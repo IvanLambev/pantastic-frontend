@@ -37,14 +37,14 @@ function App() {
     <>
     
        {/* Navigation Menu */}
-      <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-md bg-white rounded-lg w-full">
+      <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-md bg-white rounded-lg w-auto mx-auto">
         {/* Logo */}
-        <div className="flex items-center">
-          <img src="/logo.webp" alt="Logo" className="h-12 w-12" />
+        <div className="flex items-start">
+          <img src="/logo.webp" alt="Logo" className="h-12 w-auto" />
         </div>
 
         {/* Navigation Links */}
-        <NavigationMenuList className="flex gap-8">
+        <NavigationMenuList className="flex gap-8 px-8">
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
               <Link to="/" className="text-gray-800 hover:text-gray-600">Home</Link>
