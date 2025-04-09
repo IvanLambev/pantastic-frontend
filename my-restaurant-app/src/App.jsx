@@ -3,7 +3,7 @@ import './App.css'
 import { Button } from "@/components/ui/button"
 //import Navbar from './components/Navbar'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom' // Added Link here
-
+import { useAuth } from "./context/AuthContext"
 import Home from './pages/Home'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
@@ -20,23 +20,14 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
-import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
+// import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
 
 function App() {
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    // Check session storage for user login status
-    const user = sessionStorage.getItem('user')
-    setIsLoggedIn(!!user) // Set to true if user exists, false otherwise
-  }, [])
-  
+  const { isLoggedIn, handleLogout } = useAuth()
 
   return (
     <>
-    
-       {/* Navigation Menu */}
+      {/* Navigation Menu */}
       <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-md bg-white rounded-lg w-auto mx-auto">
         {/* Logo */}
         <div className="flex items-start">
@@ -72,16 +63,23 @@ function App() {
           </NavigationMenuItem>
         </NavigationMenuList>
 
-        {/* User Status */}
-        <div className="flex items-center">
+        {/* User Status and Logout */}
+        <div className="flex items-center gap-4">
           {isLoggedIn ? (
-            <div className="h-8 w-8 rounded-full bg-green-500"></div> // Green circle for logged-in users
+            <>
+              <div className="h-8 w-8 rounded-full bg-green-500"></div> {/* Green circle for logged-in users */}
+              <button
+                onClick={handleLogout}
+                className="text-gray-800 hover:text-gray-600 px-4 py-2 border rounded-md"
+              >
+                Logout
+              </button>
+            </>
           ) : (
-            <div className="h-8 w-8 rounded-full bg-gray-400"></div> // Gray circle for not logged-in users
+            <div className="h-8 w-8 rounded-full bg-gray-400"></div> 
           )}
         </div>
       </NavigationMenu>
-      
 
       {/* Routes */}
       <div className="mt-8">
@@ -93,7 +91,6 @@ function App() {
           <Route path="/food" element={<Food />} />
         </Routes>
       </div>
-  
     </>
   )
 }
