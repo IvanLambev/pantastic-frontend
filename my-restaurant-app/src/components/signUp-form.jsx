@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 export function SignUpForm({ className, ...props }) {
   const { updateLoginState } = useAuth()
@@ -21,6 +22,8 @@ export function SignUpForm({ className, ...props }) {
   const [city, setCity] = useState("")
   const [phone, setPhone] = useState("")
   const [error, setError] = useState(null)
+
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -45,6 +48,7 @@ export function SignUpForm({ className, ...props }) {
       sessionStorage.setItem("user", JSON.stringify(data))
       updateLoginState() // Trigger login state update
       alert("Sign up successful!")
+      navigate("/food")
     } catch (err) {
       console.error("Error during sign up:", err)
       setError(err.message || "An unexpected error occurred")
