@@ -30,7 +30,7 @@ export function SignUpForm({ className, ...props }) {
     setError(null) // Clear any previous errors
 
     try {
-      const response = await fetch("http://localhost/user/register", {
+      const response = await fetch("http://134.122.68.20:80/user/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

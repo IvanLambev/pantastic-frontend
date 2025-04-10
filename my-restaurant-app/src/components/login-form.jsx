@@ -19,34 +19,44 @@ export function LoginForm({ className, ...props }) {
   const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null) // Clear any previous errors
-
+    e.preventDefault();
+    setError(null); // Clear any previous errors
+  
     try {
-      const response = await fetch("http://localhost/user/login", {
+      const response = await fetch("http://134.122.68.20:80/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-      })
-
+      });
+  
+      const contentType = response.headers.get("Content-Type");
+  
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Login failed")
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Login failed");
+        } else {
+          const errorText = await response.text();
+          throw new Error(errorText || "Login failed");
+        }
       }
-
-      const data = await response.json()
-      console.log("Login successful:", data)
-      sessionStorage.setItem("user", JSON.stringify(data))
-      updateLoginState() // Trigger login state update
-      alert("Login successful!")
+  
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        console.log("Login successful:", data);
+        sessionStorage.setItem("user", JSON.stringify(data));
+        updateLoginState(); // Trigger login state update
+        alert("Login successful!");
+      } else {
+        throw new Error("Unexpected response format");
+      }
     } catch (err) {
-      console.error("Error during login:", err)
-      setError(err.message || "An unexpected error occurred")
+      console.error("Error during login:", err);
+      setError(err.message || "An unexpected error occurred");
     }
-  }
-
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
