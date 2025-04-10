@@ -27,28 +27,17 @@ function App() {
 
   return (
     <>
-      {/* Navigation Menu */}
-      <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-md bg-white rounded-lg w-auto mx-auto">
+      <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-md bg-white rounded-lg w-auto min-w-[1200px] mx-auto">
         {/* Logo */}
         <div className="flex items-start">
           <img src="/logo.webp" alt="Logo" className="h-12 w-auto" />
         </div>
 
         {/* Navigation Links */}
-        <NavigationMenuList className="flex gap-8 px-8">
+        <NavigationMenuList className="flex gap-8 px-8 justify-center">
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
               <Link to="/" className="text-gray-800 hover:text-gray-600">Home</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <Link to="/login" className="text-gray-800 hover:text-gray-600">Login</Link>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <Link to="/signup" className="text-gray-800 hover:text-gray-600">Sign Up</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
@@ -63,11 +52,11 @@ function App() {
           </NavigationMenuItem>
         </NavigationMenuList>
 
-        {/* User Status and Logout */}
+        {/* User Status and Auth Buttons */}
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
             <>
-              <div className="h-8 w-8 rounded-full bg-green-500"></div> {/* Green circle for logged-in users */}
+              {/* <div className="h-8 w-8 rounded-full bg-green-500"></div> */}
               <button
                 onClick={handleLogout}
                 className="text-gray-800 hover:text-gray-600 px-4 py-2 border rounded-md"
@@ -76,7 +65,21 @@ function App() {
               </button>
             </>
           ) : (
-            <div className="h-8 w-8 rounded-full bg-gray-400"></div> 
+            <>
+              {/* <div className="h-8 w-8 rounded-full bg-gray-400"></div> */}
+              <Link 
+                to="/login" 
+                className="text-gray-800 hover:text-gray-600 px-4 py-2 border rounded-md"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/signup" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md"
+              >
+                Sign Up
+              </Link>
+            </>
           )}
         </div>
       </NavigationMenu>

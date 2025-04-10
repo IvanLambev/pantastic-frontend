@@ -11,12 +11,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 export function LoginForm({ className, ...props }) {
   const { updateLoginState } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState(null)
+
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +51,8 @@ export function LoginForm({ className, ...props }) {
         console.log("Login successful:", data);
         sessionStorage.setItem("user", JSON.stringify(data));
         updateLoginState(); // Trigger login state update
-        alert("Login successful!");
+        // alert("Login successful!");
+        navigate("/food");
       } else {
         throw new Error("Unexpected response format");
       }

@@ -47,7 +47,7 @@ export function SignUpForm({ className, ...props }) {
       console.log("Sign up successful:", data)
       sessionStorage.setItem("user", JSON.stringify(data))
       updateLoginState() // Trigger login state update
-      alert("Sign up successful!")
+      // alert("Sign up successful!")
       navigate("/food")
     } catch (err) {
       console.error("Error during sign up:", err)

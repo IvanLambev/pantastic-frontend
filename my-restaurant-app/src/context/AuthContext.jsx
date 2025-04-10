@@ -1,9 +1,42 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
 const AuthContext = createContext()
 
-export function AuthProvider({ children }) {
+// Custom hook for using auth context
+const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
+
+// Auth Provider component
+const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const user = sessionStorage.getItem("user")
+      if (user) {
+        try {
+          const parsedUser = JSON.parse(user)
+          if (parsedUser.access_token) {
+            setIsLoggedIn(true)
+          } else {
+            setIsLoggedIn(false)
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error)
+          setIsLoggedIn(false)
+        }
+      } else {
+        setIsLoggedIn(false)
+      }
+    }
+
+    checkLoginStatus()
+  }, [])
 
   const updateLoginState = () => {
     const user = sessionStorage.getItem("user")
@@ -26,6 +59,7 @@ export function AuthProvider({ children }) {
 
   const handleLogout = () => {
     sessionStorage.removeItem("user")
+    sessionStorage.removeItem("selectedRestaurant")
     setIsLoggedIn(false)
     alert("You have been logged out!")
   }
@@ -37,6 +71,4 @@ export function AuthProvider({ children }) {
   )
 }
 
-export function useAuth() {
-  return useContext(AuthContext)
-}
+export { AuthProvider, useAuth }
