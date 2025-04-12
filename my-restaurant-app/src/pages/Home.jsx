@@ -61,45 +61,45 @@ const Home = () => {
 
   return (
     <>
-        <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-    <DialogContent className="sm:max-w-[800px]"> {/* Increased width for better layout */}
-      <DialogHeader>
-        <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
-      </DialogHeader>
-      <div className="grid gap-4 py-4">
-        {loading ? (
-          <p className="text-center">Loading restaurants...</p>
-        ) : error ? (
-          <p className="text-red-500 text-center">{error}</p>
-        ) : (
-          restaurants.map((restaurant) => (
-            <Button
-              key={restaurant[0]}
-              variant="outline"
-              className="w-full p-6 h-auto hover:bg-gray-100"
-              onClick={() => handleRestaurantSelect(restaurant)}
-            >
-              <div className="flex justify-between items-start w-full">
-                <div className="flex flex-col items-start gap-2">
-                  <span className="text-xl font-bold text-left">{restaurant[6]}</span>
-                  <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
-                </div>
-                <div className="text-sm text-gray-600 text-right">
-                  {Object.entries(restaurant[7]).map(([day, hours]) => (
-                    <div key={day} className="whitespace-nowrap">
-                      <span className="font-medium">{day}:</span> {hours}
+      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
+        <DialogContent className="sm:max-w-[800px]"> {/* Increased width for better layout */}
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {loading ? (
+              <p className="text-center">Loading restaurants...</p>
+            ) : error ? (
+              <p className="text-red-500 text-center">{error}</p>
+            ) : (
+              restaurants.map((restaurant) => (
+                <Button
+                  key={restaurant[0]}
+                  variant="outline"
+                  className="w-full p-6 h-auto hover:bg-gray-100"
+                  onClick={() => handleRestaurantSelect(restaurant)}
+                >
+                  <div className="flex justify-between items-start w-full">
+                    <div className="flex flex-col items-start gap-2">
+                      <span className="text-xl font-bold text-left">{restaurant[6]}</span>
+                      <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </Button>
-          ))
-        )}
-      </div>
-    </DialogContent>
-  </Dialog>
+                    <div className="text-sm text-gray-600 text-right">
+                      {Object.entries(restaurant[7]).map(([day, hours]) => (
+                        <div key={day} className="whitespace-nowrap">
+                          <span className="font-medium">{day}:</span> {hours}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      <div className="w-full relative">
+      <div className="w-full -mx-4">
         <Carousel 
           plugins={[
             Autoplay({
@@ -117,7 +117,7 @@ const Home = () => {
                     <img 
                       src={image} 
                       alt={`Pancake ${index + 1}`}
-                      className="w-full h-[calc(100vh-6rem)] object-cover"
+                      className="w-full h-[calc(100vh-12rem)] object-cover"
                     />
                   </CardContent>
                 </Card>

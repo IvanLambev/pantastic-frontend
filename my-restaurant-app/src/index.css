@@ -41,6 +41,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --radius: 0.5rem;
   --background: oklch(1 0 0);
@@ -113,9 +117,14 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.container {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 80rem;
 }

@@ -3,15 +3,19 @@ import { SignUpForm } from "@/components/signup-form"
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <a href="#" className="flex items-center gap-2 self-center font-bold text-2xl">
-          {/* <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <GalleryVerticalEnd className="size-4" />
-          </div> */}
-          Pantastic Inc. Sign Up
-        </a>
-        <SignUpForm />
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="container mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="flex flex-col space-y-2 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Sign Up for Pantastic
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Create your account to get started
+            </p>
+          </div>
+          <SignUpForm />
+        </div>
       </div>
     </div>
   )

@@ -60,7 +60,7 @@ const Food = () => {
 
       const data = await response.json()
       setItems(data)
-      console.log("Fetched items:", data)
+      // console.log("Fetched items:", data)
     } catch (err) {
       console.error("Error fetching items:", err)
       setError(err.message)
