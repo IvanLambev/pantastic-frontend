@@ -1,0 +1,177 @@
+POST /restaurants
+Request:
+{
+    "name": "string",
+    "address": "string",
+    "opening_hours": {
+        "Monday": "9:00-18:00"
+    }
+}
+Response: {
+    "message": "Restaurant added successfully",
+    "restaurant_id": "uuid-string"
+}
+
+GET /restaurants
+Response: [
+    {
+        "restaurant_id": "uuid",
+        "name": "string",
+        "address": "string",
+        "opening_hours": {"Monday": "9:00-18:00"},
+        "latitude": "float",
+        "longitude": "float",
+        "created_at": "timestamp"
+    }
+]
+
+PUT /restaurants
+Request: {
+    "restaurant_id": "uuid",
+    "restaurant": {
+        "name": "string",
+        "address": "string",
+        "opening_hours": {"Monday": "9:00-18:00"}
+    }
+}
+Response: {
+    "message": "Restaurant updated successfully"
+}
+
+DELETE /restaurants
+Request: {
+    "restaurant_id": "uuid"
+}
+Response: {
+    "message": "Restaurant deleted successfully"
+}
+
+POST /items
+Request: 
+FormData:
+{
+    "data": {
+        "restaurant_id": "uuid",
+        "items": [
+            {
+                "name": "string",
+                "description": "string",
+                "price": "float"
+            }
+        ]
+    },
+    "file": "image-file"
+}
+Response: {
+    "message": "Items added successfully"
+}
+
+POST /items
+Request: 
+FormData:
+{
+    "data": {
+        "restaurant_id": "uuid",
+        "items": [
+            {
+                "name": "string",
+                "description": "string",
+                "price": "float"
+            }
+        ]
+    },
+    "file": "image-file"
+}
+Response: {
+    "message": "Items added successfully"
+}
+
+GET /{restaurant_id}/items
+Response: [
+    {
+        "item_id": "uuid",
+        "restaurant_id": "uuid",
+        "name": "string",
+        "description": "string",
+        "price": "float",
+        "image_url": "string",
+        "created_at": "timestamp"
+    }
+]
+
+PUT /items
+Request: {
+    "item_id": "uuid",
+    "name": "string (optional)",
+    "description": "string (optional)",
+    "price": "float (optional)"
+}
+File: Optional image file
+Response: {
+    "message": "Item updated successfully"
+}
+
+DELETE /items
+Request: {
+    "item_id": "uuid"
+}
+Response: {
+    "message": "Item deleted successfully"
+}
+
+POST /delivery-people
+Request: {
+    "name": "string",
+    "phone": "string"
+}
+Response: {
+    "message": "Delivery person added successfully",
+    "delivery_person_id": "uuid-string"
+}
+
+GET /delivery-people
+Response: [
+    {
+        "delivery_person_id": "uuid",
+        "name": "string",
+        "phone": "string",
+        "created_at": "timestamp"
+    }
+]
+PUT /delivery-people
+Request: {
+    "delivery_person_id": "uuid",
+    "person": {
+        "name": "string",
+        "phone": "string"
+    }
+}
+Response: {
+    "message": "Delivery person updated successfully"
+}
+
+DELETE /delivery-people
+Request: {
+    "delivery_person_id": "uuid"
+}
+Response: {
+    "message": "Delivery person removed successfully"
+}
+
+POST /assign-delivery-person-to-restaurant
+Request: {
+    "restaurant_id": "uuid",
+    "delivery_person_id": "uuid"
+}
+Response: {
+    "message": "Delivery person assigned to restaurant successfully"
+}
+
+DELETE /unassign-delivery-person-from-restaurant
+Request: {
+    "restaurant_id": "uuid",
+    "delivery_person_id": "uuid"
+}
+Response: {
+    "message": "Delivery person unassigned from restaurant successfully"
+}

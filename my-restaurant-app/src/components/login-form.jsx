@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 
-export function LoginForm({ className, ...props }) {
+export function LoginForm({ className }) {
   const { updateLoginState } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -62,7 +62,7 @@ export function LoginForm({ className, ...props }) {
     }
   };
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>

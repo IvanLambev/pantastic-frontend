@@ -12,10 +12,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DeliveryPeopleManager } from "./DeliveryPeopleManager"
+import { MoreVertical, Pencil, Trash2, Search, UserPlus } from "lucide-react"
 
 export function RestaurantManager() {
   const [restaurants, setRestaurants] = useState([])
@@ -23,31 +33,131 @@ export function RestaurantManager() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showAddItemDialog, setShowAddItemDialog] = useState(false)
+  const [showEditRestaurantDialog, setShowEditRestaurantDialog] = useState(false)
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false)
+  const [showEditItemDialog, setShowEditItemDialog] = useState(false)
+  const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false)
+  const [items, setItems] = useState([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [deliveryPeople, setDeliveryPeople] = useState([])
   const [newItem, setNewItem] = useState({
     name: "",
     description: "",
     price: "",
     file: null
   })
+  const [editRestaurantData, setEditRestaurantData] = useState({
+    name: "",
+    address: "",
+    opening_hours: {}
+  })
+  const [editingItem, setEditingItem] = useState(null)
+  const [currentTab, setCurrentTab] = useState("items")
 
   useEffect(() => {
     fetchRestaurants()
+    fetchDeliveryPeople()
   }, [])
+
+  useEffect(() => {
+    if (selectedRestaurant) {
+      fetchItems(selectedRestaurant[0])
+    }
+  }, [selectedRestaurant])
 
   const fetchRestaurants = async () => {
     setLoading(true)
     try {
       const response = await fetch('http://134.122.68.20:80/restaurant/restaurants')
-      if (!response.ok) {
-        throw new Error('Failed to fetch restaurants')
-      }
+      if (!response.ok) throw new Error('Failed to fetch restaurants')
       const data = await response.json()
+      console.log('Fetched restaurants:', data)
       setRestaurants(data)
     } catch (err) {
       setError(err.message)
       console.error('Error fetching restaurants:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchItems = async (restaurantId) => {
+    try {
+      const response = await fetch(`http://134.122.68.20:80/restaurant/${restaurantId}/items`)
+      if (!response.ok) throw new Error('Failed to fetch items')
+      const data = await response.json()
+      console.log('Fetched items for restaurant', restaurantId, ':', data)
+      setItems(data)
+    } catch (err) {
+      console.error('Error fetching items:', err)
+      setError(err.message)
+    }
+  }
+
+  const fetchDeliveryPeople = async () => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      const response = await fetch('http://134.122.68.20:80/restaurant/delivery-people', {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`
+        }
+      })
+      if (!response.ok) throw new Error('Failed to fetch delivery people')
+      const data = await response.json()
+      setDeliveryPeople(data)
+    } catch (err) {
+      console.error('Error fetching delivery people:', err)
+    }
+  }
+
+  const handleEditRestaurant = async (e) => {
+    e.preventDefault()
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({
+          restaurant_id: selectedRestaurant[0],
+          restaurant: editRestaurantData
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to update restaurant')
+      
+      setShowEditRestaurantDialog(false)
+      fetchRestaurants()
+    } catch (err) {
+      console.error('Error updating restaurant:', err)
+      setError(err.message)
+    }
+  }
+
+  const handleDeleteRestaurant = async () => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({
+          restaurant_id: selectedRestaurant[0]
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to delete restaurant')
+      
+      setShowDeleteConfirmDialog(false)
+      setSelectedRestaurant(null)
+      fetchRestaurants()
+    } catch (err) {
+      console.error('Error deleting restaurant:', err)
+      setError(err.message)
     }
   }
 
@@ -82,9 +192,68 @@ export function RestaurantManager() {
 
       setShowAddItemDialog(false)
       setNewItem({ name: "", description: "", price: "", file: null })
-      // Refresh items or show success message
     } catch (err) {
       console.error('Error adding item:', err)
+      setError(err.message)
+    }
+  }
+
+  const handleEditItem = async (e) => {
+    e.preventDefault()
+    const formData = new FormData()
+    
+    if (editingItem.file) {
+      formData.append('file', editingItem.file)
+    }
+
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      const response = await fetch('http://134.122.68.20:80/restaurant/items', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({
+          item_id: editingItem.item_id,
+          name: editingItem.name,
+          description: editingItem.description,
+          price: parseFloat(editingItem.price)
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to update item')
+      
+      setShowEditItemDialog(false)
+      setEditingItem(null)
+      fetchItems(selectedRestaurant[0])
+    } catch (err) {
+      console.error('Error updating item:', err)
+      setError(err.message)
+    }
+  }
+
+  const handleDeleteItem = async () => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      const response = await fetch('http://134.122.68.20:80/restaurant/items', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({
+          item_id: editingItem[0] // Access the ID from the first element of the array
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to delete item')
+      
+      setShowDeleteItemDialog(false)
+      setEditingItem(null)
+      fetchItems(selectedRestaurant[0])
+    } catch (err) {
+      console.error('Error deleting item:', err)
       setError(err.message)
     }
   }
@@ -96,6 +265,11 @@ export function RestaurantManager() {
     }))
   }
 
+  const filteredItems = items.filter(item =>
+    (item?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (item?.description?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+  )
+
   if (loading) {
     return <div className="text-center p-4">Loading...</div>
   }
@@ -106,27 +280,63 @@ export function RestaurantManager() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {restaurants.map((restaurant) => (
           <Card 
             key={restaurant[0]} 
-            className={`cursor-pointer transition-all ${
-              selectedRestaurant?.[0] === restaurant[0] ? 'ring-2 ring-primary' : ''
+            className={`relative cursor-pointer transition-all hover:shadow-lg ${
+              selectedRestaurant?.[0] === restaurant[0] ? 'ring-2 ring-primary' : 'hover:border-primary'
             }`}
             onClick={() => setSelectedRestaurant(restaurant)}
           >
-            <CardHeader>
-              <CardTitle>{restaurant[6]}</CardTitle>
-              <CardDescription>{restaurant[1]}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-gray-600">
-                {Object.entries(restaurant[7]).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between">
-                    <span className="font-medium">{day}:</span>
-                    <span>{hours}</span>
+            <CardContent className="p-6">
+              <div className="flex items-start">
+                <div className="flex-grow pr-16">
+                  <h3 className="text-2xl font-semibold mb-2">{restaurant[6]}</h3>
+                  <p className="text-muted-foreground mb-4">{restaurant[1]}</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                      <div key={day} className="flex justify-between items-center border-b border-border/50 pb-1">
+                        <span className="font-medium capitalize">{day}:</span>
+                        <span className="text-muted-foreground">{hours}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                <div className="absolute top-6 right-6">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="hover:bg-accent">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation()
+                        setEditRestaurantData({
+                          name: restaurant[6],
+                          address: restaurant[1],
+                          opening_hours: restaurant[7]
+                        })
+                        setShowEditRestaurantDialog(true)
+                      }}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive focus:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedRestaurant(restaurant)
+                          setShowDeleteConfirmDialog(true)
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -134,17 +344,174 @@ export function RestaurantManager() {
       </div>
 
       {selectedRestaurant && (
-        <div className="flex gap-4 mt-6">
-          <Button onClick={() => setShowAddItemDialog(true)}>
-            Add Menu Item
-          </Button>
+        <div className="mt-6">
+          <Tabs value={currentTab} onValueChange={setCurrentTab}>
+            <TabsList>
+              <TabsTrigger value="items">Menu Items</TabsTrigger>
+              <TabsTrigger value="details">Restaurant Details</TabsTrigger>
+              <TabsTrigger value="delivery">Delivery People</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="items" className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search items..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <Button onClick={() => setShowAddItemDialog(true)}>
+                  Add Menu Item
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredItems.map((item) => (
+                  <Card key={item.item_id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <CardHeader className="relative">
+                      <div className="absolute top-4 right-4 z-10">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="bg-background/80 backdrop-blur-sm hover:bg-background/90">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {
+                              setEditingItem(item)
+                              setShowEditItemDialog(true)
+                            }}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => {
+                                setEditingItem(item)
+                                setShowDeleteItemDialog(true)
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="aspect-square relative mb-4">
+                        <img 
+                          src={item.image_url || '/placeholder-food.jpg'} 
+                          alt={item.name}
+                          className="absolute inset-0 h-full w-full object-cover rounded-md"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg">{item.name}</CardTitle>
+                        <CardDescription className="text-sm line-clamp-2">{item.description}</CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="font-semibold text-lg">
+                        ${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="details" className="space-y-4">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Location Details</h3>
+                  <p><strong>Latitude:</strong> {selectedRestaurant[4]}</p>
+                  <p><strong>Longitude:</strong> {selectedRestaurant[5]}</p>
+                  <p><strong>Address:</strong> {selectedRestaurant[1]}</p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Business Hours</h3>
+                  {Object.entries(selectedRestaurant[7] || {}).map(([day, hours]) => (
+                    <p key={day}><strong>{day}:</strong> {hours}</p>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="delivery" className="space-y-4">
+              <DeliveryPeopleManager 
+                restaurantId={selectedRestaurant[0]}
+                deliveryPeople={deliveryPeople}
+                onUpdate={fetchDeliveryPeople}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       )}
+
+      <Dialog open={showEditRestaurantDialog} onOpenChange={setShowEditRestaurantDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Restaurant</DialogTitle>
+            <DialogDescription>
+              Modify the restaurant details below
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditRestaurant}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Restaurant Name</Label>
+                <Input
+                  id="name"
+                  value={editRestaurantData.name}
+                  onChange={(e) => setEditRestaurantData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  value={editRestaurantData.address}
+                  onChange={(e) => setEditRestaurantData(prev => ({ ...prev, address: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Restaurant</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this restaurant? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirmDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteRestaurant}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showAddItemDialog} onOpenChange={setShowAddItemDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Menu Item</DialogTitle>
+            <DialogDescription>
+              Fill in the details to add a new menu item
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddItem}>
             <div className="grid gap-4 py-4">
@@ -192,6 +559,81 @@ export function RestaurantManager() {
               <Button type="submit">Add Item</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditItemDialog} onOpenChange={setShowEditItemDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Menu Item</DialogTitle>
+            <DialogDescription>
+              Modify the menu item details below
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditItem}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Item Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editingItem?.name || ''}
+                  onChange={(e) => setEditingItem(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Input
+                  id="edit-description"
+                  value={editingItem?.description || ''}
+                  onChange={(e) => setEditingItem(prev => ({ ...prev, description: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-price">Price</Label>
+                <Input
+                  id="edit-price"
+                  type="number"
+                  step="0.01"
+                  value={editingItem?.price || ''}
+                  onChange={(e) => setEditingItem(prev => ({ ...prev, price: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-image">New Image (optional)</Label>
+                <Input
+                  id="edit-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditingItem(prev => ({ ...prev, file: e.target.files[0] }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteItemDialog} onOpenChange={setShowDeleteItemDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Menu Item</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this menu item? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteItemDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteItem}>
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

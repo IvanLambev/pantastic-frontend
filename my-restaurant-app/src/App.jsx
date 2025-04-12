@@ -14,6 +14,7 @@ import SignUp from './pages/SignUp'
 import About from './pages/About'
 import Food from './pages/Food'
 import Admin from './pages/Admin'
+import RestaurantDetails from './pages/RestaurantDetails'
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
@@ -101,6 +102,7 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/about" element={<About />} />
       <Route path="/food" element={<Food />} />
+      <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )
