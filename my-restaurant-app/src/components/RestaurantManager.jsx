@@ -370,7 +370,7 @@ export function RestaurantManager() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredItems.map((item) => (
-                  <Card key={item.item_id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <Card key={item[0]} className="overflow-hidden hover:shadow-md transition-shadow">
                     <CardHeader className="relative">
                       <div className="absolute top-4 right-4 z-10">
                         <DropdownMenu>
@@ -381,7 +381,13 @@ export function RestaurantManager() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => {
-                              setEditingItem(item)
+                              setEditingItem({
+                                item_id: item[0],
+                                name: item[4],
+                                description: item[2],
+                                price: item[5],
+                                image_url: item[3]
+                              })
                               setShowEditItemDialog(true)
                             }}>
                               <Pencil className="mr-2 h-4 w-4" />
@@ -390,7 +396,10 @@ export function RestaurantManager() {
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
                               onClick={() => {
-                                setEditingItem(item)
+                                setEditingItem({
+                                  item_id: item[0],
+                                  name: item[4]
+                                })
                                 setShowDeleteItemDialog(true)
                               }}
                             >
@@ -402,19 +411,25 @@ export function RestaurantManager() {
                       </div>
                       <div className="aspect-square relative mb-4">
                         <img 
-                          src={item.image_url || '/placeholder-food.jpg'} 
-                          alt={item.name}
+                          src={item[3] || '/elementor-placeholder-image.webp'} 
+                          alt={item[4]}
+                          onError={(e) => {
+                            e.target.src = '/elementor-placeholder-image.webp'
+                          }}
                           className="absolute inset-0 h-full w-full object-cover rounded-md"
                         />
                       </div>
                       <div className="space-y-1">
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <CardDescription className="text-sm line-clamp-2">{item.description}</CardDescription>
+                        <CardTitle className="text-lg">{item[4]}</CardTitle>
+                        <CardDescription className="text-sm line-clamp-2">{item[2]}</CardDescription>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="font-semibold text-lg">
-                        ${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}
+                        ${typeof item[5] === 'number' ? item[5].toFixed(2) : '0.00'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Added on {new Date(item[1]).toLocaleDateString()}
                       </div>
                     </CardContent>
                   </Card>
