@@ -134,7 +134,7 @@ const Food = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 mt-16">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-left">

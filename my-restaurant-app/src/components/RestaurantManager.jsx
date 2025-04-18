@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { validateToken } from "@/utils/auth"
 import {
   Card,
   CardContent,
@@ -28,6 +30,7 @@ import { DeliveryPeopleManager } from "./DeliveryPeopleManager"
 import { MoreVertical, Pencil, Trash2, Search, UserPlus } from "lucide-react"
 
 export function RestaurantManager() {
+  const navigate = useNavigate()
   const [restaurants, setRestaurants] = useState([])
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -53,6 +56,25 @@ export function RestaurantManager() {
   })
   const [editingItem, setEditingItem] = useState(null)
   const [currentTab, setCurrentTab] = useState("items")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    const validateUserToken = async () => {
+      const user = JSON.parse(sessionStorage.getItem('user'))
+      if (!user?.access_token) {
+        navigate('/login')
+        return
+      }
+      
+      const isValid = await validateToken(user.access_token)
+      if (!isValid) {
+        sessionStorage.removeItem('user')
+        navigate('/login')
+      }
+    }
+
+    validateUserToken()
+  }, [navigate])
 
   useEffect(() => {
     fetchRestaurants()
@@ -163,6 +185,9 @@ export function RestaurantManager() {
 
   const handleAddItem = async (e) => {
     e.preventDefault()
+    if (isSubmitting) return // Prevent duplicate submissions
+    
+    setIsSubmitting(true)
     const formData = new FormData()
     const itemData = {
       restaurant_id: selectedRestaurant[0],
@@ -192,16 +217,34 @@ export function RestaurantManager() {
 
       setShowAddItemDialog(false)
       setNewItem({ name: "", description: "", price: "", file: null })
+      fetchItems(selectedRestaurant[0])
     } catch (err) {
       console.error('Error adding item:', err)
       setError(err.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleEditItem = async (e) => {
     e.preventDefault()
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
     const formData = new FormData()
     
+    // Create the data object with item_id as string
+    const itemData = {
+      item_id: editingItem.item_id.toString(),
+      name: editingItem.name,
+      description: editingItem.description,
+      price: parseFloat(editingItem.price)
+    }
+
+    // Append data with type specification
+    formData.append('data', JSON.stringify(itemData) + ';type=application/json')
+    
+    // Add the file if one was selected
     if (editingItem.file) {
       formData.append('file', editingItem.file)
     }
@@ -211,15 +254,9 @@ export function RestaurantManager() {
       const response = await fetch('http://134.122.68.20:80/restaurant/items', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.access_token}`
         },
-        body: JSON.stringify({
-          item_id: editingItem.item_id,
-          name: editingItem.name,
-          description: editingItem.description,
-          price: parseFloat(editingItem.price)
-        })
+        body: formData
       })
 
       if (!response.ok) throw new Error('Failed to update item')
@@ -230,10 +267,15 @@ export function RestaurantManager() {
     } catch (err) {
       console.error('Error updating item:', err)
       setError(err.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDeleteItem = async () => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
       const response = await fetch('http://134.122.68.20:80/restaurant/items', {
@@ -243,7 +285,7 @@ export function RestaurantManager() {
           'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
-          item_id: editingItem[0] // Access the ID from the first element of the array
+          item_id: editingItem.item_id // Using the correct property from the object
         })
       })
 
@@ -255,6 +297,8 @@ export function RestaurantManager() {
     } catch (err) {
       console.error('Error deleting item:', err)
       setError(err.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -571,7 +615,9 @@ export function RestaurantManager() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Add Item</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add Item'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -627,7 +673,9 @@ export function RestaurantManager() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -645,8 +693,8 @@ export function RestaurantManager() {
             <Button variant="outline" onClick={() => setShowDeleteItemDialog(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteItem}>
-              Delete
+            <Button variant="destructive" onClick={handleDeleteItem} disabled={isSubmitting}>
+              {isSubmitting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
