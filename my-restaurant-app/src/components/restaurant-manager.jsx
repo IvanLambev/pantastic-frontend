@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { validateToken } from "@/utils/auth"
+import { API_URL } from '@/config/api'
 import imageCompression from 'browser-image-compression';
 import {
   Card,
@@ -91,7 +92,7 @@ export function RestaurantManager() {
   const fetchRestaurants = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants')
+      const response = await fetch(`${API_URL}/restaurant/restaurants`)
       if (!response.ok) throw new Error('Failed to fetch restaurants')
       const data = await response.json()
       console.log('Fetched restaurants:', data)
@@ -106,7 +107,7 @@ export function RestaurantManager() {
 
   const fetchItems = async (restaurantId) => {
     try {
-      const response = await fetch(`http://134.122.68.20:80/restaurant/${restaurantId}/items`)
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`)
       if (!response.ok) throw new Error('Failed to fetch items')
       const data = await response.json()
       console.log('Fetched items for restaurant', restaurantId, ':', data)
@@ -120,7 +121,7 @@ export function RestaurantManager() {
   const fetchDeliveryPeople = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/delivery-people', {
+      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`
         }
@@ -137,7 +138,7 @@ export function RestaurantManager() {
     e.preventDefault()
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants', {
+      const response = await fetch(`${API_URL}/restaurant/restaurants`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +163,7 @@ export function RestaurantManager() {
   const handleDeleteRestaurant = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants', {
+      const response = await fetch(`${API_URL}/restaurant/restaurants`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ export function RestaurantManager() {
 
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/items', {
+      const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.access_token}`
@@ -269,7 +270,7 @@ export function RestaurantManager() {
       }
 
       const user = JSON.parse(sessionStorage.getItem('user'));
-      const response = await fetch('http://134.122.68.20:80/restaurant/items', {
+      const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.access_token}`
@@ -308,7 +309,7 @@ export function RestaurantManager() {
     
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/items', {
+      const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

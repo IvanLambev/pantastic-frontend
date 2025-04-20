@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { API_URL } from '@/config/api'
 import {
   Card,
   CardContent,
@@ -30,7 +31,7 @@ export function SignUpForm({ className, ...props }) {
     setError(null) // Clear any previous errors
 
     try {
-      const response = await fetch("http://134.122.68.20:80/user/register", {
+      const response = await fetch(`${API_URL}/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

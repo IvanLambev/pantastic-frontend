@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { API_URL } from '@/config/api'
 import {
   Card,
   CardContent,
@@ -36,7 +37,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
     e.preventDefault()
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/delivery-people', {
+      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
     e.preventDefault()
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/delivery-people', {
+      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
   const handleDelete = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/delivery-people', {
+      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +109,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
   const handleAssign = async (person) => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/assign-delivery-person-to-restaurant', {
+      const response = await fetch(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
   const handleUnassign = async (person) => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch('http://134.122.68.20:80/restaurant/unassign-delivery-person-from-restaurant', {
+      const response = await fetch(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

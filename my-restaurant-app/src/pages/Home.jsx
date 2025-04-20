@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
+import { API_URL } from '@/config/api'
 import {
   Carousel,
   CarouselContent,
@@ -31,7 +32,7 @@ const Home = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await fetch('http://134.122.68.20:80/restaurant/restaurants')
+        const response = await fetch(`${API_URL}/restaurant/restaurants`)
         if (!response.ok) {
           throw new Error('Failed to fetch restaurants')
         }

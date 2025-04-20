@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { API_URL } from '@/config/api'
 import {
   Card,
   CardContent,
@@ -28,7 +29,7 @@ const Food = () => {
   const fetchRestaurants = async () => {
     setLoadingRestaurants(true)
     try {
-      const response = await fetch('http://134.122.68.20:80/restaurant/restaurants')
+      const response = await fetch(`${API_URL}/restaurant/restaurants`)
       if (!response.ok) {
         throw new Error('Failed to fetch restaurants')
       }
@@ -52,7 +53,7 @@ const Food = () => {
   const fetchItems = async (restaurantId) => {
     setLoading(true)
     try {
-      const response = await fetch(`http://134.122.68.20:80/restaurant/${restaurantId}/items`)
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`)
       
       if (!response.ok) {
         throw new Error("Failed to fetch items")
