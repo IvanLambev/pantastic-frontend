@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { validateToken } from "@/utils/auth"
+import imageCompression from 'browser-image-compression';
 import {
   Card,
   CardContent,
@@ -226,49 +227,78 @@ export function RestaurantManager() {
     }
   }
 
+  const compressImage = async (imageFile) => {
+    if (!imageFile) return null;
+    
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1024,
+      useWebWorker: true
+    };
+    
+    try {
+      return await imageCompression(imageFile, options);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      throw new Error('Failed to compress image');
+    }
+  };
+
   const handleEditItem = async (e) => {
-    e.preventDefault()
-    if (isSubmitting) return
+    e.preventDefault();
+    if (isSubmitting) return;
     
-    setIsSubmitting(true)
-    const formData = new FormData()
+    setIsSubmitting(true);
+    const formData = new FormData();
     
-    // Create the data object with item_id as string
     const itemData = {
-      item_id: editingItem.item_id.toString(),
+      item_id: editingItem.item_id,
       name: editingItem.name,
       description: editingItem.description,
       price: parseFloat(editingItem.price)
-    }
-
-    // Append data with type specification
-    formData.append('data', JSON.stringify(itemData) + ';type=application/json')
-    
-    // Add the file if one was selected
-    if (editingItem.file) {
-      formData.append('file', editingItem.file)
-    }
+    };
 
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
+      formData.append('data', JSON.stringify(itemData));
+      
+      if (editingItem.file) {
+        const compressedImage = await compressImage(editingItem.file);
+        if (compressedImage) {
+          formData.append('file', compressedImage, compressedImage.name);
+        }
+      }
+
+      const user = JSON.parse(sessionStorage.getItem('user'));
       const response = await fetch('http://134.122.68.20:80/restaurant/items', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.access_token}`
         },
         body: formData
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to update item')
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        let errorMessage;
+        
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || 'Failed to update item';
+        } else {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
       
-      setShowEditItemDialog(false)
-      setEditingItem(null)
-      fetchItems(selectedRestaurant[0])
+      // After successful update, fetch updated items
+      await fetchItems(selectedRestaurant[0]);
+      setShowEditItemDialog(false);
+      setEditingItem(null);
     } catch (err) {
-      console.error('Error updating item:', err)
-      setError(err.message)
+      console.error('Error updating item:', err);
+      setError(err.message);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
