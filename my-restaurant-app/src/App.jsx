@@ -1,14 +1,14 @@
 import './App.css'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
-import { useAuth } from "./context/AuthContext"
+import { useAuth } from './context/AuthContext'
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink,
-} from "@/components/ui/navigation-menu"
-import { SidebarProvider } from '@/components/ui/sidebar'
-import Home from './pages/home'
+} from './components/ui/navigation-menu'
+import { SidebarProvider } from './components/ui/sidebar'
+import Home from './pages/Home'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import About from './pages/About'
