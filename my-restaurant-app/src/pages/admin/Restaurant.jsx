@@ -1,4 +1,4 @@
-import { RestaurantManager } from "@/components/RestaurantManager"
+import { RestaurantManager } from "@/components/restaurant-manager.jsx"
 
 export default function RestaurantPage() {
   return (

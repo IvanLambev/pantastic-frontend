@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DeliveryPeopleManager } from "./DeliveryPeopleManager"
+import { DeliveryPeopleManager } from "@/components/delivery-people-manager"
 import { MoreVertical, Pencil, Trash2, Search, UserPlus } from "lucide-react"
 
 export function RestaurantManager() {
