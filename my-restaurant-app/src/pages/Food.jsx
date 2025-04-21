@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
 import { API_URL } from '@/config/api'
+import { useCart } from "@/hooks/use-cart"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -14,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 
 const Food = () => {
   const [items, setItems] = useState([])
@@ -25,6 +27,7 @@ const Food = () => {
   const [loadingRestaurants, setLoadingRestaurants] = useState(false)
   const [restaurantError, setRestaurantError] = useState(null)
   const [currentRestaurant, setCurrentRestaurant] = useState(null)
+  const { addToCart } = useCart()
 
   const fetchRestaurants = async () => {
     setLoadingRestaurants(true)
@@ -36,7 +39,8 @@ const Food = () => {
       const data = await response.json()
       setRestaurants(data)
     } catch (err) {
-      setRestaurantError(err.message)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch restaurants'
+      setRestaurantError(errorMessage)
       console.error('Error fetching restaurants:', err)
     } finally {
       setLoadingRestaurants(false)
@@ -47,7 +51,7 @@ const Food = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setCurrentRestaurant(restaurant)
     setShowRestaurantModal(false)
-    fetchItems(restaurant[0]) // Fetch items for the newly selected restaurant
+    fetchItems(restaurant[0])
   }
 
   const fetchItems = async (restaurantId) => {
@@ -61,10 +65,10 @@ const Food = () => {
 
       const data = await response.json()
       setItems(data)
-      // console.log("Fetched items:", data)
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch items'
       console.error("Error fetching items:", err)
-      setError(err.message)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -85,6 +89,17 @@ const Food = () => {
   const handleChangeRestaurant = () => {
     fetchRestaurants()
     setShowRestaurantModal(true)
+  }
+
+  const handleAddToCart = (item) => {
+    addToCart({
+      id: item[0],
+      name: item[4],
+      description: item[2],
+      price: item[5],
+      image: item[3]
+    })
+    toast.success(`Added ${item[4]} to cart`)
   }
 
   if (loading && !showRestaurantModal) {
@@ -173,6 +188,14 @@ const Food = () => {
               <CardContent>
                 <p className="text-gray-600">{item[2]}</p>
               </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  onClick={() => handleAddToCart(item)}
+                >
+                  Add to Cart
+                </Button>
+              </CardFooter>
             </Card>
           ))}
         </div>

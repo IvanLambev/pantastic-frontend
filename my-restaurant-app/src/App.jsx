@@ -1,33 +1,38 @@
 import './App.css'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
+import { CartProvider } from '@/context/CartContext'
+import { useCart } from '@/hooks/use-cart'
+import { ShoppingCart } from 'lucide-react'
+import { Toaster } from "@/components/ui/sonner"
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink,
-} from './components/ui/navigation-menu'
-import { SidebarProvider } from './components/ui/sidebar'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import SignUp from './pages/SignUp'
-import About from './pages/About'
-import Food from './pages/Food'
-import Admin from './pages/Admin'
-import RestaurantDetails from './pages/RestaurantDetails'
+} from '@/components/ui/navigation-menu'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import Home from '@/pages/Home'
+import Login from '@/pages/Login'
+import SignUp from '@/pages/SignUp'
+import About from '@/pages/About'
+import Food from '@/pages/Food'
+import Admin from '@/pages/Admin'
+import Cart from '@/pages/Cart'
+import RestaurantDetails from '@/pages/RestaurantDetails'
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
+  const { cartItems } = useCart()
+  const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
 
   return (
     <div className="relative flex min-h-screen flex-col">
       <NavigationMenu className="flex items-center justify-between px-8 py-4 shadow-sm bg-white min-w-[1200px]">
-        {/* Logo */}
         <div className="flex items-start">
           <img src="/logo.webp" alt="Logo" className="h-12 w-auto" />
         </div>
 
-        {/* Navigation Links */}
         <NavigationMenuList className="flex gap-8 px-8 justify-center">
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
@@ -53,8 +58,15 @@ function MainLayout({ children }) {
           )}
         </NavigationMenuList>
 
-        {/* User Status and Auth Buttons */}
         <div className="flex items-center gap-4">
+          <Link to="/cart" className="text-gray-800 hover:text-primary relative">
+            <ShoppingCart className="h-6 w-6" />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
+          </Link>
           {isLoggedIn ? (
             <button
               onClick={handleLogout}
@@ -102,15 +114,19 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/about" element={<About />} />
       <Route path="/food" element={<Food />} />
+      <Route path="/cart" element={<Cart />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )
 
   return (
-    <SidebarProvider>
-      {isAdminPage ? content : <MainLayout>{content}</MainLayout>}
-    </SidebarProvider>
+    <CartProvider>
+      <SidebarProvider>
+        {isAdminPage ? content : <MainLayout>{content}</MainLayout>}
+        <Toaster />
+      </SidebarProvider>
+    </CartProvider>
   )
 }
 
