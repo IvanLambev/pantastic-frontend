@@ -84,7 +84,8 @@ export const CartProvider = ({ children }) => {
           restaurant_id: restaurant[0],
           products,
           payment_method: 'card',
-          delivery_method: 'pickup'
+          delivery_method: 'pickup',
+          address: restaurant[1] // Adding restaurant address for pickup orders
         })
       })
 
