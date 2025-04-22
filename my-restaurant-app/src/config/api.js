@@ -1,1 +1,1 @@
-export const API_URL = 'https://palachinki.store'
+export const API_URL = 'https://api.palachinki.store'
