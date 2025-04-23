@@ -1,30 +1,81 @@
-import { cn } from "@/lib/utils"
+import React from "react";
+import { cn } from "@/lib/utils";
 
-interface TimelineProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode
+type Status = "complete" | "incomplete" | "cancelled";
+
+interface TimelineProps {
+  className?: string;
+  children: React.ReactNode;
 }
 
-export function Timeline({ children, className, ...props }: TimelineProps) {
+interface TimelineItemProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+interface TimelineDotProps {
+  status: Status;
+  className?: string;
+}
+
+interface TimelineConnectorProps {
+  status: Status;
+  className?: string;
+}
+
+interface TimelineContentProps {
+  className?: string;
+  children: React.ReactNode;
+}
+
+export function Timeline({ className, children }: TimelineProps) {
   return (
-    <div className={cn("space-y-8", className)} {...props}>
+    <div className={cn("space-y-4", className)}>
       {children}
     </div>
-  )
+  );
 }
 
-interface TimelineItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  year: string
-  title: string
-  children: React.ReactNode
-}
-
-export function TimelineItem({ year, title, children, className, ...props }: TimelineItemProps) {
+export function TimelineItem({ className, children }: TimelineItemProps) {
   return (
-    <div className={cn("relative pl-8 before:absolute before:left-0 before:top-2 before:h-full before:w-[2px] before:bg-primary/20 last:before:hidden", className)} {...props}>
-      <div className="absolute left-0 top-2 -translate-x-[5px] h-3 w-3 rounded-full bg-primary" />
-      <div className="text-sm text-primary font-semibold mb-2">{year}</div>
-      <h3 className="font-bold mb-2">{title}</h3>
-      <div className="text-muted-foreground">{children}</div>
+    <div className={cn("flex items-start gap-2", className)}>
+      {children}
     </div>
-  )
+  );
+}
+
+export function TimelineDot({ status, className }: TimelineDotProps) {
+  return (
+    <div className={cn(
+      "relative flex h-3 w-3 shrink-0 items-center justify-center",
+      className
+    )}>
+      <div className={cn(
+        "h-3 w-3 rounded-full",
+        status === "complete" && "bg-primary",
+        status === "incomplete" && "border-2 border-muted-foreground",
+        status === "cancelled" && "bg-destructive"
+      )} />
+    </div>
+  );
+}
+
+export function TimelineConnector({ status, className }: TimelineConnectorProps) {
+  return (
+    <div className={cn(
+      "relative left-1.5 h-10 w-px -translate-x-1/2",
+      status === "complete" && "bg-primary",
+      status === "incomplete" && "bg-muted-foreground/30",
+      status === "cancelled" && "bg-destructive/30",
+      className
+    )} />
+  );
+}
+
+export function TimelineContent({ className, children }: TimelineContentProps) {
+  return (
+    <div className={cn("ml-2 pb-8", className)}>
+      {children}
+    </div>
+  );
 }

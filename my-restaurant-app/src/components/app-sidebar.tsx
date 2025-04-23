@@ -56,6 +56,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Restaurant Management",
         url: "/admin/restaurant",
         icon: IconDatabase,
+      },
+      {
+        title: "Order Management",
+        url: "/admin/orders",
+        icon: IconListDetails,
       }
     ],
     navClouds: [

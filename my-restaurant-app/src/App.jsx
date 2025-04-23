@@ -20,6 +20,7 @@ import Food from '@/pages/Food'
 import Admin from '@/pages/Admin'
 import Cart from '@/pages/Cart'
 import RestaurantDetails from '@/pages/RestaurantDetails'
+import OrderTracking from '@/pages/OrderTracking'
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
@@ -116,6 +117,7 @@ function App() {
       <Route path="/food" element={<Food />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+      <Route path="/order/:id" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )

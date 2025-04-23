@@ -30,9 +30,8 @@ const Cart = () => {
     orderId 
   } = useCart()
   const navigate = useNavigate()
-  const [{ isCheckingOut, showSuccessDialog, error }, setState] = useState({
+  const [{ isCheckingOut, error }, setState] = useState({
     isCheckingOut: false,
-    showSuccessDialog: false,
     error: null
   })
 
@@ -41,9 +40,10 @@ const Cart = () => {
   const handleCheckout = async () => {
     setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
     try {
-      await checkout()
-      setState(prev => ({ ...prev, showSuccessDialog: true }))
+      const result = await checkout()
       toast.success('Order placed successfully!')
+      // Redirect to order tracking page
+      navigate(`/order/${result.order_id}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
@@ -181,20 +181,6 @@ const Cart = () => {
           </Card>
         </div>
       </div>
-
-      <Dialog open={showSuccessDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showSuccessDialog: open }))}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Order Placed Successfully!</DialogTitle>
-            <DialogDescription>
-              Your order has been placed and is being processed. You can track its status or cancel it if needed.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setState(prev => ({ ...prev, showSuccessDialog: false }))}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
