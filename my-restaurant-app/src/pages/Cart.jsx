@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { API_URL } from "@/config/api"
 
 const Cart = () => {
   const { 
@@ -39,13 +40,35 @@ const Cart = () => {
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
+  // Helper to fetch all orders and find the latest/matching one
+  const fetchOrderDetails = async (orderId) => {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      const response = await fetch(`${API_URL}/order/orders/status`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      if (!response.ok) throw new Error('Failed to fetch orders')
+      const orders = await response.json()
+      // Find the order with the matching order_id
+      return orders.find(order => order.order_id === orderId) || null
+    } catch (err) {
+      toast.error('Could not load order details')
+      return null
+    }
+  }
+
   const handleCheckout = async () => {
     setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
     try {
       const result = await checkout()
+      // result.order_id is expected
+      const fullOrder = await fetchOrderDetails(result.order_id)
       setState(prev => ({ 
         ...prev, 
-        orderDetails: result,
+        orderDetails: fullOrder ? fullOrder : { order_id: result.order_id },
         showConfirmation: true 
       }))
       toast.success('Order placed successfully!')
@@ -77,7 +100,11 @@ const Cart = () => {
 
   const handleConfirmationClose = () => {
     setState(prev => ({ ...prev, showConfirmation: false }))
-    navigate(`/order/${orderDetails.order_id}`)
+    if (orderDetails && orderDetails.order_id) {
+      navigate(`/order/${orderDetails.order_id}`)
+    } else {
+      navigate('/order')
+    }
   }
 
   if (cartItems.length === 0) {
