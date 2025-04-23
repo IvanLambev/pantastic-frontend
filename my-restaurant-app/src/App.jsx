@@ -117,7 +117,7 @@ function App() {
       <Route path="/food" element={<Food />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-      <Route path="/order/:id" element={<OrderTracking />} />
+      <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )
