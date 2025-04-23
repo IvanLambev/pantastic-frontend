@@ -206,23 +206,23 @@ const Cart = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium">Order ID</p>
-                  <p className="text-sm text-muted-foreground">{orderDetails.order_id}</p>
+                  <p className="text-sm text-muted-foreground">{orderDetails.order_id || '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Total Price</p>
-                  <p className="text-sm text-muted-foreground">${orderDetails.total_price.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">${typeof orderDetails.total_price === 'number' ? orderDetails.total_price.toFixed(2) : '0.00'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Delivery Method</p>
-                  <p className="text-sm text-muted-foreground capitalize">{orderDetails.delivery_method}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{orderDetails.delivery_method || '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Estimated Delivery</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(orderDetails.estimated_delivery_time).toLocaleString()}
+                    {orderDetails.estimated_delivery_time ? new Date(orderDetails.estimated_delivery_time).toLocaleString() : '-'}
                   </p>
                 </div>
-                {orderDetails.delivery_method === 'pickup' && (
+                {orderDetails.delivery_method === 'pickup' && orderDetails.address && (
                   <div className="col-span-2">
                     <p className="text-sm font-medium">Pickup Address</p>
                     <p className="text-sm text-muted-foreground">{orderDetails.address}</p>
@@ -236,7 +236,7 @@ const Cart = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Contact Number</p>
-                      <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_phone}</p>
+                      <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_phone || '-'}</p>
                     </div>
                   </>
                 )}
