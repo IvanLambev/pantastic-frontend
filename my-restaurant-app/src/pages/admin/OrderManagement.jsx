@@ -11,18 +11,27 @@ export default function OrderManagement() {
 
   useEffect(() => {
     fetchOrders();
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders`, {
+      const response = await fetch(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json'
         }
       });
+      
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
+      
+      // Log the order data for debugging purposes
+      console.log('Received order data:', data);
+      
       setOrders(data);
       setLoading(false);
     } catch (error) {
@@ -47,14 +56,86 @@ export default function OrderManagement() {
       if (!response.ok) throw new Error('Failed to update order status');
       
       // Update local state
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
+      setOrders(orders.map(order => {
+        if (order.id === orderId) {
+          const updatedOrder = { ...order, status: newStatus };
+          console.log('Updated order:', updatedOrder); // Log the updated order
+          return updatedOrder;
+        }
+        return order;
+      }));
       
       toast.success('Order status updated successfully');
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
+    }
+  };
+
+  // Render function with error boundary
+  const renderOrder = (order) => {
+    try {
+      return (
+        <Card key={order.id} className="shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold mb-2">Order #{order.id}</h3>
+                <p className="text-sm text-gray-600">
+                  Customer: {order.customerName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Total: ${order.total?.toFixed(2) || '0.00'}
+                </p>
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">Items:</h4>
+                  <ul className="list-disc list-inside">
+                    {order.items?.map((item, index) => (
+                      <li key={index} className="text-sm">
+                        {item.quantity}x {item.name} - ${item.price?.toFixed(2) || '0.00'}
+                      </li>
+                    )) || <li>No items available</li>}
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                <Select
+                  value={order.status || 'pending'}
+                  onValueChange={(value) => updateOrderStatus(order.id, value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="preparing">Preparing</SelectItem>
+                    <SelectItem value="ready">Ready for Pickup</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => window.open(`/order/${order.id}`, '_blank')}
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    } catch (error) {
+      console.error('Error rendering order:', order, error);
+      return (
+        <Card key={order.id || 'unknown'} className="shadow-sm bg-red-50">
+          <CardContent className="p-6">
+            <p className="text-red-600">Error rendering order. ID: {order.id || 'unknown'}</p>
+          </CardContent>
+        </Card>
+      );
     }
   };
 
@@ -67,58 +148,7 @@ export default function OrderManagement() {
       <h1 className="text-2xl font-bold mb-6">Order Management</h1>
       
       <div className="grid gap-4">
-        {orders.map((order) => (
-          <Card key={order.id} className="shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold mb-2">Order #{order.id}</h3>
-                  <p className="text-sm text-gray-600">
-                    Customer: {order.customerName}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Total: ${order.total.toFixed(2)}
-                  </p>
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Items:</h4>
-                    <ul className="list-disc list-inside">
-                      {order.items.map((item, index) => (
-                        <li key={index} className="text-sm">
-                          {item.quantity}x {item.name} - ${item.price.toFixed(2)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-4">
-                  <Select
-                    value={order.status}
-                    onValueChange={(value) => updateOrderStatus(order.id, value)}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="preparing">Preparing</SelectItem>
-                      <SelectItem value="ready">Ready for Pickup</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => window.open(`/order/${order.id}`, '_blank')}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {orders.map(order => renderOrder(order))}
       </div>
     </div>
   );
