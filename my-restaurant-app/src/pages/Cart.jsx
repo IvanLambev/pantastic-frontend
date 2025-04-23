@@ -30,9 +30,11 @@ const Cart = () => {
     orderId 
   } = useCart()
   const navigate = useNavigate()
-  const [{ isCheckingOut, error }, setState] = useState({
+  const [{ isCheckingOut, error, orderDetails, showConfirmation }, setState] = useState({
     isCheckingOut: false,
-    error: null
+    error: null,
+    orderDetails: null,
+    showConfirmation: false
   })
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -41,9 +43,12 @@ const Cart = () => {
     setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
     try {
       const result = await checkout()
+      setState(prev => ({ 
+        ...prev, 
+        orderDetails: result,
+        showConfirmation: true 
+      }))
       toast.success('Order placed successfully!')
-      // Redirect to order tracking page
-      navigate(`/order/${result.order_id}`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
@@ -68,6 +73,11 @@ const Cart = () => {
   const handleRemoveFromCart = (itemId, itemName) => {
     removeFromCart(itemId)
     toast.info(`Removed ${itemName} from cart`)
+  }
+
+  const handleConfirmationClose = () => {
+    setState(prev => ({ ...prev, showConfirmation: false }))
+    navigate(`/order/${orderDetails.order_id}`)
   }
 
   if (cartItems.length === 0) {
@@ -181,6 +191,66 @@ const Cart = () => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={showConfirmation} onOpenChange={handleConfirmationClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Order Confirmed!</DialogTitle>
+            <DialogDescription>
+              Your order has been successfully placed.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {orderDetails && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Order ID</p>
+                  <p className="text-sm text-muted-foreground">{orderDetails.order_id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Total Price</p>
+                  <p className="text-sm text-muted-foreground">${orderDetails.total_price.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Delivery Method</p>
+                  <p className="text-sm text-muted-foreground capitalize">{orderDetails.delivery_method}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Estimated Delivery</p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(orderDetails.estimated_delivery_time).toLocaleString()}
+                  </p>
+                </div>
+                {orderDetails.delivery_method === 'pickup' && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium">Pickup Address</p>
+                    <p className="text-sm text-muted-foreground">{orderDetails.address}</p>
+                  </div>
+                )}
+                {orderDetails.delivery_person_name && (
+                  <>
+                    <div>
+                      <p className="text-sm font-medium">Delivery Person</p>
+                      <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Contact Number</p>
+                      <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_phone}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={handleConfirmationClose}>
+              Track Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
