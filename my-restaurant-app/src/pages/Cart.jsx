@@ -101,9 +101,7 @@ const Cart = () => {
   const handleConfirmationClose = () => {
     setState(prev => ({ ...prev, showConfirmation: false }))
     if (orderDetails && orderDetails.order_id) {
-      navigate(`/order/${orderDetails.order_id}`)
-    } else {
-      navigate('/order')
+      navigate(`/order-tracking/${orderDetails.order_id}`)
     }
   }
 
