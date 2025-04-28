@@ -44,38 +44,56 @@ export default function RestaurantDetails() {
   if (!restaurant) return <div className="container py-8">Restaurant not found</div>;
 
   return (
-    <div className="container py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="container py-8 px-4">
+      <div className="max-w-7xl mx-auto">
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-3xl">{restaurant[6]}</CardTitle>
-            <CardDescription className="text-lg">{restaurant[1]}</CardDescription>
+            <CardTitle className="text-2xl md:text-3xl">{restaurant[6]}</CardTitle>
+            <CardDescription className="text-base md:text-lg">{restaurant[1]}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
-                <div key={day} className="flex justify-between items-center border-b border-border/50 pb-1">
-                  <span className="font-medium capitalize">{day}:</span>
-                  <span className="text-muted-foreground">{hours}</span>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <h3 className="font-semibold">Opening Hours</h3>
+                {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                  <div key={day} className="flex justify-between items-center border-b border-border/50 pb-1">
+                    <span className="font-medium capitalize">{day}:</span>
+                    <span className="text-muted-foreground">{hours}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-semibold">Location</h3>
+                <p className="text-muted-foreground">{restaurant[1]}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <h2 className="text-2xl font-bold mb-4">Menu Items</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-xl md:text-2xl font-bold mb-6">Menu Items</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {menuItems.map((item) => (
-            <div key={item[0]} className="menu-item">
-              <img 
-                src={item[3] || '/elementor-placeholder-image.webp'} 
-                alt={item[4]}
-                className="menu-item-image"
-              />
-              <h3>{item[4]}</h3>
-              <p>{item[2]}</p>
-              <p className="price">${typeof item[5] === 'number' ? item[5].toFixed(2) : '0.00'}</p>
-            </div>
+            <Card key={item[0]} className="flex flex-col overflow-hidden">
+              <div className="aspect-video relative">
+                <img 
+                  src={item[3] || '/elementor-placeholder-image.webp'} 
+                  alt={item[4]}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <CardContent className="flex flex-col flex-grow p-4">
+                <h3 className="font-semibold mb-2">{item[4]}</h3>
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="font-semibold">${typeof item[5] === 'number' ? item[5].toFixed(2) : '0.00'}</span>
+                  {addToCart && (
+                    <Button onClick={() => handleAddToCart(item)} size="sm">
+                      Add to Cart
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

@@ -34,42 +34,50 @@ export default function Analytics() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Analytics</h1>
-      <div className="grid gap-6">
+    <div className="container px-4">
+      <h1 className="text-xl md:text-2xl font-bold mb-6">Analytics</h1>
+      <div className="grid grid-cols-1 gap-4 md:gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
+            <CardTitle className="text-lg md:text-xl">Sales Overview</CardTitle>
             <CardDescription>Monthly sales performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig}>
-              <BarChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <ChartTooltip content={(props) => <ChartTooltipContent {...props} />} />
-                <Bar dataKey="sales" fill="var(--color-sales)" />
-              </BarChart>
-            </ChartContainer>
+            <div className="h-[300px] md:h-[400px]">
+              <ChartContainer config={chartConfig}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <ChartTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                    <Bar dataKey="sales" fill="var(--color-sales)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Orders Analysis</CardTitle>
+            <CardTitle className="text-lg md:text-xl">Orders Analysis</CardTitle>
             <CardDescription>Weekly order trends</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig}>
-              <LineChart data={ordersData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <ChartTooltip content={(props) => <ChartTooltipContent {...props} />} />
-                <Line type="monotone" dataKey="orders" stroke="var(--color-sales)" />
-              </LineChart>
-            </ChartContainer>
+            <div className="h-[300px] md:h-[400px]">
+              <ChartContainer config={chartConfig}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ordersData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <ChartTooltip content={(props) => <ChartTooltipContent {...props} />} />
+                    <Line type="monotone" dataKey="orders" stroke="var(--color-sales)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

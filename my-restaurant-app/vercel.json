@@ -10,5 +10,6 @@
   "framework": "vite",
   "github": {
     "silent": true
-  }
+  },
+  "regions": ["fra1"]
 }

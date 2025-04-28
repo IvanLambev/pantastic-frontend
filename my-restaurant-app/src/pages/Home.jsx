@@ -100,7 +100,7 @@ const Home = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="w-full -mx-4">
+      <div className="w-full">
         <Carousel 
           plugins={[
             Autoplay({
@@ -118,7 +118,7 @@ const Home = () => {
                     <img 
                       src={image} 
                       alt={`Pancake ${index + 1}`}
-                      className="w-full h-[calc(100vh-12rem)] object-cover"
+                      className="w-full h-[30vh] md:h-[50vh] lg:h-[70vh] object-cover"
                     />
                   </CardContent>
                 </Card>
@@ -127,6 +127,10 @@ const Home = () => {
           </CarouselContent>
           <CarouselDots api={api} count={images.length} />
         </Carousel>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+        {/* Restaurant cards will be displayed here */}
       </div>
     </>
   )

@@ -1,22 +1,47 @@
 import { Link } from 'react-router-dom'
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import { cn } from "@/lib/utils"
 
 const Navbar = () => {
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50">
-      <div className="container mx-auto h-full flex items-center justify-between px-6">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium">
-            Home
-          </Link>
-          <Link to="/about" className="text-gray-700 hover:text-gray-900 font-medium">
-            About
-          </Link>
-          <Link to="/food" className="text-gray-700 hover:text-gray-900 font-medium">
-            Food
-          </Link>
-        </div>
-        <div>
-          <Link to="/login" className="text-gray-700 hover:text-gray-900 font-medium">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link to="/" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Home
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link to="/about" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  About
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link to="/food" legacyBehavior passHref>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                  Food
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+        
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-background")}>
             Login
           </Link>
         </div>

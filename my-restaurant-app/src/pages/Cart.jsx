@@ -116,26 +116,34 @@ const Cart = () => {
   }
 
   return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-4">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-8">Shopping Cart</h1>
+      
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="space-y-4 flex-grow">
           {cartItems.map((item) => (
-            <Card key={item.id} className="flex">
-              <div className="flex-1 p-6">
-                <div className="flex justify-between mb-2">
-                  <h3 className="font-semibold">{item.name}</h3>
+            <Card key={item.id} className="flex flex-col sm:flex-row">
+              <div className="w-full sm:w-32 h-32">
+                <img
+                  src={item.image || '/elementor-placeholder-image.webp'}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
+                  <h3 className="font-semibold mb-2 sm:mb-0">{item.name}</h3>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive"
+                    className="text-destructive self-end sm:self-start"
                     onClick={() => handleRemoveFromCart(item.id, item.name)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -154,7 +162,7 @@ const Cart = () => {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="font-semibold">
+                  <div className="font-semibold text-right">
                     ${(item.price * item.quantity).toFixed(2)}
                   </div>
                 </div>
@@ -163,7 +171,7 @@ const Cart = () => {
           ))}
         </div>
 
-        <div className="space-y-6">
+        <div className="w-full lg:w-96 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>

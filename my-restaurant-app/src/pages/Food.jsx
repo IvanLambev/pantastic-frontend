@@ -150,52 +150,47 @@ const Food = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="container mx-auto p-4 mt-16">
-        <div className="flex justify-between items-center mb-6">
+      <div className="container mx-auto px-4 py-8 mt-16 max-w-7xl">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-left">
+            <h1 className="text-2xl md:text-3xl font-bold text-center md:text-left mb-2">
               {currentRestaurant && currentRestaurant[6]}
             </h1>
-            <p className="text-gray-500 text-left">
+            <p className="text-gray-500 text-center md:text-left text-sm md:text-base">
               {currentRestaurant && currentRestaurant[1]}
             </p>
           </div>
-          <Button 
-            onClick={handleChangeRestaurant}
+          <Button
+            onClick={() => setShowRestaurantModal(true)}
             variant="outline"
+            className="mt-4 md:mt-0"
           >
             Change Restaurant
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((item) => (
             <Card key={item[0]} className="overflow-hidden">
-              <div className="aspect-video relative overflow-hidden">
-                <img 
-                  src={`https://pantastic-images.s3.amazonaws.com/menu-items/${item[0]}.jpg`}
+              <div className="aspect-video relative">
+                <img
+                  src={item[3] || '/elementor-placeholder-image.webp'}
                   alt={item[4]}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = '/elementor-placeholder-image.webp'
-                  }}
                 />
               </div>
-              <CardHeader>
-                <CardTitle>{item[4]}</CardTitle>
-                <CardDescription>${Number(item[5]).toFixed(2)}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{item[2]}</p>
+              <CardContent className="p-4">
+                <div className="flex flex-col h-full">
+                  <h3 className="font-semibold mb-2">{item[4]}</h3>
+                  <p className="text-sm text-gray-600 mb-4 flex-grow">{item[2]}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold">${Number(item[5]).toFixed(2)}</span>
+                    <Button onClick={() => handleAddToCart(item)} size="sm">
+                      Add to Cart
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleAddToCart(item)}
-                >
-                  Add to Cart
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </div>
