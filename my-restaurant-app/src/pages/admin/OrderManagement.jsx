@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
