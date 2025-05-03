@@ -74,7 +74,7 @@ const Food = () => {
   const fetchItems = async (restaurantId) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/menu-items`)
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`)
       if (!response.ok) {
         throw new Error('Failed to fetch menu items')
       }
