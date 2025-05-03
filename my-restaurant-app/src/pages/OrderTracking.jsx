@@ -78,18 +78,18 @@ export default function OrderTracking() {
   };
 
   if (loading) {
-    return <div className="container py-8">Loading order details...</div>;
+    return <div className="container py-8 pb-32">Loading order details...</div>;
   }
 
   if (!order) {
-    return <div className="container py-8">Order not found</div>;
+    return <div className="container py-8 pb-32">Order not found</div>;
   }
 
   const currentStep = getStatusStep(order.status);
   const progressLabels = ['Order Received', 'Preparing', 'Ready for Pickup', 'Delivered'];
 
   return (
-    <div className="container py-8 px-4">
+    <div className="container py-8 px-4 pb-32">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Order Progress</CardTitle>

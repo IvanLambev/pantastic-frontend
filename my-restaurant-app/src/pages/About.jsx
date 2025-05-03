@@ -3,7 +3,7 @@ import { Timeline, TimelineItem } from "@/components/ui/timeline"
 
 const About = () => {
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto py-8 px-4 max-w-7xl pb-32">
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row gap-8 items-center justify-center mb-12">
         <div className="flex-1">

@@ -126,5 +126,17 @@
 
 .container {
   @apply mx-auto px-4 sm:px-6 lg:px-8;
-  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: min(1280px, 100%);
+}
+
+/* Ensure content centers properly in larger viewports */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  width: 100%;
 }

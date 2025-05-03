@@ -103,15 +103,15 @@ const Food = () => {
   }
 
   if (loading && !showRestaurantModal) {
-    return <div className="text-center p-4">Loading...</div>
+    return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
   }
 
   if (error && !showRestaurantModal) {
-    return <div className="text-center text-red-500 p-4">{error}</div>
+    return <div className="min-h-[calc(100vh-4rem)] text-center text-red-500 p-4 pb-32">{error}</div>
   }
 
   return (
-    <>
+    <div className="min-h-[calc(100vh-4rem)]">
       <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
@@ -150,7 +150,7 @@ const Food = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="container mx-auto px-4 py-8 mt-16 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 mt-16 pb-32 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-center md:text-left mb-2">
@@ -195,7 +195,7 @@ const Food = () => {
           ))}
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

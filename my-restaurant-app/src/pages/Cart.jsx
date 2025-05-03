@@ -107,7 +107,7 @@ const Cart = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="container py-8 text-center">
+      <div className="container py-8 pb-32 text-center">
         <h1 className="text-2xl font-bold mb-4">Your Cart is Empty</h1>
         <p className="text-muted-foreground mb-6">Add some delicious items to get started!</p>
         <Button onClick={() => navigate('/food')}>Browse Menu</Button>
@@ -116,7 +116,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-32">
       <h1 className="text-2xl font-bold mb-8">Shopping Cart</h1>
       
       <div className="flex flex-col lg:flex-row gap-8">

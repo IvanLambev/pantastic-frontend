@@ -20,6 +20,7 @@ import {
   SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { Footer } from '@/components/Footer'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
@@ -188,6 +189,7 @@ function MainLayout({ children }) {
       <main className="flex-1">
         {children}
       </main>
+      <Footer />
     </div>
   )
 }
