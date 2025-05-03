@@ -17,6 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Slider } from "@/components/ui/slider"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const Food = () => {
   const [items, setItems] = useState([])
@@ -27,7 +34,24 @@ const Food = () => {
   const [loadingRestaurants, setLoadingRestaurants] = useState(false)
   const [restaurantError, setRestaurantError] = useState(null)
   const [currentRestaurant, setCurrentRestaurant] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [priceRange, setPriceRange] = useState([0, 100])
+  const [category, setCategory] = useState("all")
+  const [sortBy, setSortBy] = useState("default")
+  
   const { addToCart } = useCart()
+
+  useEffect(() => {
+    const savedRestaurant = sessionStorage.getItem('selectedRestaurant')
+    if (savedRestaurant) {
+      const restaurant = JSON.parse(savedRestaurant)
+      setCurrentRestaurant(restaurant)
+      fetchItems(restaurant[0])
+    } else {
+      setShowRestaurantModal(true)
+      fetchRestaurants()
+    }
+  }, [])
 
   const fetchRestaurants = async () => {
     setLoadingRestaurants(true)
@@ -47,6 +71,24 @@ const Food = () => {
     }
   }
 
+  const fetchItems = async (restaurantId) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/menu-items`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu items')
+      }
+      const data = await response.json()
+      setItems(data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items'
+      setError(errorMessage)
+      console.error('Error fetching menu items:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleRestaurantSelect = (restaurant) => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setCurrentRestaurant(restaurant)
@@ -54,53 +96,37 @@ const Food = () => {
     fetchItems(restaurant[0])
   }
 
-  const fetchItems = async (restaurantId) => {
-    setLoading(true)
-    try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`)
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch items")
-      }
-
-      const data = await response.json()
-      setItems(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch items'
-      console.error("Error fetching items:", err)
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    const restaurantData = sessionStorage.getItem("selectedRestaurant")
-    if (!restaurantData) {
-      setShowRestaurantModal(true)
-      fetchRestaurants()
-    } else {
-      const restaurant = JSON.parse(restaurantData)
-      setCurrentRestaurant(restaurant)
-      fetchItems(restaurant[0])
-    }
-  }, [])
-
-  const handleChangeRestaurant = () => {
-    fetchRestaurants()
-    setShowRestaurantModal(true)
-  }
-
   const handleAddToCart = (item) => {
     addToCart({
       id: item[0],
       name: item[4],
-      description: item[2],
       price: item[5],
-      image: item[3]
+      image: item[3],
+      description: item[2],
+      quantity: 1
     })
     toast.success(`Added ${item[4]} to cart`)
   }
+
+  // Add filtered and sorted items logic
+  const filteredItems = items.filter(item => {
+    const matchesSearch = (item[4]?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item[2]?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    const matchesPrice = Number(item[5]) >= priceRange[0] && Number(item[5]) <= priceRange[1]
+    const matchesCategory = category === "all" || item[6] === category
+    return matchesSearch && matchesPrice && matchesCategory
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return Number(a[5]) - Number(b[5])
+      case "price-high":
+        return Number(b[5]) - Number(a[5])
+      case "most-ordered":
+        return (b[7] || 0) - (a[7] || 0)
+      default:
+        return 0
+    }
+  })
 
   if (loading && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
@@ -117,27 +143,25 @@ const Food = () => {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             {loadingRestaurants ? (
-              <p className="text-center">Loading restaurants...</p>
+              <div className="text-center col-span-2">Loading restaurants...</div>
             ) : restaurantError ? (
-              <p className="text-red-500 text-center">{restaurantError}</p>
+              <div className="text-center text-red-500 col-span-2">{restaurantError}</div>
             ) : (
               restaurants.map((restaurant) => (
                 <Button
                   key={restaurant[0]}
                   variant="outline"
-                  className="w-full p-6 h-auto hover:bg-gray-100"
+                  className="h-full p-4 flex flex-col items-start justify-start"
                   onClick={() => handleRestaurantSelect(restaurant)}
                 >
-                  <div className="flex justify-between items-start w-full">
-                    <div className="flex flex-col items-start gap-2">
-                      <span className="text-xl font-bold text-left">{restaurant[6]}</span>
-                      <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 text-right">
-                      {Object.entries(restaurant[7]).map(([day, hours]) => (
-                        <div key={day} className="whitespace-nowrap">
+                  <div className="text-left">
+                    <h3 className="font-semibold mb-2">{restaurant[6]}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">{restaurant[1]}</p>
+                    <div className="grid grid-cols-1 gap-1 text-sm">
+                      {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                        <div key={day} className="flex justify-between">
                           <span className="font-medium">{day}:</span> {hours}
                         </div>
                       ))}
@@ -169,30 +193,106 @@ const Food = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {items.map((item) => (
-            <Card key={item[0]} className="overflow-hidden">
-              <div className="aspect-video relative">
-                <img
-                  src={item[3] || '/elementor-placeholder-image.webp'}
-                  alt={item[4]}
-                  className="w-full h-full object-cover"
-                />
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Filters Sidebar */}
+          <div className="w-full md:w-64 space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search menu items..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
               </div>
-              <CardContent className="p-4">
-                <div className="flex flex-col h-full">
-                  <h3 className="font-semibold mb-2">{item[4]}</h3>
-                  <p className="text-sm text-gray-600 mb-4 flex-grow">{item[2]}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold">${Number(item[5]).toFixed(2)}</span>
-                    <Button onClick={() => handleAddToCart(item)} size="sm">
-                      Add to Cart
-                    </Button>
+
+              <div className="space-y-2">
+                <Label>Price Range</Label>
+                <div className="pt-2">
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label>Sort By</Label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    <SelectItem value="most-ordered">Most Ordered</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label>Categories</Label>
+                <ToggleGroup type="single" value={category} onValueChange={setCategory} className="flex flex-wrap gap-2">
+                  <ToggleGroupItem value="all" aria-label="Show all items">
+                    All
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="sweet" aria-label="Show sweet items">
+                    Sweet
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="savory" aria-label="Show savory items">
+                    Savory
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="promo" aria-label="Show promotional items">
+                    Promo
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            </div>
+          </div>
+
+          {/* Menu Items Grid */}
+          <div className="flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item) => (
+                <Card key={item[0]} className="flex flex-col h-full">
+                  <div className="aspect-video relative">
+                    <img
+                      src={item[3] || '/elementor-placeholder-image.webp'}
+                      alt={item[4]}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardContent className="flex flex-col flex-grow p-4">
+                    <h3 className="font-semibold mb-2">{item[4]}</h3>
+                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
+                      <Button size="sm" onClick={() => handleAddToCart(item)}>
+                        Add to Cart
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
