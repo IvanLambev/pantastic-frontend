@@ -41,9 +41,11 @@ const Navbar = () => {
         </NavigationMenu>
         
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-background")}>
-            Login
-          </Link>
+          <div className="flex items-center space-x-4">
+            <button className="burger-menu">☰</button>
+            <Link to="/cart" className="cart-icon">🛒</Link>
+          </div>
+          <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-background")}>Login</Link>
         </div>
       </div>
     </nav>

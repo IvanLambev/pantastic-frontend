@@ -128,6 +128,8 @@ const Food = () => {
     }
   })
 
+  const isMobile = window.innerWidth <= 768;
+
   if (loading && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
   }
@@ -138,145 +140,164 @@ const Food = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
-      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {loadingRestaurants ? (
-              <div className="text-center col-span-2">Loading restaurants...</div>
-            ) : restaurantError ? (
-              <div className="text-center text-red-500 col-span-2">{restaurantError}</div>
-            ) : (
-              restaurants.map((restaurant) => (
-                <Button
-                  key={restaurant[0]}
-                  variant="outline"
-                  className="h-full p-4 flex flex-col items-start justify-start"
-                  onClick={() => handleRestaurantSelect(restaurant)}
-                >
-                  <div className="text-left">
-                    <h3 className="font-semibold mb-2">{restaurant[6]}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{restaurant[1]}</p>
-                    <div className="grid grid-cols-1 gap-1 text-sm">
-                      {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
-                        <div key={day} className="flex justify-between">
-                          <span className="font-medium">{day}:</span> {hours}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Button>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <div className="container mx-auto px-4 py-8 mt-16 pb-32">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-64 space-y-8">
-            {/* Filters Section */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Search</Label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search menu items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Price Range</Label>
-                <div className="pt-2">
-                  <Slider
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label>Sort By</Label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">Default</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="most-ordered">Most Ordered</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label>Categories</Label>
-                <ToggleGroup type="single" value={category} onValueChange={setCategory} className="flex flex-wrap gap-2">
-                  <ToggleGroupItem value="all" aria-label="Show all items">
-                    All
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="sweet" aria-label="Show sweet items">
-                    Sweet
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="savory" aria-label="Show savory items">
-                    Savory
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="promo" aria-label="Show promotional items">
-                    Promo
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-            </div>
-          </div>
-
-          {/* Menu Items Grid */}
-          <div className="flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredItems.map((item) => (
-                <Card key={item[0]} className="flex flex-col h-full">
-                  <div className="aspect-video relative">
-                    <img
-                      src={item[3] || '/elementor-placeholder-image.webp'}
-                      alt={item[4]}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="flex flex-col flex-grow p-4">
-                    <h3 className="font-semibold mb-2">{item[4]}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
-                      <Button size="sm" onClick={() => handleAddToCart(item)}>
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      {isMobile ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-2">
+            <Label>Search</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
+            <DialogContent className="sm:max-w-[800px]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                {loadingRestaurants ? (
+                  <div className="text-center col-span-2">Loading restaurants...</div>
+                ) : restaurantError ? (
+                  <div className="text-center text-red-500 col-span-2">{restaurantError}</div>
+                ) : (
+                  restaurants.map((restaurant) => (
+                    <Button
+                      key={restaurant[0]}
+                      variant="outline"
+                      className="h-full p-4 flex flex-col items-start justify-start"
+                      onClick={() => handleRestaurantSelect(restaurant)}
+                    >
+                      <div className="text-left">
+                        <h3 className="font-semibold mb-2">{restaurant[6]}</h3>
+                        <p className="text-sm text-muted-foreground mb-4">{restaurant[1]}</p>
+                        <div className="grid grid-cols-1 gap-1 text-sm">
+                          {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                            <div key={day} className="flex justify-between">
+                              <span className="font-medium">{day}:</span> {hours}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Button>
+                  ))
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <div className="container mx-auto px-4 py-8 mt-16 pb-32">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="w-full lg:w-64 space-y-8">
+                {/* Filters Section */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Search</Label>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search menu items..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Price Range</Label>
+                    <div className="pt-2">
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={priceRange}
+                        onValueChange={setPriceRange}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+                        <span>${priceRange[0]}</span>
+                        <span>${priceRange[1]}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>Sort By</Label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="price-low">Price: Low to High</SelectItem>
+                        <SelectItem value="price-high">Price: High to Low</SelectItem>
+                        <SelectItem value="most-ordered">Most Ordered</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>Categories</Label>
+                    <ToggleGroup type="single" value={category} onValueChange={setCategory} className="flex flex-wrap gap-2">
+                      <ToggleGroupItem value="all" aria-label="Show all items">
+                        All
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="sweet" aria-label="Show sweet items">
+                        Sweet
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="savory" aria-label="Show savory items">
+                        Savory
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="promo" aria-label="Show promotional items">
+                        Promo
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Items Grid */}
+              <div className="flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredItems.map((item) => (
+                    <Card key={item[0]} className="flex flex-col h-full">
+                      <div className="aspect-video relative">
+                        <img
+                          src={item[3] || '/elementor-placeholder-image.webp'}
+                          alt={item[4]}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <CardContent className="flex flex-col flex-grow p-4">
+                        <h3 className="font-semibold mb-2">{item[4]}</h3>
+                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
+                          <Button size="sm" onClick={() => handleAddToCart(item)}>
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
