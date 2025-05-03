@@ -2,9 +2,9 @@ import { RestaurantManager } from "@/components/restaurant-manager.jsx"
 
 export default function RestaurantPage() {
   return (
-    <div className="container mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Restaurant Management</h1>
-      <div className="flex-1 space-y-4">
+    <div className="flex-1 space-y-4">
+      <div className="container mx-auto px-4">
+        <h1 className="text-xl md:text-2xl font-bold mb-6">Restaurant Management</h1>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>

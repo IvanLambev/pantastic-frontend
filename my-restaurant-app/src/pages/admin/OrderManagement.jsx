@@ -77,8 +77,8 @@ export default function OrderManagement() {
   }
 
   return (
-    <div className="container mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Order Management</h1>
+    <div className="container mx-auto px-4">
+      <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
       
       <div className="grid gap-4">
         {orders.map(order => (

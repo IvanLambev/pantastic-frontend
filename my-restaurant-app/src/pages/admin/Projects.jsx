@@ -45,7 +45,7 @@ export default function Projects() {
   }
 
   return (
-    <div className="container mx-auto">
+    <div>
       <h1 className="text-2xl font-bold mb-6">Projects</h1>
       <div className="grid gap-6">
         {projects.map((project) => (

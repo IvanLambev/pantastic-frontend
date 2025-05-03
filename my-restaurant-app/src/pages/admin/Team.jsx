@@ -34,7 +34,7 @@ export default function Team() {
   ]
 
   return (
-    <div className="container mx-auto">
+    <div>
       <h1 className="text-2xl font-bold mb-6">Team</h1>
       <div className="grid gap-6">
         {teamMembers.map((member) => (
