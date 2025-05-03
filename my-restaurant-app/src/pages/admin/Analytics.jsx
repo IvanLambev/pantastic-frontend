@@ -34,8 +34,8 @@ export default function Analytics() {
   }
 
   return (
-    <div className="container px-4">
-      <h1 className="text-xl md:text-2xl font-bold mb-6">Analytics</h1>
+    <div className="container mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Analytics</h1>
       <div className="grid grid-cols-1 gap-4 md:gap-6">
         <Card>
           <CardHeader>

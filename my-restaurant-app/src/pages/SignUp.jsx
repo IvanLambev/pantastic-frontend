@@ -3,9 +3,9 @@ import { SignUpForm } from "@/components/sign-up-form"
 
 export default function SignupPage() {
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background">
-      <div className="container mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="w-full max-w-sm space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw] flex items-center justify-center">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="w-full max-w-sm space-y-6 mx-auto px-4">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
               Sign Up for Pantastic

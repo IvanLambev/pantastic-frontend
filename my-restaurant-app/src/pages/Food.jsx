@@ -137,7 +137,7 @@ const Food = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
       <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
         <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
@@ -174,28 +174,10 @@ const Food = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="container mx-auto px-4 py-8 mt-16 pb-32 max-w-7xl">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-center md:text-left mb-2">
-              {currentRestaurant && currentRestaurant[6]}
-            </h1>
-            <p className="text-gray-500 text-center md:text-left text-sm md:text-base">
-              {currentRestaurant && currentRestaurant[1]}
-            </p>
-          </div>
-          <Button
-            onClick={() => setShowRestaurantModal(true)}
-            variant="outline"
-            className="mt-4 md:mt-0"
-          >
-            Change Restaurant
-          </Button>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Filters Sidebar */}
-          <div className="w-full md:w-64 space-y-6">
+      <div className="container mx-auto px-4 py-8 mt-16 pb-32">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="w-full lg:w-64 space-y-8">
+            {/* Filters Section */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Search</Label>
