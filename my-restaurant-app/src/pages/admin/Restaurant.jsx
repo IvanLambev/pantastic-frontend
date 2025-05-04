@@ -1,5 +1,6 @@
 import { RestaurantManager } from "@/components/restaurant-manager.jsx"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 export default function RestaurantPage() {
   return (

@@ -45,17 +45,17 @@ export default function OrderManagement() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/${orderId}`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_URL}/order/orders/status`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ order_id: orderId, status: newStatus })
       });
-      
+
       if (!response.ok) throw new Error('Failed to update order status');
-      
+
       // Update local state
       setOrders(orders.map(order => {
         if (order.id === orderId) {
@@ -65,7 +65,7 @@ export default function OrderManagement() {
         }
         return order;
       }));
-      
+
       toast.success('Order status updated successfully');
     } catch (error) {
       console.error('Error updating order status:', error);
