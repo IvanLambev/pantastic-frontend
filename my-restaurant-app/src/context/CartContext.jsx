@@ -85,7 +85,8 @@ export const CartProvider = ({ children }) => {
           products,
           payment_method: 'card',
           delivery_method: 'pickup',
-          address: restaurant[1] // Adding restaurant address for pickup orders
+          address: restaurant[1], // Adding restaurant address for pickup orders
+          status: 'Pending' // Ensuring we set the correct initial status
         })
       })
 

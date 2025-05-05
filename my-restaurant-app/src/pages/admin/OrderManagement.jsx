@@ -94,7 +94,7 @@ export default function OrderManagement() {
                         {new Date(order.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant={order.status === 'cancelled' ? 'destructive' : 'default'}>
+                    <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
                       {order.status}
                     </Badge>
                   </div>
@@ -113,18 +113,17 @@ export default function OrderManagement() {
               
                 <div className="flex flex-col gap-4">
                   <Select
-                    value={order.status || 'pending'}
+                    value={order.status || 'Pending'}
                     onValueChange={(value) => updateOrderStatus(order.id, value)}
                   >
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="preparing">Preparing</SelectItem>
-                      <SelectItem value="ready">Ready for Pickup</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                      <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
                   </Select>
                   

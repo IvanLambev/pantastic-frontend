@@ -139,7 +139,7 @@ const Food = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background">
+    <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
       {isMobile ? (
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-2">

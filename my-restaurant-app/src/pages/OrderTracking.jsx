@@ -48,8 +48,8 @@ export default function OrderTracking() {
   const handleCancelOrder = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/cancel`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/order/orders`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
@@ -68,11 +68,10 @@ export default function OrderTracking() {
 
   const getStatusStep = (status) => {
     const steps = {
-      'pending': 0,
-      'preparing': 1,
-      'ready': 2,
-      'delivered': 3,
-      'cancelled': -1
+      'Pending': 0,
+      'In Progress': 1,
+      'Delivered': 2,
+      'Canceled': -1
     };
     return steps[status] ?? 0;
   };
@@ -86,7 +85,7 @@ export default function OrderTracking() {
   }
 
   const currentStep = getStatusStep(order.status);
-  const progressLabels = ['Order Received', 'Preparing', 'Ready for Pickup', 'Delivered'];
+  const progressLabels = ['Order Received', 'In Progress', 'Delivered'];
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
