@@ -45,6 +45,8 @@ export default function OrderManagement() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      console.log('Updating order status:', { orderId, newStatus }); // Log the update request
+      console.log('User token:', user.access_token); // Log the user token
       const response = await fetch(`${API_URL}/order/orders/status`, {
         method: 'PUT',
         headers: {

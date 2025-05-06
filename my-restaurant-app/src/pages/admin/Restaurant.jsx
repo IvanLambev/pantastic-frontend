@@ -1,6 +1,9 @@
 import { RestaurantManager } from "@/components/restaurant-manager.jsx"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { MoreVertical } from "lucide-react";
 
 export default function RestaurantPage() {
   return (
