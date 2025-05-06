@@ -221,28 +221,26 @@ const Cart = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex-col gap-4">
-                {error && (
-                  <p className="text-destructive text-sm">{error}</p>
-                )}
+                {error && <p className="text-destructive text-sm">{error}</p>}
                 {orderId ? (
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     className="w-full"
                     onClick={handleCancelOrder}
                   >
                     Cancel Order
                   </Button>
                 ) : (
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 flex-wrap">
                     <Button
-                      className="w-full"
+                      className="w-full sm:w-auto flex-1"
                       onClick={handlePayWithCard}
                       disabled={isCheckingOut}
                     >
                       {isCheckingOut ? "Processing..." : "Pay with Card"}
                     </Button>
                     <Button
-                      className="w-full"
+                      className="w-full sm:w-auto flex-1"
                       variant="outline"
                       onClick={handlePayWithCash}
                       disabled={isCheckingOut}
@@ -251,8 +249,8 @@ const Cart = () => {
                     </Button>
                   </div>
                 )}
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={() => navigate('/food')}
                 >

@@ -61,49 +61,55 @@ export const CartProvider = ({ children }) => {
     setOrderId(null)
   }
 
-  const checkout = async () => {
+  const checkout = async (paymentMethod = 'card') => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const restaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const restaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]');
 
       if (!user?.access_token || !restaurant?.[0]) {
-        throw new Error('User not logged in or no restaurant selected')
+        throw new Error('User not logged in or no restaurant selected');
       }
 
-      const products = {}
+      const products = {};
       cartItems.forEach(item => {
-        products[item.id] = item.quantity
-      })
+        products[item.id] = item.quantity;
+      });
 
       const response = await fetch(`${API_URL}/order/orders`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           restaurant_id: restaurant[0],
           products,
-          payment_method: 'card',
+          payment_method: paymentMethod,
           delivery_method: 'pickup',
-          address: restaurant[1], // Adding restaurant address for pickup orders
-          status: 'Pending' // Ensuring we set the correct initial status
-        })
-      })
+          address: restaurant[1],
+          status: 'Pending',
+        }),
+      });
 
-      if (!response.ok) throw new Error('Failed to create order')
-      
-      const data = await response.json()
-      setOrderId(data.order_id)
-      sessionStorage.setItem('orderId', data.order_id)
-      window.location.href = `/order-tracking/${data.order_id}`;
+      if (!response.ok) throw new Error('Failed to create order');
+
+      const data = await response.json();
+      setOrderId(data.order_id);
+      sessionStorage.setItem('orderId', data.order_id);
+
+      if (paymentMethod === 'card') {
+        window.location.href = `/payment/${data.order_id}`; // Redirect to payment page
+      } else {
+        window.location.href = `/order-tracking/${data.order_id}`; // Redirect to order tracking page
+      }
+
       clearCart();
-      return data
+      return data;
     } catch (error) {
-      console.error('Error during checkout:', error)
-      throw error
+      console.error('Error during checkout:', error);
+      throw error;
     }
-  }
+  };
 
   const updateOrder = async (newItems) => {
     if (!orderId) return
