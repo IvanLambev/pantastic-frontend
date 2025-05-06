@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
@@ -55,53 +55,31 @@ const Cart = () => {
       // Find the order with the matching order_id
       return orders.find(order => order.order_id === orderId) || null
     } catch (err) {
-      console.error(err); // Log the error to avoid unused variable issue
       toast.error('Could not load order details')
       return null
     }
   }
 
-  const handlePayWithCard = async () => {
-    setState((prev) => ({ ...prev, isCheckingOut: true, error: null }));
+  const handleCheckout = async () => {
+    setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
     try {
-      const result = await checkout();
-      const fullOrder = await fetchOrderDetails(result.order_id);
-      setState((prev) => ({
-        ...prev,
+      const result = await checkout()
+      // result.order_id is expected
+      const fullOrder = await fetchOrderDetails(result.order_id)
+      setState(prev => ({ 
+        ...prev, 
         orderDetails: fullOrder ? fullOrder : { order_id: result.order_id },
-        showConfirmation: true,
-      }));
-      toast.success("Order placed successfully!");
+        showConfirmation: true 
+      }))
+      toast.success('Order placed successfully!')
     } catch (err) {
-      console.error(err); // Log the error to avoid unused variable issue
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      setState((prev) => ({ ...prev, error: errorMessage }));
-      toast.error("Failed to place order: " + errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+      setState(prev => ({ ...prev, error: errorMessage }))
+      toast.error('Failed to place order: ' + errorMessage)
     } finally {
-      setState((prev) => ({ ...prev, isCheckingOut: false }));
+      setState(prev => ({ ...prev, isCheckingOut: false }))
     }
-  };
-
-  const handlePayWithCash = async () => {
-    setState((prev) => ({ ...prev, isCheckingOut: true, error: null }));
-    try {
-      const result = await checkout("cash"); // Pass 'cash' as the payment method
-      const fullOrder = await fetchOrderDetails(result.order_id);
-      setState((prev) => ({
-        ...prev,
-        orderDetails: fullOrder ? fullOrder : { order_id: result.order_id },
-        showConfirmation: true,
-      }));
-      toast.success("Order placed successfully!");
-    } catch (err) {
-      console.error(err); // Log the error to avoid unused variable issue
-      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
-      setState((prev) => ({ ...prev, error: errorMessage }));
-      toast.error("Failed to place order: " + errorMessage);
-    } finally {
-      setState((prev) => ({ ...prev, isCheckingOut: false }));
-    }
-  };
+  }
 
   const handleCancelOrder = async () => {
     try {
@@ -109,7 +87,6 @@ const Cart = () => {
       toast.success('Order cancelled successfully')
       navigate('/food')
     } catch (err) {
-      console.error(err); // Log the error to avoid unused variable issue
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
       toast.error('Failed to cancel order: ' + errorMessage)
@@ -221,36 +198,28 @@ const Cart = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex-col gap-4">
-                {error && <p className="text-destructive text-sm">{error}</p>}
+                {error && (
+                  <p className="text-destructive text-sm">{error}</p>
+                )}
                 {orderId ? (
-                  <Button
-                    variant="destructive"
+                  <Button 
+                    variant="destructive" 
                     className="w-full"
                     onClick={handleCancelOrder}
                   >
                     Cancel Order
                   </Button>
                 ) : (
-                  <div className="flex gap-4 flex-wrap">
-                    <Button
-                      className="w-full sm:w-auto flex-1"
-                      onClick={handlePayWithCard}
-                      disabled={isCheckingOut}
-                    >
-                      {isCheckingOut ? "Processing..." : "Pay with Card"}
-                    </Button>
-                    <Button
-                      className="w-full sm:w-auto flex-1"
-                      variant="outline"
-                      onClick={handlePayWithCash}
-                      disabled={isCheckingOut}
-                    >
-                      {isCheckingOut ? "Processing..." : "Pay with Cash"}
-                    </Button>
-                  </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleCheckout}
+                    disabled={isCheckingOut}
+                  >
+                    {isCheckingOut ? 'Processing...' : 'Checkout'}
+                  </Button>
                 )}
-                <Button
-                  variant="outline"
+                <Button 
+                  variant="outline" 
                   className="w-full"
                   onClick={() => navigate('/food')}
                 >
