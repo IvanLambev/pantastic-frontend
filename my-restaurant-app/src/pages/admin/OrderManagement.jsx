@@ -29,6 +29,7 @@ export default function OrderManagement() {
       }
       const data = await response.json();
       setItems(data);
+      console.log('Fetched menu items:', data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items';
       setError(errorMessage);
@@ -145,7 +146,7 @@ export default function OrderManagement() {
                 <div className="flex flex-col gap-4">
                   <Select
                     value={order.status || 'Pending'}
-                    onValueChange={(value) => updateOrderStatus(order.id, value)}
+                    onValueChange={(value) => updateOrderStatus(order.order_id, value)}
                   >
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="Select status" />
