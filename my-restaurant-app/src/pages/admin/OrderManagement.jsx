@@ -5,10 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -16,6 +19,24 @@ export default function OrderManagement() {
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchItems = async (restaurantId) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu items');
+      }
+      const data = await response.json();
+      setItems(data);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items';
+      setError(errorMessage);
+      console.error('Error fetching menu items:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -30,9 +51,12 @@ export default function OrderManagement() {
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       
-      // Log the order data for debugging purposes
-      console.log('Received order data:', data);
-      
+      // Fetch items for the current restaurant
+      const restaurantId = sessionStorage.getItem('selectedRestaurantId');
+      if (restaurantId) {
+        await fetchItems(restaurantId);
+      }
+
       setOrders(data);
       setLoading(false);
     } catch (error) {
@@ -43,10 +67,13 @@ export default function OrderManagement() {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    if (!orderId) {
+      console.error('Order ID is undefined. Cannot update order status.');
+      return;
+    }
+
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      console.log('Updating order status:', { orderId, newStatus }); // Log the update request
-      console.log('User token:', user.access_token); // Log the user token
       const response = await fetch(`${API_URL}/order/orders/status`, {
         method: 'PUT',
         headers: {
@@ -58,12 +85,9 @@ export default function OrderManagement() {
 
       if (!response.ok) throw new Error('Failed to update order status');
 
-      // Update local state
       setOrders(orders.map(order => {
         if (order.id === orderId) {
-          const updatedOrder = { ...order, status: newStatus };
-          console.log('Updated order:', updatedOrder); // Log the updated order
-          return updatedOrder;
+          return { ...order, status: newStatus };
         }
         return order;
       }));
@@ -73,6 +97,11 @@ export default function OrderManagement() {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
     }
+  };
+
+  const getItemNameById = (itemId) => {
+    const item = items.find(item => item[0] === itemId);
+    return item ? item[4] : 'Unknown Item';
   };
 
   if (loading) {
@@ -106,7 +135,7 @@ export default function OrderManagement() {
                     <ul className="list-disc list-inside text-sm text-muted-foreground">
                       {(order.products && Object.entries(order.products).map(([id, quantity]) => (
                         <li key={id}>
-                          {quantity}x Product #{id}
+                          {quantity}x {getItemNameById(id)}
                         </li>
                       ))) || <li>No items available</li>}
                     </ul>
