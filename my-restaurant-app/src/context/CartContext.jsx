@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { API_URL } from '@/config/api'
 import { CartContext } from './cart'
+import { redirect } from "react-router-dom"
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
@@ -95,6 +96,7 @@ export const CartProvider = ({ children }) => {
       const data = await response.json()
       setOrderId(data.order_id)
       sessionStorage.setItem('orderId', data.order_id)
+      window.location.href = `/order-tracking/${data.order_id}`;
       clearCart();
       return data
     } catch (error) {
