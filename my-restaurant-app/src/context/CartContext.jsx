@@ -95,6 +95,7 @@ export const CartProvider = ({ children }) => {
       const data = await response.json()
       setOrderId(data.order_id)
       sessionStorage.setItem('orderId', data.order_id)
+      clearCart();
       return data
     } catch (error) {
       console.error('Error during checkout:', error)

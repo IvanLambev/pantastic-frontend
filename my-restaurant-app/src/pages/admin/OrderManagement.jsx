@@ -102,7 +102,7 @@ export default function OrderManagement() {
 
   const getItemNameById = (itemId) => {
     const item = items.find(item => item[0] === itemId);
-    return item ? item[4] : 'Unknown Item';
+    return item ? item[0] : 'Unknown Item';
   };
 
   if (loading) {
