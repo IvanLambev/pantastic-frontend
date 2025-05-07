@@ -18,12 +18,22 @@ export default function UserDashboard() {
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-    const storedToken = sessionStorage.getItem("token");
-    if (storedToken) {
-      console.log("Token retrieved from session storage:", storedToken);
-      setToken(storedToken);
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        const token = parsedUser.access_token;
+        if (token) {
+          console.log("Token retrieved from session storage:", token);
+          setToken(token);
+        } else {
+          console.error("No access_token found in user data.");
+        }
+      } catch (err) {
+        console.error("Error parsing user data from session storage:", err);
+      }
     } else {
-      console.error("No token found in session storage.");
+      console.error("No user data found in session storage.");
     }
   }, []);
 
