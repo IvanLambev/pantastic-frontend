@@ -5,9 +5,12 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { MoreVertical } from "lucide-react";
 import { Input } from '@/components/ui/input';
-
+import { Textarea } from '@/components/ui/textarea';
+import { useState } from 'react';
 
 export default function RestaurantPage() {
+  const [formData, setFormData] = useState({ name: '', description: '', price: '', image: null });
+
   return (
     <div className="flex-1 space-y-4">
       <div className="container mx-auto px-4">
