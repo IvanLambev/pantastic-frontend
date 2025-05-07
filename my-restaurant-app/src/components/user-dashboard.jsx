@@ -11,11 +11,21 @@ import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/config/api";
 
 export default function UserDashboard() {
-  const { user, token } = useAuth();
+  const { user, token, setToken } = useAuth();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem("token");
+    if (storedToken) {
+      console.log("Token retrieved from session storage:", storedToken);
+      setToken(storedToken);
+    } else {
+      console.error("No token found in session storage.");
+    }
+  }, []);
 
   useEffect(() => {
     console.log("UserDashboard component mounted.");
