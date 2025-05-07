@@ -23,6 +23,7 @@ export default function UserDashboard() {
       setError(null);
 
       try {
+        console.log("Fetching orders...");
         const response = await fetch(`${API_URL}/user/user/orders`, {
           method: "GET",
           headers: {
@@ -30,16 +31,17 @@ export default function UserDashboard() {
             "Content-Type": "application/json",
           },
         });
-        console.log("Response:", response);
-        console.log("Response status:", response.status);
+        console.log("Orders fetch response:", response);
 
         if (!response.ok) {
           throw new Error(`Error fetching orders: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log("Orders data:", data);
         setOrders(data.orders || []);
       } catch (err) {
+        console.error("Error fetching orders:", err);
         setError(err.message || "Failed to fetch orders");
       } finally {
         setIsLoading(false);
@@ -54,6 +56,7 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
+        console.log("Fetching user information...");
         const response = await fetch(`${API_URL}/user/user-info`, {
           method: "GET",
           headers: {
@@ -61,12 +64,14 @@ export default function UserDashboard() {
             "Content-Type": "application/json",
           },
         });
+        console.log("User info fetch response:", response);
 
         if (!response.ok) {
           throw new Error("Failed to fetch user information");
         }
 
         const data = await response.json();
+        console.log("User info data:", data);
         setUserInfo(data);
       } catch (err) {
         console.error("Error fetching user information:", err);
@@ -89,25 +94,31 @@ export default function UserDashboard() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!user?.email) return;
+    if (!userInfo?.email) {
+      console.error("No email found for user. Cannot delete account.");
+      return;
+    }
 
     const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
     if (!confirmDelete) return;
 
     try {
+      console.log("Deleting user account for email:", userInfo.email);
       const response = await fetch(`${API_URL}/user/user/delete`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({ email: userInfo.email }),
       });
+      console.log("Delete account response:", response);
 
       if (!response.ok) {
         throw new Error("Failed to delete account");
       }
 
       const data = await response.json();
+      console.log("Delete account result:", data);
       alert(data.message);
       // Optionally, log the user out or redirect them
     } catch (err) {
