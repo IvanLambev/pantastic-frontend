@@ -29,6 +29,8 @@ export default function UserDashboard() {
             "Content-Type": "application/json",
           },
         });
+        console.log("Response:", response);
+        console.log("Response status:", response.status);
 
         if (!response.ok) {
           throw new Error(`Error fetching orders: ${response.status}`);
@@ -53,6 +55,7 @@ export default function UserDashboard() {
       const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
       return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
     } catch (e) {
+      console.error("Error formatting date:", e);
       return dateString;
     }
   };

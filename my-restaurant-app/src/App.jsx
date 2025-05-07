@@ -4,7 +4,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import { useCart } from '@/hooks/use-cart'
-import { ShoppingCart, Menu } from 'lucide-react'
+import { ShoppingCart, Menu, User } from 'lucide-react'
 import { Toaster } from "@/components/ui/sonner"
 import {
   NavigationMenu,
@@ -31,6 +31,12 @@ import Cart from '@/pages/Cart'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTracking from '@/pages/OrderTracking'
 import UserDashboardPage from './pages/UserDashboard'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
@@ -95,12 +101,20 @@ function MainLayout({ children }) {
 
               <div className="hidden md:flex items-center space-x-2">
                 {isLoggedIn ? (
-                  <button 
-                    onClick={handleLogout}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
-                  >
-                    Logout
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2">
+                        <User className="h-6 w-6" />
+                        <span className="sr-only">User Menu</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link to="/user-dashboard">Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <>
                     <Link 
