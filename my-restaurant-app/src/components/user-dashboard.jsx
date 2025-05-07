@@ -19,15 +19,19 @@ export default function UserDashboard() {
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
+    console.log("Raw user data from session storage:", storedUser);
+
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        const token = parsedUser.access_token;
-        if (token) {
-          console.log("Token retrieved from session storage:", token);
+        console.log("Parsed user data:", parsedUser);
+
+        if (parsedUser && typeof parsedUser === "object" && parsedUser.access_token) {
+          const token = parsedUser.access_token;
+          console.log("Token extracted from user data:", token);
           setToken(token);
         } else {
-          console.error("No access_token found in user data.");
+          console.error("Parsed user data does not contain an access_token.");
         }
       } catch (err) {
         console.error("Error parsing user data from session storage:", err);
