@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, User, ShoppingBag, Clock, MapPin, Truck } from "lucide-react";
-import { format } from "../node_modules/date-fns";
+import { format } from "date-fns";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
