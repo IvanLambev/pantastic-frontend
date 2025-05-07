@@ -15,6 +15,7 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -50,6 +51,33 @@ export default function UserDashboard() {
     }
   }, [token]);
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await fetch(`${API_URL}/user/user-info`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user information");
+        }
+
+        const data = await response.json();
+        setUserInfo(data);
+      } catch (err) {
+        console.error("Error fetching user information:", err);
+      }
+    };
+
+    if (token) {
+      fetchUserInfo();
+    }
+  }, [token]);
+
   const formatDate = (dateString) => {
     try {
       const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
@@ -57,6 +85,34 @@ export default function UserDashboard() {
     } catch (e) {
       console.error("Error formatting date:", e);
       return dateString;
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.email) return;
+
+    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/user/user/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      const data = await response.json();
+      alert(data.message);
+      // Optionally, log the user out or redirect them
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      alert("An error occurred while trying to delete your account.");
     }
   };
 
@@ -80,11 +136,8 @@ export default function UserDashboard() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium">{user?.name}</p>
+                  <p className="font-medium">{userInfo ? `${userInfo.first_name} ${userInfo.last_name}` : "Loading..."}</p>
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Edit name">
-                  <Pencil className="h-4 w-4" />
-                </Button>
               </div>
 
               <Separator />
@@ -92,11 +145,8 @@ export default function UserDashboard() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{user?.email}</p>
+                  <p className="font-medium">{userInfo ? userInfo.email : "Loading..."}</p>
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Edit email">
-                  <Pencil className="h-4 w-4" />
-                </Button>
               </div>
 
               <Separator />
@@ -104,11 +154,8 @@ export default function UserDashboard() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">Phone Number</p>
-                  <p className="font-medium">{user?.phone}</p>
+                  <p className="font-medium">{userInfo ? userInfo.phone : "Loading..."}</p>
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Edit phone number">
-                  <Pencil className="h-4 w-4" />
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -230,6 +277,15 @@ export default function UserDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="mt-8 text-center">
+        <button
+          onClick={handleDeleteAccount}
+          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+        >
+          Delete Account
+        </button>
+      </div>
     </div>
   );
 }
