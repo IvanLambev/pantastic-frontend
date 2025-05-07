@@ -18,7 +18,11 @@ export default function UserDashboard() {
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
+    console.log("UserDashboard component mounted.");
+    console.log("Token available:", token);
+
     const fetchOrders = async () => {
+      console.log("fetchOrders function triggered.");
       setIsLoading(true);
       setError(null);
 
@@ -54,9 +58,12 @@ export default function UserDashboard() {
   }, [token]);
 
   useEffect(() => {
+    console.log("Fetching user information...");
+    console.log("Token available:", token);
+
     const fetchUserInfo = async () => {
+      console.log("fetchUserInfo function triggered.");
       try {
-        console.log("Fetching user information...");
         const response = await fetch(`${API_URL}/user/user-info`, {
           method: "GET",
           headers: {
@@ -94,6 +101,7 @@ export default function UserDashboard() {
   };
 
   const handleDeleteAccount = async () => {
+    console.log("handleDeleteAccount function triggered.");
     if (!userInfo?.email) {
       console.error("No email found for user. Cannot delete account.");
       return;
