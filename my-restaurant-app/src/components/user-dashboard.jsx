@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, User, ShoppingBag, Clock, MapPin, Truck } from "lucide-react";
-import { format } from "date-fns";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +50,8 @@ export default function UserDashboard() {
 
   const formatDate = (dateString) => {
     try {
-      return format(new Date(dateString), "PPp");
+      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+      return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
     } catch (e) {
       return dateString;
     }
