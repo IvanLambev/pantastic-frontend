@@ -14,6 +14,7 @@ const useAuth = () => {
 // Auth Provider component
 const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [token, setToken] = useState(null)
 
   useEffect(() => {
     const checkLoginStatus = () => {
@@ -22,6 +23,7 @@ const AuthProvider = ({ children }) => {
         try {
           const parsedUser = JSON.parse(user)
           if (parsedUser.access_token) {
+            setToken(parsedUser.access_token)
             setIsLoggedIn(true)
           } else {
             setIsLoggedIn(false)
@@ -44,6 +46,7 @@ const AuthProvider = ({ children }) => {
       try {
         const parsedUser = JSON.parse(user)
         if (parsedUser.access_token) {
+          setToken(parsedUser.access_token)
           setIsLoggedIn(true)
         } else {
           setIsLoggedIn(false)
@@ -61,11 +64,12 @@ const AuthProvider = ({ children }) => {
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("selectedRestaurant")
     setIsLoggedIn(false)
+    setToken(null)
     alert("You have been logged out!")
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, updateLoginState, handleLogout }}>
+    <AuthContext.Provider value={{ isLoggedIn, token, setToken, updateLoginState, handleLogout }}>
       {children}
     </AuthContext.Provider>
   )
