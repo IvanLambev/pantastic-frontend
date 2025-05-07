@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { MoreVertical } from "lucide-react";
+import { Input } from '@/components/ui/input';
+
 
 export default function RestaurantPage() {
   return (
