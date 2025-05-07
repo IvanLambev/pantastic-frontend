@@ -14,7 +14,6 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['date-fns'],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
