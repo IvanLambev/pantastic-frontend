@@ -144,6 +144,7 @@ export default function UserDashboard() {
         body: JSON.stringify({ email: userInfo.email }),
       });
       console.log("Delete account response:", response);
+      console.log("uzera",JSON.stringify({ email: userInfo.email }));
 
       if (!response.ok) {
         throw new Error("Failed to delete account");
