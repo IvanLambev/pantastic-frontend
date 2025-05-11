@@ -224,7 +224,7 @@ const Cart = () => {
           </div>
         </div>
 
-        <Dialog open={showConfirmation} onOpenChange={handleConfirmationClose}>
+        {/* <Dialog open={showConfirmation} onOpenChange={handleConfirmationClose}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Order Confirmed!</DialogTitle>
@@ -282,7 +282,7 @@ const Cart = () => {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     </div>
   )
