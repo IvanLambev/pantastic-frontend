@@ -35,7 +35,7 @@ const Cart = () => {
     isCheckingOut: false,
     error: null,
     orderDetails: null,
-    showConfirmation: false
+    showConfirmation: true
   })
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -73,7 +73,7 @@ const Cart = () => {
       }))
       toast.success('Order placed successfully!')
       navigate(`/order/${result.order_id}`)
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
