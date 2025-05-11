@@ -31,7 +31,6 @@ import Cart from '@/pages/Cart'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTracking from '@/pages/OrderTracking'
 import UserDashboardPage from './pages/UserDashboard'
-import OrderDetails from './pages/OrderDetails'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -226,7 +225,7 @@ function App() {
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       <Route path="/user-dashboard" element={<UserDashboardPage />} />
-      <Route path="/order/:orderId" element={<OrderDetails />} />
+      <Route path="/order/:orderId" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )
