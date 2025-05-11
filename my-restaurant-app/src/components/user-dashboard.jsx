@@ -153,6 +153,10 @@ export default function UserDashboard() {
       const data = await response.json();
       console.log("Delete account result:", data);
       alert(data.message);
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("selectedRestaurant");
+      setToken(null);
+      setOrders([]);
       // Optionally, log the user out or redirect them
     } catch (err) {
       console.error("Error deleting account:", err);

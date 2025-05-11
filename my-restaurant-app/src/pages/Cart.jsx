@@ -72,6 +72,8 @@ const Cart = () => {
         showConfirmation: true 
       }))
       toast.success('Order placed successfully!')
+      navigate(`/order/${result.order_id}`)
+      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
