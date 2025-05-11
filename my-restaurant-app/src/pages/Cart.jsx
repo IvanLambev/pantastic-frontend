@@ -61,27 +61,19 @@ const Cart = () => {
   }
 
   const handleCheckout = async () => {
-    setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
+    setState(prev => ({ ...prev, isCheckingOut: true, error: null }));
     try {
-      const result = await checkout()
-      // result.order_id is expected
-      const fullOrder = await fetchOrderDetails(result.order_id)
-      setState(prev => ({ 
-        ...prev, 
-        orderDetails: fullOrder ? fullOrder : { order_id: result.order_id },
-        showConfirmation: true 
-      }))
-      toast.success('Order placed successfully!')
-      navigate(`/order/${result.order_id}`)
-
+      const result = await checkout();
+      // Redirect immediately after successful checkout
+      navigate(`/order/${result.order_id}`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-      setState(prev => ({ ...prev, error: errorMessage }))
-      toast.error('Failed to place order: ' + errorMessage)
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setState(prev => ({ ...prev, error: errorMessage }));
+      toast.error('Failed to place order: ' + errorMessage);
     } finally {
-      setState(prev => ({ ...prev, isCheckingOut: false }))
+      setState(prev => ({ ...prev, isCheckingOut: false }));
     }
-  }
+  };
 
   const handleCancelOrder = async () => {
     try {
