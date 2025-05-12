@@ -16,6 +16,21 @@ export default function OrderTracking() {
   const { clearCart } = useCart();
   const navigate = useNavigate();
 
+  const fetchItemDetails = async (restaurantId, itemId) => {
+    try {
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching item details:', errorData.detail);
+        return { name: 'Unknown Item' };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      return { name: 'Unknown Item' };
+    }
+  };
+
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -23,13 +38,22 @@ export default function OrderTracking() {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
-        }
+        },
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
-      // Find the order with the matching order_id
       const found = data.find(o => o.order_id === orderId);
-      setOrder(found || null);
+      if (found) {
+        const itemsWithDetails = await Promise.all(
+          Object.entries(found.products).map(async ([itemId, quantity]) => {
+            const itemDetails = await fetchItemDetails(found.restaurant_id, itemId);
+            return { ...itemDetails, quantity };
+          })
+        );
+        setOrder({ ...found, products: itemsWithDetails });
+      } else {
+        setOrder(null);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -130,9 +154,9 @@ export default function OrderTracking() {
             <div className="space-y-4">
               <h3 className="font-semibold">Order Details</h3>
               <div className="space-y-4">
-                {order.products && Object.entries(order.products).map(([productId, quantity], index) => (
+                {order.products && order.products.map((product, index) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span>{quantity}x Product #{productId}</span>
+                    <span>{product.quantity}x {product.name}</span>
                   </div>
                 ))}
                 <div className="border-t pt-4 mt-4">
