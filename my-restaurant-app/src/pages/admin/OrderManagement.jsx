@@ -19,18 +19,25 @@ export default function OrderManagement() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchItemDetails = async (restaurantId, itemId) => {
+  const fetchBatchItemDetails = async (restaurantId, itemIds) => {
     try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionStorage.getItem('user') || '{}').access_token}`,
+        },
+        body: JSON.stringify({ item_ids: itemIds }),
+      });
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error fetching item details:', errorData.detail);
-        return { name: 'Unknown Item' };
+        console.error('Error fetching batch item details:', errorData.detail);
+        return [];
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching item details:', error);
-      return { name: 'Unknown Item' };
+      console.error('Error fetching batch item details:', error);
+      return [];
     }
   };
 
@@ -45,17 +52,19 @@ export default function OrderManagement() {
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
+
       const ordersWithDetails = await Promise.all(
         data.orders.map(async (order) => {
-          const itemsWithDetails = await Promise.all(
-            Object.entries(order.products).map(async ([itemId, quantity]) => {
-              const itemDetails = await fetchItemDetails(order.restaurant_id, itemId);
-              return { ...itemDetails, quantity };
-            })
-          );
+          const itemIds = Object.keys(order.products);
+          const batchItems = await fetchBatchItemDetails(order.restaurant_id, itemIds);
+          const itemsWithDetails = batchItems.map((item) => ({
+            ...item,
+            quantity: order.products[item.item_id] || 0,
+          }));
           return { ...order, products: itemsWithDetails };
         })
       );
+
       setOrders(ordersWithDetails);
     } catch (error) {
       console.error('Error fetching orders:', error);
