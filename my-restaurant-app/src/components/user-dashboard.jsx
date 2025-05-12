@@ -46,33 +46,31 @@ export default function UserDashboard() {
     console.log("Token available:", token);
 
     const fetchOrders = async () => {
-      console.log("fetchOrders function triggered.");
-      setIsLoading(true);
-      setError(null);
-
       try {
-        console.log("Fetching orders...");
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         const response = await fetch(`${API_URL}/user/user/orders`, {
-          method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Authorization': `Bearer ${user.access_token}`,
+            'Content-Type': 'application/json',
           },
         });
-        console.log("Orders fetch response:", response);
-
-        if (!response.ok) {
-          throw new Error(`Error fetching orders: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch orders');
         const data = await response.json();
-        console.log("Orders data:", data);
-        setOrders(data.orders || []);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-        setError(err.message || "Failed to fetch orders");
-      } finally {
-        setIsLoading(false);
+        const ordersWithDetails = await Promise.all(
+          data.orders.map(async (order) => {
+            const itemsWithDetails = await Promise.all(
+              Object.entries(order.products).map(async ([itemId, quantity]) => {
+                const itemDetails = await fetchItemDetails(order.restaurant_id, itemId);
+                return { ...itemDetails, quantity };
+              })
+            );
+            return { ...order, products: itemsWithDetails };
+          })
+        );
+        setOrders(ordersWithDetails);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        toast.error('Failed to fetch orders');
       }
     };
 
@@ -113,6 +111,21 @@ export default function UserDashboard() {
       fetchUserInfo();
     }
   }, [token]);
+
+  const fetchItemDetails = async (restaurantId, itemId) => {
+    try {
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching item details:', errorData.detail);
+        return { name: 'Unknown Item' };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      return { name: 'Unknown Item' };
+    }
+  };
 
   const formatDate = (dateString) => {
     try {
@@ -266,9 +279,9 @@ export default function UserDashboard() {
                                 <div>
                                   <p className="font-medium">Items</p>
                                   <ul className="text-sm">
-                                    {Object.entries(order.products).map(([item, quantity]) => (
-                                      <li key={item}>
-                                        {item} x {quantity}
+                                    {order.products.map((product, index) => (
+                                      <li key={index}>
+                                        {product.name} x {product.quantity}
                                       </li>
                                     ))}
                                   </ul>

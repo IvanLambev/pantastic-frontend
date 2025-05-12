@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
-  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,50 +19,47 @@ export default function OrderManagement() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchItems = async (restaurantId) => {
-    setLoading(true);
+  const fetchItemDetails = async (restaurantId, itemId) => {
     try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch menu items');
+        const errorData = await response.json();
+        console.error('Error fetching item details:', errorData.detail);
+        return { name: 'Unknown Item' };
       }
-      const data = await response.json();
-      setItems(data);
-      console.log('Fetched menu items:', data);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items';
-      setError(errorMessage);
-      console.error('Error fetching menu items:', err);
-    } finally {
-      setLoading(false);
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      return { name: 'Unknown Item' };
     }
   };
 
   const fetchOrders = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetch(`${API_URL}/admin/orders`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
-      
-      // Fetch items for the current restaurant
-      const restaurantId = sessionStorage.getItem('selectedRestaurantId');
-      if (restaurantId) {
-        await fetchItems(restaurantId);
-      }
-
-      setOrders(data);
-      setLoading(false);
+      const ordersWithDetails = await Promise.all(
+        data.orders.map(async (order) => {
+          const itemsWithDetails = await Promise.all(
+            Object.entries(order.products).map(async ([itemId, quantity]) => {
+              const itemDetails = await fetchItemDetails(order.restaurant_id, itemId);
+              return { ...itemDetails, quantity };
+            })
+          );
+          return { ...order, products: itemsWithDetails };
+        })
+      );
+      setOrders(ordersWithDetails);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast.error('Failed to fetch orders');
-      setLoading(false);
     }
   };
 
@@ -100,11 +96,6 @@ export default function OrderManagement() {
     }
   };
 
-  const getItemNameById = (itemId) => {
-    const item = items.find(item => item[0] === itemId);
-    return item ? item[0] : 'Unknown Item';
-  };
-
   if (loading) {
     return <div>Loading orders...</div>;
   }
@@ -134,9 +125,9 @@ export default function OrderManagement() {
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
                     <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {(order.products && Object.entries(order.products).map(([id, quantity]) => (
-                        <li key={id}>
-                          {quantity}x {getItemNameById(id)}
+                      {(order.products && order.products.map((product, index) => (
+                        <li key={index}>
+                          {product.quantity}x {product.name}
                         </li>
                       ))) || <li>No items available</li>}
                     </ul>
