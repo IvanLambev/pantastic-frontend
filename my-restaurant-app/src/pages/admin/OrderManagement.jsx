@@ -44,7 +44,7 @@ export default function OrderManagement() {
   const fetchOrders = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/admin/orders`, {
+      const response = await fetch(`${API_URL}/order/orders/worker`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',

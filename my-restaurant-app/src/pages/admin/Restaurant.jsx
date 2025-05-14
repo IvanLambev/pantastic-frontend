@@ -7,6 +7,8 @@ import { MoreVertical } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+            
 
 export default function RestaurantPage() {
   const [formData, setFormData] = useState({ name: '', description: '', price: '', image: null });
