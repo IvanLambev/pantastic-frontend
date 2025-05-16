@@ -50,13 +50,20 @@ export default function OrderManagement() {
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       
-      // Log the order data for debugging purposes
-      console.log('Received order data:', data);
+      // Ensure data is an array before setting it to state
+      if (!Array.isArray(data)) {
+        console.error('Expected array of orders but received:', data);
+        setOrders([]);
+        toast.error('Received invalid order data');
+      } else {
+        console.log('Received order data:', data);
+        setOrders(data);
+      }
       
-      setOrders(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setOrders([]); // Set to empty array on error
       toast.error('Failed to fetch orders');
       setLoading(false);
     }
