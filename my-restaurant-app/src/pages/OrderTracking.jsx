@@ -16,21 +16,6 @@ export default function OrderTracking() {
   const { clearCart } = useCart();
   const navigate = useNavigate();
 
-  const fetchItemDetails = async (restaurantId, itemId) => {
-    try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching item details:', errorData.detail);
-        return { name: 'Unknown Item' };
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching item details:', error);
-      return { name: 'Unknown Item' };
-    }
-  };
-
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -38,22 +23,13 @@ export default function OrderTracking() {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
-        },
+        }
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
+      // Find the order with the matching order_id
       const found = data.find(o => o.order_id === orderId);
-      if (found) {
-        const itemsWithDetails = await Promise.all(
-          Object.entries(found.products).map(async ([itemId, quantity]) => {
-            const itemDetails = await fetchItemDetails(found.restaurant_id, itemId);
-            return { ...itemDetails, quantity };
-          })
-        );
-        setOrder({ ...found, products: itemsWithDetails });
-      } else {
-        setOrder(null);
-      }
+      setOrder(found || null);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -72,8 +48,8 @@ export default function OrderTracking() {
   const handleCancelOrder = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders`, {
-        method: 'DELETE',
+      const response = await fetch(`${API_URL}/order/orders/cancel`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
@@ -92,10 +68,11 @@ export default function OrderTracking() {
 
   const getStatusStep = (status) => {
     const steps = {
-      'Pending': 0,
-      'In Progress': 1,
-      'Delivered': 2,
-      'Canceled': -1
+      'pending': 0,
+      'preparing': 1,
+      'ready': 2,
+      'delivered': 3,
+      'cancelled': -1
     };
     return steps[status] ?? 0;
   };
@@ -109,7 +86,7 @@ export default function OrderTracking() {
   }
 
   const currentStep = getStatusStep(order.status);
-  const progressLabels = ['Order Received', 'In Progress', 'Delivered'];
+  const progressLabels = ['Order Received', 'Preparing', 'Ready for Pickup', 'Delivered'];
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
@@ -154,9 +131,9 @@ export default function OrderTracking() {
             <div className="space-y-4">
               <h3 className="font-semibold">Order Details</h3>
               <div className="space-y-4">
-                {order.products && order.products.map((product, index) => (
+                {order.products && Object.entries(order.products).map(([productId, quantity], index) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span>{product.quantity}x {product.name}</span>
+                    <span>{quantity}x Product #{productId}</span>
                   </div>
                 ))}
                 <div className="border-t pt-4 mt-4">

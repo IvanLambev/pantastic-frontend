@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { API_URL } from '@/config/api'
 import { CartContext } from './cart'
-import { redirect } from "react-router-dom"
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
@@ -86,8 +85,7 @@ export const CartProvider = ({ children }) => {
           products,
           payment_method: 'card',
           delivery_method: 'pickup',
-          address: restaurant[1], // Adding restaurant address for pickup orders
-          status: 'Pending' // Ensuring we set the correct initial status
+          address: restaurant[1] // Adding restaurant address for pickup orders
         })
       })
 
@@ -96,7 +94,6 @@ export const CartProvider = ({ children }) => {
       const data = await response.json()
       setOrderId(data.order_id)
       sessionStorage.setItem('orderId', data.order_id)
-      clearCart();
       return data
     } catch (error) {
       console.error('Error during checkout:', error)

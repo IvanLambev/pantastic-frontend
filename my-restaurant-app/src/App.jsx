@@ -4,7 +4,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
 import { useCart } from '@/hooks/use-cart'
-import { ShoppingCart, Menu, User } from 'lucide-react'
+import { ShoppingCart, Menu } from 'lucide-react'
 import { Toaster } from "@/components/ui/sonner"
 import {
   NavigationMenu,
@@ -20,7 +20,6 @@ import {
   SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Footer } from '@/components/Footer'
 import Home from '@/pages/Home'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
@@ -30,13 +29,6 @@ import Admin from '@/pages/Admin'
 import Cart from '@/pages/Cart'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTracking from '@/pages/OrderTracking'
-import UserDashboardPage from './pages/UserDashboard'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
@@ -101,20 +93,12 @@ function MainLayout({ children }) {
 
               <div className="hidden md:flex items-center space-x-2">
                 {isLoggedIn ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2">
-                        <User className="h-6 w-6" />
-                        <span className="sr-only">User Menu</span>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link to="/user-dashboard">Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <button 
+                    onClick={handleLogout}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
+                  >
+                    Logout
+                  </button>
                 ) : (
                   <>
                     <Link 
@@ -202,9 +186,8 @@ function MainLayout({ children }) {
       </header>
 
       <main className="flex-1">
-        {children}
+     a    {children}
       </main>
-      <Footer />
     </div>
   )
 }
@@ -224,8 +207,6 @@ function App() {
       <Route path="/cart" element={<Cart />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
-      <Route path="/user-dashboard" element={<UserDashboardPage />} />
-      <Route path="/order/:orderId" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )

@@ -5,79 +5,64 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
+  const [menuItems, setMenuItems] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
+    fetchMenuItems();
     fetchOrders();
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchBatchItemDetails = async (restaurantId, itemIds) => {
+  const fetchMenuItems = async () => {
     try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${JSON.parse(sessionStorage.getItem('user') || '{}').access_token}`,
-        },
-        body: JSON.stringify({ item_ids: itemIds }),
+      const response = await fetch('https://api.palachinki.store/restaurant/b5add894-8d03-422f-acce-0b0e44bb721b/item-names');
+      if (!response.ok) throw new Error('Failed to fetch menu items');
+      const items = await response.json();
+      
+      // Convert array to object for easier lookup
+      const itemsMap = {};
+      items.forEach(item => {
+        itemsMap[item.item_id] = item.name;
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching batch item details:', errorData.detail);
-        return [];
-      }
-      return await response.json();
+      setMenuItems(itemsMap);
     } catch (error) {
-      console.error('Error fetching batch item details:', error);
-      return [];
+      console.error('Error fetching menu items:', error);
+      toast.error('Failed to fetch menu items');
     }
   };
 
   const fetchOrders = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/worker`, {
+      const response = await fetch(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       });
+      
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
-
-      const ordersWithDetails = await Promise.all(
-        data.orders.map(async (order) => {
-          const itemIds = Object.keys(order.products);
-          const batchItems = await fetchBatchItemDetails(order.restaurant_id, itemIds);
-          const itemsWithDetails = batchItems.map((item) => ({
-            ...item,
-            quantity: order.products[item.item_id] || 0,
-          }));
-          return { ...order, products: itemsWithDetails };
-        })
-      );
-
-      setOrders(ordersWithDetails);
+      
+      // Log the order data for debugging purposes
+      console.log('Received order data:', data);
+      
+      setOrders(data);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast.error('Failed to fetch orders');
+      setLoading(false);
     }
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
-    if (!orderId) {
-      console.error('Order ID is undefined. Cannot update order status.');
-      return;
-    }
-
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       const response = await fetch(`${API_URL}/order/orders/status`, {
@@ -91,9 +76,12 @@ export default function OrderManagement() {
 
       if (!response.ok) throw new Error('Failed to update order status');
 
+      // Update local state
       setOrders(orders.map(order => {
         if (order.id === orderId) {
-          return { ...order, status: newStatus };
+          const updatedOrder = { ...order, status: newStatus };
+          console.log('Updated order:', updatedOrder); // Log the updated order
+          return updatedOrder;
         }
         return order;
       }));
@@ -126,7 +114,7 @@ export default function OrderManagement() {
                         {new Date(order.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
+                    <Badge variant={order.status === 'cancelled' ? 'destructive' : 'default'}>
                       {order.status}
                     </Badge>
                   </div>
@@ -134,9 +122,9 @@ export default function OrderManagement() {
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
                     <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {(order.products && order.products.map((product, index) => (
-                        <li key={index}>
-                          {product.quantity}x {product.name}
+                      {(order.products && Object.entries(order.products).map(([id, quantity]) => (
+                        <li key={id}>
+                          {quantity}x {menuItems[id] || `Unknown Item (${id})`}
                         </li>
                       ))) || <li>No items available</li>}
                     </ul>
@@ -145,17 +133,18 @@ export default function OrderManagement() {
               
                 <div className="flex flex-col gap-4">
                   <Select
-                    value={order.status || 'Pending'}
-                    onValueChange={(value) => updateOrderStatus(order.order_id, value)}
+                    value={order.status || 'pending'}
+                    onValueChange={(value) => updateOrderStatus(order.id, value)}
                   >
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Delivered">Delivered</SelectItem>
-                      <SelectItem value="Canceled">Canceled</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="preparing">Preparing</SelectItem>
+                      <SelectItem value="ready">Ready for Pickup</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                   
