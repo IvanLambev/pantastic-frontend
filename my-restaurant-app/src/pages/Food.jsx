@@ -270,7 +270,8 @@ const Food = () => {
 
               {/* Menu Items Grid */}
               <div className="flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                  {filteredItems.map((item) => (                    <Card key={item[0]} className="flex flex-col h-full overflow-hidden">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                  {filteredItems.map((item) => (                    
+                  <Card key={item[0]} className="flex flex-col h-full overflow-hidden">
                       <div className="relative">
                         <img
                           src={item[3] || '/elementor-placeholder-image.webp'}

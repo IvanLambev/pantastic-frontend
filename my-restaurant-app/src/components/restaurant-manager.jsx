@@ -355,8 +355,8 @@ export function RestaurantManager() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-6 min-w-[100vw]">
+    <div className="flex flex-col gap-6 w-full px-0 py-0 bg-background">
+      <div className="grid grid-cols-1 gap-6 w-full">
         {restaurants.map((restaurant) => (
           <Card 
             key={restaurant[0]} 

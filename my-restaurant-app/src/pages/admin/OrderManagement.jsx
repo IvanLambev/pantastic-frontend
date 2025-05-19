@@ -8,32 +8,31 @@ import { Badge } from "@/components/ui/badge";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
-  const [menuItems, setMenuItems] = useState({});
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMenuItems();
     fetchOrders();
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // fetchOrders is not a dependency because it is defined inline and does not change
 
-  const fetchMenuItems = async () => {
+  const fetchItems = async (restaurantId) => {
+    setLoading(true);
     try {
-      const response = await fetch('https://api.palachinki.store/restaurant/b5add894-8d03-422f-acce-0b0e44bb721b/item-names');
-      if (!response.ok) throw new Error('Failed to fetch menu items');
-      const items = await response.json();
-      
-      // Convert array to object for easier lookup
-      const itemsMap = {};
-      items.forEach(item => {
-        itemsMap[item.item_id] = item.name;
-      });
-      setMenuItems(itemsMap);
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
-      toast.error('Failed to fetch menu items');
+      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu items');
+      }
+      const data = await response.json();
+      setItems(data);
+      console.log('Fetched menu items:', data);
+    } catch (err) {
+      // Only log error, do not call setError
+      console.error('Error fetching menu items:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,30 +45,27 @@ export default function OrderManagement() {
           'Content-Type': 'application/json'
         }
       });
-      
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
-      
-      // Ensure data is an array before setting it to state
-      if (!Array.isArray(data)) {
-        console.error('Expected array of orders but received:', data);
-        setOrders([]);
-        toast.error('Received invalid order data');
-      } else {
-        console.log('Received order data:', data);
-        setOrders(data);
+      // Fetch items for the current restaurant
+      const restaurantId = sessionStorage.getItem('selectedRestaurantId');
+      if (restaurantId) {
+        await fetchItems(restaurantId);
       }
-      
+      setOrders(data);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      setOrders([]); // Set to empty array on error
-      toast.error('Failed to fetch orders');
+      // Only log error, do not call setError
       setLoading(false);
     }
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    if (!orderId) {
+      console.error('Order ID is undefined. Cannot update order status.');
+      return;
+    }
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       const response = await fetch(`${API_URL}/order/orders/status`, {
@@ -80,24 +76,23 @@ export default function OrderManagement() {
         },
         body: JSON.stringify({ order_id: orderId, status: newStatus })
       });
-
       if (!response.ok) throw new Error('Failed to update order status');
-
-      // Update local state
       setOrders(orders.map(order => {
-        if (order.id === orderId) {
-          const updatedOrder = { ...order, status: newStatus };
-          console.log('Updated order:', updatedOrder); // Log the updated order
-          return updatedOrder;
+        if (order.order_id === orderId) {
+          return { ...order, status: newStatus };
         }
         return order;
       }));
-
       toast.success('Order status updated successfully');
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
     }
+  };
+
+  const getItemNameById = (itemId) => {
+    const item = items.find(item => item[0] === itemId);
+    return item ? item[4] : `Unknown Item (${itemId})`;
   };
 
   if (loading) {
@@ -107,10 +102,9 @@ export default function OrderManagement() {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
-      
       <div className="grid gap-4">
         {orders.map(order => (
-          <Card key={order.id || 'unknown'} className="shadow-sm">
+          <Card key={order.id || order.order_id || 'unknown'} className="shadow-sm">
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                 <div className="flex-grow space-y-4">
@@ -121,40 +115,36 @@ export default function OrderManagement() {
                         {new Date(order.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant={order.status === 'cancelled' ? 'destructive' : 'default'}>
+                    <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
                       {order.status}
                     </Badge>
                   </div>
-                  
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
                     <ul className="list-disc list-inside text-sm text-muted-foreground">
                       {(order.products && Object.entries(order.products).map(([id, quantity]) => (
                         <li key={id}>
-                          {quantity}x {menuItems[id] || `Unknown Item (${id})`}
+                          {quantity}x {getItemNameById(id)}
                         </li>
                       ))) || <li>No items available</li>}
                     </ul>
                   </div>
                 </div>
-              
                 <div className="flex flex-col gap-4">
                   <Select
-                    value={order.status || 'pending'}
-                    onValueChange={(value) => updateOrderStatus(order.id, value)}
+                    value={order.status || 'Pending'}
+                    onValueChange={(value) => updateOrderStatus(order.order_id, value)}
                   >
                     <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="preparing">Preparing</SelectItem>
-                      <SelectItem value="ready">Ready for Pickup</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                      <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
                   </Select>
-                  
                   <Button 
                     variant="outline"
                     onClick={() => window.open(`/order-tracking/${order.order_id}`, '_blank')}
@@ -164,7 +154,6 @@ export default function OrderManagement() {
                   </Button>
                 </div>
               </div>
-
               <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm font-medium">Delivery Method</p>
