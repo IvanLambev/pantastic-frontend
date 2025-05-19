@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -29,6 +29,29 @@ import Admin from '@/pages/Admin'
 import Cart from '@/pages/Cart'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTracking from '@/pages/OrderTracking'
+import Lenis from 'lenis'
+
+function useLenisSmoothScroll() {
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      smooth: true,
+    })
+    function raf(time) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
+    requestAnimationFrame(raf)
+    return () => {
+      lenis.destroy()
+    }
+  }, [])
+}
+
+function AppWithLenis({ children }) {
+  useLenisSmoothScroll()
+  return children
+}
 
 function MainLayout({ children }) {
   const { isLoggedIn, handleLogout } = useAuth()
@@ -212,12 +235,14 @@ function App() {
   )
 
   return (
-    <CartProvider>
-      <SidebarProvider>
-        {isAdminPage ? content : <MainLayout>{content}</MainLayout>}
-        <Toaster />
-      </SidebarProvider>
-    </CartProvider>
+    <AppWithLenis>
+      <CartProvider>
+        <SidebarProvider>
+          {isAdminPage ? content : <MainLayout>{content}</MainLayout>}
+          <Toaster />
+        </SidebarProvider>
+      </CartProvider>
+    </AppWithLenis>
   )
 }
 

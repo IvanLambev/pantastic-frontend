@@ -68,11 +68,11 @@ export default function OrderTracking() {
 
   const getStatusStep = (status) => {
     const steps = {
-      'pending': 0,
-      'preparing': 1,
-      'ready': 2,
-      'delivered': 3,
-      'cancelled': -1
+      'Pending': 0,
+      'In Progress': 1,
+      'Ready': 2,
+      'Delivered': 3,
+      'Cancelled': -1
     };
     return steps[status] ?? 0;
   };
