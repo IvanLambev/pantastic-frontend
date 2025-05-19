@@ -354,7 +354,7 @@ export function RestaurantManager() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 min-w-[100vw]">
       <div className="grid grid-cols-1 gap-6">
         {restaurants.map((restaurant) => (
           <Card 

@@ -280,9 +280,9 @@ const Food = () => {
                         />
                       </div>
                       <CardContent className="flex flex-col flex-grow p-3">
-                        <h3 className="font-semibold mb-1">{item[4]}</h3>
+                        <h3 className="font-semibold mb-1 items-start">{item[4]}</h3>
                         <p className="text-sm text-muted-foreground mb-3 flex-grow">{item[2]}</p>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-start">
                           <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
                           <Button size="sm" onClick={() => handleAddToCart(item)}>
                             Add to Cart

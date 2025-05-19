@@ -149,6 +149,8 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
       console.error('Error unassigning delivery person:', err)
     }
   }
+  // Debug log to see the delivery people data
+  console.log('Delivery People Data:', deliveryPeople)
 
   return (
     <div className="space-y-4">
