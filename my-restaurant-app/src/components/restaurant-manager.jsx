@@ -128,6 +128,7 @@ export function RestaurantManager() {
       })
       if (!response.ok) throw new Error('Failed to fetch delivery people')
       const data = await response.json()
+      console.log('Fetched delivery people:', data)
       setDeliveryPeople(data)
     } catch (err) {
       console.error('Error fetching delivery people:', err)
@@ -354,8 +355,8 @@ export function RestaurantManager() {
   }
 
   return (
-    <div className="flex flex-col gap-6 min-w-[100vw]">
-      <div className="grid grid-cols-1 gap-6">
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-6 min-w-[100vw]">
         {restaurants.map((restaurant) => (
           <Card 
             key={restaurant[0]} 

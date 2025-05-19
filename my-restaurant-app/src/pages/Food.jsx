@@ -270,19 +270,18 @@ const Food = () => {
 
               {/* Menu Items Grid */}
               <div className="flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                  {filteredItems.map((item) => (
-                    <Card key={item[0]} className="flex flex-col h-full overflow-hidden">
-                      <div className="relative p-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                  {filteredItems.map((item) => (                    <Card key={item[0]} className="flex flex-col h-full overflow-hidden">
+                      <div className="relative">
                         <img
                           src={item[3] || '/elementor-placeholder-image.webp'}
                           alt={item[4]}
-                          className="w-full h-full object-cover max-w-[250px] max-h-[125px] mx-auto transition-transform duration-200 hover:scale-[1.01]"
+                          className="w-full h-full max-w-[250px] max-h-[125px] mx-auto transition-transform duration-200 hover:scale-[1.01] object-contain scale-75"
                         />
                       </div>
-                      <CardContent className="flex flex-col flex-grow p-3">
-                        <h3 className="font-semibold mb-1 items-start">{item[4]}</h3>
-                        <p className="text-sm text-muted-foreground mb-3 flex-grow">{item[2]}</p>
-                        <div className="flex justify-between items-start">
+                      <CardContent className="flex flex-col flex-grow px-4 pb-4 text-left">
+                        <h3 className="font-semibold mb-2 text-left">{item[4]}</h3>
+                        <p className="text-sm text-muted-foreground mb-4 flex-grow text-left">{item[2]}</p>
+                        <div className="flex justify-between items-center mt-auto">
                           <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
                           <Button size="sm" onClick={() => handleAddToCart(item)}>
                             Add to Cart
