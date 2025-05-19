@@ -186,7 +186,7 @@ function MainLayout({ children }) {
       </header>
 
       <main className="flex-1">
-     a    {children}
+       {children}
       </main>
     </div>
   )

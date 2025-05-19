@@ -12,9 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import Autoplay from "embla-carousel-autoplay"
 import { useState, useEffect } from "react"
 import { CarouselDots } from "@/components/carousel-dots"
+import Autoplay from "embla-carousel-autoplay"
 
 const Home = () => {
   const [api, setApi] = useState(null)
