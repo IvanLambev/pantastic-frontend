@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,15 +10,37 @@ export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const prevOrdersRef = useRef([]);
+  const audioRef = useRef(null);
 
+  // Initialize audio on mount
   useEffect(() => {
-    fetchOrders();
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchOrders, 30000);
-    return () => clearInterval(interval);
-  }, []); // fetchOrders is not a dependency because it is defined inline and does not change
-  const fetchItems = async (restaurantId) => {
-    setLoading(true);
+    audioRef.current = new Audio('/ding-126626.mp3');
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
+  }, []);
+
+  // Helper function to check for new orders
+  const checkForNewOrders = useCallback((newOrders) => {
+    const prevOrderIds = new Set(prevOrdersRef.current.map(o => o.order_id));
+    const newOrdersFound = newOrders.filter(order => !prevOrderIds.has(order.order_id));
+    
+    if (newOrdersFound.length > 0 && audioRef.current) {
+      // Play sound for new orders
+      audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+      // Show toast notification
+      toast.success(`${newOrdersFound.length} new order${newOrdersFound.length > 1 ? 's' : ''} received!`);
+    }
+    
+    prevOrdersRef.current = newOrders;
+  }, []);
+
+  const fetchItems = useCallback(async (restaurantId) => {
     try {
       console.log('Fetching items for restaurant:', restaurantId);
       const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
@@ -30,7 +52,6 @@ export default function OrderManagement() {
       
       // Validate the data structure
       if (Array.isArray(data)) {
-        // Ensure we have the correct array structure [id, date, description, image_url, name, price]
         const validItems = data.filter(item => 
           Array.isArray(item) && item.length >= 5 && item[0] && item[4]
         );
@@ -43,11 +64,10 @@ export default function OrderManagement() {
     } catch (err) {
       console.error('Error fetching menu items:', err);
       setItems([]);
-    } finally {
-      setLoading(false);
     }
-  };
-  const fetchOrders = async () => {
+  }, []);
+
+  const fetchOrders = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       const response = await fetch(`${API_URL}/order/orders/status`, {
@@ -59,6 +79,9 @@ export default function OrderManagement() {
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       console.log('Fetched orders:', data);
+
+      // Check for new orders before updating state
+      checkForNewOrders(data);
 
       // Get restaurant ID from the first order if available
       const firstOrder = data[0];
@@ -79,10 +102,9 @@ export default function OrderManagement() {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      // Only log error, do not call setError
       setLoading(false);
     }
-  };
+  }, [checkForNewOrders, fetchItems]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     if (!orderId) {
@@ -124,6 +146,17 @@ export default function OrderManagement() {
     return item[4];
   };
 
+  useEffect(() => {
+    // Initial fetch
+    fetchOrders();
+    
+    // Set up polling interval (every 30 seconds)
+    const intervalId = setInterval(fetchOrders, 30000);
+
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
+  }, [fetchOrders]); // Add fetchOrders as a dependency
+
   if (loading) {
     return <div>Loading orders...</div>;
   }
@@ -137,9 +170,8 @@ export default function OrderManagement() {
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                 <div className="flex-grow space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <div>
-                      <h3 className="font-semibold">Order #{order.order_id}</h3>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">                    <div>
+                      <h3 className="font-semibold">Order #{order.order_id.split('-')[0]}</h3>
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleString()}
                       </p>
