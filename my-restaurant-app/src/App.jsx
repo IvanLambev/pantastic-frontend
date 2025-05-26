@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import NotFound from '@/pages/NotFound'
 import { CartProvider } from '@/context/CartContext'
 import { useCart } from '@/hooks/use-cart'
 import { ShoppingCart, Menu } from 'lucide-react'
@@ -219,16 +220,16 @@ function App() {
   const { isLoggedIn } = useAuth()
   const location = useLocation()
   const isAdminPage = location.pathname.startsWith('/admin')
-
   const content = (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
-      <Route path="/about" element={<About />} />
+      <Route path="*" element={<NotFound />} /><Route path="/about" element={<About />} />
       <Route path="/food" element={<Food />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+      <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
