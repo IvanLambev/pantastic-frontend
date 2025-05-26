@@ -12,9 +12,15 @@ const grayColor = '#e5e7eb'; // tailwind gray-200
 export default function OrderTracking() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState([]);
   const { orderId } = useParams();
   const { clearCart } = useCart();
   const navigate = useNavigate();
+
+  const getItemNameById = (itemId) => {
+    const item = items.find(item => item[0] === itemId);
+    return item ? item[4] : `Unknown Item (${itemId})`;
+  };
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -27,8 +33,19 @@ export default function OrderTracking() {
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
+      
       // Find the order with the matching order_id
       const found = data.find(o => o.order_id === orderId);
+      
+      if (found && found.restaurant_id) {
+        // Fetch items for the restaurant
+        const itemsResponse = await fetch(`${API_URL}/restaurant/${found.restaurant_id}/items`);
+        if (itemsResponse.ok) {
+          const itemsData = await itemsResponse.json();
+          setItems(itemsData);
+        }
+      }
+      
       setOrder(found || null);
       setLoading(false);
     } catch (error) {
@@ -133,7 +150,7 @@ export default function OrderTracking() {
               <div className="space-y-4">
                 {order.products && Object.entries(order.products).map(([productId, quantity], index) => (
                   <div key={index} className="flex justify-between text-sm">
-                    <span>{quantity}x Product #{productId}</span>
+                    <span>{quantity}x {getItemNameById(productId)}</span>
                   </div>
                 ))}
                 <div className="border-t pt-4 mt-4">

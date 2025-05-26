@@ -65,6 +65,7 @@ const Cart = () => {
     try {      const result = await checkout();
       // Redirect immediately after successful checkout
       navigate(`/order-tracking/${result.order_id}`);
+      removeFromCart(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setState(prev => ({ ...prev, error: errorMessage }));
