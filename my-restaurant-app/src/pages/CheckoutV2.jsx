@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { ArrowLeft } from "lucide-react"
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
   const { cartItems, clearCart } = useCart()
   const [deliveryMethod, setDeliveryMethod] = useState("pickup")
+  const [paymentMethod, setPaymentMethod] = useState("card")
   const [isProcessing, setIsProcessing] = useState(false)
 
   // Calculate totals
@@ -46,7 +48,7 @@ export default function CheckoutV2() {
         body: JSON.stringify({
           restaurant_id: restaurant[0],
           products,
-          payment_method: 'card',
+          payment_method: paymentMethod,
           delivery_method: deliveryMethod,
           address: restaurant[1] // Using restaurant address for pickup orders
         })
@@ -81,7 +83,22 @@ export default function CheckoutV2() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
-      <div className="container mx-auto px-4 py-8 mt-16 pb-32">
+      {/* Checkout Navigation */}
+      <div className="border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center">
+          <Button 
+            variant="ghost" 
+            className="mr-4"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <h1 className="text-lg font-semibold">Checkout</h1>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 pb-32">
         <div className="grid gap-8 md:grid-cols-2">
           <div>
             <Card>
@@ -112,6 +129,25 @@ export default function CheckoutV2() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Payment Method</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label htmlFor="card">Credit/Debit Card</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="cash" id="cash" />
+                    <Label htmlFor="cash">Cash on Delivery/Pickup</Label>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Delivery Method</CardTitle>
@@ -130,7 +166,8 @@ export default function CheckoutV2() {
               </CardContent>
             </Card>
           </div>
-          <div>
+
+          <div className="md:sticky md:top-24">
             <Card>
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
