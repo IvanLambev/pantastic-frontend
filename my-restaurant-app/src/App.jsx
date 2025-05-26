@@ -221,12 +221,11 @@ function App() {
   const location = useLocation()
   const isAdminPage = location.pathname.startsWith('/admin')
   const content = (
-    <Routes>
-      <Route path="/" element={<Home />} />
+    <Routes>      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="*" element={<NotFound />} /><Route path="/about" element={<About />} />
-      <Route path="/food" element={<Food />} />      <Route path="/cart" element={<CheckoutV2 />} />
+      <Route path="/food" element={<Food />} />      <Route path="/cart" element={<Checkout />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
