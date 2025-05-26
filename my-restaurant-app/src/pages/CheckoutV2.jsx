@@ -84,7 +84,7 @@ export default function CheckoutV2() {
       clearCart()
       sessionStorage.setItem('orderId', data.order_id)
       toast.success('Order placed successfully!')
-      navigate(`/order-tracking-v2/${data.order_id}`)
+      navigate(`/order-tracking/${data.order_id}`)
     } catch (error) {
       console.error('Error during checkout:', error)
       toast.error(error.message || 'Failed to place order')

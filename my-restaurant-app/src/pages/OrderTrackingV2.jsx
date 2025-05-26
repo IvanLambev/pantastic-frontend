@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
-export default function OrderTrackingV2() {
+export default function OrderTracking() {
   const [order, setOrder] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)

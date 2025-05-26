@@ -93,11 +93,14 @@ const Cart = () => {
   }
 
   const handleConfirmationClose = () => {
-    setState(prev => ({ ...prev, showConfirmation: false }))
-    if (orderDetails && orderDetails.order_id) {
-      navigate(`/order-tracking/${orderDetails.order_id}`)
+    setState(prev => ({ ...prev, showConfirmation: false }))      if (orderDetails && orderDetails.order_id) {
+      navigate(`/order-tracking-v2/${orderDetails.order_id}`)
     }
   }
+
+  useEffect(() => {
+    navigate('/cart')
+  }, [navigate])
 
   if (cartItems.length === 0) {
     return (

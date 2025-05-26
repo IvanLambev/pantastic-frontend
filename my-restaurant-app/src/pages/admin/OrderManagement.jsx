@@ -207,8 +207,7 @@ export default function OrderManagement() {
                     </SelectContent>
                   </Select>
                   <Button 
-                    variant="outline"
-                    onClick={() => window.open(`/order-tracking/${order.order_id}`, '_blank')}
+                    variant="outline"                    onClick={() => window.open(`/order-tracking/${order.order_id}`, '_blank')}
                     className="w-full md:w-auto"
                   >
                     View Details

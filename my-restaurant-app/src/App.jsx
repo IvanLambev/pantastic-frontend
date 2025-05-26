@@ -27,11 +27,9 @@ import SignUp from '@/pages/SignUp'
 import About from '@/pages/About'
 import Food from '@/pages/Food'
 import Admin from '@/pages/Admin'
-import Cart from '@/pages/Cart'
+import Checkout from '@/pages/CheckoutV2'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTracking from '@/pages/OrderTracking'
-import OrderTrackingV2 from '@/pages/OrderTrackingV2'
-import CheckoutV2 from '@/pages/CheckoutV2'
 import Lenis from 'lenis'
 
 function useLenisSmoothScroll() {
@@ -228,11 +226,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="*" element={<NotFound />} /><Route path="/about" element={<About />} />
-      <Route path="/food" element={<Food />} />      <Route path="/cart" element={<Cart />} />
-      <Route path="/cart-v2" element={<CheckoutV2 />} />
+      <Route path="/food" element={<Food />} />      <Route path="/cart" element={<CheckoutV2 />} />
       <Route path="/restaurant/:id" element={<RestaurantDetails />} />
       <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
-      <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
       {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
     </Routes>
   )
