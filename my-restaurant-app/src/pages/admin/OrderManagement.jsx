@@ -17,25 +17,36 @@ export default function OrderManagement() {
     const interval = setInterval(fetchOrders, 30000);
     return () => clearInterval(interval);
   }, []); // fetchOrders is not a dependency because it is defined inline and does not change
-
   const fetchItems = async (restaurantId) => {
     setLoading(true);
     try {
+      console.log('Fetching items for restaurant:', restaurantId);
       const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
       if (!response.ok) {
         throw new Error('Failed to fetch menu items');
       }
       const data = await response.json();
-      setItems(data);
       console.log('Fetched menu items:', data);
+      
+      // Validate the data structure
+      if (Array.isArray(data)) {
+        // Ensure we have the correct array structure [id, date, description, image_url, name, price]
+        const validItems = data.filter(item => 
+          Array.isArray(item) && item.length >= 5 && item[0] && item[4]
+        );
+        console.log('Valid items for lookup:', validItems);
+        setItems(validItems);
+      } else {
+        console.error('Unexpected items data structure:', data);
+        setItems([]);
+      }
     } catch (err) {
-      // Only log error, do not call setError
       console.error('Error fetching menu items:', err);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
-
   const fetchOrders = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -47,10 +58,22 @@ export default function OrderManagement() {
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
-      // Fetch items for the current restaurant
-      const restaurantId = sessionStorage.getItem('selectedRestaurantId');
-      if (restaurantId) {
-        await fetchItems(restaurantId);
+      console.log('Fetched orders:', data);
+
+      // Get restaurant ID from the first order if available
+      const firstOrder = data[0];
+      if (firstOrder && firstOrder.restaurant_id) {
+        console.log('Found restaurant ID from order:', firstOrder.restaurant_id);
+        await fetchItems(firstOrder.restaurant_id);
+      } else {
+        // Fallback to stored restaurant ID
+        const restaurantId = sessionStorage.getItem('selectedRestaurantId');
+        if (restaurantId) {
+          console.log('Using stored restaurant ID:', restaurantId);
+          await fetchItems(restaurantId);
+        } else {
+          console.log('No restaurant ID found');
+        }
       }
       setOrders(data);
       setLoading(false);
@@ -89,10 +112,16 @@ export default function OrderManagement() {
       toast.error('Failed to update order status');
     }
   };
-
   const getItemNameById = (itemId) => {
-    const item = items.find(item => item[0] === itemId);
-    return item ? item[4] : `Unknown Item (${itemId})`;
+    console.log('Looking up item:', itemId, 'in items:', items);
+    // Convert itemId to string for comparison since IDs might come as different types
+    const item = items.find(item => String(item[0]) === String(itemId));
+    if (!item) {
+      console.log('Item not found:', itemId);
+      return `Unknown Item (${itemId})`;
+    }
+    console.log('Found item:', item);
+    return item[4];
   };
 
   if (loading) {
