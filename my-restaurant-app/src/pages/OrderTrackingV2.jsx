@@ -85,9 +85,7 @@ export default function OrderTracking() {
     if (currentStepIndex === orderStepIndex) return 'current'
     if (currentStepIndex < orderStepIndex) return 'completed'
     return 'pending'
-  }
-
-  // Fetch order details
+  }  // Fetch order details
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -98,12 +96,12 @@ export default function OrderTracking() {
         }
       })
       if (!response.ok) throw new Error('Failed to fetch orders')
-      const data = await response.json()
+      const orders = await response.json()
       
-      const found = data.find(o => o.order_id === orderId)
+      const orderData = orders.find(o => o.order_id === orderId)
       
-      if (found && found.restaurant_id) {
-        const itemsResponse = await fetch(`${API_URL}/restaurant/${found.restaurant_id}/items`)
+      if (orderData && orderData.restaurant_id) {
+        const itemsResponse = await fetch(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
         if (itemsResponse.ok) {
           const itemsData = await itemsResponse.json()
           console.log('Fetched items:', itemsData)
@@ -111,7 +109,7 @@ export default function OrderTracking() {
         }
       }
       
-      setOrder(found || null)
+      setOrder(orderData || null)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching order:', error)
