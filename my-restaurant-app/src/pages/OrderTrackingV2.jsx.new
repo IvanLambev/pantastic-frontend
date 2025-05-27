@@ -1,3 +1,4 @@
+// filepath: c:\Users\ivan2\OneDrive\Documents\Python projects\FastApiProject-Frontend\my-restaurant-app\src\pages\OrderTrackingV2.jsx
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { API_URL } from '@/config/api'
@@ -85,37 +86,36 @@ export default function OrderTracking() {
     if (currentStepIndex === orderStepIndex) return 'current'
     if (currentStepIndex < orderStepIndex) return 'completed'
     return 'pending'
-  }  // Fetch order details
+  }
+
+  // Fetch order details
   const fetchOrder = useCallback(async () => {
     try {
+      console.log('Fetching order with ID:', orderId)
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      console.log('Fetching orders with user token:', user.access_token ? '[PRESENT]' : '[MISSING]')
-      
       const response = await fetch(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         }
       })
-      
       if (!response.ok) throw new Error('Failed to fetch orders')
       const orders = await response.json()
       
-      console.log('Searching for order ID:', orderId, 'Type:', typeof orderId)
-      console.log('Available orders:', orders.map(o => ({ id: o.order_id, type: typeof o.order_id })))
+      console.log('Orders from API:', orders)
+      console.log('Looking for orderId:', orderId)
       
       const orderData = orders.find(o => {
-        console.log(`Comparing order ${o.order_id} (${typeof o.order_id}) with ${orderId} (${typeof orderId})`)
-        // Try string comparison to handle potential type mismatches
-        return String(o.order_id) === String(orderId)
+        console.log('Comparing:', o.order_id, orderId, o.order_id === orderId)
+        return o.order_id === orderId
       })
       
       if (orderData) {
-        console.log('Found matching order:', orderData)
+        console.log('Found order:', orderData)
       } else {
-        console.log('No matching order found in response')
+        console.log('Order not found in response')
       }
-
+      
       if (orderData && orderData.restaurant_id) {
         const itemsResponse = await fetch(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
         if (itemsResponse.ok) {
