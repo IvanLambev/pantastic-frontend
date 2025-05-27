@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import NotFound from '@/pages/NotFound'
 import { CartProvider } from '@/context/CartContext'
@@ -29,7 +29,7 @@ import Food from '@/pages/Food'
 import Admin from '@/pages/Admin'
 import Checkout from '@/pages/CheckoutV2'
 import RestaurantDetails from '@/pages/RestaurantDetails'
-import OrderTracking from '@/pages/OrderTracking'
+import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import Lenis from 'lenis'
 
 function useLenisSmoothScroll() {
@@ -54,7 +54,7 @@ function AppWithLenis({ children }) {
   return children
 }
 
-function MainLayout({ children }) {
+function MainLayout() {
   const { isLoggedIn, handleLogout } = useAuth()
   const { cartItems } = useCart()
   const [open, setOpen] = useState(false)
@@ -170,37 +170,6 @@ function MainLayout({ children }) {
                         </Link>
                       )}
                     </div>
-                    
-                    <div className="flex flex-col gap-2 w-full max-w-[200px] mt-4">
-                      {isLoggedIn ? (
-                        <button 
-                          onClick={() => {
-                            handleLogout()
-                            setOpen(false)
-                          }}
-                          className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9"
-                        >
-                          Logout
-                        </button>
-                      ) : (
-                        <>
-                          <Link 
-                            to="/login" 
-                            onClick={() => setOpen(false)}
-                            className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input"
-                          >
-                            Login
-                          </Link>
-                          <Link 
-                            to="/signup"
-                            onClick={() => setOpen(false)}
-                            className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9"
-                          >
-                            Sign Up
-                          </Link>
-                        </>
-                      )}
-                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
@@ -208,37 +177,31 @@ function MainLayout({ children }) {
           </div>
         </div>
       </header>
-
-      <main className="flex-1">
-       {children}
-      </main>
+      <div className="flex-1">
+        <Outlet />
+      </div>
     </div>
   )
 }
 
 function App() {
-  const { isLoggedIn } = useAuth()
-  const location = useLocation()
-  const isAdminPage = location.pathname.startsWith('/admin')
-  const content = (
-    <Routes>      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="*" element={<NotFound />} /><Route path="/about" element={<About />} />
-      <Route path="/food" element={<Food />} />      <Route path="/cart" element={<Checkout />} />
-      <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-      <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
-      {isLoggedIn && <Route path="/admin/*" element={<Admin />} />}
-    </Routes>
-  )
-
   return (
     <AppWithLenis>
       <CartProvider>
-        <SidebarProvider>
-          {isAdminPage ? content : <MainLayout>{content}</MainLayout>}
-          <Toaster />
-        </SidebarProvider>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/food" element={<Food />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/cart" element={<Checkout />} />
+            <Route path="/admin/*" element={<Admin />} />
+            <Route path="/restaurant/:id" element={<RestaurantDetails />} />            <Route path="/order-tracking-v2/:id" element={<OrderTrackingV2 />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
       </CartProvider>
     </AppWithLenis>
   )

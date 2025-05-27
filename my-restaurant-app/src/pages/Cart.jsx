@@ -62,8 +62,7 @@ const Cart = () => {
 
   const handleCheckout = async () => {
     setState(prev => ({ ...prev, isCheckingOut: true, error: null }));
-    try {      const result = await checkout();
-      // Redirect immediately after successful checkout
+    try {      const result = await checkout();      // Redirect immediately after successful checkout
       navigate(`/order-tracking-v2/${result.order_id}`);
       removeFromCart(null)
     } catch (err) {
@@ -91,10 +90,10 @@ const Cart = () => {
     removeFromCart(itemId)
     toast.info(`Removed ${itemName} from cart`)
   }
+
   const handleConfirmationClose = () => {
-    setState(prev => ({ ...prev, showConfirmation: false }));
-    if (orderDetails && orderDetails.order_id) {
-      navigate(`/order-tracking-v2/${orderDetails.order_id}`);
+    setState(prev => ({ ...prev, showConfirmation: false }))      if (orderDetails && orderDetails.order_id) {
+      navigate(`/order-tracking-v2/${orderDetails.order_id}`)
     }
   }
 

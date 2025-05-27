@@ -205,9 +205,9 @@ export default function OrderManagement() {
                       <SelectItem value="Delivered">Delivered</SelectItem>
                       <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
-                  </Select>
-                  <Button 
-                    variant="outline"                    onClick={() => window.open(`/order-tracking/${order.order_id}`, '_blank')}
+                  </Select>                  <Button 
+                    variant="outline"
+                    onClick={() => window.open(`/order-tracking-v2/${order.order_id}`, '_blank')}
                     className="w-full md:w-auto"
                   >
                     View Details
