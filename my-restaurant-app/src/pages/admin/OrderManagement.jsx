@@ -103,9 +103,11 @@ export default function OrderManagement() {
       }
 
       const response = await fetch(`${API_URL}/order/orders/status`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json'
+          
         }
       });
 
