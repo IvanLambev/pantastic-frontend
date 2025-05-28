@@ -143,8 +143,8 @@ export default function OrderTracking() {
   const handleCancelOrder = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetch(`${API_URL}/order/orders/cancel`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/order/orders`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',

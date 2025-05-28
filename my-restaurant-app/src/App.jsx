@@ -5,8 +5,14 @@ import { useAuth } from '@/context/AuthContext'
 import NotFound from '@/pages/NotFound'
 import { CartProvider } from '@/context/CartContext'
 import { useCart } from '@/hooks/use-cart'
-import { ShoppingCart, Menu } from 'lucide-react'
+import { ShoppingCart, Menu, User, LogOut } from 'lucide-react'
 import { Toaster } from "@/components/ui/sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -30,7 +36,8 @@ import Admin from '@/pages/Admin'
 import Checkout from '@/pages/CheckoutV2'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
-import Lenis from 'lenis'
+import UserDashboard from '@/pages/UserDashboard'
+import Lenis from '@studio-freight/lenis'
 
 function useLenisSmoothScroll() {
   useEffect(() => {
@@ -113,16 +120,25 @@ function MainLayout() {
                     {cartItemCount}
                   </span>
                 )}
-              </Link>
-
-              <div className="hidden md:flex items-center space-x-2">
+              </Link>              <div className="hidden md:flex items-center space-x-2">
                 {isLoggedIn ? (
-                  <button 
-                    onClick={handleLogout}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
-                  >
-                    Logout
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-full w-9 h-9 border border-input hover:bg-accent">
+                      <User className="h-5 w-5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link to="/dashboard" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span>Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
+                        <LogOut className="h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <>
                     <Link 
@@ -193,10 +209,10 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/food" element={<Food />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />            <Route path="/signup" element={<SignUp />} />
             <Route path="/cart" element={<Checkout />} />
             <Route path="/admin/*" element={<Admin />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
           </Route>
