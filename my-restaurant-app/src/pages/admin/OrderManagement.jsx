@@ -23,21 +23,49 @@ export default function OrderManagement() {
         audio.currentTime = 0;
       }
     };
-  }, []);
-
-  // Helper function to check for new orders
+  }, []);  // Helper function to check for new orders
   const checkForNewOrders = useCallback((newOrders) => {
-    const prevOrderIds = new Set(prevOrdersRef.current.map(o => o.order_id));
-    const newOrdersFound = newOrders.filter(order => !prevOrderIds.has(order.order_id));
-    
-    if (newOrdersFound.length > 0 && audioRef.current) {
-      // Play sound for new orders
-      audioRef.current.play().catch(err => console.log('Audio play failed:', err));
-      // Show toast notification
-      toast.success(`${newOrdersFound.length} new order${newOrdersFound.length > 1 ? 's' : ''} received!`);
+    if (!Array.isArray(newOrders)) {
+      console.error('Invalid orders data received:', newOrders);
+      return;
     }
     
-    prevOrdersRef.current = newOrders;
+    try {
+      // Filter out orders without IDs
+      const validNewOrders = newOrders.filter(order => order.order_id);
+      const prevOrderIds = new Set(prevOrdersRef.current.map(o => o.order_id));
+      
+      // Find new orders that weren't in the previous set
+      const newOrdersFound = validNewOrders.filter(order => !prevOrderIds.has(order.order_id));
+      
+      // Check for status changes in existing orders
+      const statusChanges = validNewOrders.filter(newOrder => {
+        const prevOrder = prevOrdersRef.current.find(o => o.order_id === newOrder.order_id);
+        return prevOrder && prevOrder.status !== newOrder.status;
+      });
+      
+      // Handle new orders
+      if (newOrdersFound.length > 0) {
+        console.log(`New orders detected (${newOrdersFound.length}):`, 
+          newOrdersFound.map(o => ({ id: o.order_id, status: o.status })));
+        
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => console.error('Audio play failed:', err));
+        }
+        
+        toast.success(`${newOrdersFound.length} new order${newOrdersFound.length > 1 ? 's' : ''} received!`);
+      }
+      
+      // Handle status changes
+      statusChanges.forEach(order => {
+        const prevOrder = prevOrdersRef.current.find(o => o.order_id === order.order_id);
+        console.log(`Order ${order.order_id} status changed: ${prevOrder?.status} -> ${order.status}`);
+      });
+      
+      prevOrdersRef.current = validNewOrders;
+    } catch (error) {
+      console.error('Error in checkForNewOrders:', error);
+    }
   }, []);
 
   const fetchItems = useCallback(async (restaurantId) => {
@@ -66,28 +94,38 @@ export default function OrderManagement() {
       setItems([]);
     }
   }, []);
-
   const fetchOrders = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      if (!user?.access_token) {
+        console.error('No access token found');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json'
         }
       });
+
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data = await response.json();
       console.log('Fetched orders:', data);
 
+      if (!Array.isArray(data)) {
+        console.error('Invalid orders data format received:', data);
+        return;
+      }
+
       // Check for new orders before updating state
       checkForNewOrders(data);
 
-      // Get restaurant ID from the first order if available
-      const firstOrder = data[0];
-      if (firstOrder && firstOrder.restaurant_id) {
-        console.log('Found restaurant ID from order:', firstOrder.restaurant_id);
-        await fetchItems(firstOrder.restaurant_id);
+      // Get restaurant ID from any order that has it
+      const orderWithRestaurantId = data.find(order => order?.restaurant_id);
+      if (orderWithRestaurantId) {
+        console.log('Found restaurant ID from order:', orderWithRestaurantId.restaurant_id);
+        await fetchItems(orderWithRestaurantId.restaurant_id);
       } else {
         // Fallback to stored restaurant ID
         const restaurantId = sessionStorage.getItem('selectedRestaurantId');
@@ -97,9 +135,28 @@ export default function OrderManagement() {
         } else {
           console.log('No restaurant ID found');
         }
-      }
-      setOrders(data);
+      }      // Filter out any orders without created_at timestamps
+      const validOrders = data.filter(order => order.created_at);
+      
+      // Sort orders by creation date, newest first
+      const sortedOrders = validOrders.sort((a, b) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        if (isNaN(dateA) || isNaN(dateB)) {
+          console.error('Invalid date found in orders:', { a: a.created_at, b: b.created_at });
+          return 0;
+        }
+        return dateB - dateA;
+      });
+      
+      setOrders(sortedOrders);
       setLoading(false);
+      
+      // Log the number of active orders
+      const activeOrders = sortedOrders.filter(order => 
+        order.status !== 'Delivered' && order.status !== 'Canceled'
+      );
+      console.log(`Active orders: ${activeOrders.length}, Total orders: ${sortedOrders.length}`);
     } catch (error) {
       console.error('Error fetching orders:', error);
       setLoading(false);
@@ -144,18 +201,22 @@ export default function OrderManagement() {
     }
     console.log('Found item:', item);
     return item[4];
-  };
-
-  useEffect(() => {
+  };  useEffect(() => {
     // Initial fetch
     fetchOrders();
     
-    // Set up polling interval (every 30 seconds)
-    const intervalId = setInterval(fetchOrders, 30000);
+    // Set up polling interval (every 5 seconds for real-time updates)
+    const intervalId = setInterval(() => {
+      console.log('Polling for new orders...');
+      fetchOrders();
+    }, 5000);
 
     // Cleanup on unmount
-    return () => clearInterval(intervalId);
-  }, [fetchOrders]); // Add fetchOrders as a dependency
+    return () => {
+      console.log('Cleaning up order polling interval');
+      clearInterval(intervalId);
+    };
+  }, [fetchOrders]);
 
   if (loading) {
     return <div>Loading orders...</div>;
