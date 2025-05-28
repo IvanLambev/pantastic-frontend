@@ -215,11 +215,10 @@ export default function OrderTracking() {
               <CardTitle>Order Details</CardTitle>
               <CardDescription>Your order information and payment details</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
+            <CardContent className="space-y-4">              <div className="flex justify-between items-center">
                 <span className="font-medium">Order ID</span>
-                <Badge variant="outline" className="font-mono">
-                  {order.order_id.substring(0, 8)}
+                <Badge variant="outline" className="font-mono text-xs">
+                  {order.order_id}
                 </Badge>
               </div>
 

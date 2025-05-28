@@ -79,12 +79,11 @@ export default function CheckoutV2() {
       })
 
       if (!response.ok) throw new Error('Failed to create order')
-      
-      const data = await response.json()
+        const data = await response.json()
       clearCart()
-      // Store order_id as a number
-      const orderId = parseInt(data.order_id, 10)
-      sessionStorage.setItem('orderId', String(orderId))
+      // Keep the full UUID for the order
+      const orderId = data.order_id
+      sessionStorage.setItem('orderId', orderId)
       toast.success('Order placed successfully!')
       navigate(`/order-tracking-v2/${orderId}`)
     } catch (error) {
