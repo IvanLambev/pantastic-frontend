@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { Routes, Route, Link, Outlet } from 'react-router-dom'
+import { Routes, Route, Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import NotFound from '@/pages/NotFound'
 import { CartProvider } from '@/context/CartContext'
@@ -38,6 +38,7 @@ import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import UserDashboard from '@/pages/UserDashboard'
 import Lenis from 'lenis'
+import { Footer } from "@/components/Footer"
 
 function useLenisSmoothScroll() {
   useEffect(() => {
@@ -65,7 +66,10 @@ function MainLayout() {
   const { isLoggedIn, handleLogout } = useAuth()
   const { cartItems } = useCart()
   const [open, setOpen] = useState(false)
+  const [showMobileUserMenu, setShowMobileUserMenu] = useState(false)
+  const location = useLocation()
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
+  const isAdminPage = location.pathname.startsWith('/admin')
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -186,6 +190,48 @@ function MainLayout() {
                         </Link>
                       )}
                     </div>
+
+                    <div className="w-full border-t pt-4 px-4">
+                      {isLoggedIn ? (
+                        <div className="flex flex-col gap-4">
+                          <Link 
+                            to="/dashboard" 
+                            onClick={() => setOpen(false)} 
+                            className="flex items-center gap-2 text-foreground hover:text-primary"
+                          >
+                            <User className="h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                          <button 
+                            onClick={() => {
+                              handleLogout();
+                              setOpen(false);
+                            }} 
+                            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            <span>Log out</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          <Link 
+                            to="/login" 
+                            onClick={() => setOpen(false)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input w-full"
+                          >
+                            Login
+                          </Link>
+                          <Link 
+                            to="/signup" 
+                            onClick={() => setOpen(false)}
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 w-full"
+                          >
+                            Sign Up
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
@@ -193,35 +239,36 @@ function MainLayout() {
           </div>
         </div>
       </header>
-      <div className="flex-1">
+
+      <main className="flex-1">
         <Outlet />
-      </div>
+      </main>
+
+      <Footer />
     </div>
   )
 }
 
-function App() {
+export default function App() {
   return (
-    <AppWithLenis>
-      <CartProvider>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/food" element={<Food />} />
-            <Route path="/login" element={<Login />} />            <Route path="/signup" element={<SignUp />} />
-            <Route path="/cart" element={<Checkout />} />
-            <Route path="/admin/*" element={<Admin />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-            <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
-          </Route>
+    <CartProvider>
+      <Routes>
+        <Route path="/" element={<AppWithLenis><MainLayout /></AppWithLenis>}>
+          <Route index element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/food" element={<Food />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/admin/*" element={<Admin />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+          <Route path="/order-tracking" element={<OrderTrackingV2 />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-      </CartProvider>
-    </AppWithLenis>
+        </Route>
+      </Routes>
+
+      <Toaster />
+    </CartProvider>
   )
 }
-
-export default App

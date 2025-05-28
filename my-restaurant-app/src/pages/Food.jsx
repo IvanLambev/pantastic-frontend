@@ -142,16 +142,42 @@ const Food = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
       {isMobile ? (
         <div className="container mx-auto px-4 py-8">
-          <div className="space-y-2">
-            <Label>Search</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search menu items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
-              />
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label>Search</Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search menu items..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Menu Items Grid */}
+            <div className="grid grid-cols-1 gap-4">
+              {filteredItems.map((item) => (
+                <Card key={item[0]} className="flex flex-row h-24">
+                  <div className="w-24 h-full">
+                    <img
+                      src={item[3] || '/elementor-placeholder-image.webp'}
+                      alt={item[4]}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardContent className="flex flex-1 justify-between items-center p-3">
+                    <div className="flex flex-col justify-center">
+                      <h3 className="font-semibold text-sm">{item[4]}</h3>
+                      <span className="font-semibold text-sm">${Number(item[5]).toFixed(2)}</span>
+                    </div>
+                    <Button size="sm" onClick={() => handleAddToCart(item)}>
+                      Add
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
