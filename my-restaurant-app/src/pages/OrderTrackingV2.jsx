@@ -97,18 +97,15 @@ export default function OrderTracking() {
           'Content-Type': 'application/json',
         }
       })
-      
-      if (!response.ok) throw new Error('Failed to fetch orders')
+        if (!response.ok) throw new Error('Failed to fetch orders')
       const orders = await response.json()
       
-      // Parse orderId as number since it comes from the API as a number
-      const searchOrderId = parseInt(orderId, 10)
-      console.log('Searching for order ID:', searchOrderId, 'Type:', typeof searchOrderId)
+      console.log('Searching for order ID:', orderId, 'Type:', typeof orderId)
       console.log('Available orders:', orders.map(o => ({ id: o.order_id, type: typeof o.order_id })))
       
       const orderData = orders.find(o => {
-        console.log(`Comparing order ${o.order_id} (${typeof o.order_id}) with ${searchOrderId} (${typeof searchOrderId})`)
-        return o.order_id === searchOrderId
+        console.log(`Comparing order ${o.order_id} (${typeof o.order_id}) with ${orderId} (${typeof orderId})`)
+        return String(o.order_id) === String(orderId)
       })
       
       if (orderData) {
