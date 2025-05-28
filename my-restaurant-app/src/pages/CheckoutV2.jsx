@@ -79,13 +79,14 @@ export default function CheckoutV2() {
       })
 
       if (!response.ok) throw new Error('Failed to create order')
-        const data = await response.json()
+      
+      const data = await response.json()
+      if (!data.order_id) throw new Error('No order ID received')
+      
       clearCart()
-      // Keep the full UUID for the order
-      const orderId = data.order_id
-      sessionStorage.setItem('orderId', orderId)
       toast.success('Order placed successfully!')
-      navigate(`/order-tracking-v2/${orderId}`)
+      // Navigate using the complete UUID without any parsing
+      navigate(`/order-tracking-v2/${data.order_id}`)
     } catch (error) {
       console.error('Error during checkout:', error)
       toast.error(error.message || 'Failed to place order')
