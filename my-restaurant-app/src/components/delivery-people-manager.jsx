@@ -27,16 +27,6 @@ import {
 import { MoreVertical, Pencil, Trash2, UserPlus } from "lucide-react"
 
 export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }) {
-  // If deliveryPeople is an array of arrays, map to objects for easier use
-  const normalizedDeliveryPeople = Array.isArray(deliveryPeople) && deliveryPeople.length > 0 && Array.isArray(deliveryPeople[0])
-    ? deliveryPeople.map(arr => ({
-        delivery_person_id: arr[0],
-        created_at: arr[1],
-        name: arr[2],
-        phone: arr[3],
-      }))
-    : deliveryPeople;
-
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -159,8 +149,6 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
       console.error('Error unassigning delivery person:', err)
     }
   }
-  // Debug log to see the delivery people data
-  console.log('Delivery People Data:', deliveryPeople)
 
   return (
     <div className="space-y-4">
@@ -173,7 +161,7 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {normalizedDeliveryPeople.map((person) => (
+        {deliveryPeople.map((person) => (
           <Card key={person.delivery_person_id}>
             <CardHeader className="relative">
               <CardTitle>{person.name}</CardTitle>

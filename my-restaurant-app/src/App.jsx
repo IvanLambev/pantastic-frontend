@@ -197,7 +197,8 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/cart" element={<Checkout />} />
             <Route path="/admin/*" element={<Admin />} />
-            <Route path="/restaurant/:id" element={<RestaurantDetails />} />            <Route path="/order-tracking-v2/:id" element={<OrderTrackingV2 />} />
+            <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+            <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
