@@ -11,8 +11,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  build: {
+  },  build: {
     rollupOptions: {
       output: {
         manualChunks: {
@@ -24,7 +23,8 @@ export default defineConfig({
             '@radix-ui/react-tabs'
           ],
           'chart-vendor': ['recharts', 'd3-scale', 'd3-array'],
-          'icons': ['lucide-react', '@tabler/icons-react']
+          'icons': ['lucide-react', '@tabler/icons-react'],
+          'scroll': ['lenis']
         }
       }
     },

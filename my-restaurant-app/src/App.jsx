@@ -37,7 +37,7 @@ import Checkout from '@/pages/CheckoutV2'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import UserDashboard from '@/pages/UserDashboard'
-import Lenis from '@studio-freight/lenis'
+import Lenis from 'lenis'
 
 function useLenisSmoothScroll() {
   useEffect(() => {
