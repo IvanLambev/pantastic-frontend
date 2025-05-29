@@ -67,7 +67,7 @@ const Home = () => {
   return (
     <>
       <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-        <DialogContent className="sm:max-w-[800px]"> {/* Increased width for better layout */}
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto"> {/* Added max height and scroll */}
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
           </DialogHeader>
@@ -81,15 +81,15 @@ const Home = () => {
                 <Button
                   key={restaurant[0]}
                   variant="outline"
-                  className="w-full p-6 h-auto hover:bg-gray-100"
+                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
                   onClick={() => handleRestaurantSelect(restaurant)}
                 >
-                  <div className="flex justify-between items-start w-full">
-                    <div className="flex flex-col items-start gap-2">
-                      <span className="text-xl font-bold text-left">{restaurant[6]}</span>
+                  <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
+                    <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
+                      <span className="text-lg sm:text-xl font-bold text-left">{restaurant[6]}</span>
                       <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
                     </div>
-                    <div className="text-sm text-gray-600 text-right">
+                    <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
                       {Object.entries(restaurant[7]).map(([day, hours]) => (
                         <div key={day} className="whitespace-nowrap">
                           <span className="font-medium">{day}:</span> {hours}
