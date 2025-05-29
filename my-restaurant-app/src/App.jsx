@@ -75,21 +75,12 @@ function MainLayout() {
     <div className="relative min-h-screen flex flex-col">
       <header className="sticky top-0 w-full border-b bg-background z-50">
         <div className="container">
-          <div className="flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
+          <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <img src="/logo.webp" alt="Logo" className="h-8 w-auto" />
-              {/* Show cart on mobile when items exist */}
-              {cartItemCount > 0 && (
-                <Link to="/cart" className="relative md:hidden ml-4">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                </Link>
-              )}
             </div>
 
-            <NavigationMenu className="hidden md:flex mx-auto">
+            <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
@@ -116,7 +107,18 @@ function MainLayout() {
               </NavigationMenuList>
             </NavigationMenu>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
+              {/* Cart icon for mobile */}
+              {cartItemCount > 0 && (
+                <Link to="/cart" className="relative md:hidden">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                </Link>
+              )}
+
+              {/* Desktop cart and user menu */}
               <Link to="/cart" className="relative hidden md:inline-flex">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
@@ -124,7 +126,9 @@ function MainLayout() {
                     {cartItemCount}
                   </span>
                 )}
-              </Link>              <div className="hidden md:flex items-center space-x-2">
+              </Link>
+              
+              <div className="hidden md:flex items-center space-x-2">
                 {isLoggedIn ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-full w-9 h-9 border border-input hover:bg-accent">
@@ -161,13 +165,14 @@ function MainLayout() {
                 )}
               </div>
 
+              {/* Mobile menu button - now last item */}
               <Sheet open={open} onOpenChange={setOpen}>
                 <SheetTrigger asChild className="md:hidden">
                   <button>
                     <Menu className="h-6 w-6" />
                   </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-full flex flex-col">
+                <SheetContent side="right" className="w-full flex flex-col">
                   <SheetHeader className="text-center border-b pb-4">
                     <div className="flex justify-center">
                       <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain" />
