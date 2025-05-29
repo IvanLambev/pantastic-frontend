@@ -89,31 +89,18 @@ export default function OrderTracking() {
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      console.log('Fetching orders with user token:', user.access_token ? '[PRESENT]' : '[MISSING]')
+      console.log('Fetching order with ID:', orderId)
       
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetch(`${API_URL}/order/orders/${orderId}`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         }
       })
-        if (!response.ok) throw new Error('Failed to fetch orders')
-      const orders = await response.json()
-      
-      console.log('Searching for order ID:', orderId, 'Type:', typeof orderId)
-      console.log('Available orders:', orders.map(o => ({ id: o.order_id, type: typeof o.order_id })))
-      
-      const orderData = orders.find(o => {
-        console.log(`Comparing order ${o.order_id} (${typeof o.order_id}) with ${orderId} (${typeof orderId})`)
-        return String(o.order_id) === String(orderId)
-      })
-      
-      if (orderData) {
-        console.log('Found matching order:', orderData)
-      } else {
-        console.log('No matching order found in response')
-      }
 
+      if (!response.ok) throw new Error('Failed to fetch order')
+      const orderData = await response.json()
+      
       if (orderData && orderData.restaurant_id) {
         const itemsResponse = await fetch(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
         if (itemsResponse.ok) {

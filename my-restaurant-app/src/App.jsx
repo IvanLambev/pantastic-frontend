@@ -262,7 +262,7 @@ export default function App() {
           <Route path="/admin/*" element={<Admin />} />
           <Route path="/cart" element={<Checkout />} />
           <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-          <Route path="/order-tracking" element={<OrderTrackingV2 />} />
+          <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Route>
