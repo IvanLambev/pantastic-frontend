@@ -66,192 +66,197 @@ function MainLayout() {
   const { isLoggedIn, handleLogout } = useAuth()
   const { cartItems } = useCart()
   const [open, setOpen] = useState(false)
-  const [showMobileUserMenu, setShowMobileUserMenu] = useState(false)
   const location = useLocation()
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
   const isAdminPage = location.pathname.startsWith('/admin')
 
   return (
-    <div className="relative min-h-screen flex flex-col">      <header className="sticky top-0 w-full border-b bg-background z-50">
-        <div className="container">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center">
-              <img src="/logo.webp" alt="Logo" className="h-8 w-auto" />
-            </div>
+    <div className="relative min-h-screen flex flex-col">
+      {!isAdminPage ? (
+        <>
+          <header className="sticky top-0 w-full border-b bg-background z-50">
+            <div className="container">
+              <div className="flex h-16 items-center justify-between">
+                <div className="flex items-center">
+                  <img src="/logo.webp" alt="Logo" className="h-8 w-auto" />
+                </div>
 
-            {!isAdminPage && (
-              <NavigationMenu className="hidden md:flex">
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link to="/">Home</Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link to="/about">About</Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink asChild>
-                      <Link to="/food">Food</Link>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                  {isLoggedIn && (
+                <NavigationMenu className="hidden md:flex">
+                  <NavigationMenuList>
                     <NavigationMenuItem>
                       <NavigationMenuLink asChild>
-                        <Link to="/admin">Admin</Link>
+                        <Link to="/">Home</Link>
                       </NavigationMenuLink>
                     </NavigationMenuItem>
-                  )}
-                </NavigationMenuList>
-              </NavigationMenu>
-            )}
-
-            <div className="flex items-center gap-4">
-              {/* Cart icon for mobile */}
-              {cartItemCount > 0 && (
-                <Link to="/cart" className="relative md:hidden">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                </Link>
-              )}
-
-              {/* Desktop cart and user menu */}
-              <Link to="/cart" className="relative hidden md:inline-flex">
-                <ShoppingCart className="h-5 w-5" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Link>
-              
-              <div className="hidden md:flex items-center space-x-2">
-                {isLoggedIn ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-full w-9 h-9 border border-input hover:bg-accent">
-                      <User className="h-5 w-5" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link to="/dashboard" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
-                        <LogOut className="h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <>
-                    <Link 
-                      to="/login"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input"
-                    >
-                      Login
-                    </Link>
-                    <Link 
-                      to="/signup"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
-                    >
-                      Sign Up
-                    </Link>
-                  </>
-                )}
-              </div>
-
-              {/* Mobile menu button - now last item */}
-              <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <button>
-                    <Menu className="h-6 w-6" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full flex flex-col">
-                  <SheetHeader className="text-center border-b pb-4">
-                    <div className="flex justify-center">
-                      <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain" />
-                    </div>
-                  </SheetHeader>
-                  <div className="flex flex-col items-center gap-6 mt-8">                    {!isAdminPage && (
-                      <div className="flex flex-col items-center gap-4">
-                        <Link to="/" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                          Home
-                        </Link>
-                        <Link to="/about" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                          About
-                        </Link>
-                        <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                          Food
-                        </Link>
-                        {isLoggedIn && (
-                          <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                            Admin
-                          </Link>
-                        )}
-                      </div>
+                    <NavigationMenuItem>
+                      <NavigationMenuLink asChild>
+                        <Link to="/about">About</Link>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                      <NavigationMenuLink asChild>
+                        <Link to="/food">Food</Link>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    {isLoggedIn && (
+                      <NavigationMenuItem>
+                        <NavigationMenuLink asChild>
+                          <Link to="/admin">Admin</Link>
+                        </NavigationMenuLink>
+                      </NavigationMenuItem>
                     )}
+                  </NavigationMenuList>
+                </NavigationMenu>
 
-                    <div className="w-full border-t pt-4 px-4">
-                      {isLoggedIn ? (
-                        <div className="flex flex-col gap-4">
-                          <Link 
-                            to="/dashboard" 
-                            onClick={() => setOpen(false)} 
-                            className="flex items-center gap-2 text-foreground hover:text-primary"
-                          >
-                            <User className="h-4 w-4" />
-                            <span>Dashboard</span>
-                          </Link>
-                          <button 
-                            onClick={() => {
-                              handleLogout();
-                              setOpen(false);
-                            }} 
-                            className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                          >
+                <div className="flex items-center gap-4">
+                  {/* Cart icon for mobile */}
+                  {cartItemCount > 0 && (
+                    <Link to="/cart" className="relative md:hidden">
+                      <ShoppingCart className="h-5 w-5" />
+                      <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
+                        {cartItemCount}
+                      </span>
+                    </Link>
+                  )}
+
+                  {/* Desktop cart and user menu */}
+                  <Link to="/cart" className="relative hidden md:inline-flex">
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartItemCount > 0 && (
+                      <span className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
+                        {cartItemCount}
+                      </span>
+                    )}
+                  </Link>
+                  
+                  <div className="hidden md:flex items-center space-x-2">
+                    {isLoggedIn ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-full w-9 h-9 border border-input hover:bg-accent">
+                          <User className="h-5 w-5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link to="/dashboard" className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>Dashboard</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
                             <LogOut className="h-4 w-4" />
                             <span>Log out</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <Link 
-                            to="/login" 
-                            onClick={() => setOpen(false)}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input w-full"
-                          >
-                            Login
-                          </Link>
-                          <Link 
-                            to="/signup" 
-                            onClick={() => setOpen(false)}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 w-full"
-                          >
-                            Sign Up
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <>
+                        <Link 
+                          to="/login"
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input"
+                        >
+                          Login
+                        </Link>
+                        <Link 
+                          to="/signup"
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
+                        >
+                          Sign Up
+                        </Link>
+                      </>
+                    )}
                   </div>
-                </SheetContent>
-              </Sheet>
+
+                  {/* Mobile menu button */}
+                  <Sheet open={open} onOpenChange={setOpen}>
+                    <SheetTrigger asChild className="md:hidden">
+                      <button>
+                        <Menu className="h-6 w-6" />
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-full flex flex-col">
+                      <SheetHeader className="text-center border-b pb-4">
+                        <div className="flex justify-center">
+                          <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain" />
+                        </div>
+                      </SheetHeader>
+                      <div className="flex flex-col items-center gap-6 mt-8">
+                        <div className="flex flex-col items-center gap-4">
+                          <Link to="/" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                            Home
+                          </Link>
+                          <Link to="/about" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                            About
+                          </Link>
+                          <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                            Food
+                          </Link>
+                          {isLoggedIn && (
+                            <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                              Admin
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className="w-full border-t pt-4 px-4">
+                          {isLoggedIn ? (
+                            <div className="flex flex-col gap-4">
+                              <Link 
+                                to="/dashboard" 
+                                onClick={() => setOpen(false)} 
+                                className="flex items-center gap-2 text-foreground hover:text-primary"
+                              >
+                                <User className="h-4 w-4" />
+                                <span>Dashboard</span>
+                              </Link>
+                              <button 
+                                onClick={() => {
+                                  handleLogout();
+                                  setOpen(false);
+                                }} 
+                                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                              >
+                                <LogOut className="h-4 w-4" />
+                                <span>Log out</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-4">
+                              <Link 
+                                to="/login" 
+                                onClick={() => setOpen(false)}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input w-full"
+                              >
+                                Login
+                              </Link>
+                              <Link 
+                                to="/signup" 
+                                onClick={() => setOpen(false)}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 w-full"
+                              >
+                                Sign Up
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </header>
+          </header>
 
-      <main className="flex-1">
-        <Outlet />
-      </main>
+          <main className="flex-1">
+            <Outlet />
+          </main>
 
-      <Footer />
+          <Footer />
+        </>
+      ) : (
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      )}
     </div>
   )
 }
