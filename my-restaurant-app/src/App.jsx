@@ -72,40 +72,41 @@ function MainLayout() {
   const isAdminPage = location.pathname.startsWith('/admin')
 
   return (
-    <div className="relative min-h-screen flex flex-col">
-      <header className="sticky top-0 w-full border-b bg-background z-50">
+    <div className="relative min-h-screen flex flex-col">      <header className="sticky top-0 w-full border-b bg-background z-50">
         <div className="container">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <img src="/logo.webp" alt="Logo" className="h-8 w-auto" />
             </div>
 
-            <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/">Home</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/about">About</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link to="/food">Food</Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                {isLoggedIn && (
+            {!isAdminPage && (
+              <NavigationMenu className="hidden md:flex">
+                <NavigationMenuList>
                   <NavigationMenuItem>
                     <NavigationMenuLink asChild>
-                      <Link to="/admin">Admin</Link>
+                      <Link to="/">Home</Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link to="/about">About</Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild>
+                      <Link to="/food">Food</Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                  {isLoggedIn && (
+                    <NavigationMenuItem>
+                      <NavigationMenuLink asChild>
+                        <Link to="/admin">Admin</Link>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  )}
+                </NavigationMenuList>
+              </NavigationMenu>
+            )}
 
             <div className="flex items-center gap-4">
               {/* Cart icon for mobile */}
@@ -178,23 +179,24 @@ function MainLayout() {
                       <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain" />
                     </div>
                   </SheetHeader>
-                  <div className="flex flex-col items-center gap-6 mt-8">
-                    <div className="flex flex-col items-center gap-4">
-                      <Link to="/" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        Home
-                      </Link>
-                      <Link to="/about" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        About
-                      </Link>
-                      <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        Food
-                      </Link>
-                      {isLoggedIn && (
-                        <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                          Admin
+                  <div className="flex flex-col items-center gap-6 mt-8">                    {!isAdminPage && (
+                      <div className="flex flex-col items-center gap-4">
+                        <Link to="/" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                          Home
                         </Link>
-                      )}
-                    </div>
+                        <Link to="/about" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                          About
+                        </Link>
+                        <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                          Food
+                        </Link>
+                        {isLoggedIn && (
+                          <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
+                            Admin
+                          </Link>
+                        )}
+                      </div>
+                    )}
 
                     <div className="w-full border-t pt-4 px-4">
                       {isLoggedIn ? (
