@@ -259,9 +259,8 @@ export default function App() {
           <Route path="/food" element={<Food />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/cart" element={<CartProvider><Cart /></CartProvider>} />
           <Route path="/admin/*" element={<Admin />} />
-          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/cart" element={<Checkout />} />
           <Route path="/restaurant/:id" element={<RestaurantDetails />} />
           <Route path="/order-tracking" element={<OrderTrackingV2 />} />
           <Route path="/dashboard" element={<UserDashboard />} />
