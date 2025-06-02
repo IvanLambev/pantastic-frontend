@@ -22,8 +22,10 @@ import AboutUs from "@/components/about-us"
 
 const Home = () => {
   const [api, setApi] = useState(null)
-  const [showRestaurantModal, setShowRestaurantModal] = useState(true)
+  const [showCityModal, setShowCityModal] = useState(true)
+  const [showRestaurantModal, setShowRestaurantModal] = useState(false)
   const [restaurants, setRestaurants] = useState([])
+  const [selectedCity, setSelectedCity] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -55,21 +57,66 @@ const Home = () => {
     if (!selectedRestaurant) {
       fetchRestaurants()
     } else {
+      setShowCityModal(false)
       setShowRestaurantModal(false)
     }
   }, [])
+
+  const handleCitySelect = (city) => {
+    setSelectedCity(city)
+    setShowCityModal(false)
+    setShowRestaurantModal(true)
+  }
 
   const handleRestaurantSelect = (restaurant) => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setShowRestaurantModal(false)
   }
 
+  // Get unique cities from restaurants
+  const cities = [...new Set(restaurants.map(restaurant => restaurant[2]))].sort()
+
+  // Filter restaurants by selected city
+  const filteredRestaurants = selectedCity 
+    ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
+    : restaurants
+
   return (
     <>
-      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto"> {/* Added max height and scroll */}
+      {/* City Selection Modal */}
+      <Dialog open={showCityModal} onOpenChange={setShowCityModal}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {loading ? (
+              <p className="text-center">Loading cities...</p>
+            ) : error ? (
+              <p className="text-red-500 text-center">{error}</p>
+            ) : (
+              cities.map((city) => (
+                <Button
+                  key={city}
+                  variant="outline"
+                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
+                  onClick={() => handleCitySelect(city)}
+                >
+                  <span className="text-lg sm:text-xl font-bold">{city}</span>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restaurant Selection Modal */}
+      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Select a Restaurant in {selectedCity}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {loading ? (
@@ -77,7 +124,7 @@ const Home = () => {
             ) : error ? (
               <p className="text-red-500 text-center">{error}</p>
             ) : (
-              restaurants.map((restaurant) => (
+              filteredRestaurants.map((restaurant) => (
                 <Button
                   key={restaurant[0]}
                   variant="outline"
@@ -86,11 +133,11 @@ const Home = () => {
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                     <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                      <span className="text-lg sm:text-xl font-bold text-left">{restaurant[6]}</span>
+                      <span className="text-lg sm:text-xl font-bold text-left">{restaurant[7]}</span>
                       <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
                     </div>
                     <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
-                      {Object.entries(restaurant[7]).map(([day, hours]) => (
+                      {Object.entries(restaurant[8]).map(([day, hours]) => (
                         <div key={day} className="whitespace-nowrap">
                           <span className="font-medium">{day}:</span> {hours}
                         </div>
