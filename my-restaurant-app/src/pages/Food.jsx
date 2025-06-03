@@ -26,49 +26,83 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const Food = () => {
-  const [items, setItems] = useState([])
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [showCityModal, setShowCityModal] = useState(true)
   const [showRestaurantModal, setShowRestaurantModal] = useState(false)
   const [restaurants, setRestaurants] = useState([])
-  const [loadingRestaurants, setLoadingRestaurants] = useState(false)
-  const [restaurantError, setRestaurantError] = useState(null)
-  const [currentRestaurant, setCurrentRestaurant] = useState(null)
+  const [selectedCity, setSelectedCity] = useState(null)
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [items, setItems] = useState([])
   const [priceRange, setPriceRange] = useState([0, 100])
   const [category, setCategory] = useState("all")
   const [sortBy, setSortBy] = useState("default")
-  
   const { addToCart } = useCart()
+  const isMobile = window.innerWidth <= 768
 
   useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await fetch(`${API_URL}/restaurant/restaurants`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurants')
+        }
+        const data = await response.json()
+        setRestaurants(data)
+      } catch (err) {
+        setError(err.message)
+        console.error('Error fetching restaurants:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Check if restaurant is already selected
     const savedRestaurant = sessionStorage.getItem('selectedRestaurant')
     if (savedRestaurant) {
       const restaurant = JSON.parse(savedRestaurant)
-      setCurrentRestaurant(restaurant)
+      setSelectedRestaurant(restaurant)
+      setSelectedCity(restaurant[2]) // Set the city from the saved restaurant
+      setShowCityModal(false)
+      setShowRestaurantModal(false)
       fetchItems(restaurant[0])
     } else {
-      setShowRestaurantModal(true)
       fetchRestaurants()
+      setShowCityModal(true)
     }
   }, [])
 
-  const fetchRestaurants = async () => {
-    setLoadingRestaurants(true)
-    try {
-      const response = await fetch(`${API_URL}/restaurant/restaurants`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch restaurants')
-      }
-      const data = await response.json()
-      setRestaurants(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch restaurants'
-      setRestaurantError(errorMessage)
-      console.error('Error fetching restaurants:', err)
-    } finally {
-      setLoadingRestaurants(false)
-    }
+  // Get unique cities from restaurants
+  const cities = [...new Set(restaurants.map(restaurant => restaurant[2]))].sort()
+
+  // Filter restaurants by selected city
+  const filteredRestaurants = selectedCity 
+    ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
+    : restaurants
+
+  const handleCitySelect = (city) => {
+    setSelectedCity(city)
+    setShowCityModal(false)
+    setShowRestaurantModal(true)
+  }
+
+  const handleRestaurantSelect = (restaurant) => {
+    setSelectedRestaurant(restaurant)
+    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
+    setShowRestaurantModal(false)
+    fetchItems(restaurant[0])
+  }
+
+  const handleChangeSelection = () => {
+    setShowCityModal(true)
+    setSelectedCity(null)
+  }
+
+  const handleBackToCity = () => {
+    setShowRestaurantModal(false)
+    setShowCityModal(true)
+    setSelectedCity(null)
   }
 
   const fetchItems = async (restaurantId) => {
@@ -87,13 +121,6 @@ const Food = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleRestaurantSelect = (restaurant) => {
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
-    setCurrentRestaurant(restaurant)
-    setShowRestaurantModal(false)
-    fetchItems(restaurant[0])
   }
 
   const handleAddToCart = (item) => {
@@ -128,18 +155,110 @@ const Food = () => {
     }
   })
 
-  const isMobile = window.innerWidth <= 768;
-
-  if (loading && !showRestaurantModal) {
+  if (loading && !showCityModal && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
   }
 
-  if (error && !showRestaurantModal) {
+  if (error && !showCityModal && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center text-red-500 p-4 pb-32">{error}</div>
   }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
+      {/* City Selection Modal */}
+      <Dialog open={showCityModal} onOpenChange={setShowCityModal}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {loading ? (
+              <p className="text-center">Loading cities...</p>
+            ) : error ? (
+              <p className="text-red-500 text-center">{error}</p>
+            ) : (
+              cities.map((city) => (
+                <Button
+                  key={city}
+                  variant="outline"
+                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
+                  onClick={() => handleCitySelect(city)}
+                >
+                  <span className="text-lg sm:text-xl font-bold">{city}</span>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restaurant Selection Modal */}
+      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row justify-between items-center">
+            <DialogTitle className="text-2xl font-bold">
+              Select a Restaurant in {selectedCity}
+            </DialogTitle>
+            <Button 
+              variant="outline" 
+              onClick={handleBackToCity}
+            >
+              Change City
+            </Button>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {loading ? (
+              <p className="text-center">Loading restaurants...</p>
+            ) : error ? (
+              <p className="text-red-500 text-center">{error}</p>
+            ) : (
+              filteredRestaurants.map((restaurant) => (
+                <Button
+                  key={restaurant[0]}
+                  variant="outline"
+                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
+                  onClick={() => handleRestaurantSelect(restaurant)}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
+                    <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
+                      <span className="text-lg sm:text-xl font-bold text-left">{restaurant[7]}</span>
+                      <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
+                      {Object.entries(restaurant[8]).map(([day, hours]) => (
+                        <div key={day} className="whitespace-nowrap">
+                          <span className="font-medium">{day}:</span> {hours}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Selected Restaurant Banner */}
+      {selectedRestaurant && (
+        <div className="bg-background border-b">
+          <div className="container mx-auto px-4 py-4">
+            <Button
+              variant="outline"
+              onClick={handleChangeSelection}
+              className="w-full flex justify-between items-center p-4"
+            >
+              <div className="flex flex-col items-start">
+                <span className="font-bold text-lg">{selectedRestaurant[7]}</span>
+                <span className="text-sm text-muted-foreground">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
+              </div>
+              <span className="text-sm text-primary">Change Restaurant</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Food page content */}
       {isMobile ? (
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
@@ -183,42 +302,6 @@ const Food = () => {
         </div>
       ) : (
         <>
-          <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-            <DialogContent className="sm:max-w-[800px]">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold">Select a Restaurant</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                {loadingRestaurants ? (
-                  <div className="text-center col-span-2">Loading restaurants...</div>
-                ) : restaurantError ? (
-                  <div className="text-center text-red-500 col-span-2">{restaurantError}</div>
-                ) : (
-                  restaurants.map((restaurant) => (
-                    <Button
-                      key={restaurant[0]}
-                      variant="outline"
-                      className="h-full p-4 flex flex-col items-start justify-start"
-                      onClick={() => handleRestaurantSelect(restaurant)}
-                    >
-                      <div className="text-left">
-                        <h3 className="font-semibold mb-2">{restaurant[6]}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{restaurant[1]}</p>
-                        <div className="grid grid-cols-1 gap-1 text-sm">
-                          {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
-                            <div key={day} className="flex justify-between">
-                              <span className="font-medium">{day}:</span> {hours}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </Button>
-                  ))
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
           <div className="container mx-auto px-4 py-8 mt-16 pb-32">
             <div className="flex flex-col lg:flex-row gap-8">
               <div className="w-full lg:w-64 space-y-8">

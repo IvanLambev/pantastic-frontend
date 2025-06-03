@@ -110,13 +110,22 @@ const Home = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Restaurant Selection Modal */}
-      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
+      {/* Restaurant Selection Modal */}      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="flex flex-row justify-between items-center">
             <DialogTitle className="text-2xl font-bold">
               Select a Restaurant in {selectedCity}
             </DialogTitle>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRestaurantModal(false)
+                setShowCityModal(true)
+                setSelectedCity(null)
+              }}
+            >
+              Change City
+            </Button>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {loading ? (
