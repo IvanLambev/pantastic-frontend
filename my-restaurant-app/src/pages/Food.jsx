@@ -86,17 +86,33 @@ const Food = () => {
     setShowCityModal(false)
     setShowRestaurantModal(true)
   }
-
   const handleRestaurantSelect = (restaurant) => {
     setSelectedRestaurant(restaurant)
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setShowRestaurantModal(false)
     fetchItems(restaurant[0])
   }
-
-  const handleChangeSelection = () => {
-    setShowCityModal(true)
-    setSelectedCity(null)
+  
+  const handleChangeSelection = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/restaurant/restaurants`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch restaurants')
+      }
+      const data = await response.json()
+      setRestaurants(data)
+      setSelectedRestaurant(null)
+      sessionStorage.removeItem('selectedRestaurant')
+      setShowCityModal(true)
+      setSelectedCity(null)
+      setItems([]) // Clear menu items when changing restaurant
+    } catch (err) {
+      setError(err.message)
+      console.error('Error fetching restaurants:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleBackToCity = () => {
