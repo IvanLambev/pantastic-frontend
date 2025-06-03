@@ -253,22 +253,20 @@ const Food = () => {
             )}
           </div>
         </DialogContent>
-      </Dialog>
-
-      {/* Selected Restaurant Banner */}
+      </Dialog>      {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
             <Button
               variant="outline"
               onClick={handleChangeSelection}
-              className="w-full flex justify-between items-center p-4"
+              className="w-full min-h-[4rem] flex justify-between items-center px-6 py-3 gap-4"
             >
-              <div className="flex flex-col items-start">
-                <span className="font-bold text-lg">{selectedRestaurant[7]}</span>
-                <span className="text-sm text-muted-foreground">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
+              <div className="flex flex-col items-start min-w-0">
+                <span className="font-bold text-lg truncate w-full">{selectedRestaurant[7]}</span>
+                <span className="text-sm text-muted-foreground truncate w-full">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
               </div>
-              <span className="text-sm text-primary">Change Restaurant</span>
+              <span className="text-sm text-primary whitespace-nowrap shrink-0">Change Restaurant</span>
             </Button>
           </div>
         </div>
