@@ -210,9 +210,14 @@ export default function CheckoutV2() {
               <CardContent className="space-y-4">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium">{item.name}</div>
+                    <div>                      <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-muted-foreground">Qty: {item.quantity}</div>
+                      {item.specialInstructions && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          <span className="font-medium">Instructions: </span>
+                          {item.specialInstructions}
+                        </div>
+                      )}
                     </div>
                     <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
                   </div>

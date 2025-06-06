@@ -92,7 +92,8 @@ const Cart = () => {
   }
 
   const handleConfirmationClose = () => {
-    setState(prev => ({ ...prev, showConfirmation: false }))      if (orderDetails && orderDetails.order_id) {
+    setState(prev => ({ ...prev, showConfirmation: false }))
+    if (orderDetails && orderDetails.order_id) {
       navigate(`/order-tracking-v2/${orderDetails.order_id}`)
     }
   }
@@ -142,8 +143,13 @@ const Cart = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                  <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
+                  </div>                  <p className="text-muted-foreground text-sm mb-2">{item.description}</p>
+                  {item.specialInstructions && (
+                    <div className="text-sm mb-4">
+                      <span className="font-semibold">Special Instructions: </span>
+                      <span className="text-muted-foreground">{item.specialInstructions}</span>
+                    </div>
+                  )}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-2">
                       <Button

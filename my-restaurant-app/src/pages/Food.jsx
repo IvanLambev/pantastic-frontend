@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
@@ -26,11 +27,13 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const Food = () => {
+  const navigate = useNavigate()
   const [showCityModal, setShowCityModal] = useState(true)
   const [showRestaurantModal, setShowRestaurantModal] = useState(false)
   const [restaurants, setRestaurants] = useState([])
   const [selectedCity, setSelectedCity] = useState(null)
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
+  const [restaurantId, setRestaurantId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -82,12 +85,14 @@ const Food = () => {
     : restaurants
 
   const handleCitySelect = (city) => {
-    setSelectedCity(city)
-    setShowCityModal(false)
-    setShowRestaurantModal(true)
-  }
+    setSelectedCity(city);
+    setShowCityModal(false);
+    setShowRestaurantModal(true);
+  };
+
   const handleRestaurantSelect = (restaurant) => {
     setSelectedRestaurant(restaurant)
+    setRestaurantId(restaurant[0])
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setShowRestaurantModal(false)
     fetchItems(restaurant[0])
@@ -187,8 +192,7 @@ const Food = () => {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {loading ? (
+          <div className="grid gap-4 py-4">            {loading ? (
               <p className="text-center">Loading cities...</p>
             ) : error ? (
               <p className="text-red-500 text-center">{error}</p>
@@ -250,10 +254,11 @@ const Food = () => {
                   </div>
                 </Button>
               ))
-            )}
-          </div>
+            )}          </div>
         </DialogContent>
-      </Dialog>      {/* Selected Restaurant Banner */}
+      </Dialog>
+
+      {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
@@ -300,14 +305,22 @@ const Food = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <CardContent className="flex flex-1 justify-between items-center p-3">
-                    <div className="flex flex-col justify-center">
+                  <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
                       <h3 className="font-semibold text-sm">{item[4]}</h3>
                       <span className="font-semibold text-sm">${Number(item[5]).toFixed(2)}</span>
                     </div>
-                    <Button size="sm" onClick={() => handleAddToCart(item)}>
-                      Add
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate(`/restaurants/${selectedRestaurant[0]}/items/${item[0]}`)}
+                      >
+                        Options
+                      </Button>
+                      <Button size="sm" onClick={() => handleAddToCart(item)}>
+                        Add
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -408,9 +421,18 @@ const Food = () => {
                         <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
                         <div className="flex justify-between items-start">
                           <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
-                          <Button size="sm" onClick={() => handleAddToCart(item)}>
-                            Add to Cart
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/restaurants/${selectedRestaurant[0]}/items/${item[0]}`)}
+                            >
+                              Options
+                            </Button>
+                            <Button size="sm" onClick={() => handleAddToCart(item)}>
+                              Add to Cart
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

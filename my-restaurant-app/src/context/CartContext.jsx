@@ -67,11 +67,13 @@ export const CartProvider = ({ children }) => {
 
       if (!user?.access_token || !restaurant?.[0]) {
         throw new Error('User not logged in or no restaurant selected')
-      }
-
-      const products = {}
+      }      const products = {}
+      const instructions = {}
       cartItems.forEach(item => {
         products[item.id] = item.quantity
+        if (item.specialInstructions) {
+          instructions[item.id] = item.specialInstructions
+        }
       })
 
       const response = await fetch(`${API_URL}/order/orders`, {
@@ -79,10 +81,10 @@ export const CartProvider = ({ children }) => {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        },        body: JSON.stringify({
           restaurant_id: restaurant[0],
           products,
+          instructions,
           payment_method: 'card',
           delivery_method: 'pickup',
           address: restaurant[1] // Adding restaurant address for pickup orders
@@ -105,11 +107,14 @@ export const CartProvider = ({ children }) => {
   const updateOrder = async (newItems) => {
     if (!orderId) return
 
-    try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+    try {      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       const products = {}
+      const instructions = {}
       newItems.forEach(item => {
         products[item.id] = item.quantity
+        if (item.specialInstructions) {
+          instructions[item.id] = item.specialInstructions
+        }
       })
 
       const response = await fetch(`${API_URL}/order/orders`, {
@@ -117,10 +122,10 @@ export const CartProvider = ({ children }) => {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        },        body: JSON.stringify({
           order_id: orderId,
           products,
+          instructions,
           delivery_method: 'pickup'
         })
       })

@@ -236,11 +236,18 @@ export default function OrderTracking() {
 
               <div>
                 <h4 className="font-medium mb-2">Order Items</h4>
-                <div className="space-y-2">
-                  {order.products && Object.entries(order.products).map(([productId, quantity]) => (
-                    <div key={productId} className="flex justify-between text-sm text-muted-foreground">
-                      <span>{getItemNameById(productId)}</span>
-                      <span>x{quantity}</span>
+                <div className="space-y-2">                  {order.products && Object.entries(order.products).map(([productId, quantity]) => (
+                    <div key={productId} className="space-y-1">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>{getItemNameById(productId)}</span>
+                        <span>x{quantity}</span>
+                      </div>
+                      {order.instructions?.[productId] && (
+                        <div className="text-sm text-muted-foreground pl-4">
+                          <span className="font-medium">Instructions: </span>
+                          {order.instructions[productId]}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
