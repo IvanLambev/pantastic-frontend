@@ -54,15 +54,15 @@ export default function ItemDetails() {
     sessionStorage.setItem(`item-instructions-${itemId}`, specialInstructions)
 
     addToCart({
-      id: item[0],
-      name: item[4],
-      price: item[5],
-      image: item[3],
-      description: item[2],
+      id: item.item_id,
+      name: item.name,
+      price: item.price,
+      image: item.image_url,
+      description: item.description,
       specialInstructions,
       quantity: 1
     })
-    toast.success(`Added ${item[4]} to cart`)
+    toast.success(`Added ${item.name} to cart`)
     navigate(-1) // Go back to previous page
   }
 
@@ -98,35 +98,19 @@ export default function ItemDetails() {
 
       <div className="grid md:grid-cols-2 gap-8">
         <div className="relative aspect-video md:aspect-square">
-          <img
-            src={item[3] || '/elementor-placeholder-image.webp'}
-            alt={item[4]}
+          <img            src={item.image_url || '/elementor-placeholder-image.webp'}
+            alt={item.name}
             className="w-full h-full object-cover rounded-lg"
           />
         </div>
 
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{item[4]}</h1>
+        <div className="space-y-6">          <div>
+            <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
             <p className="text-2xl font-semibold text-primary mb-4">
-              ${Number(item[5]).toFixed(2)}
+              ${Number(item.price).toFixed(2)}
             </p>
-            <p className="text-muted-foreground">{item[2]}</p>
+            <p className="text-muted-foreground">{item.description}</p>
           </div>
-
-          {/* Display allergens if they exist */}
-          {item[9] && item[9].length > 0 && (
-            <div className="space-y-2">
-              <h2 className="font-semibold">Allergens</h2>
-              <div className="flex flex-wrap gap-2">
-                {item[9].map((allergen, index) => (
-                  <Badge key={index} variant="secondary">
-                    {allergen}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="space-y-2">
             <h2 className="font-semibold">Special Instructions</h2>

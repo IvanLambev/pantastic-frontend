@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL } from "@/config/api"
 import { toast } from "sonner"
-import { CreditCard, Smartphone, Wallet, DollarSign, ArrowLeft, Check } from "lucide-react"
+import { CreditCard, Wallet, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -11,9 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 
-export default function CheckoutV2() {
-  const navigate = useNavigate()
-  const { cartItems, clearCart } = useCart()
+export default function CheckoutV2() {  const navigate = useNavigate()
+  const { cartItems, clearCart, updateQuantity, removeFromCart } = useCart()
   const [selectedPayment, setSelectedPayment] = useState("card")
   const [deliveryMethod, setDeliveryMethod] = useState("pickup")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -207,19 +206,52 @@ export default function CheckoutV2() {
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-start">
-                    <div>                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">Qty: {item.quantity}</div>
-                      {item.specialInstructions && (
-                        <div className="text-sm text-muted-foreground mt-1">
-                          <span className="font-medium">Instructions: </span>
-                          {item.specialInstructions}
-                        </div>
-                      )}
+              <CardContent className="space-y-4">                {cartItems.map((item) => (
+                  <div key={item.id} className="flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{item.name}</div>
+                        {item.specialInstructions && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            <span className="font-medium">Instructions: </span>
+                            {item.specialInstructions}
+                          </div>
+                        )}
+                      </div>
+                      <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
                     </div>
-                    <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          sessionStorage.removeItem(`item-instructions-${item.id}`);
+                          removeFromCart(item.id);
+                          toast.success(`Removed ${item.name} from cart`);
+                        }}
+                      >                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
 
