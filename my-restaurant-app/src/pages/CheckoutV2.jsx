@@ -62,6 +62,22 @@ export default function CheckoutV2() {  const navigate = useNavigate()
         products[item.id] = item.quantity
       })
 
+      const instructions = {}
+      cartItems.forEach(item => {
+        if (item.specialInstructions) {
+          instructions[item.id] = item.specialInstructions
+        }
+      })
+
+      console.log('Placing order with:', {
+        restaurant_id: restaurant[0],
+        products,
+        payment_method: selectedPayment,
+        delivery_method: deliveryMethod,
+        address: deliveryMethod === 'pickup' ? restaurant[1] : user.address, // Use restaurant address for pickup, user's address for delivery
+        instructions
+      })
+
       const response = await fetch(`${API_URL}/order/orders`, {
         method: 'POST',
         headers: {
@@ -73,7 +89,8 @@ export default function CheckoutV2() {  const navigate = useNavigate()
           products,
           payment_method: selectedPayment,
           delivery_method: deliveryMethod,
-          address: restaurant[1] // Using restaurant address for pickup orders
+          address: restaurant[1], // Using restaurant address for pickup orders
+          instructions
         })
       })
 
