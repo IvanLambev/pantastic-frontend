@@ -61,7 +61,7 @@ export default function CheckoutV2() {  const navigate = useNavigate()
       cartItems.forEach(item => {
         products[item.id] = item.quantity
       })
-
+      console.log('Cart items:', cartItems)
       const instructions = {}
       cartItems.forEach(item => {
         if (item.specialInstructions) {
@@ -100,6 +100,9 @@ export default function CheckoutV2() {  const navigate = useNavigate()
       if (!data.order_id) throw new Error('No order ID received')
       
       clearCart()
+      cartItems.forEach(item => {
+        sessionStorage.removeItem(`item-instructions-${item.id}`);
+      });
       toast.success('Order placed successfully!')
       // Navigate using the complete UUID without any parsing
       navigate(`/order-tracking-v2/${data.order_id}`)
