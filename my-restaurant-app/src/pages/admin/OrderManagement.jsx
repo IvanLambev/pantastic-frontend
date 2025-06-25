@@ -249,6 +249,9 @@ export default function OrderManagement() {
                       {(order.products && Object.entries(order.products).map(([id, quantity]) => (
                         <li key={id}>
                           {quantity}x {getItemNameById(id)}
+                          {order.instructions && order.instructions[id] && (
+                            <div className="ml-4 text-xs text-primary font-medium">Instructions: {order.instructions[id]}</div>
+                          )}
                         </li>
                       ))) || <li>No items available</li>}
                     </ul>
