@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { useCart } from '@/hooks/use-cart';
+import { fetchWithAuth } from "@/lib/utils";
 
 const themeColor = '#ff9900'; // orange
 const grayColor = '#e5e7eb'; // tailwind gray-200
@@ -25,7 +26,7 @@ export default function OrderTracking() {
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
@@ -39,7 +40,7 @@ export default function OrderTracking() {
       
       if (found && found.restaurant_id) {
         // Fetch items for the restaurant
-        const itemsResponse = await fetch(`${API_URL}/restaurant/${found.restaurant_id}/items`);
+        const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${found.restaurant_id}/items`);
         if (itemsResponse.ok) {
           const itemsData = await itemsResponse.json();
           setItems(itemsData);
@@ -65,7 +66,7 @@ export default function OrderTracking() {
   const handleCancelOrder = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/cancel`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/cancel`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,

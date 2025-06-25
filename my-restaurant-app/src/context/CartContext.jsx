@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { API_URL } from '@/config/api'
 import { CartContext } from './cart'
+import { fetchWithAuth } from "@/lib/utils";
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
@@ -76,18 +77,19 @@ export const CartProvider = ({ children }) => {
         }
       })
 
-      const response = await fetch(`${API_URL}/order/orders`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
-        },        body: JSON.stringify({
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           restaurant_id: restaurant[0],
           products,
           instructions,
           payment_method: 'card',
           delivery_method: 'pickup',
-          address: restaurant[1] // Adding restaurant address for pickup orders
+          address: restaurant[1]
         })
       })
 
@@ -117,12 +119,13 @@ export const CartProvider = ({ children }) => {
         }
       })
 
-      const response = await fetch(`${API_URL}/order/orders`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
-        },        body: JSON.stringify({
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           order_id: orderId,
           products,
           instructions,
@@ -143,11 +146,11 @@ export const CartProvider = ({ children }) => {
 
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetch(`${API_URL}/order/orders`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           order_id: orderId

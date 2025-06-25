@@ -25,6 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { fetchWithAuth } from "@/lib/utils"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -47,7 +48,7 @@ const Food = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await fetch(`${API_URL}/restaurant/restaurants`)
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
         if (!response.ok) {
           throw new Error('Failed to fetch restaurants')
         }
@@ -101,7 +102,7 @@ const Food = () => {
   const handleChangeSelection = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/restaurant/restaurants`)
+      const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
       if (!response.ok) {
         throw new Error('Failed to fetch restaurants')
       }
@@ -129,7 +130,7 @@ const Food = () => {
   const fetchItems = async (restaurantId) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`)
+      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`)
       if (!response.ok) {
         throw new Error('Failed to fetch menu items')
       }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react"
+import { handle401Logout } from "@/lib/utils"
 
 const AuthContext = createContext()
 
@@ -73,6 +74,16 @@ const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   )
+}
+
+// Global fetch wrapper
+export async function fetchWithAuth(url, options = {}) {
+  const response = await fetch(url, options)
+  if (response.status === 401) {
+    handle401Logout()
+    throw new Error("Unauthorized. Logging out.")
+  }
+  return response
 }
 
 export { AuthProvider, useAuth }

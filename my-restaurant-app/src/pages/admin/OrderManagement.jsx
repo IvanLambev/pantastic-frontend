@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { fetchWithAuth } from "@/lib/utils";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
@@ -71,7 +72,7 @@ export default function OrderManagement() {
   const fetchItems = useCallback(async (restaurantId) => {
     try {
       console.log('Fetching items for restaurant:', restaurantId);
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items`);
+      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`);
       if (!response.ok) {
         throw new Error('Failed to fetch menu items');
       }
@@ -102,11 +103,11 @@ export default function OrderManagement() {
         return;
       }
 
-      const response = await fetch(`${API_URL}/order/orders/worker`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/worker`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
           
         }
       });
@@ -172,7 +173,7 @@ export default function OrderManagement() {
     }
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,

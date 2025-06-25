@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { fetchWithAuth } from "@/lib/utils"
 
 export default function OrderTracking() {
   const [order, setOrder] = useState(null)
@@ -91,7 +92,7 @@ export default function OrderTracking() {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       console.log('Fetching orders with user token:', user.access_token ? '[PRESENT]' : '[MISSING]')
       
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
@@ -115,7 +116,7 @@ export default function OrderTracking() {
       }
 
       if (orderData && orderData.restaurant_id) {
-        const itemsResponse = await fetch(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
+        const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
         if (itemsResponse.ok) {
           const itemsData = await itemsResponse.json()
           console.log('Fetched items:', itemsData)
@@ -143,7 +144,7 @@ export default function OrderTracking() {
   const handleCancelOrder = async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetch(`${API_URL}/order/orders`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.access_token}`,

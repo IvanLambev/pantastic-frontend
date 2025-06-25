@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { API_URL } from "@/config/api"
+import { fetchWithAuth } from "@/lib/utils"
 
 const Cart = () => {
   const { 
@@ -44,7 +45,7 @@ const Cart = () => {
   const fetchOrderDetails = async (orderId) => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetch(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',

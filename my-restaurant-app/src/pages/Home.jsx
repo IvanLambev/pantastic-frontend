@@ -19,6 +19,7 @@ import HowItWorks from "@/components/how-it-works"
 import DeliveryPickupInfo from "@/components/delivery-pickup-info"
 import FAQ from "@/components/faq"
 import AboutUs from "@/components/about-us"
+import { fetchWithAuth } from "@/lib/utils"
 
 const Home = () => {
   const [api, setApi] = useState(null)
@@ -38,7 +39,7 @@ const Home = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await fetch(`${API_URL}/restaurant/restaurants`)
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
         if (!response.ok) {
           throw new Error('Failed to fetch restaurants')
         }

@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft } from "lucide-react"
+import { fetchWithAuth } from "@/lib/utils"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
@@ -27,7 +28,7 @@ export default function ItemDetails() {
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`)
+        const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`)
         if (!response.ok) {
           throw new Error('Failed to fetch item details')
         }

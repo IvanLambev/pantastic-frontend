@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { fetchWithAuth } from "@/lib/utils";
 
 export default function RestaurantDetails() {
   const { id } = useParams();
@@ -13,7 +14,7 @@ export default function RestaurantDetails() {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await fetch(`${API_URL}/restaurant/restaurants`);
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`);
         if (!response.ok) throw new Error('Failed to fetch restaurant');
         const data = await response.json();
         const restaurantData = data.find(r => r[0].toString() === id);
@@ -21,7 +22,7 @@ export default function RestaurantDetails() {
         setRestaurant(restaurantData);
         
         // Fetch menu items
-        const itemsResponse = await fetch(`${API_URL}/restaurant/${id}/items`);
+        const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${id}/items`);
         if (!itemsResponse.ok) throw new Error('Failed to fetch menu items');
         const itemsData = await itemsResponse.json();
         console.log('Menu items:', itemsData);
