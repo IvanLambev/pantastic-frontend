@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Pencil, User, ShoppingBag, Clock, MapPin, Truck } from "lucide-react";
+import { Pencil, User, ShoppingBag, Clock, MapPin, Truck, Heart } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/config/api";
+import { fetchWithAuth } from '@/lib/utils';
 
 export default function UserDashboard() {
   const { user, token, setToken } = useAuth();
@@ -16,6 +17,7 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [favoriteItems, setFavoriteItems] = useState([]);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -112,6 +114,24 @@ export default function UserDashboard() {
     }
   }, [token]);
 
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      if (!user.access_token) return;
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteItems(data);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
   const fetchItemDetails = async (restaurantId, itemId) => {
     try {
       const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
@@ -185,6 +205,7 @@ export default function UserDashboard() {
         <TabsList className="mb-4">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="favourites">Favourites</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -333,6 +354,40 @@ export default function UserDashboard() {
                     </AccordionItem>
                   ))}
                 </Accordion>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="favourites">
+          <Card>
+            <CardHeader>
+              <CardTitle>Favourite Items</CardTitle>
+              <CardDescription>Your saved favourite menu items</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {favoriteItems.length === 0 ? (
+                <div className="text-muted-foreground">No favourite items yet.</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {favoriteItems.map((fav) => (
+                    <div key={fav.id || fav.favourite_id || fav._id} className="relative border rounded-lg overflow-hidden">
+                      <img
+                        src={fav.image_url || '/elementor-placeholder-image.webp'}
+                        alt={fav.name}
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Heart className="h-6 w-6 fill-red-500 text-red-500" fill="red" />
+                      </div>
+                      <div className="p-4">
+                        <div className="font-semibold">{fav.name}</div>
+                        <div className="text-sm text-muted-foreground">{fav.description}</div>
+                        <div className="font-bold mt-2">${fav.price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

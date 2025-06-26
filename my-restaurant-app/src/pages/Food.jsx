@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Search } from "lucide-react"
+import { Search, Heart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -44,6 +44,7 @@ const Food = () => {
   const [sortBy, setSortBy] = useState("default")
   const { addToCart } = useCart()
   const isMobile = window.innerWidth <= 768
+  const [favoriteItems, setFavoriteItems] = useState([])
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -76,6 +77,25 @@ const Food = () => {
       setShowCityModal(true)
     }
   }, [])
+
+  // Fetch favorite items on mount
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      if (!user.access_token) return;
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteItems(data);
+      }
+    };
+    fetchFavorites();
+  }, []);
 
   // Get unique cities from restaurants
   const cities = [...new Set(restaurants.map(restaurant => restaurant[2]))].sort()
@@ -156,6 +176,45 @@ const Food = () => {
     })
     toast.success(`Added ${item[4]} to cart`)
   }
+
+  const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
+  const getFavoriteId = (itemId) => {
+    const fav = favoriteItems.find(f => f.item_id === itemId);
+    return fav ? (fav.id || fav.favourite_id || fav._id) : null;
+  };
+
+  const handleToggleFavorite = async (itemId) => {
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    if (!user.access_token) return;
+    if (!isItemFavorite(itemId)) {
+      // Add to favorites
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteItems([...favoriteItems, data]);
+      }
+    } else {
+      // Remove from favorites
+      const favId = getFavoriteId(itemId);
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favId || itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        setFavoriteItems(favoriteItems.filter(f => f.item_id !== itemId));
+      }
+    }
+  };
 
   // Add filtered and sorted items logic
   const filteredItems = items.filter(item => {
@@ -299,12 +358,23 @@ const Food = () => {
             <div className="grid grid-cols-1 gap-4">
               {filteredItems.map((item) => (
                 <Card key={item[0]} className="flex flex-row h-24">
-                  <div className="w-24 h-full">
+                  <div className="w-24 h-full relative">
                     <img
                       src={item[3] || '/elementor-placeholder-image.webp'}
                       alt={item[4]}
                       className="w-full h-full object-cover"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFavorite(item[0])}
+                      className="absolute top-1 right-1 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                      aria-label={isItemFavorite(item[0]) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart
+                        className={`h-6 w-6 ${isItemFavorite(item[0]) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                        fill={isItemFavorite(item[0]) ? 'red' : 'none'}
+                      />
+                    </button>
                   </div>
                   <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
                       <h3 className="font-semibold text-sm">{item[4]}</h3>
@@ -416,6 +486,17 @@ const Food = () => {
                           alt={item[4]}
                           className="w-full h-full object-cover"
                         />
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFavorite(item[0])}
+                          className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                          aria-label={isItemFavorite(item[0]) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          <Heart
+                            className={`h-6 w-6 ${isItemFavorite(item[0]) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                            fill={isItemFavorite(item[0]) ? 'red' : 'none'}
+                          />
+                        </button>
                       </div>
                       <CardContent className="flex flex-col flex-grow p-4">
                         <h3 className="font-semibold mb-2">{item[4]}</h3>

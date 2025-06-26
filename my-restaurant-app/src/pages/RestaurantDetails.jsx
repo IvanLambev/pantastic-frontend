@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { fetchWithAuth } from "@/lib/utils";
+import { Heart } from 'lucide-react';
+import { fetchWithAuth } from '@/lib/utils';
 
 export default function RestaurantDetails() {
   const { id } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
+  const [favoriteItems, setFavoriteItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,10 +37,65 @@ export default function RestaurantDetails() {
       }
     };
 
+    const fetchFavorites = async () => {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      if (!user.access_token) return;
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteItems(data);
+      }
+    };
+
     if (id) {
       fetchRestaurantDetails();
+      fetchFavorites();
     }
   }, [id]);
+
+  const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
+  const getFavoriteId = (itemId) => {
+    const fav = favoriteItems.find(f => f.item_id === itemId);
+    return fav ? (fav.id || fav.favourite_id || fav._id) : null;
+  };
+
+  const handleToggleFavorite = async (itemId) => {
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    if (!user.access_token) return;
+    if (!isItemFavorite(itemId)) {
+      // Add to favorites
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFavoriteItems([...favoriteItems, data]);
+      }
+    } else {
+      // Remove from favorites
+      const favId = getFavoriteId(itemId);
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favId || itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (res.ok) {
+        setFavoriteItems(favoriteItems.filter(f => f.item_id !== itemId));
+      }
+    }
+  };
 
   if (loading) return <div className="container py-8">Loading...</div>;
   if (error) return <div className="container py-8 text-red-500">{error}</div>;
@@ -81,6 +138,17 @@ export default function RestaurantDetails() {
                   alt={item[4]}
                   className="w-full h-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleToggleFavorite(item[0])}
+                  className="absolute top-1 right-1 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                  aria-label={isItemFavorite(item[0]) ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Heart
+                    className={`h-6 w-6 ${isItemFavorite(item[0]) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                    fill={isItemFavorite(item[0]) ? 'red' : 'none'}
+                  />
+                </button>
               </div>
               <CardContent className="flex flex-col flex-grow p-4">
                 <h3 className="font-semibold mb-2">{item[4]}</h3>

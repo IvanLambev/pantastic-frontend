@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Heart } from "lucide-react"
 import { fetchWithAuth } from "@/lib/utils"
 
 export default function ItemDetails() {
@@ -24,6 +24,10 @@ export default function ItemDetails() {
   const [error, setError] = useState(null)
   const [specialInstructions, setSpecialInstructions] = useState("")
   const { addToCart } = useCart()
+
+  // Add state for favorite
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteId, setFavoriteId] = useState(null)
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -50,6 +54,29 @@ export default function ItemDetails() {
     fetchItem()
   }, [restaurantId, itemId])
 
+  // Check if item is favorite on mount
+  useEffect(() => {
+    const checkFavorite = async () => {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      if (!user.access_token) return
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const fav = data.find(f => f.item_id === itemId)
+        if (fav) {
+          setIsFavorite(true)
+          setFavoriteId(fav.id || fav.favourite_id || fav._id)
+        }
+      }
+    }
+    if (itemId) checkFavorite()
+  }, [itemId])
+
   const handleAddToCart = () => {
     // Save instructions even if empty
     sessionStorage.setItem(`item-instructions-${itemId}`, specialInstructions)
@@ -72,6 +99,40 @@ export default function ItemDetails() {
     setSpecialInstructions(instructions)
     // Save instructions as user types
     sessionStorage.setItem(`item-instructions-${itemId}`, instructions)
+  }
+
+  const handleToggleFavorite = async () => {
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+    if (!user.access_token) return
+    if (!isFavorite) {
+      // Add to favorites
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ item_id: itemId }),
+      })
+      if (res.ok) {
+        setIsFavorite(true)
+        const data = await res.json()
+        setFavoriteId(data.id || data.favourite_id || data._id)
+      }
+    } else {
+      // Remove from favorites
+      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favoriteId || itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+      if (res.ok) {
+        setIsFavorite(false)
+        setFavoriteId(null)
+      }
+    }
   }
 
   if (loading) {
@@ -99,13 +160,26 @@ export default function ItemDetails() {
 
       <div className="grid md:grid-cols-2 gap-8">
         <div className="relative aspect-video md:aspect-square">
-          <img            src={item.image_url || '/elementor-placeholder-image.webp'}
+          <img
+            src={item.image_url || '/elementor-placeholder-image.webp'}
             alt={item.name}
             className="w-full h-full object-cover rounded-lg"
           />
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart
+              className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+              fill={isFavorite ? 'red' : 'none'}
+            />
+          </button>
         </div>
 
-        <div className="space-y-6">          <div>
+        <div className="space-y-6">
+          <div>
             <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
             <p className="text-2xl font-semibold text-primary mb-4">
               ${Number(item.price).toFixed(2)}
@@ -123,8 +197,8 @@ export default function ItemDetails() {
             />
           </div>
 
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="w-full"
             onClick={handleAddToCart}
           >
