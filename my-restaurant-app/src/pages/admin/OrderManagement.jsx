@@ -299,60 +299,6 @@ export default function OrderManagement() {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
-      <Button className="mb-4" onClick={() => setShowAddRestaurant(true)}>
-        Add Restaurant
-      </Button>
-      <Dialog open={showAddRestaurant} onOpenChange={setShowAddRestaurant}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Restaurant</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddRestaurant} className="space-y-4">
-            <Input
-              placeholder="Name"
-              value={restaurantForm.name}
-              onChange={(e) => handleFormChange("name", e.target.value)}
-              required
-            />
-            <Input
-              placeholder="City"
-              value={restaurantForm.city}
-              onChange={(e) => handleFormChange("city", e.target.value)}
-              required
-            />
-            <Input
-              placeholder="Address"
-              value={restaurantForm.address}
-              onChange={(e) => handleFormChange("address", e.target.value)}
-              required
-            />
-            {/* Map picker placeholder */}
-            <div className="text-xs text-muted-foreground">[Map picker coming soon]</div>
-            <div>
-              <div className="font-semibold mb-2">Opening Hours</div>
-              {Object.entries(restaurantForm.openingHours).map(([day, hours]) => (
-                <div key={day} className="flex items-center gap-2 mb-2">
-                  <span className="w-20">{day}</span>
-                  <Slider
-                    min={0}
-                    max={24}
-                    step={1}
-                    value={hours}
-                    onValueChange={(val) => handleOpeningHoursChange(day, val)}
-                    className="flex-1"
-                  />
-                  <span className="w-16 text-right">{hours[0]}:00 - {hours[1]}:00</span>
-                </div>
-              ))}
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Adding..." : "Add Restaurant"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
       <div className="grid gap-4">
         {orders.map(order => (
           <Card key={order.id || order.order_id || 'unknown'} className="shadow-sm">
