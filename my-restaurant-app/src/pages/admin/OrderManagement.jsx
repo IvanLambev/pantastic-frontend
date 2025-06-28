@@ -6,11 +6,30 @@ import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { fetchWithAuth } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAddRestaurant, setShowAddRestaurant] = useState(false);
+  const [restaurantForm, setRestaurantForm] = useState({
+    name: "",
+    city: "",
+    address: "",
+    openingHours: {
+      Monday: [9, 17],
+      Tuesday: [9, 17],
+      Wednesday: [9, 17],
+      Thursday: [9, 17],
+      Friday: [9, 17],
+      Saturday: [9, 17],
+      Sunday: [9, 17],
+    },
+  });
+  const [submitting, setSubmitting] = useState(false);
   const prevOrdersRef = useRef([]);
   const audioRef = useRef(null);
 
@@ -221,6 +240,58 @@ export default function OrderManagement() {
     };
   }, [fetchOrders]);
 
+  const handleFormChange = (field, value) => {
+    setRestaurantForm((prev) => ({ ...prev, [field]: value }));
+  };
+  const handleOpeningHoursChange = (day, value) => {
+    setRestaurantForm((prev) => ({
+      ...prev,
+      openingHours: { ...prev.openingHours, [day]: value },
+    }));
+  };
+
+  const handleAddRestaurant = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+      const response = await fetch(`${API_URL}/restaurant/restaurants`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${user.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: restaurantForm.name,
+          city: restaurantForm.city,
+          address: restaurantForm.address,
+          opening_hours: restaurantForm.openingHours,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add restaurant");
+      toast.success("Restaurant added successfully!");
+      setShowAddRestaurant(false);
+      setRestaurantForm({
+        name: "",
+        city: "",
+        address: "",
+        openingHours: {
+          Monday: [9, 17],
+          Tuesday: [9, 17],
+          Wednesday: [9, 17],
+          Thursday: [9, 17],
+          Friday: [9, 17],
+          Saturday: [9, 17],
+          Sunday: [9, 17],
+        },
+      });
+    } catch (err) {
+      toast.error("Failed to add restaurant");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <div>Loading orders...</div>;
   }
@@ -228,6 +299,60 @@ export default function OrderManagement() {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
+      <Button className="mb-4" onClick={() => setShowAddRestaurant(true)}>
+        Add Restaurant
+      </Button>
+      <Dialog open={showAddRestaurant} onOpenChange={setShowAddRestaurant}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Restaurant</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddRestaurant} className="space-y-4">
+            <Input
+              placeholder="Name"
+              value={restaurantForm.name}
+              onChange={(e) => handleFormChange("name", e.target.value)}
+              required
+            />
+            <Input
+              placeholder="City"
+              value={restaurantForm.city}
+              onChange={(e) => handleFormChange("city", e.target.value)}
+              required
+            />
+            <Input
+              placeholder="Address"
+              value={restaurantForm.address}
+              onChange={(e) => handleFormChange("address", e.target.value)}
+              required
+            />
+            {/* Map picker placeholder */}
+            <div className="text-xs text-muted-foreground">[Map picker coming soon]</div>
+            <div>
+              <div className="font-semibold mb-2">Opening Hours</div>
+              {Object.entries(restaurantForm.openingHours).map(([day, hours]) => (
+                <div key={day} className="flex items-center gap-2 mb-2">
+                  <span className="w-20">{day}</span>
+                  <Slider
+                    min={0}
+                    max={24}
+                    step={1}
+                    value={hours}
+                    onValueChange={(val) => handleOpeningHoursChange(day, val)}
+                    className="flex-1"
+                  />
+                  <span className="w-16 text-right">{hours[0]}:00 - {hours[1]}:00</span>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Adding..." : "Add Restaurant"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <div className="grid gap-4">
         {orders.map(order => (
           <Card key={order.id || order.order_id || 'unknown'} className="shadow-sm">
