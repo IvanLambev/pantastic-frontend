@@ -75,6 +75,8 @@ export function RestaurantManager() {
     },
   });
   const [submitting, setSubmitting] = useState(false);
+  const [restaurantSearch, setRestaurantSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
 
   useEffect(() => {
     const validateUserToken = async () => {
@@ -420,6 +422,18 @@ export function RestaurantManager() {
     }
   };
 
+  // Get unique cities from restaurants
+  const cities = Array.from(new Set(restaurants.map(r => r[2]).filter(Boolean)));
+
+  const filteredRestaurants = restaurants.filter(r => {
+    const matchesSearch =
+      r[7]?.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+      r[1]?.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
+      r[2]?.toLowerCase().includes(restaurantSearch.toLowerCase());
+    const matchesCity = cityFilter ? r[2] === cityFilter : true;
+    return matchesSearch && matchesCity;
+  });
+
   if (loading) {
     return <div className="text-center p-4">Loading...</div>
   }
@@ -430,8 +444,32 @@ export function RestaurantManager() {
 
   return (
     <div className="flex flex-col gap-6 w-full px-0 py-0 bg-background">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-3xl font-bold tracking-tight">Restaurant Management</h2>
+        <Button onClick={() => setShowAddRestaurantDialog(true)}>
+          Add Restaurant
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-4 mb-4 items-center">
+        <Input
+          placeholder="Search restaurants..."
+          value={restaurantSearch}
+          onChange={e => setRestaurantSearch(e.target.value)}
+          className="max-w-xs"
+        />
+        <select
+          value={cityFilter}
+          onChange={e => setCityFilter(e.target.value)}
+          className="border rounded px-2 py-1 text-base"
+        >
+          <option value="">All Cities</option>
+          {cities.map(city => (
+            <option key={city} value={city}>{city}</option>
+          ))}
+        </select>
+      </div>
       <div className="grid grid-cols-1 gap-6 w-full">
-        {restaurants.map((restaurant) => (
+        {filteredRestaurants.map((restaurant) => (
           <Card 
             key={restaurant[0]} 
             className={`relative cursor-pointer transition-all hover:shadow-lg ${
