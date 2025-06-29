@@ -16,22 +16,26 @@ export default function RestaurantDetails() {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        // Fetch all restaurants and filter by UUID
+        console.log('Fetching all restaurants...');
         const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`);
         if (!response.ok) throw new Error('Failed to fetch restaurant');
         const data = await response.json();
+        console.log('Fetched restaurants:', data);
         const restaurantData = data.find(r => r[0].toString() === id);
+        console.log('Filtered restaurant by id', id, ':', restaurantData);
         setRestaurant(restaurantData);
         if (restaurantData) {
-          // Fetch menu items for the found restaurant
+          console.log('Fetching menu items for restaurant', id);
           const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${id}/items`);
           if (!itemsResponse.ok) throw new Error('Failed to fetch menu items');
           const itemsData = await itemsResponse.json();
+          console.log('Fetched menu items:', itemsData);
           setMenuItems(itemsData);
         } else {
           setMenuItems([]);
         }
       } catch (err) {
+        console.error('Error in fetchRestaurantDetails:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -41,6 +45,7 @@ export default function RestaurantDetails() {
     const fetchFavorites = async () => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       if (!user.access_token) return;
+      console.log('Fetching favorite items for user');
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
@@ -49,6 +54,7 @@ export default function RestaurantDetails() {
       });
       if (res.ok) {
         const data = await res.json();
+        console.log('Fetched favorite items:', data);
         setFavoriteItems(data);
       }
     };
@@ -157,11 +163,7 @@ export default function RestaurantDetails() {
                 <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
                 <div className="flex items-center justify-between mt-auto">
                   <span className="font-semibold">${typeof item[5] === 'number' ? item[5].toFixed(2) : '0.00'}</span>
-                  {addToCart && (
-                    <Button onClick={() => handleAddToCart(item)} size="sm">
-                      Add to Cart
-                    </Button>
-                  )}
+                  {/* Removed Add to Cart button as cart functionality is not defined */}
                 </div>
               </CardContent>
             </Card>
