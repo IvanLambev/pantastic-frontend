@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 
 export default function RestaurantDetailsAdmin() {
-  const { restaurantName } = useParams();
+  const { id } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
@@ -18,9 +18,10 @@ export default function RestaurantDetailsAdmin() {
     const fetchRestaurant = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/restaurant/restaurants`);
-        const data = await res.json();
-        const found = data.find(r => r[7] === restaurantName);
+        // Fetch restaurant by UUID
+        const res = await fetch(`${API_URL}/restaurant/${id}`);
+        if (!res.ok) throw new Error('Failed to fetch restaurant');
+        const found = await res.json();
         setRestaurant(found);
         if (found) {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
@@ -35,7 +36,7 @@ export default function RestaurantDetailsAdmin() {
       }
     };
     fetchRestaurant();
-  }, [restaurantName]);
+  }, [id]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
