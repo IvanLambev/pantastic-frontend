@@ -422,14 +422,21 @@ export function RestaurantManager() {
     }
   };
 
-  // Get unique cities from restaurants
-  const cities = Array.from(new Set(restaurants.map(r => r[2]).filter(Boolean)));
+  // Remove duplicate restaurants by id
+  const uniqueRestaurants = Array.from(
+    new Map(restaurants.map(r => [r[0], r])).values()
+  );
 
-  const filteredRestaurants = restaurants.filter(r => {
+  // Get unique cities from unique restaurants
+  const cities = Array.from(new Set(uniqueRestaurants.map(r => r[2]).filter(Boolean)));
+
+  const filteredRestaurants = uniqueRestaurants.filter(r => {
+    const search = restaurantSearch.trim().toLowerCase();
     const matchesSearch =
-      r[7]?.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-      r[1]?.toLowerCase().includes(restaurantSearch.toLowerCase()) ||
-      r[2]?.toLowerCase().includes(restaurantSearch.toLowerCase());
+      (!search ||
+      (r[7] && r[7].toLowerCase().includes(search)) ||
+      (r[1] && r[1].toLowerCase().includes(search)) ||
+      (r[2] && r[2].toLowerCase().includes(search)));
     const matchesCity = cityFilter ? r[2] === cityFilter : true;
     return matchesSearch && matchesCity;
   });
@@ -444,29 +451,28 @@ export function RestaurantManager() {
 
   return (
     <div className="flex flex-col gap-6 w-full px-0 py-0 bg-background">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-3xl font-bold tracking-tight">Restaurant Management</h2>
+      <div className="flex flex-wrap gap-4 mb-4 items-center justify-between">
+        <div className="flex gap-4 flex-1 min-w-0">
+          <Input
+            placeholder="Search restaurants..."
+            value={restaurantSearch}
+            onChange={e => setRestaurantSearch(e.target.value)}
+            className="max-w-xs"
+          />
+          <select
+            value={cityFilter}
+            onChange={e => setCityFilter(e.target.value)}
+            className="border rounded px-2 py-1 text-base"
+          >
+            <option value="">All Cities</option>
+            {cities.map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+        </div>
         <Button onClick={() => setShowAddRestaurantDialog(true)}>
           Add Restaurant
         </Button>
-      </div>
-      <div className="flex flex-wrap gap-4 mb-4 items-center">
-        <Input
-          placeholder="Search restaurants..."
-          value={restaurantSearch}
-          onChange={e => setRestaurantSearch(e.target.value)}
-          className="max-w-xs"
-        />
-        <select
-          value={cityFilter}
-          onChange={e => setCityFilter(e.target.value)}
-          className="border rounded px-2 py-1 text-base"
-        >
-          <option value="">All Cities</option>
-          {cities.map(city => (
-            <option key={city} value={city}>{city}</option>
-          ))}
-        </select>
       </div>
       <div className="grid grid-cols-1 gap-6 w-full">
         {filteredRestaurants.map((restaurant) => (
@@ -531,7 +537,7 @@ export function RestaurantManager() {
           </Card>
         ))}
       </div>
-
+      {/* Show details and delivery people tabs when a restaurant is selected */}
       {selectedRestaurant && (
         <div className="mt-6">
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
@@ -540,7 +546,6 @@ export function RestaurantManager() {
               <TabsTrigger value="details">Restaurant Details</TabsTrigger>
               <TabsTrigger value="delivery">Delivery People</TabsTrigger>
             </TabsList>
-
             <TabsContent value="items" className="space-y-4">
               <div className="flex justify-between items-center">
                 <div className="relative w-full max-w-sm">
@@ -630,13 +635,14 @@ export function RestaurantManager() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Location Details</h3>
-                  <p><strong>Latitude:</strong> {selectedRestaurant[4]}</p>
-                  <p><strong>Longitude:</strong> {selectedRestaurant[5]}</p>
+                  <p><strong>Latitude:</strong> {selectedRestaurant[5]}</p>
+                  <p><strong>Longitude:</strong> {selectedRestaurant[6]}</p>
                   <p><strong>Address:</strong> {selectedRestaurant[1]}</p>
+                  <p><strong>City:</strong> {selectedRestaurant[2]}</p>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Business Hours</h3>
-                  {Object.entries(selectedRestaurant[7] || {}).map(([day, hours]) => (
+                  {Object.entries(selectedRestaurant[8] || {}).map(([day, hours]) => (
                     <p key={day}><strong>{day}:</strong> {hours}</p>
                   ))}
                 </div>
