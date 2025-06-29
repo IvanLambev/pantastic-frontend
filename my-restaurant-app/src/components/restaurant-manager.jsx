@@ -481,7 +481,7 @@ export function RestaurantManager() {
             className={`relative cursor-pointer transition-all hover:shadow-lg ${
               selectedRestaurant?.[0] === restaurant[0] ? 'ring-2 ring-primary' : 'hover:border-primary'
             }`}
-            onClick={() => setSelectedRestaurant(restaurant)}
+            onClick={() => navigate(`/admin/restaurant/${encodeURIComponent(restaurant[7])}`)}
           >
             <CardContent className="p-6">
               <div className="flex items-start">
@@ -507,11 +507,11 @@ export function RestaurantManager() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation()
+                        e.stopPropagation();
                         setEditRestaurantData({
-                          name: restaurant[6],
-                          address: restaurant[1],
-                          opening_hours: restaurant[7]
+                          name: restaurant[7], // Correct index for name
+                          address: restaurant[1], // Correct index for address
+                          opening_hours: restaurant[8] // Correct index for opening_hours
                         })
                         setShowEditRestaurantDialog(true)
                       }}>

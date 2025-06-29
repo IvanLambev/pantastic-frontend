@@ -35,6 +35,7 @@ import Food from '@/pages/Food'
 import Admin from '@/pages/Admin'
 import Checkout from '@/pages/CheckoutV2'
 import RestaurantDetails from '@/pages/RestaurantDetails'
+import RestaurantDetailsAdmin from '@/pages/admin/RestaurantDetailsAdmin'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import UserDashboard from '@/pages/UserDashboard'
 import ItemDetails from '@/pages/ItemDetails'
@@ -197,7 +198,6 @@ function MainLayout() {
                             </Link>
                           )}
                         </div>
-
                         <div className="w-full border-t pt-4 px-4">
                           {isLoggedIn ? (
                             <div className="flex flex-col gap-4">
@@ -239,12 +239,12 @@ function MainLayout() {
                             </div>
                           )}
                         </div>
-                      </div>
+                      </div> {/* end flex flex-col items-center gap-6 mt-8 */}
                     </SheetContent>
                   </Sheet>
-                </div>
-              </div>
-            </div>
+                </div> {/* end flex items-center gap-4 */}
+              </div> {/* end flex h-16 items-center justify-between */}
+            </div> {/* end container */}
           </header>
 
           <main className="flex-1">
@@ -266,20 +266,19 @@ export default function App() {
   return (
     <CartProvider>
       <Routes>
-        <Route path="/" element={<AppWithLenis><MainLayout /></AppWithLenis>}>
-          <Route index element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/food" element={<Food />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/admin/*" element={<Admin />} />
-          <Route path="/cart" element={<Checkout />} />
-          <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-          <Route path="/restaurants/:restaurantId/items/:itemId" element={<ItemDetails />} />
-          <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
+        <Route path="/" element={<AppWithLenis><MainLayout /></AppWithLenis>} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/food" element={<Food />} />
+        <Route path="/admin/*" element={<Admin />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/admin/restaurant/:id" element={<RestaurantDetailsAdmin />} />
+        <Route path="/order-tracking" element={<OrderTrackingV2 />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/item-details/:id" element={<ItemDetails />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <Toaster />
