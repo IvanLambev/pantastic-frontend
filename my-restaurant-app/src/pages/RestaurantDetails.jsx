@@ -16,26 +16,22 @@ export default function RestaurantDetails() {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        console.log('Fetching all restaurants...');
-        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`);
+        console.log('Fetching restaurant by UUID:', id);
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants/${id}`);
         if (!response.ok) throw new Error('Failed to fetch restaurant');
-        const data = await response.json();
-        console.log('Fetched restaurants:', data);
-        const restaurantData = data.find(r => r[0].toString() === id);
-        console.log('Filtered restaurant by id', id, ':', restaurantData);
+        const restaurantData = await response.json();
+        console.log('Fetched restaurant:', restaurantData);
         setRestaurant(restaurantData);
-        if (restaurantData) {
-          console.log('Fetching menu items for restaurant', id);
+        if (restaurantData && restaurantData.id) {
+          // Fetch menu items for the found restaurant
           const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${id}/items`);
           if (!itemsResponse.ok) throw new Error('Failed to fetch menu items');
           const itemsData = await itemsResponse.json();
-          console.log('Fetched menu items:', itemsData);
           setMenuItems(itemsData);
         } else {
           setMenuItems([]);
         }
       } catch (err) {
-        console.error('Error in fetchRestaurantDetails:', err);
         setError(err.message);
       } finally {
         setLoading(false);

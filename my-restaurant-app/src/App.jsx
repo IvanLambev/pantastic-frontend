@@ -69,7 +69,7 @@ function MainLayout() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Only hide Navbar on admin pages, show on all others */}
+      {/* Show Navbar on all pages except admin */}
       {!isAdminPage && <Navbar />}
       <main className="flex-1">
         <Outlet />
