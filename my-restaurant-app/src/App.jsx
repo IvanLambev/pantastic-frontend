@@ -41,6 +41,7 @@ import UserDashboard from '@/pages/UserDashboard'
 import ItemDetails from '@/pages/ItemDetails'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
+import Navbar from '@/components/Navbar'
 
 function useLenisSmoothScroll() {
   useEffect(() => {
@@ -76,6 +77,7 @@ function MainLayout() {
     <div className="relative min-h-screen flex flex-col">
       {!isAdminPage ? (
         <>
+          <Navbar />
           <header className="sticky top-0 w-full border-b bg-background z-50">
             <div className="container">
               <div className="flex h-16 items-center justify-between">
