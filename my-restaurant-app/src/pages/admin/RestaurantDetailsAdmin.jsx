@@ -59,11 +59,8 @@ export default function RestaurantDetailsAdmin() {
         if (found) {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
           setMenuItems(await itemsRes.json());
-          // Use correct endpoint for delivery people
-          const dpRes = await fetch(`${API_URL}/restaurant/delivery-people`);
-          const dpData = await dpRes.json();
-          console.log('Fetched delivery people:', dpData);
-          setDeliveryPeople(dpData);
+          // Only use fetchDeliveryPeople (with fetchWithAuth) for delivery people
+          await fetchDeliveryPeople();
         }
       } catch (err) {
         setError("Failed to load restaurant details");
@@ -176,9 +173,8 @@ export default function RestaurantDetailsAdmin() {
       });
       setShowAddDeliveryDialog(false);
       setNewDeliveryPerson({ name: "", phone: "" });
-      // Refresh delivery people
-      const dpRes = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
-      setDeliveryPeople(await dpRes.json());
+      // Always use fetchDeliveryPeople
+      await fetchDeliveryPeople();
     } catch (err) {
       alert("Failed to add delivery person");
     } finally {
@@ -208,7 +204,7 @@ export default function RestaurantDetailsAdmin() {
       });
       setShowEditDeliveryDialog(false);
       setEditingDelivery(null);
-      fetchDeliveryPeople();
+      await fetchDeliveryPeople();
     } catch {
       alert("Failed to update delivery person");
     } finally {
@@ -226,7 +222,7 @@ export default function RestaurantDetailsAdmin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ delivery_person_id: person.delivery_person_id || person[0] }),
       });
-      fetchDeliveryPeople();
+      await fetchDeliveryPeople();
     } catch {
       alert("Failed to delete delivery person");
     } finally {
@@ -246,7 +242,7 @@ export default function RestaurantDetailsAdmin() {
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
-      fetchDeliveryPeople();
+      await fetchDeliveryPeople();
     } catch {
       alert("Failed to assign delivery person");
     } finally {
@@ -264,7 +260,7 @@ export default function RestaurantDetailsAdmin() {
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
-      fetchDeliveryPeople();
+      await fetchDeliveryPeople();
     } catch {
       alert("Failed to unassign delivery person");
     } finally {
