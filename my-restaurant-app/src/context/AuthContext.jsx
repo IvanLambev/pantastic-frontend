@@ -129,12 +129,54 @@ const AuthProvider = ({ children }) => {
 
 // Global fetch wrapper
 export async function fetchWithAuth(url, options = {}) {
-  const response = await fetch(url, options)
-  if (response.status === 401) {
-    handle401Logout()
-    throw new Error("Unauthorized. Logging out.")
+  let user = sessionStorage.getItem("user");
+  let access_token = null;
+  let refresh_token = null;
+  if (user) {
+    try {
+      const parsedUser = JSON.parse(user);
+      access_token = parsedUser.access_token;
+      refresh_token = parsedUser.refresh_token;
+    } catch {}
   }
-  return response
+  // Always set Authorization header if access_token exists
+  if (access_token) {
+    options.headers = {
+      ...(options.headers || {}),
+      "Authorization": `Bearer ${access_token}`,
+    };
+  }
+  let response = await fetch(url, options);
+  if (response.status === 401 && refresh_token) {
+    // Try to refresh the access token
+    try {
+      const refreshRes = await fetch(`${API_URL}/user/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token }),
+      });
+      if (refreshRes.ok) {
+        const refreshData = await refreshRes.json();
+        // Update sessionStorage with new access_token
+        const userObj = JSON.parse(sessionStorage.getItem("user"));
+        userObj.access_token = refreshData.access_token;
+        sessionStorage.setItem("user", JSON.stringify(userObj));
+        // Retry original request with new token
+        options.headers = {
+          ...(options.headers || {}),
+          "Authorization": `Bearer ${refreshData.access_token}`,
+        };
+        response = await fetch(url, options);
+        if (response.status !== 401) return response;
+      }
+    } catch (err) {
+      // ignore, will handle below
+    }
+    // If refresh fails, log out
+    handle401Logout();
+    throw new Error("Unauthorized. Logging out.");
+  }
+  return response;
 }
 
 export { AuthProvider, useAuth }
