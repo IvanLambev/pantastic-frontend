@@ -481,7 +481,10 @@ export function RestaurantManager() {
             className={`relative cursor-pointer transition-all hover:shadow-lg ${
               selectedRestaurant?.[0] === restaurant[0] ? 'ring-2 ring-primary' : 'hover:border-primary'
             }`}
-            onClick={() => navigate(`/admin/restaurant/${encodeURIComponent(restaurant[7])}`)}
+            onClick={() => {
+              console.log('Navigating to restaurant UUID:', restaurant[0]);
+              navigate(`/admin/restaurant/${restaurant[0]}`);
+            }}
           >
             <CardContent className="p-6">
               <div className="flex items-start">

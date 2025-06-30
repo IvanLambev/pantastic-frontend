@@ -8,6 +8,7 @@ import Projects from "./admin/Projects"
 import Team from "./admin/Team"
 import Restaurant from "./admin/Restaurant"
 import OrderManagement from "./admin/OrderManagement"
+import RestaurantDetailsAdmin from "./admin/RestaurantDetailsAdmin"
 
 export default function Page() {
   return (
@@ -24,6 +25,7 @@ export default function Page() {
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/team" element={<Team />} />
                 <Route path="/restaurant" element={<Restaurant />} />
+                <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsAdmin />} />
                 <Route path="/orders" element={<OrderManagement />} />
               </Routes>
             </main>
