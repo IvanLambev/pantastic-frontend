@@ -6,7 +6,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 
 export default function RestaurantDetailsAdmin() {
-  const { restaurantName } = useParams();
+  // Use restaurantId (UUID) instead of restaurantName
+  const { restaurantId } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
@@ -20,7 +21,8 @@ export default function RestaurantDetailsAdmin() {
       try {
         const res = await fetch(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
-        const found = data.find(r => r[7] === restaurantName);
+        // Find by UUID (restaurantId)
+        const found = data.find(r => r[0] === restaurantId);
         setRestaurant(found);
         if (found) {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
@@ -35,7 +37,7 @@ export default function RestaurantDetailsAdmin() {
       }
     };
     fetchRestaurant();
-  }, [restaurantName]);
+  }, [restaurantId]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
