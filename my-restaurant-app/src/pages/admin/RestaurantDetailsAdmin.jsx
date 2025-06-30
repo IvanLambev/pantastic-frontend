@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Pencil, Trash2, UserPlus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function RestaurantDetailsAdmin() {
   const { restaurantId } = useParams();
@@ -155,68 +163,76 @@ export default function RestaurantDetailsAdmin() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Item Modal */}
-      {showItemModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <form className="bg-white p-6 rounded shadow-lg w-full max-w-md" onSubmit={handleItemFormSubmit}>
-            <h2 className="text-xl font-bold mb-4">{modalMode === "add" ? "Add" : "Edit"} Menu Item</h2>
-            <div className="mb-2">
+      {/* Add/Edit Item Dialog */}
+      <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{modalMode === "add" ? "Add" : "Edit"} Menu Item</DialogTitle>
+            <DialogDescription>
+              {modalMode === "add" ? "Fill in the details to add a new menu item." : "Edit the menu item details below."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleItemFormSubmit} className="space-y-4">
+            <div>
               <label className="block mb-1">Name</label>
               <input className="w-full border px-2 py-1" value={itemForm.name} onChange={e => setItemForm(f => ({ ...f, name: e.target.value }))} required />
             </div>
-            <div className="mb-2">
+            <div>
               <label className="block mb-1">Description</label>
               <textarea className="w-full border px-2 py-1" value={itemForm.description} onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))} required />
             </div>
-            <div className="mb-2">
+            <div>
               <label className="block mb-1">Price</label>
               <input type="number" step="0.01" className="w-full border px-2 py-1" value={itemForm.price} onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))} required />
             </div>
-            <div className="mb-2">
+            <div>
               <label className="block mb-1">Image</label>
               <input type="file" accept="image/*" ref={fileInputRef} className="w-full" />
               {itemForm.image && <img src={itemForm.image} alt="Preview" className="h-24 mt-2" />}
             </div>
-            <div className="flex gap-2 mt-4">
-              <button type="submit" className="bg-primary text-white px-4 py-2 rounded">Save</button>
-              <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowItemModal(false)}>Cancel</button>
-            </div>
+            <DialogFooter>
+              <Button type="submit" className="bg-primary text-white px-4 py-2 rounded">Save</Button>
+              <Button type="button" variant="outline" onClick={() => setShowItemModal(false)}>Cancel</Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
-      {/* Delete Confirm Modal */}
-      {deletingItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-sm">
-            <h2 className="text-xl font-bold mb-4">Delete Item</h2>
-            <p>Are you sure you want to delete <b>{deletingItem[4]}</b>?</p>
-            <div className="flex gap-2 mt-4">
-              <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={confirmDeleteItem}>Delete</button>
-              <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setDeletingItem(null)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+      {/* Delete Confirm Dialog */}
+      <Dialog open={!!deletingItem} onOpenChange={v => { if (!v) setDeletingItem(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Item</DialogTitle>
+            <DialogDescription>Are you sure you want to delete <b>{deletingItem?.[4]}</b>?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingItem(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDeleteItem}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Add Delivery Person Dialog */}
-      {showAddDeliveryDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <form className="bg-white p-6 rounded shadow-lg w-full max-w-md" onSubmit={handleAddDeliveryPerson}>
-            <h2 className="text-xl font-bold mb-4">Add Delivery Person</h2>
-            <div className="mb-2">
+      <Dialog open={showAddDeliveryDialog} onOpenChange={setShowAddDeliveryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Delivery Person</DialogTitle>
+            <DialogDescription>Fill in the details to add a new delivery person.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddDeliveryPerson} className="space-y-4">
+            <div>
               <label className="block mb-1">Name</label>
               <input className="w-full border px-2 py-1" value={newDeliveryPerson.name} onChange={e => setNewDeliveryPerson(f => ({ ...f, name: e.target.value }))} required />
             </div>
-            <div className="mb-2">
+            <div>
               <label className="block mb-1">Phone</label>
               <input className="w-full border px-2 py-1" value={newDeliveryPerson.phone} onChange={e => setNewDeliveryPerson(f => ({ ...f, phone: e.target.value }))} required />
             </div>
-            <div className="flex gap-2 mt-4">
-              <button type="submit" className="bg-primary text-white px-4 py-2 rounded" disabled={isSubmitting}>Add</button>
-              <button type="button" className="bg-gray-300 px-4 py-2 rounded" onClick={() => setShowAddDeliveryDialog(false)}>Cancel</button>
-            </div>
+            <DialogFooter>
+              <Button type="submit" className="bg-primary text-white px-4 py-2 rounded" disabled={isSubmitting}>Add</Button>
+              <Button type="button" variant="outline" onClick={() => setShowAddDeliveryDialog(false)}>Cancel</Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
       <Tabs value={currentTab} onValueChange={setCurrentTab}>
         <TabsList>
           <TabsTrigger value="items">Menu Items</TabsTrigger>
