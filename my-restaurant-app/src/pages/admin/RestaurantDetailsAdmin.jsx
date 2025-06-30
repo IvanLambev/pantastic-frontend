@@ -154,6 +154,9 @@ export default function RestaurantDetailsAdmin() {
   // Fetch delivery people (global, not just assigned)
   const fetchDeliveryPeople = async () => {
     try {
+      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+        method: "GET"
+      });
       const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
       setDeliveryPeople(await res.json());
     } catch {
