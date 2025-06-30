@@ -42,6 +42,8 @@ export default function RestaurantDetailsAdmin() {
   const [deletingItem, setDeletingItem] = useState(null);
   const [showAddDeliveryDialog, setShowAddDeliveryDialog] = useState(false);
   const [newDeliveryPerson, setNewDeliveryPerson] = useState({ name: "", phone: "" });
+  const [editingDelivery, setEditingDelivery] = useState(null);
+  const [showEditDeliveryDialog, setShowEditDeliveryDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef();
 
@@ -96,15 +98,28 @@ export default function RestaurantDetailsAdmin() {
   const handleItemFormSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append("name", itemForm.name);
-    formData.append("description", itemForm.description);
-    formData.append("price", itemForm.price);
-    if (fileInputRef.current && fileInputRef.current.files[0]) {
-      formData.append("image", fileInputRef.current.files[0]);
-    }
     let url = `${API_URL}/restaurant/${restaurant[0]}/items`;
     let method = modalMode === "add" ? "POST" : "PUT";
-    if (modalMode === "edit") formData.append("item_id", itemForm.id);
+    if (modalMode === "add") {
+      formData.append("name", itemForm.name);
+      formData.append("description", itemForm.description);
+      formData.append("price", itemForm.price);
+      if (fileInputRef.current && fileInputRef.current.files[0]) {
+        formData.append("image", fileInputRef.current.files[0]);
+      }
+    } else {
+      // For edit, use the backend's required structure
+      const data = {
+        item_id: itemForm.id,
+        name: itemForm.name,
+        description: itemForm.description,
+        price: parseFloat(itemForm.price)
+      };
+      formData.append("data", JSON.stringify(data));
+      if (fileInputRef.current && fileInputRef.current.files[0]) {
+        formData.append("file", fileInputRef.current.files[0]);
+      }
+    }
     try {
       await fetchWithAuth(url, {
         method,
@@ -135,6 +150,17 @@ export default function RestaurantDetailsAdmin() {
     }
   };
 
+  // Delivery people management state
+  // Fetch delivery people (global, not just assigned)
+  const fetchDeliveryPeople = async () => {
+    try {
+      const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
+      setDeliveryPeople(await res.json());
+    } catch {
+      setDeliveryPeople([]);
+    }
+  };
+
   // Add delivery person handler
   const handleAddDeliveryPerson = async (e) => {
     e.preventDefault();
@@ -152,6 +178,92 @@ export default function RestaurantDetailsAdmin() {
       setDeliveryPeople(await dpRes.json());
     } catch (err) {
       alert("Failed to add delivery person");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Edit delivery person handler
+  const handleEditDeliveryPerson = (person) => {
+    setEditingDelivery(person);
+    setShowEditDeliveryDialog(true);
+  };
+  const handleEditDeliveryPersonSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          delivery_person_id: editingDelivery.delivery_person_id || editingDelivery[0],
+          person: {
+            name: editingDelivery.name || editingDelivery[1],
+            phone: editingDelivery.phone || editingDelivery[2],
+          },
+        }),
+      });
+      setShowEditDeliveryDialog(false);
+      setEditingDelivery(null);
+      fetchDeliveryPeople();
+    } catch {
+      alert("Failed to update delivery person");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Delete delivery person
+  const handleDeleteDeliveryPerson = async (person) => {
+    if (!window.confirm("Are you sure you want to delete this delivery person?")) return;
+    setIsSubmitting(true);
+    try {
+      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delivery_person_id: person.delivery_person_id || person[0] }),
+      });
+      fetchDeliveryPeople();
+    } catch {
+      alert("Failed to delete delivery person");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Assign/unassign delivery person to restaurant
+  const handleAssignDelivery = async (person) => {
+    setIsSubmitting(true);
+    try {
+      await fetchWithAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurant_id: restaurant[0],
+          delivery_person_id: person.delivery_person_id || person[0],
+        }),
+      });
+      fetchDeliveryPeople();
+    } catch {
+      alert("Failed to assign delivery person");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleUnassignDelivery = async (person) => {
+    setIsSubmitting(true);
+    try {
+      await fetchWithAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurant_id: restaurant[0],
+          delivery_person_id: person.delivery_person_id || person[0],
+        }),
+      });
+      fetchDeliveryPeople();
+    } catch {
+      alert("Failed to unassign delivery person");
     } finally {
       setIsSubmitting(false);
     }
@@ -187,8 +299,30 @@ export default function RestaurantDetailsAdmin() {
             </div>
             <div>
               <label className="block mb-1">Image</label>
-              <input type="file" accept="image/*" ref={fileInputRef} className="w-full" />
-              {itemForm.image && <img src={itemForm.image} alt="Preview" className="h-24 mt-2" />}
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={e => {
+                    if (e.target.files && e.target.files[0]) {
+                      const url = URL.createObjectURL(e.target.files[0]);
+                      setItemForm(f => ({ ...f, image: url }));
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                >
+                  {itemForm.image ? "Change Image" : "Select Image"}
+                </Button>
+                {itemForm.image && (
+                  <img src={itemForm.image} alt="Preview" className="h-16 w-16 object-cover rounded" />
+                )}
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" className="bg-primary text-white px-4 py-2 rounded">Save</Button>
@@ -210,25 +344,27 @@ export default function RestaurantDetailsAdmin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Add Delivery Person Dialog */}
-      <Dialog open={showAddDeliveryDialog} onOpenChange={setShowAddDeliveryDialog}>
+      {/* Add/Edit Delivery Person Dialog */}
+      <Dialog open={showAddDeliveryDialog || showEditDeliveryDialog} onOpenChange={v => { setShowAddDeliveryDialog(false); setShowEditDeliveryDialog(false); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Delivery Person</DialogTitle>
-            <DialogDescription>Fill in the details to add a new delivery person.</DialogDescription>
+            <DialogTitle>{showAddDeliveryDialog ? "Add" : "Edit"} Delivery Person</DialogTitle>
+            <DialogDescription>
+              {showAddDeliveryDialog ? "Fill in the details to add a new delivery person." : "Edit the delivery person details below."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddDeliveryPerson} className="space-y-4">
+          <form onSubmit={showAddDeliveryDialog ? handleAddDeliveryPerson : handleEditDeliveryPersonSubmit} className="space-y-4">
             <div>
               <label className="block mb-1">Name</label>
-              <input className="w-full border px-2 py-1" value={newDeliveryPerson.name} onChange={e => setNewDeliveryPerson(f => ({ ...f, name: e.target.value }))} required />
+              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.name : (editingDelivery?.name || editingDelivery?.[1] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, name: e.target.value })) : setEditingDelivery(f => ({ ...f, name: e.target.value }))} required />
             </div>
             <div>
               <label className="block mb-1">Phone</label>
-              <input className="w-full border px-2 py-1" value={newDeliveryPerson.phone} onChange={e => setNewDeliveryPerson(f => ({ ...f, phone: e.target.value }))} required />
+              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.phone : (editingDelivery?.phone || editingDelivery?.[2] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, phone: e.target.value })) : setEditingDelivery(f => ({ ...f, phone: e.target.value }))} required />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-primary text-white px-4 py-2 rounded" disabled={isSubmitting}>Add</Button>
-              <Button type="button" variant="outline" onClick={() => setShowAddDeliveryDialog(false)}>Cancel</Button>
+              <Button type="submit" className="bg-primary text-white px-4 py-2 rounded" disabled={isSubmitting}>{showAddDeliveryDialog ? "Add" : "Save"}</Button>
+              <Button type="button" variant="outline" onClick={() => { setShowAddDeliveryDialog(false); setShowEditDeliveryDialog(false); }}>Cancel</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -306,14 +442,39 @@ export default function RestaurantDetailsAdmin() {
             <h2 className="text-xl font-bold">Delivery People</h2>
             <Button onClick={() => setShowAddDeliveryDialog(true)}><UserPlus className="mr-2 h-4 w-4" />Add Delivery Person</Button>
           </div>
-          <DeliveryPeopleManager 
-            restaurantId={restaurant[0]}
-            deliveryPeople={deliveryPeople}
-            onUpdate={async () => {
-              const dpRes = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
-              setDeliveryPeople(await dpRes.json());
-            }}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {deliveryPeople.map(person => (
+              <Card key={person.delivery_person_id || person[0]} className="overflow-hidden hover:shadow-md transition-shadow">
+                <CardHeader className="relative">
+                  <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="bg-background/80 backdrop-blur-sm hover:bg-background/90">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditDeliveryPerson(person)}>
+                          <Pencil className="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteDeliveryPerson(person)}>
+                          <Trash2 className="mr-2 h-4 w-4" />Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <CardTitle className="text-lg">{person.name || person[1]}</CardTitle>
+                  <CardDescription className="text-sm">{person.phone || person[2]}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" variant="outline" onClick={() => handleAssignDelivery(person)}>Assign</Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleUnassignDelivery(person)}>Unassign</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
