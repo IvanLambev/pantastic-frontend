@@ -271,20 +271,21 @@ export default function App() {
   return (
     <CartProvider>
       <Routes>
-        <Route path="/" element={<AppWithLenis><MainLayout /></AppWithLenis>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/food" element={<Food />} />
+        <Route element={<AppWithLenis><MainLayout /></AppWithLenis>}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/food" element={<Food />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+          <Route path="/order-tracking" element={<OrderTrackingV2 />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/item/:id" element={<ItemDetails />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
         <Route path="/admin/*" element={<Admin />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/restaurant/:id" element={<RestaurantDetails />} />
-        <Route path="/order-tracking" element={<OrderTrackingV2 />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
-        <Route path="/item/:id" element={<ItemDetails />} />
-        <Route path="*" element={<NotFound />} />
       </Routes>
-
       <Toaster />
     </CartProvider>
   )
