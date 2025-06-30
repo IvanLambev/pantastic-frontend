@@ -59,6 +59,24 @@ export function RestaurantManager() {
   const [editingItem, setEditingItem] = useState(null)
   const [currentTab, setCurrentTab] = useState("items")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAddRestaurantDialog, setShowAddRestaurantDialog] = useState(false);
+  const [addRestaurantForm, setAddRestaurantForm] = useState({
+    name: "",
+    city: "",
+    address: "",
+    openingHours: {
+      Monday: [9, 18],
+      Tuesday: [9, 18],
+      Wednesday: [9, 18],
+      Thursday: [9, 18],
+      Friday: [9, 18],
+      Saturday: [10, 18],
+      Sunday: [10, 16],
+    },
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [restaurantSearch, setRestaurantSearch] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
 
   useEffect(() => {
     const validateUserToken = async () => {
@@ -346,6 +364,83 @@ export function RestaurantManager() {
     (item?.description?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   )
 
+  const handleAddRestaurantFormChange = (field, value) => {
+    setAddRestaurantForm((prev) => ({ ...prev, [field]: value }));
+  };
+  const handleOpeningHoursChange = (day, value) => {
+    setAddRestaurantForm((prev) => ({
+      ...prev,
+      openingHours: { ...prev.openingHours, [day]: value },
+    }));
+  };
+  const handleAddRestaurant = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+      // Convert opening hours to string format
+      const opening_hours = Object.fromEntries(
+        Object.entries(addRestaurantForm.openingHours).map(([day, [start, end]]) => [
+          day,
+          `${String(start).padStart(2, '0')}:00-${String(end).padStart(2, '0')}:00`
+        ])
+      );
+      const response = await fetch(`${API_URL}/restaurant/restaurants`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${user.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: addRestaurantForm.name,
+          city: addRestaurantForm.city,
+          address: addRestaurantForm.address,
+          opening_hours,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add restaurant");
+      setShowAddRestaurantDialog(false);
+      setAddRestaurantForm({
+        name: "",
+        city: "",
+        address: "",
+        openingHours: {
+          Monday: [9, 18],
+          Tuesday: [9, 18],
+          Wednesday: [9, 18],
+          Thursday: [9, 18],
+          Friday: [9, 18],
+          Saturday: [10, 18],
+          Sunday: [10, 16],
+        },
+      });
+      fetchRestaurants();
+    } catch (err) {
+      alert("Failed to add restaurant");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Remove duplicate restaurants by id
+  const uniqueRestaurants = Array.from(
+    new Map(restaurants.map(r => [r[0], r])).values()
+  );
+
+  // Get unique cities from unique restaurants
+  const cities = Array.from(new Set(uniqueRestaurants.map(r => r[2]).filter(Boolean)));
+
+  const filteredRestaurants = uniqueRestaurants.filter(r => {
+    const search = restaurantSearch.trim().toLowerCase();
+    const matchesSearch =
+      (!search ||
+      (r[7] && r[7].toLowerCase().includes(search)) ||
+      (r[1] && r[1].toLowerCase().includes(search)) ||
+      (r[2] && r[2].toLowerCase().includes(search)));
+    const matchesCity = cityFilter ? r[2] === cityFilter : true;
+    return matchesSearch && matchesCity;
+  });
+
   if (loading) {
     return <div className="text-center p-4">Loading...</div>
   }
@@ -356,22 +451,46 @@ export function RestaurantManager() {
 
   return (
     <div className="flex flex-col gap-6 w-full px-0 py-0 bg-background">
+      <div className="flex flex-wrap gap-4 mb-4 items-center justify-between">
+        <div className="flex gap-4 flex-1 min-w-0">
+          <Input
+            placeholder="Search restaurants..."
+            value={restaurantSearch}
+            onChange={e => setRestaurantSearch(e.target.value)}
+            className="max-w-xs"
+          />
+          <select
+            value={cityFilter}
+            onChange={e => setCityFilter(e.target.value)}
+            className="border rounded px-2 py-1 text-base"
+          >
+            <option value="">All Cities</option>
+            {cities.map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+        </div>
+        <Button onClick={() => setShowAddRestaurantDialog(true)}>
+          Add Restaurant
+        </Button>
+      </div>
       <div className="grid grid-cols-1 gap-6 w-full">
-        {restaurants.map((restaurant) => (
+        {filteredRestaurants.map((restaurant) => (
           <Card 
             key={restaurant[0]} 
             className={`relative cursor-pointer transition-all hover:shadow-lg ${
               selectedRestaurant?.[0] === restaurant[0] ? 'ring-2 ring-primary' : 'hover:border-primary'
             }`}
-            onClick={() => setSelectedRestaurant(restaurant)}
+            onClick={() => navigate(`/admin/restaurant/${encodeURIComponent(restaurant[7])}`)}
           >
             <CardContent className="p-6">
               <div className="flex items-start">
                 <div className="flex-grow pr-16">
-                  <h3 className="text-2xl font-semibold mb-2">{restaurant[6]}</h3>
-                  <p className="text-muted-foreground mb-4">{restaurant[1]}</p>
+                  <h3 className="text-2xl font-semibold mb-2">{restaurant[7]}</h3>
+                  <p className="text-muted-foreground mb-1">{restaurant[1]}</p>
+                  <p className="text-muted-foreground mb-4">{restaurant[2]}</p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                    {Object.entries(restaurant[8] || {}).map(([day, hours]) => (
                       <div key={day} className="flex justify-between items-center border-b border-border/50 pb-1">
                         <span className="font-medium capitalize">{day}:</span>
                         <span className="text-muted-foreground">{hours}</span>
@@ -388,11 +507,11 @@ export function RestaurantManager() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation()
+                        e.stopPropagation();
                         setEditRestaurantData({
-                          name: restaurant[6],
-                          address: restaurant[1],
-                          opening_hours: restaurant[7]
+                          name: restaurant[7], // Correct index for name
+                          address: restaurant[1], // Correct index for address
+                          opening_hours: restaurant[8] // Correct index for opening_hours
                         })
                         setShowEditRestaurantDialog(true)
                       }}>
@@ -418,7 +537,7 @@ export function RestaurantManager() {
           </Card>
         ))}
       </div>
-
+      {/* Show details and delivery people tabs when a restaurant is selected */}
       {selectedRestaurant && (
         <div className="mt-6">
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
@@ -427,7 +546,6 @@ export function RestaurantManager() {
               <TabsTrigger value="details">Restaurant Details</TabsTrigger>
               <TabsTrigger value="delivery">Delivery People</TabsTrigger>
             </TabsList>
-
             <TabsContent value="items" className="space-y-4">
               <div className="flex justify-between items-center">
                 <div className="relative w-full max-w-sm">
@@ -517,13 +635,14 @@ export function RestaurantManager() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Location Details</h3>
-                  <p><strong>Latitude:</strong> {selectedRestaurant[4]}</p>
-                  <p><strong>Longitude:</strong> {selectedRestaurant[5]}</p>
+                  <p><strong>Latitude:</strong> {selectedRestaurant[5]}</p>
+                  <p><strong>Longitude:</strong> {selectedRestaurant[6]}</p>
                   <p><strong>Address:</strong> {selectedRestaurant[1]}</p>
+                  <p><strong>City:</strong> {selectedRestaurant[2]}</p>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Business Hours</h3>
-                  {Object.entries(selectedRestaurant[7] || {}).map(([day, hours]) => (
+                  {Object.entries(selectedRestaurant[8] || {}).map(([day, hours]) => (
                     <p key={day}><strong>{day}:</strong> {hours}</p>
                   ))}
                 </div>
@@ -729,6 +848,68 @@ export function RestaurantManager() {
               {isSubmitting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAddRestaurantDialog} onOpenChange={setShowAddRestaurantDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Restaurant</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddRestaurant} className="space-y-4">
+            <Input
+              placeholder="Name"
+              value={addRestaurantForm.name}
+              onChange={(e) => handleAddRestaurantFormChange("name", e.target.value)}
+              required
+            />
+            <Input
+              placeholder="City"
+              value={addRestaurantForm.city}
+              onChange={(e) => handleAddRestaurantFormChange("city", e.target.value)}
+              required
+            />
+            <Input
+              placeholder="Address"
+              value={addRestaurantForm.address}
+              onChange={(e) => handleAddRestaurantFormChange("address", e.target.value)}
+              required
+            />
+            {/* Map picker placeholder */}
+            <div className="text-xs text-muted-foreground">[Map picker coming soon]</div>
+            <div>
+              <div className="font-semibold mb-2">Opening Hours</div>
+              {Object.entries(addRestaurantForm.openingHours).map(([day, hours]) => (
+                <div key={day} className="flex items-center gap-2 mb-2">
+                  <span className="w-20">{day}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={24}
+                    step={1}
+                    value={hours[0]}
+                    onChange={e => handleOpeningHoursChange(day, [Number(e.target.value), hours[1]])}
+                    className="flex-1"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={24}
+                    step={1}
+                    value={hours[1]}
+                    onChange={e => handleOpeningHoursChange(day, [hours[0], Number(e.target.value)])}
+                    className="flex-1"
+                  />
+                  <span className="w-24 text-right">{String(hours[0]).padStart(2, '0')}:00 - {String(hours[1]).padStart(2, '0')}:00</span>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Adding..." : "Add Restaurant"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -15,7 +15,7 @@ import { User } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
-  const { isLoggedIn, handleLogout } = useAuth();
+  const { isLoggedIn, handleLogout, isAdmin } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -63,6 +63,11 @@ const Navbar = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/user-dashboard">Dashboard</Link>
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin">Admin</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

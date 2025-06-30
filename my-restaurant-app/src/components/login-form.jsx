@@ -51,7 +51,7 @@ export function LoginForm({ className }) {
         const data = await response.json();
         console.log("Login successful:", data);
         sessionStorage.setItem("user", JSON.stringify(data));
-        updateLoginState(); // Trigger login state update
+        await updateLoginState(); // Trigger login state update and admin check
         // alert("Login successful!");
         navigate("/food");
       } else {

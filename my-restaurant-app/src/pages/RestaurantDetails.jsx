@@ -106,14 +106,14 @@ export default function RestaurantDetails() {
       <div className="container mx-auto px-4 py-8 mt-16 pb-32">
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl md:text-3xl">{restaurant[6]}</CardTitle>
-            <CardDescription className="text-base md:text-lg">{restaurant[1]}</CardDescription>
+            <CardTitle className="text-2xl md:text-3xl">{restaurant[7]}</CardTitle>
+            <CardDescription className="text-base md:text-lg">{restaurant[1]}, {restaurant[2]}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="font-semibold">Opening Hours</h3>
-                {Object.entries(restaurant[7] || {}).map(([day, hours]) => (
+                {restaurant[8] && typeof restaurant[8] === 'object' && Object.entries(restaurant[8]).map(([day, hours]) => (
                   <div key={day} className="flex justify-between items-center border-b border-border/50 pb-1">
                     <span className="font-medium capitalize">{day}:</span>
                     <span className="text-muted-foreground">{hours}</span>
@@ -123,6 +123,7 @@ export default function RestaurantDetails() {
               <div className="space-y-2">
                 <h3 className="font-semibold">Location</h3>
                 <p className="text-muted-foreground">{restaurant[1]}</p>
+                <p className="text-muted-foreground">{restaurant[2]}</p>
               </div>
             </div>
           </CardContent>
