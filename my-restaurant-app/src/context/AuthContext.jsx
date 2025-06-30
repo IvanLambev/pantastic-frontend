@@ -68,8 +68,10 @@ const AuthProvider = ({ children }) => {
         return false
       }
       const data = await response.json()
+      console.log("validateAdmin response:", data)
       // Accept true, "true", "True" (string or boolean)
-      const adminValue = data.is_admin === true || data.is_admin === "true" || data.is_admin === "True"
+      const adminValue = data.is_admin === true || data.is_admin === "true" || data.is_admin === "True" || data === true
+      console.log("adminValue computed:", adminValue)
       setIsAdmin(adminValue)
       sessionStorage.setItem("isAdmin", adminValue.toString())
       return adminValue
