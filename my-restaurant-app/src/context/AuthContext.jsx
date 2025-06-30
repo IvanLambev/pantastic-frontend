@@ -56,19 +56,22 @@ const AuthProvider = ({ children }) => {
 
   const validateAdmin = async (accessToken) => {
     try {
+      console.log("Calling validateAdmin with token:", accessToken)
       const response = await fetch(`${API_URL}/user/validate-admin`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${accessToken}`,
         },
       })
+      console.log("validateAdmin fetch status:", response.status)
       if (!response.ok) {
         setIsAdmin(false)
         sessionStorage.setItem("isAdmin", "false")
+        console.log("validateAdmin: response not ok")
         return false
       }
       const data = await response.json()
-      console.log("validateAdmin response:", data)
+      console.log("validateAdmin response:", data, "typeof:", typeof data)
       // Accept true, "true", "True" (string or boolean)
       const adminValue = data.is_admin === true || data.is_admin === "true" || data.is_admin === "True" || data === true
       console.log("adminValue computed:", adminValue)
@@ -76,6 +79,7 @@ const AuthProvider = ({ children }) => {
       sessionStorage.setItem("isAdmin", adminValue.toString())
       return adminValue
     } catch (err) {
+      console.error("validateAdmin error:", err)
       setIsAdmin(false)
       sessionStorage.setItem("isAdmin", "false")
       return false
