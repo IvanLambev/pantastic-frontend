@@ -197,8 +197,8 @@ export default function RestaurantDetailsAdmin() {
         body: JSON.stringify({
           delivery_person_id: editingDelivery.delivery_person_id || editingDelivery[0],
           person: {
-            name: editingDelivery.name || editingDelivery[1],
-            phone: editingDelivery.phone || editingDelivery[2],
+            name: editingDelivery.name || editingDelivery[2],
+            phone: editingDelivery.phone || editingDelivery[3],
           },
         }),
       });
@@ -355,11 +355,11 @@ export default function RestaurantDetailsAdmin() {
           <form onSubmit={showAddDeliveryDialog ? handleAddDeliveryPerson : handleEditDeliveryPersonSubmit} className="space-y-4">
             <div>
               <label className="block mb-1">Name</label>
-              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.name : (editingDelivery?.name || editingDelivery?.[1] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, name: e.target.value })) : setEditingDelivery(f => ({ ...f, name: e.target.value }))} required />
+              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.name : (editingDelivery?.name || editingDelivery?.[2] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, name: e.target.value })) : setEditingDelivery(f => ({ ...f, name: e.target.value }))} required />
             </div>
             <div>
               <label className="block mb-1">Phone</label>
-              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.phone : (editingDelivery?.phone || editingDelivery?.[2] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, phone: e.target.value })) : setEditingDelivery(f => ({ ...f, phone: e.target.value }))} required />
+              <input className="w-full border px-2 py-1" value={showAddDeliveryDialog ? newDeliveryPerson.phone : (editingDelivery?.phone || editingDelivery?.[3] || "")} onChange={e => showAddDeliveryDialog ? setNewDeliveryPerson(f => ({ ...f, phone: e.target.value })) : setEditingDelivery(f => ({ ...f, phone: e.target.value }))} required />
             </div>
             <DialogFooter>
               <Button type="submit" className="bg-primary text-white px-4 py-2 rounded" disabled={isSubmitting}>{showAddDeliveryDialog ? "Add" : "Save"}</Button>
@@ -443,7 +443,7 @@ export default function RestaurantDetailsAdmin() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {deliveryPeople.map(person => (
-              <Card key={person.delivery_person_id || person[0]} className="overflow-hidden hover:shadow-md transition-shadow">
+              <Card key={person[0]} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardHeader className="relative">
                   <div className="absolute top-4 right-4 z-10 flex gap-2">
                     <DropdownMenu>
@@ -462,8 +462,8 @@ export default function RestaurantDetailsAdmin() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <CardTitle className="text-lg">{person.name || person[1]}</CardTitle>
-                  <CardDescription className="text-sm">{person.phone || person[2]}</CardDescription>
+                  <CardTitle className="text-lg">{person[2]}</CardTitle>
+                  <CardDescription className="text-sm">{person[3]}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2 mt-2">
