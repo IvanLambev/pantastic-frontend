@@ -68,9 +68,11 @@ const AuthProvider = ({ children }) => {
         return false
       }
       const data = await response.json()
-      setIsAdmin(!!data.is_admin)
-      sessionStorage.setItem("isAdmin", (!!data.is_admin).toString())
-      return !!data.is_admin
+      // Accept true, "true", "True" (string or boolean)
+      const adminValue = data.is_admin === true || data.is_admin === "true" || data.is_admin === "True"
+      setIsAdmin(adminValue)
+      sessionStorage.setItem("isAdmin", adminValue.toString())
+      return adminValue
     } catch (err) {
       setIsAdmin(false)
       sessionStorage.setItem("isAdmin", "false")
