@@ -192,6 +192,7 @@ const Home = () => {
 
       <div className="container mx-auto px-4 py-12 space-y-24">
         <HowItWorks />
+        ne sum li nai qkiq
         <DeliveryPickupInfo />
         <FAQ />
         <AboutUs />
