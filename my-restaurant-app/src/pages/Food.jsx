@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/lib/utils"
-import { getCoordinates } from "@/utils/geocode"
+import RestaurantSelector from "@/components/ui/RestaurantSelector";
 
 const Food = () => {
   const navigate = useNavigate()
@@ -35,7 +35,6 @@ const Food = () => {
   const [restaurants, setRestaurants] = useState([])
   const [selectedCity, setSelectedCity] = useState(null)
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
-  const [restaurantId, setRestaurantId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -46,9 +45,6 @@ const Food = () => {
   const { addToCart } = useCart()
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
-  const [address, setAddress] = useState("")
-  const [addressError, setAddressError] = useState("")
-  const [addressLoading, setAddressLoading] = useState(false)
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -101,116 +97,6 @@ const Food = () => {
     fetchFavorites();
   }, []);
 
-  // Get unique cities from restaurants
-  const cities = [...new Set(restaurants.map(restaurant => restaurant[2]))].sort()
-
-  // Filter restaurants by selected city
-  const filteredRestaurants = selectedCity 
-    ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
-    : restaurants
-
-  // Helper to calculate distance between two coordinates (Haversine formula)
-  function getDistance(lat1, lon1, lat2, lon2) {
-    const toRad = (v) => (v * Math.PI) / 180;
-    const R = 6371; // km
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  // Find closest restaurant by coordinates
-  function findClosestRestaurant(lat, lng) {
-    if (!restaurants.length) return null;
-    let minDist = Infinity;
-    let closest = null;
-    for (const r of restaurants) {
-      const rLat = r[5];
-      const rLng = r[6];
-      if (typeof rLat === "number" && typeof rLng === "number") {
-        const dist = getDistance(lat, lng, rLat, rLng);
-        if (dist < minDist) {
-          minDist = dist;
-          closest = r;
-        }
-      }
-    }
-    return closest;
-  }
-
-  // Unified restaurant selection handler
-  function selectRestaurant(restaurant) {
-    setSelectedRestaurant(restaurant);
-    setRestaurantId(restaurant[0]);
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
-    setShowCityModal(false);
-    setShowRestaurantModal(false);
-    fetchItems(restaurant[0]);
-    toast.success(`You selected restaurant: ${restaurant[7]}`);
-  }
-
-  const handleCitySelect = (city) => {
-    setSelectedCity(city);
-    setShowCityModal(false);
-    setShowRestaurantModal(true);
-  };
-
-  const handleRestaurantSelect = (restaurant) => {
-    selectRestaurant(restaurant);
-  };
-
-  async function handleAddressSubmit(e) {
-    e.preventDefault();
-    setAddressError("");
-    setAddressLoading(true);
-    try {
-      const coords = await getCoordinates(address);
-      if (!coords) throw new Error("Could not geocode address");
-      const closest = findClosestRestaurant(coords.lat, coords.lng);
-      if (closest) {
-        selectRestaurant(closest);
-      } else {
-        setAddressError("No restaurants found near this address.");
-      }
-    } catch {
-      setAddressError("Failed to find restaurant for this address.");
-    } finally {
-      setAddressLoading(false);
-    }
-  }
-
-  async function handleDeviceLocation() {
-    setAddressError("");
-    setAddressLoading(true);
-    if (!navigator.geolocation) {
-      setAddressError("Geolocation is not supported.");
-      setAddressLoading(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const closest = findClosestRestaurant(latitude, longitude);
-        if (closest) {
-          selectRestaurant(closest);
-        } else {
-          setAddressError("No restaurants found near your location.");
-        }
-        setAddressLoading(false);
-      },
-      () => {
-        setAddressError("Failed to get device location.");
-        setAddressLoading(false);
-      }
-    );
-  }
-
   const handleChangeSelection = async () => {
     setLoading(true)
     try {
@@ -231,12 +117,6 @@ const Food = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleBackToCity = () => {
-    setShowRestaurantModal(false)
-    setShowCityModal(true)
-    setSelectedCity(null)
   }
 
   const fetchItems = async (restaurantId) => {
@@ -308,6 +188,18 @@ const Food = () => {
     }
   };
 
+  // Unified restaurant selection handler
+  function selectRestaurant(restaurant) {
+    setSelectedRestaurant(restaurant);
+    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    setShowCityModal(false);
+    setShowRestaurantModal(false);
+    // Dismiss all previous toasts before showing a new one
+    toast.dismiss();
+    toast.success(`You selected restaurant: ${restaurant[7]}`);
+    fetchItems(restaurant[0]);
+  }
+
   // Add filtered and sorted items logic
   const filteredItems = items.filter(item => {
     const matchesSearch = (item[4]?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -338,97 +230,21 @@ const Food = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
-      {/* City Selection Modal */}
-      <Dialog open={showCityModal} onOpenChange={setShowCityModal}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">            {loading ? (
-              <p className="text-center">Loading cities...</p>
-            ) : error ? (
-              <p className="text-red-500 text-center">{error}</p>
-            ) : (
-              <>
-                {cities.map((city) => (
-                  <Button
-                    key={city}
-                    variant="outline"
-                    className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
-                    onClick={() => handleCitySelect(city)}
-                  >
-                    <span className="text-lg sm:text-xl font-bold">{city}</span>
-                  </Button>
-                ))}
-                <form onSubmit={handleAddressSubmit} className="flex flex-col gap-2 mt-4">
-                  <input
-                    type="text"
-                    className="border rounded px-4 py-2"
-                    placeholder="Or type your address..."
-                    value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    disabled={addressLoading}
-                  />
-                  <Button type="submit" disabled={addressLoading || !address}>
-                    {addressLoading ? "Finding..." : "Find Closest Restaurant"}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={handleDeviceLocation} disabled={addressLoading}>
-                    Use My Location
-                  </Button>
-                  {addressError && <p className="text-red-500 text-sm">{addressError}</p>}
-                </form>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Restaurant Selection Modal */}
-      <Dialog open={showRestaurantModal} onOpenChange={setShowRestaurantModal}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="flex flex-row justify-between items-center">
-            <DialogTitle className="text-2xl font-bold">
-              Select a Restaurant in {selectedCity}
-            </DialogTitle>
-            <Button 
-              variant="outline" 
-              onClick={handleBackToCity}
-            >
-              Change City
-            </Button>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {loading ? (
-              <p className="text-center">Loading restaurants...</p>
-            ) : error ? (
-              <p className="text-red-500 text-center">{error}</p>
-            ) : (
-              filteredRestaurants.map((restaurant) => (
-                <Button
-                  key={restaurant[0]}
-                  variant="outline"
-                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
-                  onClick={() => handleRestaurantSelect(restaurant)}
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
-                    <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                      <span className="text-lg sm:text-xl font-bold text-left">{restaurant[7]}</span>
-                      <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
-                    </div>
-                    <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
-                      {Object.entries(restaurant[8]).map(([day, hours]) => (
-                        <div key={day} className="whitespace-nowrap">
-                          <span className="font-medium">{day}:</span> {hours}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Button>
-              ))
-            )}          </div>
-        </DialogContent>
-      </Dialog>
-
+      <RestaurantSelector
+        open={showCityModal || showRestaurantModal}
+        onClose={() => {
+          setShowCityModal(false);
+          setShowRestaurantModal(false);
+        }}
+        restaurants={restaurants}
+        onSelect={selectRestaurant}
+        loading={loading}
+        error={error}
+        selectedCity={selectedCity}
+        setSelectedCity={setSelectedCity}
+        showRestaurantModal={showRestaurantModal}
+        setShowRestaurantModal={setShowRestaurantModal}
+      />
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
         <div className="bg-background border-b">
