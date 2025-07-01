@@ -50,7 +50,7 @@ export default function UserDashboard() {
     const fetchOrders = async () => {
       try {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        const response = await fetch(`${API_URL}/user/user/orders`, {
+        const response = await fetchWithAuth(`${API_URL}/order/orders/user`, {
           headers: {
             'Authorization': `Bearer ${user.access_token}`,
             'Content-Type': 'application/json',
@@ -58,24 +58,12 @@ export default function UserDashboard() {
         });
         if (!response.ok) throw new Error('Failed to fetch orders');
         const data = await response.json();
-        const ordersWithDetails = await Promise.all(
-          data.orders.map(async (order) => {
-            const itemsWithDetails = await Promise.all(
-              Object.entries(order.products).map(async ([itemId, quantity]) => {
-                const itemDetails = await fetchItemDetails(order.restaurant_id, itemId);
-                return { ...itemDetails, quantity };
-              })
-            );
-            return { ...order, products: itemsWithDetails };
-          })
-        );
-        setOrders(ordersWithDetails);
+        setOrders(data);
       } catch (error) {
         console.error('Error fetching orders:', error);
-        toast.error('Failed to fetch orders');
+        setError('Failed to fetch orders');
       }
     };
-
     if (token) {
       fetchOrders();
     }
@@ -118,6 +106,52 @@ export default function UserDashboard() {
     const fetchFavorites = async () => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       if (!user.access_token) return;
+      // Fetch all restaurants
+      const restaurantsRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`, {
+        headers: {
+          'Authorization': `Bearer ${user.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      let allItems = [];
+      if (restaurantsRes.ok) {
+        const restaurants = await restaurantsRes.json();
+        // Fetch all items for all restaurants
+        const itemsArrays = await Promise.all(
+          restaurants.map(async (r) => {
+            const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${r[0]}/items`, {
+              headers: {
+                'Authorization': `Bearer ${user.access_token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (itemsRes.ok) {
+              return await itemsRes.json();
+            }
+            return [];
+          })
+        );
+        allItems = itemsArrays.flat();
+      }
+      // Build a map of item_id to item details
+      const itemMap = {};
+      for (const item of allItems) {
+        // If item is array, map to object
+        if (Array.isArray(item)) {
+          itemMap[item[0]] = {
+            item_id: item[0],
+            created_at: item[1],
+            description: item[2],
+            image_url: item[3],
+            name: item[4],
+            price: item[5],
+            category_id: item[6],
+          };
+        } else if (item && item.item_id) {
+          itemMap[item.item_id] = item;
+        }
+      }
+      // Fetch favourites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         headers: {
           'Authorization': `Bearer ${user.access_token}`,
@@ -126,41 +160,16 @@ export default function UserDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        // Fetch item details for each favorite
-        const detailedFavorites = await Promise.all(
-          data.map(async (fav) => {
-            // Try to find the restaurant for this item from the user's orders
-            let restaurantId = null;
-            for (const order of orders) {
-              if (order.products.some(p => p.item_id === fav.item_id)) {
-                restaurantId = order.restaurant_id;
-                break;
-              }
-            }
-            // Fallback: use the first order's restaurant if not found
-            if (!restaurantId && orders.length > 0) {
-              restaurantId = orders[0].restaurant_id;
-            }
-            let itemDetails = null;
-            if (restaurantId) {
-              try {
-                const resp = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${fav.item_id}`);
-                if (resp.ok) {
-                  itemDetails = await resp.json();
-                }
-              } catch (e) { /* ignore */ }
-            }
-            return {
-              ...fav,
-              ...(itemDetails || {}),
-            };
-          })
-        );
+        // Attach item details to each favourite
+        const detailedFavorites = data.map(fav => ({
+          ...fav,
+          ...(itemMap[fav.item_id] || {}),
+        }));
         setFavoriteItems(detailedFavorites);
       }
     };
     fetchFavorites();
-  }, [orders]);
+  }, []);
 
   const fetchItemDetails = async (restaurantId, itemId) => {
     try {
