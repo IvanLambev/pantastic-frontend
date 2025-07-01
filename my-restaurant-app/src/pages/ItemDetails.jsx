@@ -36,7 +36,19 @@ export default function ItemDetails() {
         if (!response.ok) {
           throw new Error('Failed to fetch item details')
         }
-        const data = await response.json()
+        let data = await response.json()
+        // If data is an array, map to object
+        if (Array.isArray(data)) {
+          data = {
+            item_id: data[0],
+            created_at: data[1],
+            description: data[2],
+            image_url: data[3],
+            name: data[4],
+            price: data[5],
+            category_id: data[6],
+          }
+        }
         setItem(data)
         // Load saved instructions if they exist
         const savedInstructions = sessionStorage.getItem(`item-instructions-${itemId}`)
