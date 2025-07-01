@@ -166,6 +166,7 @@ export default function UserDashboard() {
             description: details.description || '',
             image_url: details.image_url || '/elementor-placeholder-image.webp',
             price: details.price !== undefined ? details.price : '--',
+            restaurant_id: details.category_id ? details.category_id : details.restaurant_id || '', // fallback for restaurant id
           };
         });
         setFavoriteItems(detailedFavorites);
@@ -222,6 +223,25 @@ export default function UserDashboard() {
     } catch (err) {
       console.error("Error deleting account:", err);
       alert("An error occurred while trying to delete your account.");
+    }
+  };
+
+  // Add unfavourite handler
+  const handleUnfavourite = async (favouriteId) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/user/favouriteItems/${favouriteId}`, {
+        method: 'DELETE',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        setFavoriteItems(favoriteItems.filter(fav => fav.favourite_id !== favouriteId && fav.id !== favouriteId && fav._id !== favouriteId));
+      }
+    } catch (e) {
+      // Optionally show error
     }
   };
 
@@ -425,13 +445,29 @@ export default function UserDashboard() {
                         alt={fav.name || 'Unknown Item'}
                         className="w-full h-40 object-cover"
                       />
-                      <div className="absolute top-2 right-2">
-                        <Heart className="h-6 w-6 fill-red-500 text-red-500" fill="red" />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <button
+                          title="Unfavourite"
+                          onClick={() => handleUnfavourite(fav.favourite_id || fav.id || fav._id)}
+                          className="bg-white/80 rounded-full p-1 hover:bg-red-100 border border-red-200"
+                        >
+                          <Heart className="h-6 w-6 text-red-500" fill="none" />
+                        </button>
                       </div>
                       <div className="p-4">
                         <div className="font-semibold">{fav.name || 'Unknown Item'}</div>
                         <div className="text-sm text-muted-foreground">{fav.description || ''}</div>
                         <div className="font-bold mt-2">{fav.price !== undefined ? `$${fav.price}` : ''}</div>
+                        <div className="mt-3 flex gap-2">
+                          <a
+                            href={`https://www.palachinki.store/restaurants/${fav.restaurant_id}/items/${fav.item_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
+                          >
+                            See Details
+                          </a>
+                        </div>
                       </div>
                     </div>
                   ))}
