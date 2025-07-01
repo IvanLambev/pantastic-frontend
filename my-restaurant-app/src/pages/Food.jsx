@@ -194,11 +194,11 @@ const Food = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowCityModal(false);
     setShowRestaurantModal(false);
-    // toast.dismiss();
-    // toast.success(`You selected restaurant: ${restaurant[7]}`);
+    toast.dismiss();
+    toast.success(`You selected restaurant: ${restaurant[7]}`);
+    fetchItems(restaurant[0]);
     // LOG: Food selectRestaurant called
     console.log('[SONNER] Food selectRestaurant called for', restaurant[7]);
-    fetchItems(restaurant[0]);
   }
 
   // Add filtered and sorted items logic
