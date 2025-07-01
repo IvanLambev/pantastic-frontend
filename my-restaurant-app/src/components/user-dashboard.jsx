@@ -18,6 +18,8 @@ export default function UserDashboard() {
   const [error, setError] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [favoriteItems, setFavoriteItems] = useState([]);
+  const [itemMap, setItemMap] = useState({});
+  const [isItemMapLoading, setIsItemMapLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
@@ -119,14 +121,33 @@ export default function UserDashboard() {
         // Fetch all items for all restaurants
         const itemsArrays = await Promise.all(
           restaurants.map(async (r) => {
-            const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${r[0]}/items`, {
+            const restaurantId = r[0] || r.restaurant_id || r.id;
+            const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
               headers: {
                 'Authorization': `Bearer ${user.access_token}`,
                 'Content-Type': 'application/json',
               },
             });
             if (itemsRes.ok) {
-              return await itemsRes.json();
+              const items = await itemsRes.json();
+              // Normalize each item to object format
+              return items.map(item => {
+                if (Array.isArray(item)) {
+                  return {
+                    item_id: item[0],
+                    created_at: item[1],
+                    description: item[2],
+                    image_url: item[3],
+                    name: item[4],
+                    price: item[5],
+                    category_id: item[6],
+                  };
+                } else if (item && item.item_id) {
+                  return item;
+                } else {
+                  return null;
+                }
+              }).filter(Boolean);
             }
             return [];
           })
@@ -136,18 +157,7 @@ export default function UserDashboard() {
       // Build a map of item_id to item details
       const itemMap = {};
       for (const item of allItems) {
-        // If item is array, map to object
-        if (Array.isArray(item)) {
-          itemMap[item[0]] = {
-            item_id: item[0],
-            created_at: item[1],
-            description: item[2],
-            image_url: item[3],
-            name: item[4],
-            price: item[5],
-            category_id: item[6],
-          };
-        } else if (item && item.item_id) {
+        if (item && item.item_id) {
           itemMap[item.item_id] = item;
         }
       }
@@ -160,11 +170,17 @@ export default function UserDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        // Attach item details to each favourite
-        const detailedFavorites = data.map(fav => ({
-          ...fav,
-          ...(itemMap[fav.item_id] || {}),
-        }));
+        // Attach item details to each favourite, fallback to placeholder if missing
+        const detailedFavorites = data.map(fav => {
+          const details = itemMap[fav.item_id] || {};
+          return {
+            ...fav,
+            name: details.name || 'Unknown Item',
+            description: details.description || '',
+            image_url: details.image_url || '/elementor-placeholder-image.webp',
+            price: details.price !== undefined ? details.price : '--',
+          };
+        });
         setFavoriteItems(detailedFavorites);
       }
     };
@@ -289,7 +305,7 @@ export default function UserDashboard() {
               <CardDescription>View all your previous orders</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isLoading || isItemMapLoading ? (
                 <div className="py-8 text-center">
                   <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p className="text-muted-foreground">Loading your orders...</p>
@@ -339,11 +355,26 @@ export default function UserDashboard() {
                                 <div>
                                   <p className="font-medium">Items</p>
                                   <ul className="text-sm">
-                                    {order.products.map((product, index) => (
-                                      <li key={index}>
-                                        {product.name} x {product.quantity}
-                                      </li>
-                                    ))}
+                                    {(Array.isArray(order.products)
+                                      ? order.products
+                                      : Object.entries(order.products || {}).map(([itemId, quantity]) => ({ item_id: itemId, quantity }))
+                                    ).map((product, index) => {
+                                      const details = itemMap[product.item_id] || {};
+                                      return (
+                                        <li key={index} className="flex items-center gap-2 mb-1">
+                                          <img
+                                            src={details.image_url || '/elementor-placeholder-image.webp'}
+                                            alt={details.name || 'Unknown Item'}
+                                            className="w-8 h-8 object-cover rounded mr-2 border"
+                                          />
+                                          <span className="font-medium">{details.name || 'Unknown Item'}</span>
+                                          <span className="text-xs text-muted-foreground ml-2">x {product.quantity}</span>
+                                          {details.price !== undefined && (
+                                            <span className="ml-2 text-xs">${details.price}</span>
+                                          )}
+                                        </li>
+                                      );
+                                    })}
                                   </ul>
                                 </div>
                               </div>
@@ -405,7 +436,12 @@ export default function UserDashboard() {
               <CardDescription>Your saved favourite menu items</CardDescription>
             </CardHeader>
             <CardContent>
-              {favoriteItems.length === 0 ? (
+              {isItemMapLoading ? (
+                <div className="py-8 text-center">
+                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading your favourites...</p>
+                </div>
+              ) : favoriteItems.length === 0 ? (
                 <div className="text-muted-foreground">No favourite items yet.</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -413,16 +449,16 @@ export default function UserDashboard() {
                     <div key={fav.id || fav.favourite_id || fav._id} className="relative border rounded-lg overflow-hidden">
                       <img
                         src={fav.image_url || '/elementor-placeholder-image.webp'}
-                        alt={fav.name}
+                        alt={fav.name || 'Unknown Item'}
                         className="w-full h-40 object-cover"
                       />
                       <div className="absolute top-2 right-2">
                         <Heart className="h-6 w-6 fill-red-500 text-red-500" fill="red" />
                       </div>
                       <div className="p-4">
-                        <div className="font-semibold">{fav.name}</div>
-                        <div className="text-sm text-muted-foreground">{fav.description}</div>
-                        <div className="font-bold mt-2">${fav.price}</div>
+                        <div className="font-semibold">{fav.name || 'Unknown Item'}</div>
+                        <div className="text-sm text-muted-foreground">{fav.description || ''}</div>
+                        <div className="font-bold mt-2">{fav.price !== undefined ? `$${fav.price}` : ''}</div>
                       </div>
                     </div>
                   ))}
