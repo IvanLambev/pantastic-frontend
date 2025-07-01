@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { fetchWithAuth } from "@/lib/utils"
 
-export default function OrderTracking() {
+export default function OrderTrackingV2() {
   const [order, setOrder] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)

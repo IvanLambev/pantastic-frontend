@@ -126,11 +126,41 @@ export default function UserDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        setFavoriteItems(data);
+        // Fetch item details for each favorite
+        const detailedFavorites = await Promise.all(
+          data.map(async (fav) => {
+            // Try to find the restaurant for this item from the user's orders
+            let restaurantId = null;
+            for (const order of orders) {
+              if (order.products.some(p => p.item_id === fav.item_id)) {
+                restaurantId = order.restaurant_id;
+                break;
+              }
+            }
+            // Fallback: use the first order's restaurant if not found
+            if (!restaurantId && orders.length > 0) {
+              restaurantId = orders[0].restaurant_id;
+            }
+            let itemDetails = null;
+            if (restaurantId) {
+              try {
+                const resp = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${fav.item_id}`);
+                if (resp.ok) {
+                  itemDetails = await resp.json();
+                }
+              } catch (e) { /* ignore */ }
+            }
+            return {
+              ...fav,
+              ...(itemDetails || {}),
+            };
+          })
+        );
+        setFavoriteItems(detailedFavorites);
       }
     };
     fetchFavorites();
-  }, []);
+  }, [orders]);
 
   const fetchItemDetails = async (restaurantId, itemId) => {
     try {
