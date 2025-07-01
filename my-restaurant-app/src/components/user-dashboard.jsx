@@ -21,34 +21,25 @@ export default function UserDashboard() {
   const [itemMap, setItemMap] = useState({});
   const [isItemMapLoading, setIsItemMapLoading] = useState(true);
 
+  // Fetch token from sessionStorage and set it, then fetch orders when token is set
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user");
-    console.log("Raw user data from session storage:", storedUser);
-
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        console.log("Parsed user data:", parsedUser);
-
         if (parsedUser && typeof parsedUser === "object" && parsedUser.access_token) {
-          const token = parsedUser.access_token;
-          console.log("Token extracted from user data:", token);
-          setToken(token);
-        } else {
-          console.error("Parsed user data does not contain an access_token.");
+          setToken(parsedUser.access_token);
         }
       } catch (err) {
         console.error("Error parsing user data from session storage:", err);
       }
-    } else {
-      console.error("No user data found in session storage.");
     }
-  }, []);
+  }, [setToken]);
 
+  // Fetch orders when token and itemMap are available
   useEffect(() => {
-    console.log("UserDashboard component mounted.");
-    console.log("Token available:", token);
-
+    if (!token || isItemMapLoading) return;
+    setIsLoading(true);
     const fetchOrders = async () => {
       try {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -61,22 +52,19 @@ export default function UserDashboard() {
         if (!response.ok) throw new Error('Failed to fetch orders');
         const data = await response.json();
         setOrders(data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
+      } catch {
         setError('Failed to fetch orders');
+      } finally {
+        setIsLoading(false);
       }
     };
-    if (token) {
-      fetchOrders();
-    }
-  }, [token]);
+    fetchOrders();
+  }, [token, isItemMapLoading]);
 
+  // Fetch user info when token is available
   useEffect(() => {
-    console.log("Fetching user information...");
-    console.log("Token available:", token);
-
+    if (!token) return;
     const fetchUserInfo = async () => {
-      console.log("fetchUserInfo function triggered.");
       try {
         const response = await fetch(`${API_URL}/user/user-info`, {
           method: "GET",
@@ -85,29 +73,27 @@ export default function UserDashboard() {
             "Content-Type": "application/json",
           },
         });
-        console.log("User info fetch response:", response);
-
         if (!response.ok) {
           throw new Error("Failed to fetch user information");
         }
-
         const data = await response.json();
-        console.log("User info data:", data);
         setUserInfo(data);
-      } catch (err) {
+      } catch {
         console.error("Error fetching user information:", err);
       }
     };
-
-    if (token) {
-      fetchUserInfo();
-    }
+    fetchUserInfo();
   }, [token]);
 
+  // Fetch favorites and all items for mapping
   useEffect(() => {
     const fetchFavorites = async () => {
+      setIsItemMapLoading(true);
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user.access_token) return;
+      if (!user.access_token) {
+        setIsItemMapLoading(false);
+        return;
+      }
       // Fetch all restaurants
       const restaurantsRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`, {
         headers: {
@@ -155,12 +141,13 @@ export default function UserDashboard() {
         allItems = itemsArrays.flat();
       }
       // Build a map of item_id to item details
-      const itemMap = {};
+      const itemMapObj = {};
       for (const item of allItems) {
         if (item && item.item_id) {
-          itemMap[item.item_id] = item;
+          itemMapObj[item.item_id] = item;
         }
       }
+      setItemMap(itemMapObj);
       // Fetch favourites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         headers: {
@@ -172,7 +159,7 @@ export default function UserDashboard() {
         const data = await res.json();
         // Attach item details to each favourite, fallback to placeholder if missing
         const detailedFavorites = data.map(fav => {
-          const details = itemMap[fav.item_id] || {};
+          const details = itemMapObj[fav.item_id] || {};
           return {
             ...fav,
             name: details.name || 'Unknown Item',
@@ -183,24 +170,10 @@ export default function UserDashboard() {
         });
         setFavoriteItems(detailedFavorites);
       }
+      setIsItemMapLoading(false);
     };
     fetchFavorites();
   }, []);
-
-  const fetchItemDetails = async (restaurantId, itemId) => {
-    try {
-      const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching item details:', errorData.detail);
-        return { name: 'Unknown Item' };
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching item details:', error);
-      return { name: 'Unknown Item' };
-    }
-  };
 
   const formatDate = (dateString) => {
     try {
