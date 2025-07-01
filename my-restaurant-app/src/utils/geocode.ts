@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const GEOCODE_API_KEY = process.env.geocoding;
+const GEOCODE_API_KEY = import.meta.env.VITE_GEOCODING_KEY;
 
 export async function getCoordinates(address) {
   try {
