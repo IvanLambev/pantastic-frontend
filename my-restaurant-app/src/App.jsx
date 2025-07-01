@@ -39,6 +39,7 @@ import RestaurantDetailsAdmin from '@/pages/admin/RestaurantDetailsAdmin'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import UserDashboard from '@/pages/UserDashboard'
 import ItemDetails from '@/pages/ItemDetails'
+import Cart from '@/pages/Cart'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
 
@@ -278,7 +279,9 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/food" element={<Food />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+          <Route path="/restaurants/:restaurantId/items/:itemId" element={<ItemDetails />} />
           <Route path="/order-tracking" element={<OrderTrackingV2 />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/item/:id" element={<ItemDetails />} />

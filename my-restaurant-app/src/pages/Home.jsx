@@ -70,10 +70,10 @@ const Home = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowCityModal(false);
     setShowRestaurantModal(false);
-    // toast.dismiss();
-    // toast.success(`You selected restaurant: ${restaurant[7]}`);
+    toast.dismiss();
+    toast.success(`You selected restaurant: ${restaurant[7]}`);
     // LOG: Home selectRestaurant called
-    console.log('[SONNER] Home selectRestaurant called for', restaurant[7]);
+   // console.log('[SONNER] Home selectRestaurant called for', restaurant[7]);
   }
 
   return (
