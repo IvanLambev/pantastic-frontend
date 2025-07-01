@@ -21,6 +21,7 @@ import FAQ from "@/components/faq"
 import AboutUs from "@/components/about-us"
 import { fetchWithAuth } from "@/lib/utils"
 import { getCoordinates } from "@/utils/geocode"
+import { toast } from "sonner"
 
 const Home = () => {
   const [api, setApi] = useState(null)
@@ -76,6 +77,7 @@ const Home = () => {
   const handleRestaurantSelect = (restaurant) => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
     setShowRestaurantModal(false)
+    toast.success(`You selected restaurant: ${restaurant[7]}`)
   }
 
   // Helper to calculate distance between two coordinates (Haversine formula)
@@ -173,6 +175,9 @@ const Home = () => {
     ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
     : restaurants
 
+  // Echo geocoding API key for debug
+  console.log('Geocoding API Key:', import.meta.env.VITE_GEOCODING_KEY || 'Not found');
+
   return (
     <>
       {/* City Selection Modal */}
@@ -255,7 +260,7 @@ const Home = () => {
                 const todayHours = hours[currentDay];
                 let isOpen = false;
                 let timeText = "Closed";
-                let color = "text-red-600";
+                let stateBg = "bg-red-100/60 text-red-700";
                 if (todayHours) {
                   // Format: "09:00-18:00"
                   const [open, close] = todayHours.split("-");
@@ -267,7 +272,7 @@ const Home = () => {
                   closeDate.setHours(closeH, closeM, 0, 0);
                   if (gmt3 >= openDate && gmt3 <= closeDate) {
                     isOpen = true;
-                    color = "text-green-600";
+                    stateBg = "bg-green-100/60 text-green-700";
                     timeText = `${open}-${close}`;
                   } else {
                     timeText = `${open}-${close}`;
@@ -282,20 +287,16 @@ const Home = () => {
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                        <span className="text-lg sm:text-xl font-bold text-left">{restaurant[7]}</span>
+                        <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
+                          {restaurant[7]}
+                          <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>{isOpen ? "We are Open" : "We are Closed"}</span>
+                        </span>
                         <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
                       </div>
-                      <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
+                      <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto flex flex-col gap-1">
                         {Object.entries(hours).map(([day, h]) => (
-                          <div key={day} className="whitespace-nowrap">
-                            <span className="font-medium">{day}:</span> {h}
-                          </div>
+                          <div key={day} className={`whitespace-nowrap ${day === currentDay ? 'bg-gray-200/60 rounded-lg px-2 py-1 font-semibold' : ''}`}>{day === currentDay ? <span>{day}: <span className="text-black">{todayHours ? timeText : "No hours"}</span></span> : <span>{day}: {h}</span>}</div>
                         ))}
-                      </div>
-                      <div className="absolute right-4 top-4 bg-black text-white rounded px-3 py-2 flex flex-col items-center min-w-[90px]">
-                        <span className="text-xs font-semibold">{currentDay}</span>
-                        <span className={`text-sm font-bold ${color}`}>{isOpen ? "Open" : "Closed"}</span>
-                        <span className={`text-xs ${color}`}>{todayHours ? timeText : "No hours"}</span>
                       </div>
                     </div>
                   </Button>
