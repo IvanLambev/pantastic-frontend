@@ -286,7 +286,7 @@ export default function App() {
         </Route>
         <Route path="/admin/*" element={<Admin />} />
       </Routes>
-      <Toaster />
+      
     </CartProvider>
   )
 }
