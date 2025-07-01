@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/lib/utils"
+import { getCoordinates } from "@/utils/geocode"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -45,6 +46,9 @@ const Food = () => {
   const { addToCart } = useCart()
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
+  const [address, setAddress] = useState("")
+  const [addressError, setAddressError] = useState("")
+  const [addressLoading, setAddressLoading] = useState(false)
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -66,15 +70,15 @@ const Food = () => {
     // Check if restaurant is already selected
     const savedRestaurant = sessionStorage.getItem('selectedRestaurant')
     if (savedRestaurant) {
-      const restaurant = JSON.parse(savedRestaurant)
-      setSelectedRestaurant(restaurant)
-      setSelectedCity(restaurant[2]) // Set the city from the saved restaurant
-      setShowCityModal(false)
-      setShowRestaurantModal(false)
-      fetchItems(restaurant[0])
+      const restaurant = JSON.parse(savedRestaurant);
+      setSelectedRestaurant(restaurant);
+      setSelectedCity(restaurant[2]); // Set the city from the saved restaurant
+      setShowCityModal(false);
+      setShowRestaurantModal(false);
+      fetchItems(restaurant[0]);
     } else {
-      fetchRestaurants()
-      setShowCityModal(true)
+      fetchRestaurants();
+      setShowCityModal(true);
     }
   }, [])
 
@@ -105,6 +109,52 @@ const Food = () => {
     ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
     : restaurants
 
+  // Helper to calculate distance between two coordinates (Haversine formula)
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371; // km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // Find closest restaurant by coordinates
+  function findClosestRestaurant(lat, lng) {
+    if (!restaurants.length) return null;
+    let minDist = Infinity;
+    let closest = null;
+    for (const r of restaurants) {
+      const rLat = r[5];
+      const rLng = r[6];
+      if (typeof rLat === "number" && typeof rLng === "number") {
+        const dist = getDistance(lat, lng, rLat, rLng);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = r;
+        }
+      }
+    }
+    return closest;
+  }
+
+  // Unified restaurant selection handler
+  function selectRestaurant(restaurant) {
+    setSelectedRestaurant(restaurant);
+    setRestaurantId(restaurant[0]);
+    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    setShowCityModal(false);
+    setShowRestaurantModal(false);
+    fetchItems(restaurant[0]);
+    toast.success(`You selected restaurant: ${restaurant[7]}`);
+  }
+
   const handleCitySelect = (city) => {
     setSelectedCity(city);
     setShowCityModal(false);
@@ -112,13 +162,55 @@ const Food = () => {
   };
 
   const handleRestaurantSelect = (restaurant) => {
-    setSelectedRestaurant(restaurant)
-    setRestaurantId(restaurant[0])
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
-    setShowRestaurantModal(false)
-    fetchItems(restaurant[0])
+    selectRestaurant(restaurant);
+  };
+
+  async function handleAddressSubmit(e) {
+    e.preventDefault();
+    setAddressError("");
+    setAddressLoading(true);
+    try {
+      const coords = await getCoordinates(address);
+      if (!coords) throw new Error("Could not geocode address");
+      const closest = findClosestRestaurant(coords.lat, coords.lng);
+      if (closest) {
+        selectRestaurant(closest);
+      } else {
+        setAddressError("No restaurants found near this address.");
+      }
+    } catch {
+      setAddressError("Failed to find restaurant for this address.");
+    } finally {
+      setAddressLoading(false);
+    }
   }
-  
+
+  async function handleDeviceLocation() {
+    setAddressError("");
+    setAddressLoading(true);
+    if (!navigator.geolocation) {
+      setAddressError("Geolocation is not supported.");
+      setAddressLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const closest = findClosestRestaurant(latitude, longitude);
+        if (closest) {
+          selectRestaurant(closest);
+        } else {
+          setAddressError("No restaurants found near your location.");
+        }
+        setAddressLoading(false);
+      },
+      () => {
+        setAddressError("Failed to get device location.");
+        setAddressLoading(false);
+      }
+    );
+  }
+
   const handleChangeSelection = async () => {
     setLoading(true)
     try {
@@ -257,16 +349,35 @@ const Food = () => {
             ) : error ? (
               <p className="text-red-500 text-center">{error}</p>
             ) : (
-              cities.map((city) => (
-                <Button
-                  key={city}
-                  variant="outline"
-                  className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
-                  onClick={() => handleCitySelect(city)}
-                >
-                  <span className="text-lg sm:text-xl font-bold">{city}</span>
-                </Button>
-              ))
+              <>
+                {cities.map((city) => (
+                  <Button
+                    key={city}
+                    variant="outline"
+                    className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100"
+                    onClick={() => handleCitySelect(city)}
+                  >
+                    <span className="text-lg sm:text-xl font-bold">{city}</span>
+                  </Button>
+                ))}
+                <form onSubmit={handleAddressSubmit} className="flex flex-col gap-2 mt-4">
+                  <input
+                    type="text"
+                    className="border rounded px-4 py-2"
+                    placeholder="Or type your address..."
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    disabled={addressLoading}
+                  />
+                  <Button type="submit" disabled={addressLoading || !address}>
+                    {addressLoading ? "Finding..." : "Find Closest Restaurant"}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleDeviceLocation} disabled={addressLoading}>
+                    Use My Location
+                  </Button>
+                  {addressError && <p className="text-red-500 text-sm">{addressError}</p>}
+                </form>
+              </>
             )}
           </div>
         </DialogContent>

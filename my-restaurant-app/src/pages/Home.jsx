@@ -68,6 +68,14 @@ const Home = () => {
     }
   }, [])
 
+  // Unified restaurant selection handler
+  function selectRestaurant(restaurant) {
+    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    setShowCityModal(false);
+    setShowRestaurantModal(false);
+    toast.success(`You selected restaurant: ${restaurant[7]}`);
+  }
+
   const handleCitySelect = (city) => {
     setSelectedCity(city)
     setShowCityModal(false)
@@ -75,9 +83,7 @@ const Home = () => {
   }
 
   const handleRestaurantSelect = (restaurant) => {
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
-    setShowRestaurantModal(false)
-    toast.success(`You selected restaurant: ${restaurant[7]}`)
+    selectRestaurant(restaurant);
   }
 
   // Helper to calculate distance between two coordinates (Haversine formula)
@@ -125,9 +131,7 @@ const Home = () => {
       if (!coords) throw new Error("Could not geocode address");
       const closest = findClosestRestaurant(coords.lat, coords.lng);
       if (closest) {
-        sessionStorage.setItem("selectedRestaurant", JSON.stringify(closest));
-        setShowCityModal(false);
-        setShowRestaurantModal(false);
+        selectRestaurant(closest);
       } else {
         setAddressError("No restaurants found near this address.");
       }
@@ -152,9 +156,7 @@ const Home = () => {
         const { latitude, longitude } = pos.coords;
         const closest = findClosestRestaurant(latitude, longitude);
         if (closest) {
-          sessionStorage.setItem("selectedRestaurant", JSON.stringify(closest));
-          setShowCityModal(false);
-          setShowRestaurantModal(false);
+          selectRestaurant(closest);
         } else {
           setAddressError("No restaurants found near your location.");
         }
