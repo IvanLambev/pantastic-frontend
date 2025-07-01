@@ -194,9 +194,10 @@ const Food = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowCityModal(false);
     setShowRestaurantModal(false);
-    // Dismiss all previous toasts before showing a new one
-    toast.dismiss();
-    toast.success(`You selected restaurant: ${restaurant[7]}`);
+    // toast.dismiss();
+    // toast.success(`You selected restaurant: ${restaurant[7]}`);
+    // LOG: Food selectRestaurant called
+    console.log('[SONNER] Food selectRestaurant called for', restaurant[7]);
     fetchItems(restaurant[0]);
   }
 
