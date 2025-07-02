@@ -247,14 +247,26 @@ export default function OrderManagement() {
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
                     <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {(order.products && Object.entries(order.products).map(([id, quantity]) => (
-                        <li key={id}>
-                          {quantity}x {getItemNameById(id)}
-                          {order.instructions && order.instructions[id] && (
-                            <div className="ml-4 text-xs text-primary font-medium">Instructions: {order.instructions[id]}</div>
-                          )}
-                        </li>
-                      ))) || <li>No items available</li>}
+                      {(order.products && Object.entries(order.products).map(([id, quantity]) => {
+                        // Parse instructions for this order (if any)
+                        let instructions = {};
+                        if (order.order_description) {
+                          try {
+                            instructions = JSON.parse(order.order_description);
+                          } catch (e) {
+                            instructions = {};
+                          }
+                        }
+                        const itemInstruction = instructions[id];
+                        return (
+                          <li key={id}>
+                            {quantity}x {getItemNameById(id)}
+                            {itemInstruction && (
+                              <span className="ml-2 text-xs text-primary font-medium">(Instructions: {itemInstruction})</span>
+                            )}
+                          </li>
+                        );
+                      })) || <li>No items available</li>}
                     </ul>
                   </div>
                 </div>
