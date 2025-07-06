@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/config/api";
-import { fetchWithAuth } from '@/lib/utils';
+import { fetchWithAuth } from "@/context/AuthContext";
 
 export default function UserDashboard() {
   const { user, token, setToken } = useAuth();

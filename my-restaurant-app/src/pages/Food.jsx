@@ -25,7 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { fetchWithAuth } from "@/lib/utils"
+import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 
 const Food = () => {

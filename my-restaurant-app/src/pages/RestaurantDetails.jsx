@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Heart } from 'lucide-react';
-import { fetchWithAuth } from '@/lib/utils';
+import { fetchWithAuth } from "@/context/AuthContext";
 
 export default function RestaurantDetails() {
   const { id } = useParams();

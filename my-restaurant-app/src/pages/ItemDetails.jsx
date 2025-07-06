@@ -14,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Heart } from "lucide-react"
-import { fetchWithAuth } from "@/lib/utils"
+import { fetchWithAuth } from "@/context/AuthContext"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()

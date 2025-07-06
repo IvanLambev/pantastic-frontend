@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { fetchWithAuth } from "@/lib/utils"
+import { fetchWithAuth } from "@/context/AuthContext"
 
 export default function OrderTracking() {
   const [order, setOrder] = useState(null)
