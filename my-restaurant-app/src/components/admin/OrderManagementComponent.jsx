@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { fetchWithAuth } from "@/lib/utils";
+import { fetchWithAuth } from "@/context/AuthContext";
 
 export default function OrderManagementComponent() {
   const [orders, setOrders] = useState([]);

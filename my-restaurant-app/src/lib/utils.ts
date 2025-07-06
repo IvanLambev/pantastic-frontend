@@ -12,11 +12,11 @@ export function handle401Logout() {
   window.location.href = "/login";
 }
 
-export async function fetchWithAuth(url: string, options: any = {}) {
-  const response = await fetch(url, options);
-  if (response.status === 401) {
-    handle401Logout();
-    throw new Error("Unauthorized. Logging out.");
-  }
-  return response;
-}
+// export async function fetchWithAuth(url: string, options: any = {}) {
+//   const response = await fetch(url, options);
+//   if (response.status === 401) {
+//     handle401Logout();
+//     throw new Error("Unauthorized. Logging out.");
+//   }
+//   return response;
+// }
