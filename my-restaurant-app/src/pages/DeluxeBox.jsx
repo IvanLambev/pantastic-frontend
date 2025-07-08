@@ -107,13 +107,15 @@ export default function DeluxeBox() {
           {/* Box size buttons */}
           <div className="flex gap-4 mb-4">
             <Button
-              variant={boxSize === 2 ? "default" : "outline"}
+              className={boxSize === 2 ? "bg-orange-400 text-white" : ""}
+              variant={boxSize === 2 ? undefined : "outline"}
               onClick={() => { setBoxSize(2); setToppings([null, null, null, null]); setImageError(false) }}
             >
               Box for 2 People
             </Button>
             <Button
-              variant={boxSize === 4 ? "default" : "outline"}
+              className={boxSize === 4 ? "bg-orange-400 text-white" : ""}
+              variant={boxSize === 4 ? undefined : "outline"}
               onClick={() => { setBoxSize(4); setToppings([null, null, null, null]); setImageError(false) }}
             >
               Box for 4 People

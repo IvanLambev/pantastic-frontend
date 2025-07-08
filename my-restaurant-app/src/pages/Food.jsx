@@ -294,7 +294,7 @@ const Food = () => {
               Promo
             </Button>
             <Button
-              className="flex-1 text-lg py-8 font-bold rounded-xl bg-white border-orange-400 text-white border-0"
+              className="flex-1 text-lg py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
               style={{ minWidth: 0, letterSpacing: 1 }}
               onClick={() => navigate("/deluxe-box")}
             >
