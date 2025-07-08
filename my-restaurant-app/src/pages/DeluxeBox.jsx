@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
@@ -25,20 +25,11 @@ const TOPPING_OPTIONS = [
 ]
 
 export default function DeluxeBox() {
-  const { restaurantId, itemId } = useParams()
   const navigate = useNavigate()
-  const [item, setItem] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [specialInstructions, setSpecialInstructions] = useState("")
-  const { addToCart } = useCart()
-
   // New state for box size and toppings
   const [boxSize, setBoxSize] = useState(2) // 2 or 4
   const [toppings, setToppings] = useState([null, null, null, null])
   const [imageError, setImageError] = useState(false)
-
-  // ...existing code...
 
   // Handle topping change
   const handleToppingChange = (index, value) => {
@@ -56,23 +47,8 @@ export default function DeluxeBox() {
       toast.error("Please select all toppings.")
       return
     }
-    const toppingJson = JSON.stringify(selectedToppings)
     console.log({ boxSize, toppings: selectedToppings })
     navigate("/food")
-  }
-
-  // ...existing code...
-
-  if (loading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>
-  }
-
-  if (error) {
-    return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>
-  }
-
-  if (!item) {
-    return <div className="container mx-auto px-4 py-8">Item not found</div>
   }
 
   return (
