@@ -1,99 +1,149 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { API_URL } from '@/config/api'
+import { useCart } from "@/hooks/use-cart"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { ArrowLeft, Heart } from "lucide-react"
+import { fetchWithAuth } from "@/context/AuthContext"
+import { Combobox } from "@/components/ui/combobox"
 
-const TOPPINGS = [
+const TOPPING_OPTIONS = [
   { label: "Nutella", value: "nutella" },
   { label: "Black Chocolate", value: "black" },
   { label: "White Chocolate", value: "white" },
   { label: "Bueno", value: "bueno" },
-];
+]
 
-const BOX_IMAGES = {
-  2: "/pantastic-deluxe-box-za-dvama.jpeg",
-  4: "/pantastic-deluxe-box-za-trima.jpeg",
-};
+export default function DeluxeBox() {
+  const { restaurantId, itemId } = useParams()
+  const navigate = useNavigate()
+  const [item, setItem] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [specialInstructions, setSpecialInstructions] = useState("")
+  const { addToCart } = useCart()
 
-const DeluxeBox = () => {
-  const [boxSize, setBoxSize] = useState(2);
-  const [toppings, setToppings] = useState([null, null, null, null]);
-  const navigate = useNavigate();
+  // New state for box size and toppings
+  const [boxSize, setBoxSize] = useState(2) // 2 or 4
+  const [toppings, setToppings] = useState([null, null, null, null])
+  const [imageError, setImageError] = useState(false)
 
+  // ...existing code...
+
+  // Handle topping change
   const handleToppingChange = (index, value) => {
-    const newToppings = [...toppings];
-    newToppings[index] = value;
-    setToppings(newToppings);
-  };
+    setToppings(prev => {
+      const updated = [...prev]
+      updated[index] = value
+      return updated
+    })
+  }
 
+  // Handle submit
   const handleSubmit = () => {
-    const selectedToppings = toppings.slice(0, boxSize);
-    if (selectedToppings.some((t) => !t)) {
-      alert("Please select all toppings.");
-      return;
+    const selectedToppings = toppings.slice(0, boxSize)
+    if (selectedToppings.some(t => !t)) {
+      toast.error("Please select all toppings.")
+      return
     }
-    const result = {
-      boxSize,
-      toppings: selectedToppings,
-    };
-    console.log(JSON.stringify(result));
-    navigate("/food");
-  };
+    const toppingJson = JSON.stringify(selectedToppings)
+    console.log({ boxSize, toppings: selectedToppings })
+    navigate("/food")
+  }
+
+  // ...existing code...
+
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>
+  }
+
+  if (error) {
+    return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>
+  }
+
+  if (!item) {
+    return <div className="container mx-auto px-4 py-8">Item not found</div>
+  }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background">
-      <div className="bg-white rounded-xl shadow-lg flex w-full max-w-4xl overflow-hidden">
+    <div className="container mx-auto px-4 py-8">
+      <Button
+        variant="ghost"
+        className="mb-6"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Left: Image */}
-        <div className="w-1/2 flex items-center justify-center bg-gray-50 p-8">
+        <div className="relative aspect-video md:aspect-square flex items-center justify-center">
           <img
-            src={BOX_IMAGES[boxSize]}
-            alt={`Deluxe Box for ${boxSize}`}
-            className="max-h-96 max-w-full rounded-lg shadow"
+            src={
+              imageError
+                ? '/elementor-placeholder-image.webp'
+                : boxSize === 2
+                  ? '/pantastic-deluxe-box-za-dvama.jpeg'
+                  : '/pantastic-deluxe-box-za-trima.jpeg'
+            }
+            alt={boxSize === 2 ? 'Box for 2' : 'Box for 4'}
+            className="w-full h-full object-cover rounded-lg"
+            onError={() => setImageError(true)}
           />
         </div>
+
         {/* Right: Controls */}
-        <div className="w-1/2 p-8 flex flex-col gap-8">
+        <div className="space-y-6">
+          {/* Box size buttons */}
           <div className="flex gap-4 mb-4">
             <Button
               variant={boxSize === 2 ? "default" : "outline"}
-              className="flex-1 text-lg py-4 font-bold rounded-xl"
-              onClick={() => setBoxSize(2)}
+              onClick={() => { setBoxSize(2); setToppings([null, null, null, null]); setImageError(false) }}
             >
-              Box For 2 People
+              Box for 2 People
             </Button>
             <Button
               variant={boxSize === 4 ? "default" : "outline"}
-              className="flex-1 text-lg py-4 font-bold rounded-xl"
-              onClick={() => setBoxSize(4)}
+              onClick={() => { setBoxSize(4); setToppings([null, null, null, null]); setImageError(false) }}
             >
-              Box For 4 People
+              Box for 4 People
             </Button>
           </div>
-          <div className="flex flex-col gap-4">
+
+          {/* Topping selectors */}
+          <div className="space-y-4">
             {[...Array(boxSize)].map((_, i) => (
-              <div key={i}>
-                <label className="block mb-1 font-semibold">
-                  Sweet Topping {i + 1}
-                </label>
-                <Combobox
-                  options={TOPPINGS}
-                  value={toppings[i]}
-                  onChange={(val) => handleToppingChange(i, val)}
-                  placeholder="Select topping..."
-                />
-              </div>
+              <Combobox
+                key={i}
+                options={TOPPING_OPTIONS}
+                value={toppings[i]}
+                onChange={val => handleToppingChange(i, val)}
+                placeholder={`Sweet topping ${i + 1}`}
+                className="w-full"
+              />
             ))}
           </div>
+
           <Button
-            className="mt-8 w-full text-lg py-4 font-bold rounded-xl bg-orange-400 text-white border-0"
+            size="lg"
+            className="w-full"
             onClick={handleSubmit}
           >
-            Confirm Selection
+            Continue
           </Button>
         </div>
       </div>
     </div>
-  );
-};
-
-export default DeluxeBox;
+  )
+}
