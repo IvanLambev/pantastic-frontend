@@ -96,12 +96,12 @@ export default function DeluxeBox() {
         </div>
 
         {/* Right: Controls */}
-        <div className="space-y-6 *:flex flex-col justify-between">
+        <div className="space-y-6">
           {/* Box info */}
-          <div className="text-left">
-            <h1 className="text-2xl font-bold mb-1">{name}</h1>
-            <p className="text-muted-foreground mb-2">{description}</p>
-            <p className="text-xl font-semibold text-primary mb-4">${price}</p>
+          <div>
+            <h1 className="text-2xl font-bold mb-1 text-left">{name}</h1>
+            <p className="text-muted-foreground mb-2 text-left">{description}</p>
+            <p className="text-xl font-semibold text-primary mb-4 text-left">${price}</p>
           </div>
 
           {/* Box size buttons */}
