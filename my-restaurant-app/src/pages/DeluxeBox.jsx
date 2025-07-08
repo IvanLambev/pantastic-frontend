@@ -33,7 +33,7 @@ const BOX_INFO = {
     toppings: 3,
   },
   4: {
-    name: "Pantastic Deluxe Box (1500g)",
+    name: "Pantastic Deluxe Box for Four (1500g)",
     description:
       "Share an unforgettable family moment with a deluxe box set with 30 mini pancakes, banana, strawberries, kiwi, 4 toppings of your choice and 1 classic pancake - savory or sweet of your choice from the ones offered",
     price: 50,
@@ -96,9 +96,9 @@ export default function DeluxeBox() {
         </div>
 
         {/* Right: Controls */}
-        <div className="space-y-6">
+        <div className="space-y-6 *:flex flex-col justify-between">
           {/* Box info */}
-          <div>
+          <div className="text-left">
             <h1 className="text-2xl font-bold mb-1">{name}</h1>
             <p className="text-muted-foreground mb-2">{description}</p>
             <p className="text-xl font-semibold text-primary mb-4">${price}</p>
