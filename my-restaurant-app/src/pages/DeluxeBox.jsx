@@ -24,14 +24,29 @@ const TOPPING_OPTIONS = [
   { label: "Bueno", value: "bueno" },
 ]
 
+const BOX_INFO = {
+  2: {
+    name: "Pantastic Deluxe Box for Two (1000g)",
+    description:
+      "An exquisite box set for unforgettable sweet moments - 20 mini pancakes, strawberries, banana and kiwi with a compliment of 3 toppings of your choice.",
+    price: 35,
+    toppings: 3,
+  },
+  4: {
+    name: "Pantastic Deluxe Box (1500g)",
+    description:
+      "Share an unforgettable family moment with a deluxe box set with 30 mini pancakes, banana, strawberries, kiwi, 4 toppings of your choice and 1 classic pancake - savory or sweet of your choice from the ones offered",
+    price: 50,
+    toppings: 4,
+  },
+}
+
 export default function DeluxeBox() {
   const navigate = useNavigate()
-  // New state for box size and toppings
   const [boxSize, setBoxSize] = useState(2) // 2 or 4
   const [toppings, setToppings] = useState([null, null, null, null])
   const [imageError, setImageError] = useState(false)
 
-  // Handle topping change
   const handleToppingChange = (index, value) => {
     setToppings(prev => {
       const updated = [...prev]
@@ -40,9 +55,8 @@ export default function DeluxeBox() {
     })
   }
 
-  // Handle submit
   const handleSubmit = () => {
-    const selectedToppings = toppings.slice(0, boxSize)
+    const selectedToppings = toppings.slice(0, BOX_INFO[boxSize].toppings)
     if (selectedToppings.some(t => !t)) {
       toast.error("Please select all toppings.")
       return
@@ -50,6 +64,8 @@ export default function DeluxeBox() {
     console.log({ boxSize, toppings: selectedToppings })
     navigate("/food")
   }
+
+  const { name, description, price, toppings: toppingCount } = BOX_INFO[boxSize]
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -81,6 +97,13 @@ export default function DeluxeBox() {
 
         {/* Right: Controls */}
         <div className="space-y-6">
+          {/* Box info */}
+          <div>
+            <h1 className="text-2xl font-bold mb-1">{name}</h1>
+            <p className="text-muted-foreground mb-2">{description}</p>
+            <p className="text-xl font-semibold text-primary mb-4">${price}</p>
+          </div>
+
           {/* Box size buttons */}
           <div className="flex gap-4 mb-4">
             <Button
@@ -99,7 +122,7 @@ export default function DeluxeBox() {
 
           {/* Topping selectors */}
           <div className="space-y-4">
-            {[...Array(boxSize)].map((_, i) => (
+            {[...Array(toppingCount)].map((_, i) => (
               <Combobox
                 key={i}
                 options={TOPPING_OPTIONS}
