@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL } from "@/config/api"
 import { toast } from "sonner"
-import { CreditCard, Wallet, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2 } from "lucide-react"
+import { CreditCard, Wallet, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, ChevronDownIcon, Calendar as CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Calendar } from "@/components/ui/calendar"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
 
 export default function CheckoutV2() {  const navigate = useNavigate()
@@ -17,12 +21,60 @@ export default function CheckoutV2() {  const navigate = useNavigate()
   const [selectedPayment, setSelectedPayment] = useState("card")
   const [deliveryMethod, setDeliveryMethod] = useState("pickup")
   const [isProcessing, setIsProcessing] = useState(false)
+  
+  // Scheduling states
+  const [isScheduled, setIsScheduled] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(undefined)
+  const [selectedTime, setSelectedTime] = useState("12:00")
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const tax = 0 // TODO: Implement tax calculation
   const shipping = 0 // TODO: Implement shipping calculation
   const total = subtotal + tax + shipping
+
+  // Time validation for GMT+3 timezone
+  const validateScheduledTime = () => {
+    if (!isScheduled || !selectedDate || !selectedTime) return true
+
+    // Create current time in GMT+3
+    const now = new Date()
+    const gmtPlus3Now = new Date(now.getTime() + (3 * 60 * 60 * 1000))
+    
+    // Create selected datetime in GMT+3
+    const scheduledDateTime = new Date(selectedDate)
+    const [hours, minutes] = selectedTime.split(':')
+    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+    
+    // Check if scheduled time is at least 1 hour from now
+    const oneHourFromNow = new Date(gmtPlus3Now.getTime() + (60 * 60 * 1000))
+    // Check if scheduled time is within 24 hours
+    const oneDayFromNow = new Date(gmtPlus3Now.getTime() + (24 * 60 * 60 * 1000))
+    
+    if (scheduledDateTime < oneHourFromNow) {
+      toast.error('Scheduled delivery must be at least 1 hour from now')
+      return false
+    }
+    
+    if (scheduledDateTime > oneDayFromNow) {
+      toast.error('Scheduled delivery cannot be more than 24 hours from now')
+      return false
+    }
+    
+    return true
+  }
+
+  // Create ISO 8601 formatted scheduled time
+  const getScheduledDeliveryTime = () => {
+    if (!isScheduled || !selectedDate || !selectedTime) return null
+    
+    const scheduledDateTime = new Date(selectedDate)
+    const [hours, minutes] = selectedTime.split(':')
+    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+    
+    return scheduledDateTime.toISOString()
+  }
 
   const paymentMethods = [
     {
@@ -49,6 +101,11 @@ export default function CheckoutV2() {  const navigate = useNavigate()
   ]
 
   const handleCheckout = async () => {
+    // Validate scheduled time before processing
+    if (!validateScheduledTime()) {
+      return
+    }
+
     setIsProcessing(true)
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -70,14 +127,22 @@ export default function CheckoutV2() {  const navigate = useNavigate()
         }
       })
 
-      console.log('Placing order with:', {
+      const orderData = {
         restaurant_id: restaurant[0],
         products,
         payment_method: selectedPayment,
         delivery_method: deliveryMethod,
         address: deliveryMethod === 'pickup' ? restaurant[1] : user.address, // Use restaurant address for pickup, user's address for delivery
         instructions
-      })
+      }
+
+      // Add scheduled delivery time if applicable
+      const scheduledTime = getScheduledDeliveryTime()
+      if (scheduledTime) {
+        orderData.scheduled_delivery_time = scheduledTime
+      }
+
+      console.log('Placing order with:', orderData)
 
       const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'POST',
@@ -85,14 +150,7 @@ export default function CheckoutV2() {  const navigate = useNavigate()
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          restaurant_id: restaurant[0],
-          products,
-          payment_method: selectedPayment,
-          delivery_method: deliveryMethod,
-          address: restaurant[1], // Using restaurant address for pickup orders
-          instructions
-        })
+        body: JSON.stringify(orderData)
       })
 
       if (!response.ok) throw new Error('Failed to create order')
@@ -217,6 +275,82 @@ export default function CheckoutV2() {  const navigate = useNavigate()
                     </div>
                   </div>
                 </RadioGroup>
+              </CardContent>
+            </Card>
+
+            {/* Scheduling Options */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Delivery Timing</CardTitle>
+                <CardDescription>Choose when you want to receive your order</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="schedule-delivery" 
+                    checked={isScheduled}
+                    onCheckedChange={setIsScheduled}
+                  />
+                  <Label htmlFor="schedule-delivery">Schedule for later</Label>
+                </div>
+                
+                {isScheduled && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <div className="flex gap-4">
+                      <div className="flex flex-col gap-3 flex-1">
+                        <Label htmlFor="date-picker" className="px-1">
+                          Date
+                        </Label>
+                        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date-picker"
+                              className="justify-between font-normal"
+                            >
+                              {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
+                              <ChevronDownIcon className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={selectedDate}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                setSelectedDate(date)
+                                setCalendarOpen(false)
+                              }}
+                              disabled={(date) => {
+                                const today = new Date()
+                                const tomorrow = new Date(today)
+                                tomorrow.setDate(tomorrow.getDate() + 1)
+                                return date < today || date > tomorrow
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="flex flex-col gap-3 flex-1">
+                        <Label htmlFor="time-picker" className="px-1">
+                          Time
+                        </Label>
+                        <Input
+                          type="time"
+                          id="time-picker"
+                          value={selectedTime}
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                          className="bg-background"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>• Minimum 1 hour from now</p>
+                      <p>• Maximum 24 hours from now</p>
+                      <p>• Times are in GMT+3 timezone</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
