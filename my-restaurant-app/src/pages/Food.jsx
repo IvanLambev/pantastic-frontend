@@ -25,7 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { fetchWithAuth } from "@/lib/utils"
+import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 
 const Food = () => {
@@ -260,6 +260,45 @@ const Food = () => {
                 <span className="text-sm text-muted-foreground truncate w-full">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
               </div>
               <span className="text-sm text-primary whitespace-nowrap shrink-0">Change Restaurant</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Category Buttons Row */}
+      {selectedRestaurant && (
+        <div className="flex justify-center my-6">
+          <div className="flex w-[80vw] max-w-5xl gap-4">
+            <Button
+              className="flex-1 text-lg py-8 font-bold rounded-xl"
+              style={{ minWidth: 0 }}
+              variant={category === "sweet" ? "default" : "outline"}
+              onClick={() => setCategory("sweet")}
+            >
+              Sweet Pancakes
+            </Button>
+            <Button
+              className="flex-1 text-lg py-8 font-bold rounded-xl"
+              style={{ minWidth: 0 }}
+              variant={category === "savory" ? "default" : "outline"}
+              onClick={() => setCategory("savory")}
+            >
+              Sour Pancakes
+            </Button>
+            <Button
+              className="flex-1 text-lg py-8 font-bold rounded-xl"
+              style={{ minWidth: 0 }}
+              variant={category === "promo" ? "default" : "outline"}
+              onClick={() => setCategory("promo")}
+            >
+              Promo
+            </Button>
+            <Button
+              className="flex-1 text-lg py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
+              style={{ minWidth: 0, letterSpacing: 1 }}
+              onClick={() => navigate("/deluxe-box")}
+            >
+              PANTASTIC DELUXE BOX
             </Button>
           </div>
         </div>

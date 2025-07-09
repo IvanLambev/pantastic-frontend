@@ -150,16 +150,18 @@ export async function fetchWithAuth(url, options = {}) {
   if (response.status === 401 && refresh_token) {
     // Try to refresh the access token
     try {
-      const refreshRes = await fetch(`${API_URL}/user/refresh-token`, {
+      const refreshRes = await fetch(`${API_URL}/user/refresh-token?refresh_token=${encodeURIComponent(refresh_token)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token }),
       });
       if (refreshRes.ok) {
         const refreshData = await refreshRes.json();
-        // Update sessionStorage with new access_token
+        // Update sessionStorage with new access_token and refresh_token
         const userObj = JSON.parse(sessionStorage.getItem("user"));
         userObj.access_token = refreshData.access_token;
+        if (refreshData.refresh_token) {
+          userObj.refresh_token = refreshData.refresh_token;
+        }
         sessionStorage.setItem("user", JSON.stringify(userObj));
         // Retry original request with new token
         options.headers = {

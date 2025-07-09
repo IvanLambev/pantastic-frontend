@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { API_URL } from '@/config/api'
 import { CartContext } from './cart'
-import { fetchWithAuth } from "@/lib/utils";
+import { fetchWithAuth } from "@/context/AuthContext";
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])

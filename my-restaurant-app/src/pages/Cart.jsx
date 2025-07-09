@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { API_URL } from "@/config/api"
-import { fetchWithAuth } from "@/lib/utils"
+import { fetchWithAuth } from "@/context/AuthContext"
 
 const Cart = () => {
   const { 
