@@ -174,6 +174,14 @@ export default function OrderManagementComponent() {
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleString()}
                       </p>
+                      {order.scheduled_delivery_time && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-400">Scheduled</Badge>
+                          <span className="text-xs text-orange-700 font-semibold">
+                            Scheduled for: {new Date(order.scheduled_delivery_time).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
                       {order.status}

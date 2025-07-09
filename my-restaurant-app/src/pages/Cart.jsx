@@ -62,7 +62,7 @@ const Cart = () => {
   }
 
   const handleCheckout = () => {
-    navigate('/checkout-v2');
+    navigate('/checkout');
   };
 
   const handleCancelOrder = async () => {
