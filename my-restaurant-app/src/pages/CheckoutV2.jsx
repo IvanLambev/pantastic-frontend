@@ -25,8 +25,44 @@ export default function CheckoutV2() {  const navigate = useNavigate()
   // Scheduling states
   const [isScheduled, setIsScheduled] = useState(false)
   const [selectedDate, setSelectedDate] = useState(undefined)
-  const [selectedTime, setSelectedTime] = useState("12:00")
+  const [selectedTime, setSelectedTime] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  // Helper: get valid time slots for selected date (24h format, every 15 min)
+  const getTimeSlots = () => {
+    if (!selectedDate) return [];
+    const slots = [];
+    const now = new Date();
+    const gmtPlus3Now = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
+    const today = new Date(gmtPlus3Now);
+    today.setHours(0, 0, 0, 0);
+    const isToday = selected.getTime() === today.getTime();
+    let minTime = 0;
+    if (isToday) {
+      // Minimum 1 hour from now
+      minTime = gmtPlus3Now.getHours() * 60 + gmtPlus3Now.getMinutes() + 60;
+    }
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        const totalMins = h * 60 + m;
+        if (totalMins < minTime) continue;
+        slots.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+      }
+    }
+    return slots;
+  };
+
+  // Update: allow 3 days in advance
+  const isDateDisabled = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + 2); // today + 2 = 3 days
+    date.setHours(0, 0, 0, 0);
+    return date < today || date > maxDate;
+  };
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -37,42 +73,28 @@ export default function CheckoutV2() {  const navigate = useNavigate()
   // Time validation for GMT+3 timezone
   const validateScheduledTime = () => {
     if (!isScheduled || !selectedDate || !selectedTime) return true
-
-    // Create current time in GMT+3
     const now = new Date()
     const gmtPlus3Now = new Date(now.getTime() + (3 * 60 * 60 * 1000))
-    
-    // Create selected datetime in GMT+3
     const scheduledDateTime = new Date(selectedDate)
-    const [hours, minutes] = selectedTime.split(':')
+    const [hours, minutes] = selectedTime.split(":")
     scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-    
-    // Check if scheduled time is at least 1 hour from now
     const oneHourFromNow = new Date(gmtPlus3Now.getTime() + (60 * 60 * 1000))
-    // Check if scheduled time is within 24 hours
-    const oneDayFromNow = new Date(gmtPlus3Now.getTime() + (24 * 60 * 60 * 1000))
-    
+    const threeDaysFromNow = new Date(gmtPlus3Now.getTime() + (3 * 24 * 60 * 60 * 1000))
     if (scheduledDateTime < oneHourFromNow) {
-      toast.error('Scheduled delivery must be at least 1 hour from now')
       return false
     }
-    
-    if (scheduledDateTime > oneDayFromNow) {
-      toast.error('Scheduled delivery cannot be more than 24 hours from now')
+    if (scheduledDateTime > threeDaysFromNow) {
       return false
     }
-    
     return true
   }
 
   // Create ISO 8601 formatted scheduled time
   const getScheduledDeliveryTime = () => {
     if (!isScheduled || !selectedDate || !selectedTime) return null
-    
     const scheduledDateTime = new Date(selectedDate)
-    const [hours, minutes] = selectedTime.split(':')
+    const [hours, minutes] = selectedTime.split(":")
     scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-    
     return scheduledDateTime.toISOString()
   }
 
@@ -306,7 +328,7 @@ export default function CheckoutV2() {  const navigate = useNavigate()
                             <Button
                               variant="outline"
                               id="date-picker"
-                              className="justify-between font-normal"
+                              className="justify-between font-normal border-orange-400 text-orange-400"
                             >
                               {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
                               <ChevronDownIcon className="h-4 w-4" />
@@ -319,14 +341,10 @@ export default function CheckoutV2() {  const navigate = useNavigate()
                               captionLayout="dropdown"
                               onSelect={(date) => {
                                 setSelectedDate(date)
+                                setSelectedTime(""); // reset time when date changes
                                 setCalendarOpen(false)
                               }}
-                              disabled={(date) => {
-                                const today = new Date()
-                                const tomorrow = new Date(today)
-                                tomorrow.setDate(tomorrow.getDate() + 1)
-                                return date < today || date > tomorrow
-                              }}
+                              disabled={isDateDisabled}
                             />
                           </PopoverContent>
                         </Popover>
@@ -335,18 +353,22 @@ export default function CheckoutV2() {  const navigate = useNavigate()
                         <Label htmlFor="time-picker" className="px-1">
                           Time
                         </Label>
-                        <Input
-                          type="time"
+                        <select
                           id="time-picker"
                           value={selectedTime}
-                          onChange={(e) => setSelectedTime(e.target.value)}
-                          className="bg-background"
-                        />
+                          onChange={e => setSelectedTime(e.target.value)}
+                          className="bg-background border border-orange-400 text-orange-400 rounded px-2 py-2 focus:ring-2 focus:ring-orange-400"
+                        >
+                          <option value="" disabled>Select time</option>
+                          {getTimeSlots().map(slot => (
+                            <option key={slot} value={slot}>{slot}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       <p>• Minimum 1 hour from now</p>
-                      <p>• Maximum 24 hours from now</p>
+                      <p>• Maximum 3 days in advance</p>
                       <p>• Times are in GMT+3 timezone</p>
                     </div>
                   </div>

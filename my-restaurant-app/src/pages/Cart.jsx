@@ -61,18 +61,8 @@ const Cart = () => {
     }
   }
 
-  const handleCheckout = async () => {
-    setState(prev => ({ ...prev, isCheckingOut: true, error: null }));
-    try {      const result = await checkout();      // Redirect immediately after successful checkout
-      navigate(`/order-tracking-v2/${result.order_id}`);
-      removeFromCart(null)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setState(prev => ({ ...prev, error: errorMessage }));
-      toast.error('Failed to place order: ' + errorMessage);
-    } finally {
-      setState(prev => ({ ...prev, isCheckingOut: false }));
-    }
+  const handleCheckout = () => {
+    navigate('/checkout-v2');
   };
 
   const handleCancelOrder = async () => {
