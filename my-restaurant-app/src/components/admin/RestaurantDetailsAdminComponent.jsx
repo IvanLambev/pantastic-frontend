@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 import AddonTemplatesAdminComponent from "@/components/admin/AddonTemplatesAdminComponent";
 import { fetchWithAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ export default function RestaurantDetailsAdminComponent() {
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
+  const [addonTemplates, setAddonTemplates] = useState([]);
   const [currentTab, setCurrentTab] = useState("items");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +41,7 @@ export default function RestaurantDetailsAdminComponent() {
     description: "",
     image: "",
     price: "",
+    addon_templates: []
   });
   const [deletingItem, setDeletingItem] = useState(null);
   const [showAddDeliveryDialog, setShowAddDeliveryDialog] = useState(false);
@@ -60,6 +63,8 @@ export default function RestaurantDetailsAdminComponent() {
         if (found) {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
           setMenuItems(await itemsRes.json());
+          // Fetch addon templates
+          await fetchAddonTemplates(found[0]);
           // Only use fetchDeliveryPeople (with fetchWithAuth) for delivery people
           await fetchDeliveryPeople();
         }
@@ -71,6 +76,19 @@ export default function RestaurantDetailsAdminComponent() {
     };
     fetchRestaurant();
   }, [restaurantId]);
+  
+  // Fetch addon templates for the restaurant
+  const fetchAddonTemplates = async (restaurantId) => {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`);
+      if (response.ok) {
+        const templates = await response.json();
+        setAddonTemplates(templates || []);
+      }
+    } catch (error) {
+      console.error('Error fetching addon templates:', error);
+    }
+  };
 
   const handleEditItem = (item) => {
     setModalMode("edit");
@@ -80,6 +98,7 @@ export default function RestaurantDetailsAdminComponent() {
       description: item[2],
       image: item[3],
       price: item[5],
+      addon_templates: item[7] || [] // Assuming the 8th element contains addon templates
     });
     setShowItemModal(true);
   };
@@ -88,7 +107,7 @@ export default function RestaurantDetailsAdminComponent() {
   };
   const handleAddItem = () => {
     setModalMode("add");
-    setItemForm({ id: "", name: "", description: "", image: "", price: "" });
+    setItemForm({ id: "", name: "", description: "", image: "", price: "", addon_templates: [] });
     setShowItemModal(true);
   };
 
@@ -99,11 +118,16 @@ export default function RestaurantDetailsAdminComponent() {
     let url = `${API_URL}/restaurant/${restaurant[0]}/items`;
     let method = modalMode === "add" ? "POST" : "PUT";
     if (modalMode === "add") {
-      formData.append("name", itemForm.name);
-      formData.append("description", itemForm.description);
-      formData.append("price", itemForm.price);
+      formData.append("data", JSON.stringify({
+        restaurant_id: restaurant[0],
+        name: itemForm.name,
+        description: itemForm.description,
+        price: parseFloat(itemForm.price),
+        addon_templates: itemForm.addon_templates
+      }));
+      
       if (fileInputRef.current && fileInputRef.current.files[0]) {
-        formData.append("image", fileInputRef.current.files[0]);
+        formData.append("file", fileInputRef.current.files[0]);
       }
     } else {
       // For edit, use the backend's required structure
@@ -111,7 +135,8 @@ export default function RestaurantDetailsAdminComponent() {
         item_id: itemForm.id,
         name: itemForm.name,
         description: itemForm.description,
-        price: parseFloat(itemForm.price)
+        price: parseFloat(itemForm.price),
+        addon_templates: itemForm.addon_templates
       };
       formData.append("data", JSON.stringify(data));
       if (fileInputRef.current && fileInputRef.current.files[0]) {
@@ -147,8 +172,7 @@ export default function RestaurantDetailsAdminComponent() {
       alert("Failed to delete item");
     }
   };
-
-  // Delivery people management state
+  
   // Fetch delivery people (global, not just assigned)
   const fetchDeliveryPeople = async () => {
     try {
@@ -157,8 +181,50 @@ export default function RestaurantDetailsAdminComponent() {
       });
       const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
       setDeliveryPeople(await res.json());
-    } catch {
+    } catch (error) {
+      console.error('Error fetching delivery people:', error);
       setDeliveryPeople([]);
+    }
+  };
+
+  // Assign/remove addon template to/from menu item
+  const handleAssignAddonToItem = async (itemId, templateId) => {
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/restaurant/${restaurant[0]}/items/${itemId}/addons/${templateId}`, 
+        { method: 'POST' }
+      );
+      if (response.ok) {
+        toast.success('Addon template added to item successfully');
+        // Refresh items
+        const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+        setMenuItems(await itemsRes.json());
+      } else {
+        toast.error('Failed to add addon template to item');
+      }
+    } catch (error) {
+      console.error('Error assigning addon to item:', error);
+      toast.error('Failed to add addon template to item');
+    }
+  };
+
+  const handleRemoveAddonFromItem = async (itemId, templateId) => {
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/restaurant/${restaurant[0]}/items/${itemId}/addons/${templateId}`, 
+        { method: 'DELETE' }
+      );
+      if (response.ok) {
+        toast.success('Addon template removed from item successfully');
+        // Refresh items
+        const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+        setMenuItems(await itemsRes.json());
+      } else {
+        toast.error('Failed to remove addon template from item');
+      }
+    } catch (error) {
+      console.error('Error removing addon from item:', error);
+      toast.error('Failed to remove addon template from item');
     }
   };
 
@@ -333,6 +399,43 @@ export default function RestaurantDetailsAdminComponent() {
                   <p className="mt-2 text-sm text-gray-500">{itemForm.image}</p>
                 )}
               </div>
+              
+              {/* Addon Templates Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Addon Templates</label>
+                <div className="mt-2 space-y-2">
+                  {addonTemplates.map((template) => (
+                    <div key={template.template_id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`template-${template.template_id}`}
+                        checked={itemForm.addon_templates.includes(template.template_id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setItemForm({
+                              ...itemForm,
+                              addon_templates: [...itemForm.addon_templates, template.template_id]
+                            });
+                          } else {
+                            setItemForm({
+                              ...itemForm,
+                              addon_templates: itemForm.addon_templates.filter(id => id !== template.template_id)
+                            });
+                          }
+                        }}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`template-${template.template_id}`} className="ml-2 block text-sm text-gray-900">
+                        {template.name}
+                      </label>
+                    </div>
+                  ))}
+                  
+                  {addonTemplates.length === 0 && (
+                    <p className="text-sm text-gray-500">No addon templates available. Create some in the Addon Templates tab.</p>
+                  )}
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -421,6 +524,9 @@ export default function RestaurantDetailsAdminComponent() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Addons
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -437,6 +543,71 @@ export default function RestaurantDetailsAdminComponent() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{item[5]}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        {item[7] && item[7].length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {item[7].map((templateId) => {
+                              const template = addonTemplates.find(t => t.template_id === templateId);
+                              return template ? (
+                                <span key={templateId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {template.name}
+                                  <button 
+                                    onClick={() => handleRemoveAddonFromItem(item[0], templateId)}
+                                    className="ml-1 text-blue-500 hover:text-blue-700"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ) : null;
+                            })}
+                            
+                            {/* Add template dropdown */}
+                            {addonTemplates.filter(t => !item[7].includes(t.template_id)).length > 0 && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="ml-1 p-1 h-6">+</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  {addonTemplates
+                                    .filter(t => !item[7].includes(t.template_id))
+                                    .map(template => (
+                                      <DropdownMenuItem 
+                                        key={template.template_id}
+                                        onClick={() => handleAssignAddonToItem(item[0], template.template_id)}
+                                      >
+                                        {template.name}
+                                      </DropdownMenuItem>
+                                    ))
+                                  }
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <span>No addons</span>
+                            {addonTemplates.length > 0 && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="ml-2 p-1 h-6">+</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  {addonTemplates.map(template => (
+                                    <DropdownMenuItem 
+                                      key={template.template_id}
+                                      onClick={() => handleAssignAddonToItem(item[0], template.template_id)}
+                                    >
+                                      {template.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button

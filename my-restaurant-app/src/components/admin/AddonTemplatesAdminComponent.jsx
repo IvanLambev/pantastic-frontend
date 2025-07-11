@@ -90,6 +90,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const fetchAddonTemplates = useCallback(async () => {
     setLoading(true)
     try {
+      // Using the correct endpoint from documentation: GET /restaurant/addon-templates/{restaurantId}
       const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`)
       if (!response.ok) throw new Error('Failed to fetch addon templates')
       const data = await response.json()
