@@ -4,6 +4,7 @@ import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
+import AddonTemplatesAdminComponent from "@/components/admin/AddonTemplatesAdminComponent";
 import { fetchWithAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
@@ -403,6 +404,7 @@ export default function RestaurantDetailsAdminComponent() {
         <TabsList>
           <TabsTrigger value="items">Menu Items</TabsTrigger>
           <TabsTrigger value="delivery">Delivery People</TabsTrigger>
+          <TabsTrigger value="addons">Addon Templates</TabsTrigger>
         </TabsList>
         <TabsContent value="items">
           {/* Menu Items Table */}
@@ -470,6 +472,10 @@ export default function RestaurantDetailsAdminComponent() {
             onUnassignDelivery={handleUnassignDelivery}
             isSubmitting={isSubmitting}
           />
+        </TabsContent>
+        <TabsContent value="addons">
+          {/* Addon Templates */}
+          <AddonTemplatesAdminComponent />
         </TabsContent>
       </Tabs>
     </div>
