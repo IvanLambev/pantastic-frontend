@@ -127,6 +127,7 @@ const Food = () => {
         throw new Error('Failed to fetch menu items')
       }
       const data = await response.json()
+      console.log('Fetched menu items:', data)
       setItems(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items'
@@ -140,13 +141,13 @@ const Food = () => {
   const handleAddToCart = (item) => {
     addToCart({
       id: item[0],
-      name: item[4],
-      price: item[5],
-      image: item[3],
-      description: item[2],
+      name: item[5],
+      price: item[6],
+      image: item[4],
+      description: item[3],
       quantity: 1
     })
-    toast.success(`Added ${item[4]} to cart`)
+    toast.success(`Added ${item[5]} to cart`)
   }
 
   const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
@@ -203,21 +204,33 @@ const Food = () => {
 
   // Add filtered and sorted items logic
   const filteredItems = items.filter(item => {
-    const matchesSearch = (item[4]?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (item[2]?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-    const matchesPrice = Number(item[5]) >= priceRange[0] && Number(item[5]) <= priceRange[1]
-    const matchesCategory = category === "all" || item[6] === category
-    return matchesSearch && matchesPrice && matchesCategory
+    // Make sure the item exists and has the expected structure
+    if (!item || !Array.isArray(item)) return false;
+    
+    const name = item[5] || ''; // Name is at index 5
+    const description = item[3] || ''; // Description is at index 3
+    const price = Number(item[6] || 0); // Price is at index 6
+    
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    
+    // For now, show all items since category data is not in the response
+    // You can add category logic once you know how categories are represented
+    const matchesCategory = category === "all" || true;
+    
+    return matchesSearch && matchesPrice && matchesCategory;
   }).sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return Number(a[5]) - Number(b[5])
+        return Number(a[6]) - Number(b[6]); // Price is at index 6
       case "price-high":
-        return Number(b[5]) - Number(a[5])
+        return Number(b[6]) - Number(a[6]); // Price is at index 6
       case "most-ordered":
-        return (b[7] || 0) - (a[7] || 0)
+        // If order count is available, use it, otherwise default to 0
+        return ((b[1]?._items?.length || 0) - (a[1]?._items?.length || 0));
       default:
-        return 0
+        return 0;
     }
   })
 
@@ -327,8 +340,8 @@ const Food = () => {
                 <Card key={item[0]} className="flex flex-row h-24">
                   <div className="w-24 h-full relative">
                     <img
-                      src={item[3] || '/elementor-placeholder-image.webp'}
-                      alt={item[4]}
+                      src={item[4] || '/elementor-placeholder-image.webp'}
+                      alt={item[5]}
                       className="w-full h-full object-cover"
                     />
                     <button
@@ -344,8 +357,8 @@ const Food = () => {
                     </button>
                   </div>
                   <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
-                      <h3 className="font-semibold text-sm">{item[4]}</h3>
-                      <span className="font-semibold text-sm">${Number(item[5]).toFixed(2)}</span>
+                      <h3 className="font-semibold text-sm">{item[5]}</h3>
+                      <span className="font-semibold text-sm">${Number(item[6]).toFixed(2)}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -449,8 +462,8 @@ const Food = () => {
                     <Card key={item[0]} className="flex flex-col h-full">
                       <div className="aspect-video relative">
                         <img
-                          src={item[3] || '/elementor-placeholder-image.webp'}
-                          alt={item[4]}
+                          src={item[4] || '/elementor-placeholder-image.webp'}
+                          alt={item[5]}
                           className="w-full h-full object-cover"
                         />
                         <button
@@ -466,10 +479,10 @@ const Food = () => {
                         </button>
                       </div>
                       <CardContent className="flex flex-col flex-grow p-4">
-                        <h3 className="font-semibold mb-2">{item[4]}</h3>
-                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[2]}</p>
+                        <h3 className="font-semibold mb-2">{item[5]}</h3>
+                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[3]}</p>
                         <div className="flex justify-between items-start">
-                          <span className="font-semibold">${Number(item[5]).toFixed(2)}</span>
+                          <span className="font-semibold">${Number(item[6]).toFixed(2)}</span>
                           <div className="flex gap-2">
                             <Button
                               variant="outline"

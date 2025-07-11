@@ -135,6 +135,28 @@ const Cart = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>                  <p className="text-muted-foreground text-sm mb-2">{item.description}</p>
+                  
+                  {/* Display selected addons if any */}
+                  {item.selectedAddons && item.selectedAddons.length > 0 && (
+                    <div className="text-sm mb-2 bg-muted p-2 rounded-md">
+                      <p className="font-semibold mb-1">Add-ons:</p>
+                      <ul className="space-y-1 pl-2">
+                        {item.selectedAddons.map((addon, index) => (
+                          <li key={index} className="flex justify-between">
+                            <span>{addon.name}</span>
+                            <span>+${Number(addon.price).toFixed(2)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {item.basePrice && (
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
+                          <span>Base price:</span>
+                          <span>${Number(item.basePrice).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {item.specialInstructions && (
                     <div className="text-sm mb-4">
                       <span className="font-semibold">Special Instructions: </span>
@@ -177,9 +199,16 @@ const Cart = () => {
               <CardContent>
                 <div className="space-y-4">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span>{item.name} × {item.quantity}</span>
-                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <div key={item.id} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">{item.name} × {item.quantity}</span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <div className="text-xs text-muted-foreground pl-4">
+                          {item.selectedAddons.length} add-ons selected
+                        </div>
+                      )}
                     </div>
                   ))}
                   <div className="border-t pt-4">
