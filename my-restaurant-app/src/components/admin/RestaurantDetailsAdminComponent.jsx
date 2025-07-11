@@ -92,13 +92,18 @@ export default function RestaurantDetailsAdminComponent() {
 
   const handleEditItem = (item) => {
     setModalMode("edit");
+    // Convert addon template ID to an array if it's a string
+    const addonTemplates = item[7] ? 
+      (Array.isArray(item[7]) ? item[7] : (item[7] ? [item[7]] : [])) : 
+      [];
+    
     setItemForm({
       id: item[0],
       name: item[4],
       description: item[2],
       image: item[3],
       price: item[5],
-      addon_templates: item[7] || [] // Assuming the 8th element contains addon templates
+      addon_templates: addonTemplates
     });
     setShowItemModal(true);
   };
@@ -546,9 +551,12 @@ export default function RestaurantDetailsAdminComponent() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {item[7] && item[7].length > 0 ? (
+                        {item[7] ? (
                           <div className="flex flex-wrap gap-1">
-                            {item[7].map((templateId) => {
+                            {/* Convert to array if it's a string and filter out any empty values */}
+                            {(Array.isArray(item[7]) ? item[7] : (item[7] ? [item[7]] : []))
+                              .filter(Boolean)
+                              .map((templateId) => {
                               const template = addonTemplates.find(t => t.template_id === templateId);
                               return template ? (
                                 <span key={templateId} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -564,14 +572,20 @@ export default function RestaurantDetailsAdminComponent() {
                             })}
                             
                             {/* Add template dropdown */}
-                            {addonTemplates.filter(t => !item[7].includes(t.template_id)).length > 0 && (
+                            {addonTemplates.filter(t => {
+                              const itemTemplates = Array.isArray(item[7]) ? item[7] : (item[7] ? [item[7]] : []);
+                              return !itemTemplates.includes(t.template_id);
+                            }).length > 0 && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="outline" size="sm" className="ml-1 p-1 h-6">+</Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                   {addonTemplates
-                                    .filter(t => !item[7].includes(t.template_id))
+                                    .filter(t => {
+                                      const itemTemplates = Array.isArray(item[7]) ? item[7] : (item[7] ? [item[7]] : []);
+                                      return !itemTemplates.includes(t.template_id);
+                                    })
                                     .map(template => (
                                       <DropdownMenuItem 
                                         key={template.template_id}
