@@ -65,8 +65,10 @@ const templateSchema = z.object({
   addons: z.array(addonSchema).min(1, { message: "Add at least one addon" }),
 })
 
-export default function AddonTemplatesAdminComponent() {
-  const { restaurantId } = useParams()
+export default function AddonTemplatesAdminComponent({ restaurantId: propRestaurantId }) {
+  const params = useParams()
+  // Use the prop if provided, otherwise fall back to URL params
+  const restaurantId = propRestaurantId || params.restaurantId
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [openDialog, setOpenDialog] = useState(false)

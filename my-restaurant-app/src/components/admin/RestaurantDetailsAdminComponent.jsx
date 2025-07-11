@@ -475,7 +475,7 @@ export default function RestaurantDetailsAdminComponent() {
         </TabsContent>
         <TabsContent value="addons">
           {/* Addon Templates */}
-          <AddonTemplatesAdminComponent />
+          <AddonTemplatesAdminComponent restaurantId={restaurant[0]} />
         </TabsContent>
       </Tabs>
     </div>

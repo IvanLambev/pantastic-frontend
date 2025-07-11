@@ -5,9 +5,10 @@
       "destination": "/index.html"
     }
   ],
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "installCommand": "npm install --legacy-peer-deps",
   "github": {
     "silent": true
   },
