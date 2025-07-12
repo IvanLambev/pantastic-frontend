@@ -8,28 +8,28 @@ If you continue having issues with `react-hook-form` compatibility, you can use 
 
 ```jsx
 // Example using React's built-in form handling
-import { useState } from 'react';
+import { useState } from "react";
 
 function SimpleForm() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: "",
+    email: "",
   });
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     }
-    
+
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -44,10 +44,10 @@ function SimpleForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       // Form is valid, process data
-      console.log('Form submitted:', formData);
+      console.log("Form submitted:", formData);
     }
   };
 
@@ -64,7 +64,7 @@ function SimpleForm() {
         />
         {errors.name && <p className="error">{errors.name}</p>}
       </div>
-      
+
       <div>
         <label htmlFor="email">Email</label>
         <input
@@ -76,7 +76,7 @@ function SimpleForm() {
         />
         {errors.email && <p className="error">{errors.email}</p>}
       </div>
-      
+
       <button type="submit">Submit</button>
     </form>
   );

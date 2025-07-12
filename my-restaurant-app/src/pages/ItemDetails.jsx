@@ -26,7 +26,6 @@ export default function ItemDetails() {
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [specialInstructions, setSpecialInstructions] = useState("")
   const [addonTemplates, setAddonTemplates] = useState([])
   const [selectedAddons, setSelectedAddons] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
@@ -37,15 +36,13 @@ export default function ItemDetails() {
   const [favoriteId, setFavoriteId] = useState(null)
 
   useEffect(() => {
-    const fetchItem = async () => {
+    const fetchItemAndAddons = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch item details')
-        }
-        let data = await response.json()
-        // If data is an array, map to object
+        // Fetch item details
+        const itemRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
+        if (!itemRes.ok) throw new Error('Failed to fetch item details');
+        let data = await itemRes.json();
         if (Array.isArray(data)) {
           data = {
             item_id: data[0],
@@ -53,51 +50,18 @@ export default function ItemDetails() {
             description: data[3],
             image_url: data[4],
             name: data[5],
-            price: data[6],
-            addon_template_ids: data[7] ? (Array.isArray(data[7]) ? data[7] : [data[7]]) : [],
+            price: data[6]
           }
         }
-        setItem(data)
-        setTotalPrice(Number(data.price))
-        
-        // Load saved instructions if they exist
-        const savedInstructions = sessionStorage.getItem(`item-instructions-${itemId}`)
-        if (savedInstructions) {
-          setSpecialInstructions(savedInstructions)
-        }
-        
-        // Fetch addon templates for this item
-        await fetchAddonTemplates(data.addon_template_ids);
-      } catch (err) {
-        setError(err.message)
-        console.error('Error fetching item:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
+        setItem(data);
+        setTotalPrice(Number(data.price));
 
-    // Fetch addon templates
-    const fetchAddonTemplates = async (templateIds) => {
-      if (!templateIds || !templateIds.length) return;
-      
-      try {
-        const templates = [];
-        
-        // Fetch each template individually
-        for (const templateId of templateIds) {
-          if (!templateId) continue;
-          
-          const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/template/${templateId}`);
-          if (response.ok) {
-            const template = await response.json();
-            if (template) {
-              templates.push(template);
-            }
-          }
-        }
-        
+        // Fetch addons for this item
+        const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}/addons`);
+        if (!addonsRes.ok) throw new Error('Failed to fetch addons');
+        const templates = await addonsRes.json();
         setAddonTemplates(templates);
-        
+
         // Initialize selectedAddons state
         const initialSelectedAddons = {};
         templates.forEach(template => {
@@ -106,14 +70,15 @@ export default function ItemDetails() {
           }
         });
         setSelectedAddons(initialSelectedAddons);
-        
-      } catch (error) {
-        console.error("Error fetching addon templates:", error);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching item/addons:', err);
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchItem()
-  }, [restaurantId, itemId])
+    fetchItemAndAddons();
+  }, [restaurantId, itemId]);
 
   // Check if item is favorite on mount
   useEffect(() => {
@@ -189,43 +154,20 @@ export default function ItemDetails() {
     return Object.values(selectedAddons).flat();
   };
   
-  // Generate special instructions from selected addons
-  const generateInstructionsFromAddons = () => {
-    const allSelected = getAllSelectedAddons();
-    if (!allSelected.length) return specialInstructions;
-    
-    const addonText = allSelected.map(addon => `${addon.name} (+$${Number(addon.price).toFixed(2)})`).join(', ');
-    
-    if (specialInstructions) {
-      return `Selected options: ${addonText}\n\nCustom instructions: ${specialInstructions}`;
-    }
-    
-    return `Selected options: ${addonText}`;
-  };
-
   const handleAddToCart = () => {
-    // Generate the complete instructions including selected addons
-    const completeInstructions = generateInstructionsFromAddons();
     const selectedAddonList = getAllSelectedAddons();
-    
-    // Save instructions to session storage
-    sessionStorage.setItem(`item-instructions-${itemId}`, specialInstructions);
-
     const cartItem = {
       id: item.item_id,
       name: item.name,
-      price: totalPrice, // Use the calculated total price including addons
+      price: totalPrice,
       basePrice: Number(item.price),
       image: item.image_url,
       description: item.description,
-      specialInstructions: completeInstructions,
       selectedAddons: selectedAddonList,
       addonCount: selectedAddonList.length,
       quantity: 1
     };
-
     addToCart(cartItem);
-    
     toast.success(
       <div className="flex flex-col">
         <span>Added {item.name} to cart</span>
@@ -234,15 +176,10 @@ export default function ItemDetails() {
         )}
       </div>
     );
-    navigate(-1); // Go back to previous page
+    navigate(-1);
   };
 
-  const handleInstructionsChange = (e) => {
-    const instructions = e.target.value
-    setSpecialInstructions(instructions)
-    // Save instructions as user types
-    sessionStorage.setItem(`item-instructions-${itemId}`, instructions)
-  }
+  // Removed manual instructions field
 
   const handleToggleFavorite = async () => {
     const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -337,15 +274,7 @@ export default function ItemDetails() {
             <p className="text-muted-foreground">{item.description}</p>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="font-semibold">Special Instructions</h2>
-            <Textarea
-              placeholder="Add any special instructions or requests here..."
-              value={specialInstructions}
-              onChange={handleInstructionsChange}
-              className="min-h-[100px]"
-            />
-          </div>
+          {/* Special Instructions field removed */}
 
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
