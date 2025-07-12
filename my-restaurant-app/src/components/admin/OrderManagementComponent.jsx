@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,7 +64,21 @@ export default function OrderManagementComponent() {
       const data = await response.json();
       if (Array.isArray(data)) {
         const validItems = data.filter(item => Array.isArray(item) && item.length >= 5 && item[0] && item[4]);
-        setItems(validItems);
+        // For each item, fetch its addons if present
+        const itemsWithAddons = await Promise.all(validItems.map(async item => {
+          let addons = [];
+          if (item[1] && item[1]._items && item[1]._items.length > 0) {
+            // Fetch addons for this item
+            try {
+              const res = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${item[0]}/addons`);
+              if (res.ok) {
+                addons = await res.json();
+              }
+            } catch (e) {}
+          }
+          return { raw: item, addons };
+        }));
+        setItems(itemsWithAddons);
       } else {
         setItems([]);
       }
@@ -138,12 +153,11 @@ export default function OrderManagementComponent() {
     }
   };
 
-  const getItemNameById = (itemId) => {
-    const item = items.find(item => String(item[0]) === String(itemId));
-    if (!item) {
-      return `Unknown Item (${itemId})`;
-    }
-    return item[4];
+  // Helper to get item details and addons by ID
+  const getItemDetailsById = (itemId) => {
+    const found = items.find(item => String(item.raw[0]) === String(itemId));
+    if (!found) return null;
+    return found;
   };
 
   useEffect(() => {
@@ -200,9 +214,20 @@ export default function OrderManagementComponent() {
                           }
                         }
                         const itemInstruction = instructions[id];
+                        const itemDetails = getItemDetailsById(id);
                         return (
                           <li key={id}>
-                            {quantity}x {getItemNameById(id)}
+                            {quantity}x {itemDetails ? itemDetails.raw[5] : `Unknown Item (${id})`}
+                            {itemDetails && itemDetails.addons && itemDetails.addons.length > 0 && (
+                              <ul className="ml-4 list-disc">
+                                {itemDetails.addons.map((addonTemplate, idx) => (
+                                  <li key={idx} className="text-xs text-muted-foreground">
+                                    <span className="font-medium">{addonTemplate.name}:</span>
+                                    <span> {addonTemplate.addons.map(a => `${a.name} (+$${Number(a.price).toFixed(2)})`).join(', ')}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                             {itemInstruction && (
                               <span className="ml-2 text-xs text-primary font-medium">(Instructions: {itemInstruction})</span>
                             )}
