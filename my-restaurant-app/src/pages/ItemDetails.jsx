@@ -62,10 +62,10 @@ export default function ItemDetails() {
         const templates = await addonsRes.json();
         setAddonTemplates(templates);
 
-        // Initialize selectedAddons state
+        // Initialize selectedAddons state - Updated for new API structure
         const initialSelectedAddons = {};
         templates.forEach(template => {
-          if (template.addons && template.addons.length > 0) {
+          if (template.addons && Object.keys(template.addons).length > 0) {
             initialSelectedAddons[template.template_id] = [];
           }
         });
@@ -103,7 +103,7 @@ export default function ItemDetails() {
     if (itemId) checkFavorite()
   }, [itemId])
 
-  // Handle selecting/deselecting addons
+  // Handle selecting/deselecting addons - Updated for new API structure
   const handleAddonChange = (templateId, addon, isChecked) => {
     setSelectedAddons(prev => {
       const updatedAddons = { ...prev };
@@ -116,7 +116,7 @@ export default function ItemDetails() {
       } else {
         if (updatedAddons[templateId]) {
           updatedAddons[templateId] = updatedAddons[templateId].filter(
-            item => item.addon_id !== addon.addon_id
+            item => item.name !== addon.name
           );
         }
       }
@@ -144,9 +144,9 @@ export default function ItemDetails() {
     setTotalPrice(newTotal);
   };
   
-  // Check if an addon is selected
-  const isAddonSelected = (templateId, addonId) => {
-    return selectedAddons[templateId]?.some(addon => addon.addon_id === addonId) || false;
+  // Check if an addon is selected - Updated for new API structure
+  const isAddonSelected = (templateId, addonName) => {
+    return selectedAddons[templateId]?.some(addon => addon.name === addonName) || false;
   };
   
   // Get all selected addons as a flat array
@@ -286,7 +286,7 @@ export default function ItemDetails() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <Badge variant="outline">{template.addons.length} options</Badge>
+                      <Badge variant="outline">{Object.keys(template.addons || {}).length} options</Badge>
                     </div>
                     <CardDescription>
                       Select the options you'd like to add
@@ -295,25 +295,25 @@ export default function ItemDetails() {
                   
                   <CardContent className="pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {template.addons.map((addon) => (
+                      {Object.entries(template.addons || {}).map(([addonName, price]) => (
                         <div
-                          key={addon.addon_id}
-                          className={`p-3 rounded-lg border transition-all flex items-center justify-between ${
-                            isAddonSelected(template.template_id, addon.addon_id)
+                          key={`${template.template_id}-${addonName}`}
+                          className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                            isAddonSelected(template.template_id, addonName)
                               ? 'border-primary bg-primary/10'
                               : 'border-border bg-background hover:bg-muted/50'
                           }`}
-                          onClick={() => handleAddonChange(template.template_id, addon, !isAddonSelected(template.template_id, addon.addon_id))}
+                          onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
                         >
                           <div className="flex items-center flex-1">
                             <Checkbox
-                              checked={isAddonSelected(template.template_id, addon.addon_id)}
-                              onCheckedChange={(checked) => handleAddonChange(template.template_id, addon, checked)}
+                              checked={isAddonSelected(template.template_id, addonName)}
+                              onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
                               className="mr-3"
                             />
-                            <span className="font-medium">{addon.name}</span>
+                            <span className="font-medium">{addonName}</span>
                           </div>
-                          <span className="text-sm font-semibold ml-2">+${Number(addon.price).toFixed(2)}</span>
+                          <span className="text-sm font-semibold ml-2">+${Number(price).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>

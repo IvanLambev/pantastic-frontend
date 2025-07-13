@@ -1,0 +1,584 @@
+# API Changes Documentation for Frontend Team
+
+## New Add-on System Endpoints
+
+Replace `{API_URL}` with your actual API base URL (e.g., `https://api.pantastic.com`)
+Replace `{JWT_TOKEN}` with actual authentication token
+Replace UUIDs with actual values from your database
+
+---
+
+## 🍕 RESTAURANT SERVICE ENDPOINTS
+
+### 1. Create Add-on Template
+**POST** `{API_URL}/restaurant/addon-templates`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "restaurant_id": "550e8400-e29b-41d4-a716-446655440000",
+  "template": {
+    "name": "Pizza Toppings",
+    "description": "Popular pizza toppings and extras",
+    "addons": {
+      "extra_cheese": 2.50,
+      "pepperoni": 3.00,
+      "mushrooms": 2.00,
+      "olives": 1.50,
+      "bacon": 3.50
+    },
+    "is_predefined": false
+  }
+}
+```
+
+**Response (201):**
+```json
+{
+  "message": "Add-on template created successfully",
+  "template_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X POST "{API_URL}/restaurant/addon-templates" \
+  -H "Authorization: Bearer {JWT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "restaurant_id": "550e8400-e29b-41d4-a716-446655440000",
+    "template": {
+      "name": "Pizza Toppings",
+      "addons": {
+        "extra_cheese": 2.50,
+        "pepperoni": 3.00,
+        "mushrooms": 2.00
+      }
+    }
+  }'
+```
+
+---
+
+### 2. Get All Add-on Templates for Restaurant
+**GET** `{API_URL}/restaurant/addon-templates/{restaurant_id}`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+[
+  {
+    "template_id": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Pizza Toppings",
+    "addons": {
+      "extra_cheese": 2.50,
+      "pepperoni": 3.00,
+      "mushrooms": 2.00,
+      "olives": 1.50,
+      "bacon": 3.50
+    },
+    "is_predefined": false,
+    "created_at": "2025-07-13T10:30:45.123000+00:00"
+  },
+  {
+    "template_id": "550e8400-e29b-41d4-a716-446655440002",
+    "name": "Coffee Extras",
+    "addons": {
+      "extra_shot": 0.75,
+      "oat_milk": 0.60,
+      "vanilla_syrup": 0.50
+    },
+    "is_predefined": false,
+    "created_at": "2025-07-13T11:15:22.456000+00:00"
+  }
+]
+```
+
+**CURL Example:**
+```bash
+curl -X GET "{API_URL}/restaurant/addon-templates/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+### 3. Get Specific Add-on Template
+**GET** `{API_URL}/restaurant/addon-templates/{restaurant_id}/{template_id}`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+{
+  "template_id": "550e8400-e29b-41d4-a716-446655440001",
+  "name": "Pizza Toppings",
+  "addons": {
+    "extra_cheese": 2.50,
+    "pepperoni": 3.00,
+    "mushrooms": 2.00,
+    "olives": 1.50,
+    "bacon": 3.50
+  },
+  "is_predefined": false,
+  "created_at": "2025-07-13T10:30:45.123000+00:00"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X GET "{API_URL}/restaurant/addon-templates/550e8400-e29b-41d4-a716-446655440000/550e8400-e29b-41d4-a716-446655440001" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+### 4. Update Add-on Template
+**PUT** `{API_URL}/restaurant/addon-templates`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "template_id": "550e8400-e29b-41d4-a716-446655440001",
+  "name": "Premium Pizza Toppings",
+  "addons": {
+    "extra_cheese": 2.75,
+    "pepperoni": 3.25,
+    "mushrooms": 2.25,
+    "olives": 1.75,
+    "bacon": 3.75,
+    "truffle_oil": 5.00
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Add-on template updated successfully"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X PUT "{API_URL}/restaurant/addon-templates" \
+  -H "Authorization: Bearer {JWT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Premium Pizza Toppings",
+    "addons": {
+      "extra_cheese": 2.75,
+      "truffle_oil": 5.00
+    }
+  }'
+```
+
+---
+
+### 5. Delete Add-on Template
+**DELETE** `{API_URL}/restaurant/addon-templates`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "template_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Add-on template deleted successfully"
+}
+```
+
+**Error Response (403) - If trying to delete predefined template:**
+```json
+{
+  "detail": "Cannot delete predefined add-on templates"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X DELETE "{API_URL}/restaurant/addon-templates" \
+  -H "Authorization: Bearer {JWT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "550e8400-e29b-41d4-a716-446655440001"
+  }'
+```
+
+---
+
+### 6. Apply Add-on Template to Menu Item
+**POST** `{API_URL}/restaurant/{restaurant_id}/items/{item_id}/apply-template/{template_id}`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Add-on template applied to item successfully",
+  "merged_addons": {
+    "extra_cheese": 2.50,
+    "pepperoni": 3.00,
+    "mushrooms": 2.00,
+    "olives": 1.50,
+    "bacon": 3.50
+  },
+  "applied_templates": ["550e8400-e29b-41d4-a716-446655440001"]
+}
+```
+
+**Error Response (404) - If template already applied:**
+```json
+{
+  "message": "Add-on template is already applied to this item"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X POST "{API_URL}/restaurant/550e8400-e29b-41d4-a716-446655440000/items/660e8400-e29b-41d4-a716-446655440003/apply-template/550e8400-e29b-41d4-a716-446655440001" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+### 7. Remove Add-on Template from Menu Item
+**DELETE** `{API_URL}/restaurant/{restaurant_id}/items/{item_id}/remove-template/{template_id}`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Add-on template removed from item successfully",
+  "remaining_addons": {
+    "custom_sauce": 1.00
+  },
+  "applied_templates": []
+}
+```
+
+**Error Response (404) - If template not applied:**
+```json
+{
+  "message": "Add-on template is not applied to this item"
+}
+```
+
+**CURL Example:**
+```bash
+curl -X DELETE "{API_URL}/restaurant/550e8400-e29b-41d4-a716-446655440000/items/660e8400-e29b-41d4-a716-446655440003/remove-template/550e8400-e29b-41d4-a716-446655440001" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+### 8. Get All Add-ons for Menu Item
+**GET** `{API_URL}/restaurant/{restaurant_id}/items/{item_id}/addons`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+[
+  {
+    "template_id": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Pizza Toppings",
+    "addons": {
+      "extra_cheese": 2.50,
+      "pepperoni": 3.00,
+      "mushrooms": 2.00,
+      "olives": 1.50,
+      "bacon": 3.50
+    }
+  },
+  {
+    "template_id": "550e8400-e29b-41d4-a716-446655440002",
+    "name": "Premium Additions",
+    "addons": {
+      "truffle_oil": 5.00,
+      "premium_cheese": 4.00
+    }
+  }
+]
+```
+
+**Response (200) - If no templates applied:**
+```json
+[]
+```
+
+**CURL Example:**
+```bash
+curl -X GET "{API_URL}/restaurant/550e8400-e29b-41d4-a716-446655440000/items/660e8400-e29b-41d4-a716-446655440003/addons" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+## 🛒 ORDER SERVICE ENDPOINTS (Enhanced)
+
+### 9. Create Order with Add-ons (Enhanced)
+**POST** `{API_URL}/order/orders`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "restaurant_id": "550e8400-e29b-41d4-a716-446655440000",
+  "products": {
+    "660e8400-e29b-41d4-a716-446655440003": 2,
+    "660e8400-e29b-41d4-a716-446655440004": 1
+  },
+  "order_addons": {
+    "660e8400-e29b-41d4-a716-446655440003": {
+      "extra_cheese": 2,
+      "pepperoni": 1,
+      "mushrooms": 2
+    },
+    "660e8400-e29b-41d4-a716-446655440004": {
+      "extra_sauce": 1
+    }
+  },
+  "payment_method": "credit_card",
+  "delivery_method": "delivery",
+  "address": "123 Pizza Street, Food City, FC 12345",
+  "instructions": {
+    "660e8400-e29b-41d4-a716-446655440003": "Extra crispy crust",
+    "660e8400-e29b-41d4-a716-446655440004": "Light on the sauce"
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Order created successfully",
+  "order_id": "770e8400-e29b-41d4-a716-446655440005",
+  "total_price": 47.98,
+  "product_details": {
+    "660e8400-e29b-41d4-a716-446655440003": {
+      "name": "Margherita Pizza",
+      "price": 12.99,
+      "quantity": 2,
+      "addon_total": 22.00
+    },
+    "660e8400-e29b-41d4-a716-446655440004": {
+      "name": "Pasta Marinara",
+      "price": 9.99,
+      "quantity": 1,
+      "addon_total": 1.00
+    }
+  }
+}
+```
+
+**CURL Example:**
+```bash
+curl -X POST "{API_URL}/order/orders" \
+  -H "Authorization: Bearer {JWT_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "restaurant_id": "550e8400-e29b-41d4-a716-446655440000",
+    "products": {
+      "660e8400-e29b-41d4-a716-446655440003": 2
+    },
+    "order_addons": {
+      "660e8400-e29b-41d4-a716-446655440003": {
+        "extra_cheese": 2,
+        "pepperoni": 1
+      }
+    },
+    "payment_method": "credit_card",
+    "delivery_method": "delivery",
+    "address": "123 Test Street"
+  }'
+```
+
+---
+
+### 10. Get Order Details with Add-ons (New)
+**GET** `{API_URL}/order/orders/{order_id}/details`
+
+**Headers:**
+```
+Authorization: Bearer {JWT_TOKEN}
+```
+
+**Response (200):**
+```json
+{
+  "order_id": "770e8400-e29b-41d4-a716-446655440005",
+  "restaurant_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "Pending",
+  "total_price": 47.98,
+  "payment_method": "credit_card",
+  "delivery_method": "delivery",
+  "address": "123 Pizza Street, Food City, FC 12345",
+  "created_at": "2025-07-13T11:15:30.456000+00:00",
+  "estimated_delivery_time": "2025-07-13T12:45:30.456000+00:00",
+  "items": [
+    {
+      "item_id": "660e8400-e29b-41d4-a716-446655440003",
+      "name": "Margherita Pizza",
+      "price": 12.99,
+      "quantity": 2,
+      "base_total": 25.98,
+      "addon_total": 22.00,
+      "item_total": 47.98,
+      "applied_addons": [
+        {
+          "name": "extra_cheese",
+          "price_per_unit": 2.50,
+          "quantity": 2,
+          "total": 10.00
+        },
+        {
+          "name": "pepperoni",
+          "price_per_unit": 3.00,
+          "quantity": 1,
+          "total": 6.00
+        },
+        {
+          "name": "mushrooms",
+          "price_per_unit": 2.00,
+          "quantity": 2,
+          "total": 8.00
+        }
+      ]
+    }
+  ],
+  "discount": null,
+  "delivery_person_name": "John Doe",
+  "delivery_person_phone": "+1234567890",
+  "instructions": {
+    "660e8400-e29b-41d4-a716-446655440003": "Extra crispy crust"
+  }
+}
+```
+
+**CURL Example:**
+```bash
+curl -X GET "{API_URL}/order/orders/770e8400-e29b-41d4-a716-446655440005/details" \
+  -H "Authorization: Bearer {JWT_TOKEN}"
+```
+
+---
+
+## 💡 FRONTEND INTEGRATION NOTES
+
+### Add-on Template Management Flow:
+1. **Create templates** for common add-on groups (Pizza Toppings, Coffee Extras, etc.)
+2. **Apply templates** to menu items to give them add-on options
+3. **Display available add-ons** when customers view menu items
+4. **Collect add-on selections** during order creation
+5. **Show detailed pricing** including add-on costs
+
+### Order Creation with Add-ons:
+```javascript
+const orderData = {
+  restaurant_id: "restaurant-uuid",
+  products: {
+    "item-uuid-1": 2,  // quantity
+    "item-uuid-2": 1
+  },
+  order_addons: {
+    "item-uuid-1": {
+      "extra_cheese": 2,    // addon quantity per item
+      "pepperoni": 1
+    },
+    "item-uuid-2": {
+      "extra_sauce": 1
+    }
+  },
+  // ... other order fields
+}
+```
+
+### Pricing Calculation:
+- **Base Price:** `item_price × quantity`
+- **Addon Price:** `addon_price × addon_quantity × item_quantity`
+- **Item Total:** `base_price + addon_price`
+- **Order Total:** Sum of all item totals + delivery fee - discounts
+
+### Error Handling:
+- **404:** Template/Item not found
+- **403:** Unauthorized (admin required for template management)
+- **400:** Invalid JSON or missing required fields
+- **422:** Validation errors
+
+### Template Application Logic:
+- Templates can be applied to multiple items
+- Templates merge with existing item add-ons
+- Removing a template removes only the template's add-ons
+- Items track which templates have been applied
+
+---
+
+## 🔍 TESTING CHECKLIST
+
+### Restaurant Management:
+- [ ] Create add-on template
+- [ ] Get all templates for restaurant
+- [ ] Get specific template details
+- [ ] Update template
+- [ ] Delete template (ensure predefined templates can't be deleted)
+- [ ] Apply template to menu item
+- [ ] Remove template from menu item
+- [ ] Get item add-ons
+
+### Order Management:
+- [ ] Create order without add-ons (existing functionality)
+- [ ] Create order with add-ons for single item
+- [ ] Create order with add-ons for multiple items
+- [ ] Get order details with add-on breakdown
+- [ ] Verify pricing calculations include add-on costs
+
+### Edge Cases:
+- [ ] Apply same template twice (should be idempotent)
+- [ ] Remove template that wasn't applied
+- [ ] Order with invalid add-ons (should be ignored)
+- [ ] Template with duplicate add-on names (last one wins)

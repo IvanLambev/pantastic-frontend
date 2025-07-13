@@ -52,17 +52,15 @@ import {
 import { Plus, MoreVertical, Pencil, Trash2, Save } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-// Zod schemas for form validation
-const addonSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  price: z.coerce.number().min(0, { message: "Price must be a positive number" }),
-  description: z.string().optional(),
-})
-
+// Zod schemas for form validation - Updated to match new API structure
 const templateSchema = z.object({
   name: z.string().min(2, { message: "Template name must be at least 2 characters" }),
+  description: z.string().optional(),
   is_predefined: z.boolean().default(false),
-  addons: z.array(addonSchema).min(1, { message: "Add at least one addon" }),
+  addons: z.record(z.string(), z.coerce.number().min(0, { message: "Price must be a positive number" })).refine(
+    (addons) => Object.keys(addons).length > 0,
+    { message: "Add at least one addon" }
+  ),
 })
 
 export default function AddonTemplatesAdminComponent({ restaurantId: propRestaurantId }) {
@@ -76,13 +74,14 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Initialize the form with react-hook-form
+  // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
     resolver: zodResolver(templateSchema),
     defaultValues: {
       name: "",
+      description: "",
       is_predefined: false,
-      addons: [{ name: "", price: 0, description: "" }],
+      addons: { "": 0 },
     },
   })
 
@@ -109,31 +108,32 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     }
   }, [restaurantId, fetchAddonTemplates])
 
-  // Open dialog for adding new template
+  // Open dialog for adding new template - Updated for new API structure
   const handleAddTemplate = () => {
     form.reset({
       name: "",
+      description: "",
       is_predefined: false,
-      addons: [{ name: "", price: 0, description: "" }],
+      addons: { "": 0 },
     })
     setEditingTemplate(null)
     setOpenDialog(true)
   }
 
-  // Open dialog for editing template
+  // Open dialog for editing template - Updated for new API structure
   const handleEditTemplate = (template) => {
-    // Normalize template data to match form schema
     const formData = {
       name: template.name,
+      description: template.description || "",
       is_predefined: template.is_predefined || false,
-      addons: template.addons || [],
+      addons: template.addons || { "": 0 },
     }
     form.reset(formData)
     setEditingTemplate(template)
     setOpenDialog(true)
   }
 
-  // Handle form submission (create or update)
+  // Handle form submission (create or update) - Updated for new API structure
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     try {
@@ -148,7 +148,6 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
             template_id: editingTemplate.template_id,
             name: data.name,
             addons: data.addons,
-            is_predefined: data.is_predefined,
           }),
         })
 
@@ -165,6 +164,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
             restaurant_id: restaurantId,
             template: {
               name: data.name,
+              description: data.description,
               addons: data.addons,
               is_predefined: data.is_predefined,
             },
@@ -213,25 +213,26 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     }
   }
 
-  // Add a new addon field to the form
+  // Add a new addon field to the form - Updated for new API structure
   const addAddon = () => {
-    const currentAddons = form.getValues("addons") || []
-    form.setValue("addons", [
+    const currentAddons = form.getValues("addons") || {}
+    const newKey = `addon_${Date.now()}`
+    form.setValue("addons", {
       ...currentAddons,
-      { name: "", price: 0, description: "" }
-    ])
+      [newKey]: 0
+    })
   }
 
-  // Remove an addon field from the form
-  const removeAddon = (index) => {
-    const currentAddons = form.getValues("addons") || []
-    if (currentAddons.length <= 1) {
+  // Remove an addon field from the form - Updated for new API structure
+  const removeAddon = (addonKey) => {
+    const currentAddons = form.getValues("addons") || {}
+    if (Object.keys(currentAddons).length <= 1) {
       toast.error("You need at least one addon")
       return
     }
     
-    const updatedAddons = currentAddons.filter((_, i) => i !== index)
-    form.setValue("addons", updatedAddons)
+    const { [addonKey]: _removed, ...remainingAddons } = currentAddons
+    form.setValue("addons", remainingAddons)
   }
 
   if (loading) {
@@ -262,7 +263,10 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                 <div>
                   <CardTitle className="text-lg font-semibold">{template.name}</CardTitle>
                   <CardDescription>
-                    {template.addons?.length || 0} addons available
+                    {Object.keys(template.addons || {}).length} addons available
+                    {template.description && (
+                      <span className="block text-sm mt-1">{template.description}</span>
+                    )}
                   </CardDescription>
                 </div>
                 <div className="flex items-center">
@@ -299,11 +303,11 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {template.addons?.map((addon, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{addon.name}</TableCell>
-                        <TableCell>{addon.description || '-'}</TableCell>
-                        <TableCell className="text-right">${Number(addon.price).toFixed(2)}</TableCell>
+                    {Object.entries(template.addons || {}).map(([addonName, price]) => (
+                      <TableRow key={addonName}>
+                        <TableCell className="font-medium">{addonName}</TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell className="text-right">${Number(price).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -344,6 +348,24 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
 
               <FormField
                 control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe this template"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="is_predefined"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
@@ -373,73 +395,55 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                   </Button>
                 </div>
 
-                {form.watch('addons')?.map((_, index) => (
-                  <div key={index} className="border rounded-md p-4 space-y-4">
+                {Object.entries(form.watch('addons') || {}).map(([addonKey, price], index) => (
+                  <div key={addonKey} className="border rounded-md p-4 space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium">Addon #{index + 1}</h4>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeAddon(index)}
+                        onClick={() => removeAddon(addonKey)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name={`addons.${index}.name`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Extra Cheese" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div>
+                        <Label>Name</Label>
+                        <Input 
+                          placeholder="e.g., Extra Cheese" 
+                          value={addonKey}
+                          onChange={(e) => {
+                            const currentAddons = form.getValues("addons") || {}
+                            const { [addonKey]: currentPrice, ...otherAddons } = currentAddons
+                            form.setValue("addons", {
+                              ...otherAddons,
+                              [e.target.value]: currentPrice
+                            })
+                          }}
+                        />
+                      </div>
 
-                      <FormField
-                        control={form.control}
-                        name={`addons.${index}.price`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price ($)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                min="0"
-                                placeholder="0.00" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div>
+                        <Label>Price ($)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0"
+                          placeholder="0.00" 
+                          value={price}
+                          onChange={(e) => {
+                            const currentAddons = form.getValues("addons") || {}
+                            form.setValue("addons", {
+                              ...currentAddons,
+                              [addonKey]: parseFloat(e.target.value) || 0
+                            })
+                          }}
+                        />
+                      </div>
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name={`addons.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Describe this addon"
-                              className="resize-none"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
                 ))}
               </div>

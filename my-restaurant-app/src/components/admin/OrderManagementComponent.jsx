@@ -223,7 +223,7 @@ export default function OrderManagementComponent() {
                                 {itemDetails.addons.map((addonTemplate, idx) => (
                                   <li key={idx} className="text-xs text-muted-foreground">
                                     <span className="font-medium">{addonTemplate.name}:</span>
-                                    <span> {addonTemplate.addons.map(a => `${a.name} (+$${Number(a.price).toFixed(2)})`).join(', ')}</span>
+                                    <span> {Object.entries(addonTemplate.addons || {}).map(([name, price]) => `${name} (+$${Number(price).toFixed(2)})`).join(', ')}</span>
                                   </li>
                                 ))}
                               </ul>

@@ -70,7 +70,7 @@ export const CartProvider = ({ children }) => {
         throw new Error('User not logged in or no restaurant selected')
       }      const products = {}
       const instructions = {}
-      const addons = {}
+      const order_addons = {}
       
       cartItems.forEach(item => {
         products[item.id] = item.quantity
@@ -78,11 +78,11 @@ export const CartProvider = ({ children }) => {
           instructions[item.id] = item.specialInstructions
         }
         if (item.selectedAddons && item.selectedAddons.length > 0) {
-          addons[item.id] = item.selectedAddons.map(addon => ({
-            addon_id: addon.addon_id,
-            name: addon.name,
-            price: addon.price
-          }))
+          const addonsByName = {}
+          item.selectedAddons.forEach(addon => {
+            addonsByName[addon.name] = (addonsByName[addon.name] || 0) + 1
+          })
+          order_addons[item.id] = addonsByName
         }
       })
 
@@ -96,7 +96,7 @@ export const CartProvider = ({ children }) => {
           restaurant_id: restaurant[0],
           products,
           instructions,
-          addons,
+          order_addons,
           payment_method: 'card',
           delivery_method: 'pickup',
           address: restaurant[1]
@@ -123,7 +123,7 @@ export const CartProvider = ({ children }) => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       const products = {}
       const instructions = {}
-      const addons = {}
+      const order_addons = {}
       
       newItems.forEach(item => {
         products[item.id] = item.quantity
@@ -131,11 +131,11 @@ export const CartProvider = ({ children }) => {
           instructions[item.id] = item.specialInstructions
         }
         if (item.selectedAddons && item.selectedAddons.length > 0) {
-          addons[item.id] = item.selectedAddons.map(addon => ({
-            addon_id: addon.addon_id,
-            name: addon.name,
-            price: addon.price
-          }))
+          const addonsByName = {}
+          item.selectedAddons.forEach(addon => {
+            addonsByName[addon.name] = (addonsByName[addon.name] || 0) + 1
+          })
+          order_addons[item.id] = addonsByName
         }
       })
 
@@ -149,7 +149,7 @@ export const CartProvider = ({ children }) => {
           order_id: orderId,
           products,
           instructions,
-          addons,
+          order_addons,
           delivery_method: 'pickup'
         })
       })
