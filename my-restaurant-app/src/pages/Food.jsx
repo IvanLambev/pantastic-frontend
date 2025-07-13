@@ -128,6 +128,19 @@ const Food = () => {
       }
       const data = await response.json()
       console.log('Fetched menu items:', data)
+      
+      // Debug each item
+      data.forEach((item, index) => {
+        console.log(`Item ${index}:`, {
+          id: item[0],
+          name: item[7],
+          price: item[8],
+          priceType: typeof item[8],
+          description: item[5],
+          image: item[6]
+        });
+      });
+      
       setItems(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items'
@@ -139,10 +152,12 @@ const Food = () => {
   }
 
   const handleAddToCart = (item) => {
+    console.log('Adding item to cart:', item);
+    console.log('Item price:', item[8], 'Type:', typeof item[8]);
     addToCart({
       id: item[0],
       name: item[7],
-      price: item[8],
+      price: Number(item[8]) || 0,
       image: item[6],
       description: item[5],
       quantity: 1
@@ -209,7 +224,9 @@ const Food = () => {
     
     const name = item[7] || ''; // Name is at index 7
     const description = item[5] || ''; // Description is at index 5
-    const price = Number(item[8] || 0); // Price is at index 8
+    const price = Number(item[8]) || 0; // Price is at index 8, ensure it's a number
+    
+    console.log('Filtering item:', { name, description, price, rawPrice: item[8] });
     
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -223,9 +240,9 @@ const Food = () => {
   }).sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return Number(a[8]) - Number(b[8]); // Price is at index 8
+        return (Number(a[8]) || 0) - (Number(b[8]) || 0); // Price is at index 8
       case "price-high":
-        return Number(b[8]) - Number(a[8]); // Price is at index 8
+        return (Number(b[8]) || 0) - (Number(a[8]) || 0); // Price is at index 8
       case "most-ordered":
         // If order count is available, use it, otherwise default to 0
         return ((b[1]?._items?.length || 0) - (a[1]?._items?.length || 0));
@@ -356,9 +373,12 @@ const Food = () => {
                       />
                     </button>
                   </div>
-                  <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
+                  <CardContent className="flex flex-1 justify-between items-center p-3">
+                    <div className="flex flex-col justify-center">
                       <h3 className="font-semibold text-sm">{item[7]}</h3>
-                      <span className="font-semibold text-sm">${Number(item[8]).toFixed(2)}</span>
+                      <span className="font-semibold text-sm">
+                        ${(Number(item[8]) || 0).toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -482,7 +502,9 @@ const Food = () => {
                         <h3 className="font-semibold mb-2">{item[7]}</h3>
                         <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[5]}</p>
                         <div className="flex justify-between items-start">
-                          <span className="font-semibold">${Number(item[8]).toFixed(2)}</span>
+                          <span className="font-semibold">
+                            ${(Number(item[8]) || 0).toFixed(2)}
+                          </span>
                           <div className="flex gap-2">
                             <Button
                               variant="outline"
