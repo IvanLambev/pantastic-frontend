@@ -44,13 +44,18 @@ export default function ItemDetails() {
         if (!itemRes.ok) throw new Error('Failed to fetch item details');
         let data = await itemRes.json();
         if (Array.isArray(data)) {
+          // New backend structure:
+          // [id, [template_ids], addon_obj, created_at, description, image_url, name, price, restaurant_id]
           data = {
             item_id: data[0],
-            created_at: data[1],
-            description: data[3],
-            image_url: data[4],
-            name: data[5],
-            price: data[6]
+            template_ids: Array.isArray(data[1]) ? data[1] : [],
+            addons: data[2] ? (typeof data[2] === 'string' ? JSON.parse(data[2]) : data[2]) : {},
+            created_at: data[3],
+            description: data[4],
+            image_url: data[5],
+            name: data[6],
+            price: Number(data[7]) || 0,
+            restaurant_id: data[8]
           }
         }
         setItem(data);

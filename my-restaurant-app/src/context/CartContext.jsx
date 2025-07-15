@@ -80,23 +80,25 @@ export const CartProvider = ({ children }) => {
 
       if (!user?.access_token || !restaurant?.[0]) {
         throw new Error('User not logged in or no restaurant selected')
-      }      const products = {}
+      }
+      const products = {}
       const instructions = {}
       const order_addons = {}
-      
+
       cartItems.forEach(item => {
         products[item.id] = item.quantity
         if (item.specialInstructions) {
           instructions[item.id] = item.specialInstructions
         }
         if (item.selectedAddons && item.selectedAddons.length > 0) {
-          const addonsByName = {}
+          // New API expects: order_addons[item_id] = { addonName: price, ... }
+          const addonsObj = {};
           item.selectedAddons.forEach(addon => {
-            addonsByName[addon.name] = (addonsByName[addon.name] || 0) + 1
-          })
-          order_addons[item.id] = addonsByName
+            addonsObj[addon.name] = Number(addon.price);
+          });
+          order_addons[item.id] = addonsObj;
         }
-      })
+      });
 
       const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'POST',
@@ -113,15 +115,15 @@ export const CartProvider = ({ children }) => {
           delivery_method: 'pickup',
           address: restaurant[1]
         })
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to create order')
-      
-      const data = await response.json()
-      setOrderId(data.order_id)
-      sessionStorage.setItem('orderId', data.order_id)
+      if (!response.ok) throw new Error('Failed to create order');
+
+      const data = await response.json();
+      setOrderId(data.order_id);
+      sessionStorage.setItem('orderId', data.order_id);
       clearCart();
-      return data
+      return data;
     } catch (error) {
       console.error('Error during checkout:', error)
       throw error
