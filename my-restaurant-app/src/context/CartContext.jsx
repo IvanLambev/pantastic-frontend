@@ -28,7 +28,19 @@ export const CartProvider = ({ children }) => {
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         )
       } else {
-        newItems = [...prevItems, { ...item, quantity: 1 }]
+        // Defensive: always use correct indices if item is an array
+        let cartItem = { ...item };
+        if (Array.isArray(item)) {
+          cartItem = {
+            id: item[0],
+            name: item[6],
+            price: Number(item[7]) || 0,
+            image: item[5],
+            description: item[4],
+            quantity: 1
+          };
+        }
+        newItems = [...prevItems, cartItem]
       }
       sessionStorage.setItem('cart', JSON.stringify(newItems))
       return newItems

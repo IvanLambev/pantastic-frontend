@@ -99,17 +99,21 @@ export default function RestaurantDetailsAdminComponent() {
 
   const handleEditItem = (item) => {
     setModalMode("edit");
-    // Convert addon template ID to an array if it's a string
-    const addonTemplates = item[7] ? 
-      (Array.isArray(item[7]) ? item[7] : (item[7] ? [item[7]] : [])) : 
-      [];
-    
+    // Parse addons if present
+    let addonTemplates = [];
+    if (item[2]) {
+      try {
+        addonTemplates = typeof item[2] === 'string' ? JSON.parse(item[2]) : item[2];
+      } catch (e) {
+        addonTemplates = [];
+      }
+    }
     setItemForm({
       id: item[0],
-      name: item[4],
-      description: item[2],
-      image: item[3],
-      price: item[5],
+      name: item[6],
+      description: item[4],
+      image: item[5],
+      price: item[7],
       addon_templates: addonTemplates
     });
     setShowItemModal(true);
@@ -626,13 +630,13 @@ export default function RestaurantDetailsAdminComponent() {
                 {menuItems.map((item) => (
                   <tr key={item[0]}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item[4]}</div>
+                      <div className="text-sm font-medium text-gray-900">{item[6]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{item[2]}</div>
+                      <div className="text-sm text-gray-500">{item[4]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item[5]}</div>
+                      <div className="text-sm text-gray-900">{item[7]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">

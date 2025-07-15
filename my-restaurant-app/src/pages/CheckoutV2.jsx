@@ -65,7 +65,7 @@ export default function CheckoutV2() {  const navigate = useNavigate()
   };
 
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const subtotal = cartItems.reduce((sum, item) => sum + ((Number(item.price) || 0) * item.quantity), 0)
   const tax = 0 // TODO: Implement tax calculation
   const shipping = 0 // TODO: Implement shipping calculation
   const total = subtotal + tax + shipping
@@ -395,7 +395,7 @@ export default function CheckoutV2() {  const navigate = useNavigate()
                           </div>
                         )}
                       </div>
-                      <div className="font-medium">${(item.price * item.quantity).toFixed(2)}</div>
+                      <div className="font-medium">${((Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">

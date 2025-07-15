@@ -64,20 +64,18 @@ export default function OrderManagementComponent() {
       const data = await response.json();
       if (Array.isArray(data)) {
         const validItems = data.filter(item => Array.isArray(item) && item.length >= 5 && item[0] && item[4]);
-        // For each item, fetch its addons if present
-        const itemsWithAddons = await Promise.all(validItems.map(async item => {
+        // For each item, parse addons if present
+        const itemsWithAddons = validItems.map(item => {
           let addons = [];
-          if (item[1] && item[1]._items && item[1]._items.length > 0) {
-            // Fetch addons for this item
+          if (item[2]) {
             try {
-              const res = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${item[0]}/addons`);
-              if (res.ok) {
-                addons = await res.json();
-              }
-            } catch (e) {}
+              addons = typeof item[2] === 'string' ? JSON.parse(item[2]) : item[2];
+            } catch (e) {
+              addons = [];
+            }
           }
           return { raw: item, addons };
-        }));
+        });
         setItems(itemsWithAddons);
       } else {
         setItems([]);
@@ -217,7 +215,7 @@ export default function OrderManagementComponent() {
                         const itemDetails = getItemDetailsById(id);
                         return (
                           <li key={id}>
-                            {quantity}x {itemDetails ? itemDetails.raw[5] : `Unknown Item (${id})`}
+                            {quantity}x {itemDetails ? itemDetails.raw[6] : `Unknown Item (${id})`}
                             {itemDetails && itemDetails.addons && itemDetails.addons.length > 0 && (
                               <ul className="ml-4 list-disc">
                                 {itemDetails.addons.map((addonTemplate, idx) => (
