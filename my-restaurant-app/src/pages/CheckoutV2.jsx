@@ -138,16 +138,25 @@ export default function CheckoutV2() {  const navigate = useNavigate()
       }
 
       const products = {}
+      const instructions = {}
+      const order_addons = {}
+      
       cartItems.forEach(item => {
         products[item.id] = item.quantity
-      })
-      console.log('Cart items:', cartItems)
-      const instructions = {}
-      cartItems.forEach(item => {
         if (item.specialInstructions) {
           instructions[item.id] = item.specialInstructions
         }
+        // Add selected addons to order_addons
+        if (item.selectedAddons && item.selectedAddons.length > 0) {
+          const addonsObj = {}
+          item.selectedAddons.forEach(addon => {
+            // Count how many times each addon is selected (for multiple quantities)
+            addonsObj[addon.name] = (addonsObj[addon.name] || 0) + 1
+          })
+          order_addons[item.id] = addonsObj
+        }
       })
+      console.log('Cart items:', cartItems)
 
       const orderData = {
         restaurant_id: restaurant[0],
@@ -155,7 +164,8 @@ export default function CheckoutV2() {  const navigate = useNavigate()
         payment_method: selectedPayment,
         delivery_method: deliveryMethod,
         address: deliveryMethod === 'pickup' ? restaurant[1] : user.address, // Use restaurant address for pickup, user's address for delivery
-        instructions
+        instructions,
+        order_addons
       }
 
       // Add scheduled delivery time if applicable
