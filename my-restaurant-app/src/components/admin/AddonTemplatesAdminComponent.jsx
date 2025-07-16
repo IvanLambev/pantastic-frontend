@@ -73,6 +73,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingAddonKey, setEditingAddonKey] = useState(null)
 
   // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
@@ -234,6 +235,16 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     const { [addonKey]: _removed, ...remainingAddons } = currentAddons
     form.setValue("addons", remainingAddons)
   }
+
+  const handleAddonNameChange = (addonKey, newName) => {
+    const currentAddons = form.getValues("addons") || {};
+    const { [addonKey]: currentPrice, ...otherAddons } = currentAddons;
+    form.setValue("addons", {
+      ...otherAddons,
+      [newName]: currentPrice,
+    });
+    setEditingAddonKey(null);
+  };
 
   if (loading) {
     return <div className="p-8">Loading addon templates...</div>
@@ -414,15 +425,9 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                         <Label>Name</Label>
                         <Input 
                           placeholder="e.g., Extra Cheese" 
-                          value={addonKey}
-                          onChange={(e) => {
-                            const currentAddons = form.getValues("addons") || {}
-                            const { [addonKey]: currentPrice, ...otherAddons } = currentAddons
-                            form.setValue("addons", {
-                              ...otherAddons,
-                              [e.target.value]: currentPrice
-                            })
-                          }}
+                          value={editingAddonKey === addonKey ? editingAddonKey : addonKey}
+                          onFocus={() => setEditingAddonKey(addonKey)}
+                          onBlur={(e) => handleAddonNameChange(addonKey, e.target.value)}
                         />
                       </div>
 
