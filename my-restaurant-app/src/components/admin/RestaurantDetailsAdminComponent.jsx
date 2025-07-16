@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function RestaurantDetailsAdminComponent() {
-  const { restaurantId } = useParams();
+  const { restaurantId: paramRestaurantId } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
@@ -55,6 +55,7 @@ export default function RestaurantDetailsAdminComponent() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [resolvedRestaurantId, setResolvedRestaurantId] = useState(paramRestaurantId || "");
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -63,15 +64,29 @@ export default function RestaurantDetailsAdminComponent() {
       try {
         const res = await fetch(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
-        // Find by UUID (restaurantId)
-        const found = data.find(r => r[0] === restaurantId);
+        // Find by UUID (paramRestaurantId)
+        let found = null;
+        let idToUse = paramRestaurantId;
+        if (paramRestaurantId) {
+          found = data.find(r => r[0] === paramRestaurantId);
+        }
+        // If not found by param, fallback to first menu item's restaurant id after loading items
+        if (!found && data.length > 0) {
+          found = data[0];
+          idToUse = data[0][0];
+        }
         setRestaurant(found);
+        setResolvedRestaurantId(idToUse);
         if (found) {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
-          setMenuItems(await itemsRes.json());
-          // Fetch addon templates
-          await fetchAddonTemplates(found[0]);
-          // Only use fetchDeliveryPeople (with fetchWithAuth) for delivery people
+          const items = await itemsRes.json();
+          setMenuItems(items);
+          // If no paramRestaurantId, try to get restaurantId from first menu item
+          if (!paramRestaurantId && items.length > 0 && items[0][8]) {
+            setResolvedRestaurantId(items[0][8]);
+          }
+          // Only fetch addon templates if we have a valid id
+          await fetchAddonTemplates(idToUse || (items.length > 0 ? items[0][8] : undefined));
           await fetchDeliveryPeople();
         }
       } catch (error) {
@@ -82,10 +97,11 @@ export default function RestaurantDetailsAdminComponent() {
       }
     };
     fetchRestaurant();
-  }, [restaurantId]);
+  }, [paramRestaurantId]);
   
   // Fetch addon templates for the restaurant
   const fetchAddonTemplates = async (restaurantId) => {
+    if (!restaurantId) return;
     try {
       const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`);
       if (response.ok) {
@@ -336,8 +352,9 @@ export default function RestaurantDetailsAdminComponent() {
 
   // Fetch available addon templates for template management
   const fetchAvailableAddonTemplates = useCallback(async () => {
+    if (!resolvedRestaurantId) return;
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`);
+      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
       if (response.ok) {
         const templates = await response.json();
         setAvailableTemplates(templates);
@@ -345,13 +362,17 @@ export default function RestaurantDetailsAdminComponent() {
     } catch (error) {
       console.error('Error fetching addon templates:', error);
     }
-  }, [restaurantId]);
+  }, [resolvedRestaurantId]);
 
   // Apply addon template to menu item
   const applyTemplateToItem = async (itemId, templateId) => {
+    if (!resolvedRestaurantId) {
+      toast.error('No restaurant ID available');
+      return;
+    }
     try {
       const response = await fetchWithAuth(
-        `${API_URL}/restaurant/${restaurantId}/items/${itemId}/apply-template/${templateId}`,
+        `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/apply-template/${templateId}`,
         { method: 'POST' }
       );
       
@@ -376,9 +397,13 @@ export default function RestaurantDetailsAdminComponent() {
 
   // Remove addon template from menu item
   const removeTemplateFromItem = async (itemId, templateId) => {
+    if (!resolvedRestaurantId) {
+      toast.error('No restaurant ID available');
+      return;
+    }
     try {
       const response = await fetchWithAuth(
-        `${API_URL}/restaurant/${restaurantId}/items/${itemId}/remove-template/${templateId}`,
+        `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/remove-template/${templateId}`,
         { method: 'DELETE' }
       );
       
@@ -425,12 +450,15 @@ export default function RestaurantDetailsAdminComponent() {
   };
 
   useEffect(() => {
-    fetchAddonTemplates();
-    fetchAvailableAddonTemplates();
-  }, [restaurantId, fetchAvailableAddonTemplates]);
+    if (resolvedRestaurantId) {
+      fetchAddonTemplates(resolvedRestaurantId);
+      fetchAvailableAddonTemplates();
+    }
+  }, [resolvedRestaurantId, fetchAvailableAddonTemplates]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
+  if (!resolvedRestaurantId) return <div className="p-8 text-red-500">No restaurant ID found. Please access this page from a valid restaurant context.</div>;
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
