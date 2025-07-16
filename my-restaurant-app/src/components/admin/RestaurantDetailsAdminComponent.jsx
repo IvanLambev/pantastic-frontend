@@ -64,31 +64,48 @@ export default function RestaurantDetailsAdminComponent() {
       try {
         const res = await fetch(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
-        // Find by UUID (paramRestaurantId)
+        console.log('Restaurants data:', data);
+        
+        // Find by UUID (paramRestaurantId) or use first restaurant if no param
         let found = null;
         let idToUse = paramRestaurantId;
+        
         if (paramRestaurantId) {
           found = data.find(r => r[0] === paramRestaurantId);
-        }
-        // If not found by param, fallback to first menu item's restaurant id after loading items
-        if (!found && data.length > 0) {
+        } else if (data.length > 0) {
+          // If no param provided, use first restaurant
           found = data[0];
           idToUse = data[0][0];
         }
+        
+        if (!found) {
+          setError("Restaurant not found");
+          setLoading(false);
+          return;
+        }
+        
         setRestaurant(found);
         setResolvedRestaurantId(idToUse);
-        if (found) {
-          const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
-          const items = await itemsRes.json();
-          setMenuItems(items);
-          // If no paramRestaurantId, try to get restaurantId from first menu item
-          if (!paramRestaurantId && items.length > 0 && items[0][8]) {
-            setResolvedRestaurantId(items[0][8]);
-          }
-          // Only fetch addon templates if we have a valid id
-          await fetchAddonTemplates(idToUse || (items.length > 0 ? items[0][8] : undefined));
-          await fetchDeliveryPeople();
-        }
+        
+        // Fetch all data in parallel
+        const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
+          fetch(`${API_URL}/restaurant/${idToUse}/items`),
+          fetchWithAuth(`${API_URL}/restaurant/delivery-people`),
+          fetchWithAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
+        ]);
+        
+        const items = await itemsRes.json();
+        const delivery = await deliveryRes.json();
+        const templates = templatesRes.ok ? await templatesRes.json() : [];
+        
+        console.log('Items:', items);
+        console.log('Templates:', templates);
+        
+        setMenuItems(items);
+        setDeliveryPeople(delivery);
+        setAddonTemplates(templates || []);
+        setAvailableTemplates(templates || []);
+        
       } catch (error) {
         setError("Failed to load restaurant details");
         console.error('Error loading restaurant details:', error);
@@ -96,33 +113,19 @@ export default function RestaurantDetailsAdminComponent() {
         setLoading(false);
       }
     };
+    
     fetchRestaurant();
   }, [paramRestaurantId]);
   
-  // Fetch addon templates for the restaurant
-  const fetchAddonTemplates = async (restaurantId) => {
-    if (!restaurantId) return;
-    try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`);
-      if (response.ok) {
-        const templates = await response.json();
-        setAddonTemplates(templates || []);
-      }
-    } catch (error) {
-      console.error('Error fetching addon templates:', error);
-    }
-  };
+  // Remove unused functions since all data is fetched in main useEffect
+  // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
 
   const handleEditItem = (item) => {
     setModalMode("edit");
-    // Parse addons if present
+    // Parse template IDs from item[1] (template_ids field)
     let addonTemplates = [];
-    if (item[2]) {
-      try {
-        addonTemplates = typeof item[2] === 'string' ? JSON.parse(item[2]) : item[2];
-      } catch (e) {
-        addonTemplates = [];
-      }
+    if (item[1] && Array.isArray(item[1])) {
+      addonTemplates = item[1];
     }
     setItemForm({
       id: item[0],
@@ -180,9 +183,8 @@ export default function RestaurantDetailsAdminComponent() {
         method,
         body: formData,
       });
-      // Refresh items
-      const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
-      setMenuItems(await itemsRes.json());
+      // Refresh items after successful save
+      refreshData();
       setShowItemModal(false);
     } catch (error) {
       alert("Failed to save item");
@@ -210,11 +212,9 @@ export default function RestaurantDetailsAdminComponent() {
   // Fetch delivery people (global, not just assigned)
   const fetchDeliveryPeople = async () => {
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
-        method: "GET"
-      });
       const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
-      setDeliveryPeople(await res.json());
+      const data = await res.json();
+      setDeliveryPeople(data);
     } catch (error) {
       console.error('Error fetching delivery people:', error);
       setDeliveryPeople([]);
@@ -336,31 +336,25 @@ export default function RestaurantDetailsAdminComponent() {
     }
   };
 
-  // Fetch menu items
-  const fetchMenuItems = useCallback(async () => {
-    if (!restaurant) return;
-    try {
-      const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
-      if (itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        setMenuItems(itemsData);
-      }
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
-    }
-  }, [restaurant]);
+  // Remove unused fetchMenuItems function since refreshData handles this now
 
-  // Fetch available addon templates for template management
-  const fetchAvailableAddonTemplates = useCallback(async () => {
+  // Refresh data after operations
+  const refreshData = useCallback(async () => {
     if (!resolvedRestaurantId) return;
+    
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
-      if (response.ok) {
-        const templates = await response.json();
-        setAvailableTemplates(templates);
-      }
+      const [itemsRes, templatesRes] = await Promise.all([
+        fetch(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
+        fetchWithAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
+      ]);
+      
+      const items = await itemsRes.json();
+      const templates = templatesRes.ok ? await templatesRes.json() : [];
+      
+      setMenuItems(items);
+      setAvailableTemplates(templates);
     } catch (error) {
-      console.error('Error fetching addon templates:', error);
+      console.error('Error refreshing data:', error);
     }
   }, [resolvedRestaurantId]);
 
@@ -379,7 +373,7 @@ export default function RestaurantDetailsAdminComponent() {
       if (response.ok) {
         const result = await response.json();
         toast.success('Addon template applied successfully');
-        fetchMenuItems(); // Refresh items to show updated templates
+        refreshData(); // Refresh items to show updated templates
         return result;
       } else {
         const error = await response.json();
@@ -409,7 +403,7 @@ export default function RestaurantDetailsAdminComponent() {
       
       if (response.ok) {
         toast.success('Addon template removed successfully');
-        fetchMenuItems(); // Refresh items
+        refreshData(); // Refresh items
       } else {
         const error = await response.json();
         toast.error(error.message || 'Failed to remove template');
@@ -439,22 +433,17 @@ export default function RestaurantDetailsAdminComponent() {
 
   // Get applied template names for an item
   const getAppliedTemplateNames = (item) => {
-    const templateIds = item[7]; // addon_template_ids field
-    if (!templateIds) return [];
+    const templateIds = item[1]; // template_ids field (index 1)
+    if (!templateIds || !Array.isArray(templateIds)) return [];
     
-    const ids = Array.isArray(templateIds) ? templateIds : [templateIds];
-    return ids.map(id => {
+    return templateIds.map(id => {
       const template = availableTemplates.find(t => t.template_id === id);
       return template ? template.name : `Template ${id.split('-')[0]}`;
     });
   };
 
-  useEffect(() => {
-    if (resolvedRestaurantId) {
-      fetchAddonTemplates(resolvedRestaurantId);
-      fetchAvailableAddonTemplates();
-    }
-  }, [resolvedRestaurantId, fetchAvailableAddonTemplates]);
+  // Remove the extra useEffect that was causing duplicate API calls
+  // All data is now fetched in the main useEffect above
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
@@ -668,12 +657,11 @@ export default function RestaurantDetailsAdminComponent() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {item[7] ? (
+                        {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {/* Display applied templates */}
                             {getAppliedTemplateNames(item).map((templateName, idx) => {
-                              const templateIds = Array.isArray(item[7]) ? item[7] : [item[7]];
-                              const templateId = templateIds[idx];
+                              const templateId = item[1][idx];
                               return (
                                 <Badge key={templateId} variant="outline" className="text-xs">
                                   {templateName}
@@ -747,7 +735,7 @@ export default function RestaurantDetailsAdminComponent() {
         </TabsContent>
         <TabsContent value="addons">
           {/* Addon Templates */}
-          <AddonTemplatesAdminComponent restaurantId={restaurant[0]} />
+          <AddonTemplatesAdminComponent restaurantId={resolvedRestaurantId} />
         </TabsContent>
       </Tabs>
 
@@ -759,7 +747,7 @@ export default function RestaurantDetailsAdminComponent() {
             <DialogDescription>
               {selectedItem && (
                 <div>
-                  <span className="font-semibold">{selectedItem[4]}</span> - Manage addon templates
+                  <span className="font-semibold">{selectedItem[6]}</span> - Manage addon templates
                 </div>
               )}
             </DialogDescription>
