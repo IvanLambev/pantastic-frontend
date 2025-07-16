@@ -1,0 +1,248 @@
+# Worker Orders API - New Response Format
+
+## New Response Structure
+
+The `/orders/worker` endpoint now returns detailed item information including addons for each order. Here's the new response format:
+
+```json
+[
+    {
+        "order_id": "0d5eaa35-bbf2-4a4b-b51b-c6f128f1316f",
+        "restaurant_id": "b5add894-8d03-422f-acce-0b0e44bb721b",
+        "customer_id": "8aa59d8a-156e-4e97-a018-9d24c5fc9b73",
+        "total_price": 19.71563305403029,
+        "status": "Pending",
+        "created_at": "2025-07-16T08:20:30.759000",
+        "delivery_method": "pickup",
+        "address": "zh.k. Lyulin 1, bul. Pancho Vladigerov",
+        "estimated_delivery_time": "2025-07-16T09:50:30.759000",
+        "delivery_person_name": "Mitko Asparuhov",
+        "delivery_person_phone": "555-1234",
+        "delivery_time": null,
+        "order_description": null,
+        "scheduled_delivery_time": null,
+        "items": [
+            {
+                "item_id": "fcf3385e-fb47-44ba-a967-4f2be5cf434d",
+                "item_name": "Margherita Pizza",
+                "item_price": 15.99,
+                "item_quantity": 1,
+                "item_base_total": 15.99,
+                "item_addon_total": 3.72,
+                "item_total": 19.71,
+                "applied_addons": [
+                    {
+                        "addon_name": "Extra Cheese",
+                        "addon_price": 2.50,
+                        "addon_quantity": 1,
+                        "addon_total": 2.50
+                    },
+                    {
+                        "addon_name": "Mushrooms",
+                        "addon_price": 1.22,
+                        "addon_quantity": 1,
+                        "addon_total": 1.22
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+## Key Changes
+
+1. **Removed**: `products` field (raw UUID->quantity mapping)
+2. **Added**: `items` array with detailed information for each item
+3. **Each item includes**:
+   - `item_id`: UUID of the item
+   - `item_name`: Human-readable name of the item
+   - `item_price`: Base price per unit
+   - `item_quantity`: Number of items ordered
+   - `item_base_total`: Base price × quantity
+   - `item_addon_total`: Total cost of all addons for this item
+   - `item_total`: Base total + addon total
+   - `applied_addons`: Array of addons applied to this specific item
+
+4. **Each addon includes**:
+   - `addon_name`: Name of the addon
+   - `addon_price`: Price per addon unit
+   - `addon_quantity`: Number of addon units
+   - `addon_total`: Addon price × quantity × item quantity
+
+## Frontend Implementation Guide
+
+### 1. Order Display Component
+
+```javascript
+function OrderCard({ order }) {
+    return (
+        <div className="order-card">
+            <div className="order-header">
+                <h3>Order #{order.order_id.substr(0, 8)}</h3>
+                <span className={`status ${order.status.toLowerCase()}`}>
+                    {order.status}
+                </span>
+            </div>
+            
+            <div className="order-details">
+                <p><strong>Customer:</strong> {order.customer_id}</p>
+                <p><strong>Total:</strong> ${order.total_price.toFixed(2)}</p>
+                <p><strong>Delivery:</strong> {order.delivery_method}</p>
+                {order.address && <p><strong>Address:</strong> {order.address}</p>}
+            </div>
+            
+            <div className="order-items">
+                <h4>Items:</h4>
+                {order.items.map(item => (
+                    <ItemCard key={item.item_id} item={item} />
+                ))}
+            </div>
+        </div>
+    );
+}
+```
+
+### 2. Item Display Component
+
+```javascript
+function ItemCard({ item }) {
+    return (
+        <div className="item-card">
+            <div className="item-header">
+                <h5>{item.item_name}</h5>
+                <span className="quantity">×{item.item_quantity}</span>
+            </div>
+            
+            <div className="item-pricing">
+                <div className="base-price">
+                    Base: ${item.item_price} × {item.item_quantity} = ${item.item_base_total.toFixed(2)}
+                </div>
+                
+                {item.applied_addons.length > 0 && (
+                    <div className="addons-section">
+                        <h6>Addons:</h6>
+                        {item.applied_addons.map((addon, index) => (
+                            <div key={index} className="addon-item">
+                                <span>{addon.addon_name}</span>
+                                <span>${addon.addon_price} × {addon.addon_quantity} = ${addon.addon_total.toFixed(2)}</span>
+                            </div>
+                        ))}
+                        <div className="addon-total">
+                            Addon Total: ${item.item_addon_total.toFixed(2)}
+                        </div>
+                    </div>
+                )}
+                
+                <div className="item-total">
+                    <strong>Item Total: ${item.item_total.toFixed(2)}</strong>
+                </div>
+            </div>
+        </div>
+    );
+}
+```
+
+### 3. Kitchen Display Implementation
+
+```javascript
+function KitchenDisplay({ orders }) {
+    return (
+        <div className="kitchen-display">
+            <h2>Active Orders</h2>
+            {orders.map(order => (
+                <div key={order.order_id} className="kitchen-order">
+                    <div className="order-summary">
+                        <h3>Order #{order.order_id.substr(0, 8)}</h3>
+                        <span className="time">
+                            {new Date(order.created_at).toLocaleTimeString()}
+                        </span>
+                    </div>
+                    
+                    <div className="items-to-prepare">
+                        {order.items.map(item => (
+                            <div key={item.item_id} className="prep-item">
+                                <div className="item-name">
+                                    <strong>{item.item_name}</strong>
+                                    <span className="qty">×{item.item_quantity}</span>
+                                </div>
+                                
+                                {item.applied_addons.length > 0 && (
+                                    <div className="addons-list">
+                                        <strong>With:</strong>
+                                        {item.applied_addons.map((addon, idx) => (
+                                            <span key={idx} className="addon-tag">
+                                                {addon.addon_name} (×{addon.addon_quantity})
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="order-actions">
+                        <button onClick={() => updateOrderStatus(order.order_id, 'In Progress')}>
+                            Start Preparing
+                        </button>
+                        <button onClick={() => updateOrderStatus(order.order_id, 'Delivered')}>
+                            Mark Ready
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+```
+
+
+### 5. Data Processing Functions
+
+```javascript
+// Calculate order totals
+function calculateOrderTotals(order) {
+    const itemsTotal = order.items.reduce((sum, item) => sum + item.item_total, 0);
+    const addonsTotal = order.items.reduce((sum, item) => sum + item.item_addon_total, 0);
+    
+    return {
+        itemsTotal,
+        addonsTotal,
+        grandTotal: order.total_price
+    };
+}
+
+// Group orders by status
+function groupOrdersByStatus(orders) {
+    return orders.reduce((groups, order) => {
+        const status = order.status;
+        if (!groups[status]) {
+            groups[status] = [];
+        }
+        groups[status].push(order);
+        return groups;
+    }, {});
+}
+
+// Format addon list for display
+function formatAddonsList(addons) {
+    return addons.map(addon => 
+        `${addon.addon_name} (×${addon.addon_quantity})`
+    ).join(', ');
+}
+```
+
+## Benefits of New Format
+
+1. **Complete Information**: Workers can see exactly what to prepare without additional API calls
+2. **Clear Pricing**: Transparent breakdown of costs for each item and addon
+3. **Kitchen Efficiency**: Clear addon specifications for food preparation
+4. **Better UX**: Rich display possibilities for order management interfaces
+5. **Debugging**: Easier to trace pricing and addon issues
+
+## Migration Notes
+
+- The old `products` field has been removed - use the new `items` array instead
+- All pricing calculations are now done server-side for consistency
+- Addon quantities are clearly separated from item quantities
+- Frontend code should be updated to use the new structure for better user experience
