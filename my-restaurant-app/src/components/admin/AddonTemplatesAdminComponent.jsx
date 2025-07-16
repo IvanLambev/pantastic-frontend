@@ -73,7 +73,6 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [editingAddonKey, setEditingAddonKey] = useState(null)
 
   // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
@@ -243,7 +242,6 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
       ...otherAddons,
       [newName]: currentPrice,
     });
-    setEditingAddonKey(null);
   };
 
   if (loading) {
@@ -425,9 +423,8 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                         <Label>Name</Label>
                         <Input 
                           placeholder="e.g., Extra Cheese" 
-                          value={editingAddonKey === addonKey ? editingAddonKey : addonKey}
-                          onFocus={() => setEditingAddonKey(addonKey)}
-                          onBlur={(e) => handleAddonNameChange(addonKey, e.target.value)}
+                          value={addonKey} 
+                          onChange={(e) => handleAddonNameChange(addonKey, e.target.value)}
                         />
                       </div>
 

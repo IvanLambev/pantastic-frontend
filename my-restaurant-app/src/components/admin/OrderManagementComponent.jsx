@@ -232,10 +232,10 @@ export default function OrderManagementComponent() {
                                   <div className="space-y-1">
                                     {item.applied_addons.map((addon, addonIndex) => (
                                       <div key={addonIndex} className="flex justify-between items-center text-xs">
-                                        <span className="text-green-600">
+                                        <span className="text-black">
                                           + {addon.addon_name} (×{addon.addon_quantity})
                                         </span>
-                                        <span className="text-green-600">
+                                        <span className="text-black">
                                           ${addon.addon_total?.toFixed(2) || '0.00'}
                                         </span>
                                       </div>
