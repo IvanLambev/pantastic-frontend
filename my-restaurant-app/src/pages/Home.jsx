@@ -90,8 +90,6 @@ const Home = () => {
         error={error}
         selectedCity={selectedCity}
         setSelectedCity={setSelectedCity}
-        showRestaurantModal={showRestaurantModal}
-        setShowRestaurantModal={setShowRestaurantModal}
       />
 
       <div className="w-full">

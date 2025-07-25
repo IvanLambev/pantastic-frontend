@@ -256,8 +256,6 @@ const Food = () => {
         error={error}
         selectedCity={selectedCity}
         setSelectedCity={setSelectedCity}
-        showRestaurantModal={showRestaurantModal}
-        setShowRestaurantModal={setShowRestaurantModal}
       />
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
