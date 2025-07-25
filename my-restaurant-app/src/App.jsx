@@ -43,6 +43,8 @@ import Cart from '@/pages/Cart'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
 import DeluxeBox from '@/pages/DeluxeBox'
+import 'leaflet/dist/leaflet.css';
+
 
 function useLenisSmoothScroll() {
   useEffect(() => {
