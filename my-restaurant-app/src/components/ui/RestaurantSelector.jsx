@@ -109,6 +109,12 @@ export default function RestaurantSelector({
     try {
       const coords = await getCoordinates(address);
       if (!coords) throw new Error("Could not geocode address");
+      // Save address in sessionStorage if delivery
+      if (deliveryMethod === 'delivery') {
+        sessionStorage.setItem('delivery_address', address);
+        sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords.lat, lng: coords.lng }));
+        setDeliveryMethod('delivery');
+      }
       const closest = findClosestRestaurant(coords.lat, coords.lng);
       if (closest) {
         onSelect(closest);
@@ -136,6 +142,12 @@ export default function RestaurantSelector({
         const { latitude, longitude } = pos.coords;
         setSelectedLocation([latitude, longitude]);
         setMapCenter([latitude, longitude]);
+        // Save location in sessionStorage if delivery
+        if (deliveryMethod === 'delivery') {
+          sessionStorage.setItem('delivery_address', 'Device Location');
+          sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: latitude, lng: longitude }));
+          setDeliveryMethod('delivery');
+        }
         const closest = findClosestRestaurant(latitude, longitude);
         if (closest) {
           onSelect(closest);
@@ -155,6 +167,12 @@ export default function RestaurantSelector({
   function handleMapLocationSelect(coords) {
     setSelectedLocation(coords);
     setMapCenter(coords);
+    // Save location in sessionStorage if delivery
+    if (deliveryMethod === 'delivery') {
+      sessionStorage.setItem('delivery_address', 'Map Location');
+      sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+      setDeliveryMethod('delivery');
+    }
     const closest = findClosestRestaurant(coords[0], coords[1]);
     if (closest) {
       onSelect(closest);
