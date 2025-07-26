@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Minus, Plus, Trash2 } from "lucide-react"
+import { Minus, Plus, Trash2, Edit, MapPin, Store } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -11,16 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { API_URL } from "@/config/api"
-import { fetchWithAuth } from "@/context/AuthContext"
+import OrderConfirmation from "@/components/OrderConfirmation"
 
 const Cart = () => {
   const { 
@@ -32,38 +24,56 @@ const Cart = () => {
     orderId 
   } = useCart()
   const navigate = useNavigate()
-  const [{ isCheckingOut, error, orderDetails, showConfirmation }, setState] = useState({
+  const [{ isCheckingOut, error, showOrderConfirmation }, setState] = useState({
     isCheckingOut: false,
     error: null,
-    orderDetails: null,
-    showConfirmation: true
+    showOrderConfirmation: false,
   })
+
+  // Get delivery information from sessionStorage
+  const deliveryAddress = sessionStorage.getItem('delivery_address')
+  const deliveryCoords = sessionStorage.getItem('delivery_coords')
+  const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '{}')
+  const isDelivery = deliveryAddress && deliveryCoords
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
-  // Helper to fetch all orders and find the latest/matching one
-  const fetchOrderDetails = async (orderId) => {
-    try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-      if (!response.ok) throw new Error('Failed to fetch orders')
-      const orders = await response.json()
-      // Find the order with the matching order_id
-      return orders.find(order => order.order_id === orderId) || null
-    } catch (err) {
-      toast.error('Could not load order details')
-      return null
-    }
+  const handleEditAddress = () => {
+    // Clear current delivery address and navigate back to restaurant selection
+    sessionStorage.removeItem('delivery_address')
+    sessionStorage.removeItem('delivery_coords')
+    navigate('/food')
   }
 
   const handleCheckout = () => {
-    navigate('/checkout');
-  };
+    setState(prev => ({ ...prev, showOrderConfirmation: true }))
+  }
+
+  const handleOrderConfirm = async () => {
+    setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
+    try {
+      const orderResult = await checkout()
+      if (orderResult && orderResult.order_id) {
+        toast.success('Order placed successfully!')
+        navigate(`/order-tracking-v2/${orderResult.order_id}`)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+      setState(prev => ({ ...prev, error: errorMessage }))
+      toast.error('Failed to place order: ' + errorMessage)
+    } finally {
+      setState(prev => ({ ...prev, isCheckingOut: false }))
+    }
+  }
+
+  const handleOrderConfirmationClose = () => {
+    setState(prev => ({ ...prev, showOrderConfirmation: false }))
+  }
+
+  const handleRemoveFromCart = (itemId, itemName) => {
+    removeFromCart(itemId)
+    toast.info(`Removed ${itemName} from cart`)
+  }
 
   const handleCancelOrder = async () => {
     try {
@@ -74,18 +84,6 @@ const Cart = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setState(prev => ({ ...prev, error: errorMessage }))
       toast.error('Failed to cancel order: ' + errorMessage)
-    }
-  }
-
-  const handleRemoveFromCart = (itemId, itemName) => {
-    removeFromCart(itemId)
-    toast.info(`Removed ${itemName} from cart`)
-  }
-
-  const handleConfirmationClose = () => {
-    setState(prev => ({ ...prev, showConfirmation: false }))
-    if (orderDetails && orderDetails.order_id) {
-      navigate(`/order-tracking-v2/${orderDetails.order_id}`)
     }
   }
 
@@ -111,6 +109,60 @@ const Cart = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       <div className="container mx-auto px-4 py-8 mt-16 pb-32">
         <h1 className="text-2xl font-bold mb-8">Your Cart</h1>
+        
+        {/* Delivery/Pickup Information */}
+        {selectedRestaurant?.length && (
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    {isDelivery ? (
+                      <MapPin className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Store className="h-5 w-5 text-blue-600" />
+                    )}
+                    <h3 className="font-semibold text-lg">
+                      {isDelivery ? 'Delivery Information' : 'Pickup Information'}
+                    </h3>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Restaurant:</p>
+                      <p className="font-medium">{selectedRestaurant[7]}</p>
+                      <p className="text-sm text-gray-500">{selectedRestaurant[1]}</p>
+                    </div>
+                    
+                    {isDelivery ? (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Delivery Address:</p>
+                        <p className="font-medium">{deliveryAddress}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Pickup from:</p>
+                        <p className="font-medium">{selectedRestaurant[1]}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {isDelivery && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleEditAddress}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Address
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="space-y-4 flex-grow">
@@ -311,6 +363,16 @@ const Cart = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog> */}
+
+        {/* Order Confirmation Dialog */}
+        <OrderConfirmation
+          open={showOrderConfirmation}
+          onClose={handleOrderConfirmationClose}
+          onConfirm={handleOrderConfirm}
+          cartItems={cartItems}
+          total={total}
+          isLoading={isCheckingOut}
+        />
       </div>
     </div>
   )

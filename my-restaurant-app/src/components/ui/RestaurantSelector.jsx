@@ -113,7 +113,9 @@ export default function RestaurantSelector({
       if (deliveryMethod === 'delivery') {
         sessionStorage.setItem('delivery_address', address);
         sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords.lat, lng: coords.lng }));
-        setDeliveryMethod('delivery');
+        sessionStorage.setItem('delivery_method', 'delivery');
+      } else {
+        sessionStorage.setItem('delivery_method', 'pickup');
       }
       const closest = findClosestRestaurant(coords.lat, coords.lng);
       if (closest) {
@@ -152,10 +154,14 @@ export default function RestaurantSelector({
               const data = await res.json();
               if (data && data.display_name) deviceAddress = data.display_name;
             }
-          } catch {}
+          } catch (error) {
+            console.log('Error reverse geocoding:', error);
+          }
           sessionStorage.setItem('delivery_address', deviceAddress);
           sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: latitude, lng: longitude }));
-          setDeliveryMethod('delivery');
+          sessionStorage.setItem('delivery_method', 'delivery');
+        } else {
+          sessionStorage.setItem('delivery_method', 'pickup');
         }
         const closest = findClosestRestaurant(latitude, longitude);
         if (closest) {
@@ -189,16 +195,20 @@ export default function RestaurantSelector({
             }
             sessionStorage.setItem('delivery_address', mapAddress);
             sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+            sessionStorage.setItem('delivery_method', 'delivery');
           })
           .catch(() => {
             sessionStorage.setItem('delivery_address', mapAddress);
             sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+            sessionStorage.setItem('delivery_method', 'delivery');
           });
       } else {
         sessionStorage.setItem('delivery_address', mapAddress);
         sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+        sessionStorage.setItem('delivery_method', 'delivery');
       }
-      setDeliveryMethod('delivery');
+    } else {
+      sessionStorage.setItem('delivery_method', 'pickup');
     }
     const closest = findClosestRestaurant(coords[0], coords[1]);
     if (closest) {
@@ -465,6 +475,7 @@ export default function RestaurantSelector({
                     variant="outline"
                     className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100 relative"
                     onClick={() => {
+                      sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
                     }}
