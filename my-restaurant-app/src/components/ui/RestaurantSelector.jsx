@@ -109,7 +109,7 @@ export default function RestaurantSelector({
     try {
       const coords = await getCoordinates(address);
       if (!coords) throw new Error("Could not geocode address");
-      // Save address in sessionStorage if delivery
+      // Save address and coordinates in sessionStorage if delivery
       if (deliveryMethod === 'delivery') {
         sessionStorage.setItem('delivery_address', address);
         sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords.lat, lng: coords.lng }));
@@ -144,7 +144,16 @@ export default function RestaurantSelector({
         setMapCenter([latitude, longitude]);
         // Save location in sessionStorage if delivery
         if (deliveryMethod === 'delivery') {
-          sessionStorage.setItem('delivery_address', 'Device Location');
+          // Try to reverse geocode if possible, else save as 'Device Location'
+          let deviceAddress = 'Device Location';
+          try {
+            if (window && window.fetch) {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+              const data = await res.json();
+              if (data && data.display_name) deviceAddress = data.display_name;
+            }
+          } catch {}
+          sessionStorage.setItem('delivery_address', deviceAddress);
           sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: latitude, lng: longitude }));
           setDeliveryMethod('delivery');
         }
@@ -169,8 +178,26 @@ export default function RestaurantSelector({
     setMapCenter(coords);
     // Save location in sessionStorage if delivery
     if (deliveryMethod === 'delivery') {
-      sessionStorage.setItem('delivery_address', 'Map Location');
-      sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+      // Try to reverse geocode if possible, else save as 'Map Location'
+      let mapAddress = 'Map Location';
+      if (window && window.fetch) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords[0]}&lon=${coords[1]}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.display_name) {
+              mapAddress = data.display_name;
+            }
+            sessionStorage.setItem('delivery_address', mapAddress);
+            sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+          })
+          .catch(() => {
+            sessionStorage.setItem('delivery_address', mapAddress);
+            sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+          });
+      } else {
+        sessionStorage.setItem('delivery_address', mapAddress);
+        sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
+      }
       setDeliveryMethod('delivery');
     }
     const closest = findClosestRestaurant(coords[0], coords[1]);
