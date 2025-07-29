@@ -12,22 +12,18 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { API_URL } from "@/config/api"
-import OrderConfirmation from "@/components/OrderConfirmation"
 
 const Cart = () => {
   const { 
     cartItems, 
     removeFromCart, 
     updateQuantity, 
-    checkout,
     cancelOrder,
     orderId 
   } = useCart()
   const navigate = useNavigate()
-  const [{ isCheckingOut, error, showOrderConfirmation }, setState] = useState({
-    isCheckingOut: false,
+  const [{ error }, setState] = useState({
     error: null,
-    showOrderConfirmation: false,
   })
 
   // Get delivery information from sessionStorage
@@ -46,28 +42,7 @@ const Cart = () => {
   }
 
   const handleCheckout = () => {
-    setState(prev => ({ ...prev, showOrderConfirmation: true }))
-  }
-
-  const handleOrderConfirm = async () => {
-    setState(prev => ({ ...prev, isCheckingOut: true, error: null }))
-    try {
-      const orderResult = await checkout()
-      if (orderResult && orderResult.order_id) {
-        toast.success('Order placed successfully!')
-        navigate(`/order-tracking-v2/${orderResult.order_id}`)
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-      setState(prev => ({ ...prev, error: errorMessage }))
-      toast.error('Failed to place order: ' + errorMessage)
-    } finally {
-      setState(prev => ({ ...prev, isCheckingOut: false }))
-    }
-  }
-
-  const handleOrderConfirmationClose = () => {
-    setState(prev => ({ ...prev, showOrderConfirmation: false }))
+    navigate('/checkout')
   }
 
   const handleRemoveFromCart = (itemId, itemName) => {
@@ -287,9 +262,8 @@ const Cart = () => {
                   <Button 
                     className="w-full" 
                     onClick={handleCheckout}
-                    disabled={isCheckingOut}
                   >
-                    {isCheckingOut ? 'Processing...' : 'Checkout'}
+                    Checkout
                   </Button>
                 )}
                 <Button 
@@ -303,76 +277,6 @@ const Cart = () => {
             </Card>
           </div>
         </div>
-
-        {/* <Dialog open={showConfirmation} onOpenChange={handleConfirmationClose}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Order Confirmed!</DialogTitle>
-              <DialogDescription>
-                Your order has been successfully placed.
-              </DialogDescription>
-            </DialogHeader>
-            
-            {orderDetails && (
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">Order ID</p>
-                    <p className="text-sm text-muted-foreground">{orderDetails.order_id || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Total Price</p>
-                    <p className="text-sm text-muted-foreground">${typeof orderDetails.total_price === 'number' ? orderDetails.total_price.toFixed(2) : '0.00'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Delivery Method</p>
-                    <p className="text-sm text-muted-foreground capitalize">{orderDetails.delivery_method || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Estimated Delivery</p>
-                    <p className="text-sm text-muted-foreground">
-                      {orderDetails.estimated_delivery_time ? new Date(orderDetails.estimated_delivery_time).toLocaleString() : '-'}
-                    </p>
-                  </div>
-                  {orderDetails.delivery_method === 'pickup' && orderDetails.address && (
-                    <div className="col-span-2">
-                      <p className="text-sm font-medium">Pickup Address</p>
-                      <p className="text-sm text-muted-foreground">{orderDetails.address}</p>
-                    </div>
-                  )}
-                  {orderDetails.delivery_person_name && (
-                    <>
-                      <div>
-                        <p className="text-sm font-medium">Delivery Person</p>
-                        <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Contact Number</p>
-                        <p className="text-sm text-muted-foreground">{orderDetails.delivery_person_phone || '-'}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            <DialogFooter>
-              <Button onClick={handleConfirmationClose}>
-                Track Order
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog> */}
-
-        {/* Order Confirmation Dialog */}
-        <OrderConfirmation
-          open={showOrderConfirmation}
-          onClose={handleOrderConfirmationClose}
-          onConfirm={handleOrderConfirm}
-          cartItems={cartItems}
-          total={total}
-          isLoading={isCheckingOut}
-        />
       </div>
     </div>
   )

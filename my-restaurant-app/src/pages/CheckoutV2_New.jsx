@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL } from "@/config/api"
 import { toast } from "sonner"
-import { CreditCard, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, Edit, MapPin, Store, X, Calendar as CalendarIcon, Clock } from "lucide-react"
+import { CreditCard, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, Edit, MapPin, Store, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -12,11 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
-import OrderConfirmation from "@/components/OrderConfirmation"
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
@@ -25,16 +21,10 @@ export default function CheckoutV2() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showAddressEdit, setShowAddressEdit] = useState(false)
   const [newAddress, setNewAddress] = useState("")
-  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
-  
-  // Scheduling states
-  const [isScheduled, setIsScheduled] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(undefined)
-  const [selectedTime, setSelectedTime] = useState("")
-  const [calendarOpen, setCalendarOpen] = useState(false)
   
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
+  const deliveryCoords = sessionStorage.getItem('delivery_coords')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
 
@@ -63,35 +53,6 @@ export default function CheckoutV2() {
     }
   }
 
-  // Helper functions for scheduling
-  const getAvailableTimeSlots = () => {
-    const slots = []
-    for (let hour = 8; hour <= 22; hour++) {
-      for (let minute of [0, 30]) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-        slots.push(time)
-      }
-    }
-    return slots
-  }
-
-  const isDateDisabled = (date) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const maxDate = new Date(today)
-    maxDate.setDate(today.getDate() + 3) // 3 days ahead
-    date.setHours(0, 0, 0, 0)
-    return date < today || date > maxDate
-  }
-
-  const getScheduledDeliveryTime = () => {
-    if (!isScheduled || !selectedDate || !selectedTime) return null
-    const scheduledDateTime = new Date(selectedDate)
-    const [hours, minutes] = selectedTime.split(":")
-    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-    return scheduledDateTime.toISOString()
-  }
-
   const paymentMethods = [
     {
       id: "card",
@@ -109,11 +70,7 @@ export default function CheckoutV2() {
     },
   ]
 
-  const handleCheckout = () => {
-    setShowOrderConfirmation(true)
-  }
-
-  const handleOrderConfirm = async () => {
+  const handleCheckout = async () => {
     setIsProcessing(true)
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
@@ -152,12 +109,6 @@ export default function CheckoutV2() {
         order_addons
       }
 
-      // Add scheduled delivery time if applicable
-      const scheduledTime = getScheduledDeliveryTime()
-      if (scheduledTime) {
-        orderData.scheduled_delivery_time = scheduledTime
-      }
-
       console.log('Placing order with:', orderData)
 
       const response = await fetchWithAuth(`${API_URL}/order/orders`, {
@@ -185,12 +136,7 @@ export default function CheckoutV2() {
       toast.error(error.message || 'Failed to place order')
     } finally {
       setIsProcessing(false)
-      setShowOrderConfirmation(false)
     }
-  }
-
-  const handleOrderConfirmationClose = () => {
-    setShowOrderConfirmation(false)
   }
 
   if (cartItems.length === 0) {
@@ -309,85 +255,6 @@ export default function CheckoutV2() {
                   </CardContent>
                 </Card>
               )}
-
-              {/* Order Scheduling */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    Order Timing
-                  </CardTitle>
-                  <CardDescription>
-                    Schedule your order for a specific time (optional)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="schedule-order" 
-                      checked={isScheduled}
-                      onCheckedChange={setIsScheduled}
-                    />
-                    <Label htmlFor="schedule-order">Schedule for later</Label>
-                  </div>
-                  
-                  {isScheduled && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="date-picker">Date</Label>
-                          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                id="date-picker"
-                                className="w-full justify-start font-normal"
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={(date) => {
-                                  setSelectedDate(date)
-                                  setSelectedTime("") // Reset time when date changes
-                                  setCalendarOpen(false)
-                                }}
-                                disabled={isDateDisabled}
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="time-picker">Time</Label>
-                          <select
-                            id="time-picker"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                            className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                            disabled={!selectedDate}
-                          >
-                            <option value="" disabled>Select time</option>
-                            {getAvailableTimeSlots().map(slot => (
-                              <option key={slot} value={slot}>{slot}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>• You can schedule orders up to 3 days in advance</p>
-                        <p>• Available times: 08:00 - 22:30</p>
-                        <p>• Times are in 30-minute intervals</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
 
             {/* Order Summary */}
@@ -483,7 +350,7 @@ export default function CheckoutV2() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <Check className="h-4 w-4" />
-                        Review Order
+                        Complete Payment
                       </div>
                     )}
                   </Button>
@@ -521,16 +388,6 @@ export default function CheckoutV2() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {/* Order Confirmation Dialog */}
-          <OrderConfirmation
-            open={showOrderConfirmation}
-            onClose={handleOrderConfirmationClose}
-            onConfirm={handleOrderConfirm}
-            cartItems={cartItems}
-            total={calculateTotal()}
-            isLoading={isProcessing}
-          />
         </div>
       </div>
     </div>

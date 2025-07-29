@@ -58,14 +58,14 @@ export default function OrderConfirmation({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 p-6 pb-0">
           <DialogTitle className="text-2xl font-bold text-center">
             Confirm Your Order
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-6">
           {/* Order Items */}
           <Card>
             <CardHeader>
@@ -191,7 +191,7 @@ export default function OrderConfirmation({
           </Card>
         </div>
 
-        <DialogFooter className="flex gap-3">
+        <DialogFooter className="flex gap-3 flex-shrink-0 p-6 pt-0">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Back to Cart
           </Button>
