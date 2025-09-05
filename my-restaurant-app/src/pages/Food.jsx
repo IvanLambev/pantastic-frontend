@@ -356,7 +356,7 @@ const Food = () => {
                   </div>
                   <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
                       <h3 className="font-semibold text-sm">{item[6]}</h3>
-                      <span className="font-semibold text-sm">${(Number(item[7]) || 0).toFixed(2)}</span>
+                      <span className="font-semibold text-sm">€{(Number(item[7]) || 0).toFixed(2)}</span>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -408,8 +408,8 @@ const Food = () => {
                         className="w-full"
                       />
                       <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                        <span>${priceRange[0]}</span>
-                        <span>${priceRange[1]}</span>
+                        <span>€{priceRange[0]}</span>
+                        <span>€{priceRange[1]}</span>
                       </div>
                     </div>
                   </div>
@@ -480,7 +480,7 @@ const Food = () => {
                         <h3 className="font-semibold mb-2">{item[6]}</h3>
                         <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[4]}</p>
                         <div className="flex justify-between items-start">
-                          <span className="font-semibold">${(Number(item[7]) || 0).toFixed(2)}</span>
+                          <span className="font-semibold">€{(Number(item[7]) || 0).toFixed(2)}</span>
                           <div className="flex gap-2">
                             <Button
                               variant="outline"

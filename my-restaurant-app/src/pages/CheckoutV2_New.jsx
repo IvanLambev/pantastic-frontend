@@ -325,13 +325,13 @@ export default function CheckoutV2() {
                     {deliveryMethod === 'delivery' && (
                       <div className="flex justify-between">
                         <span>Delivery Fee</span>
-                        <span>$5.00</span>
+                        <span>€5.00</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>€{calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>

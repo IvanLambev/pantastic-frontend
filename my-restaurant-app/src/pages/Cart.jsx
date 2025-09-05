@@ -171,14 +171,14 @@ const Cart = () => {
                         {item.selectedAddons.map((addon, index) => (
                           <li key={index} className="flex justify-between">
                             <span>{addon.name}</span>
-                            <span>+${Number(addon.price).toFixed(2)}</span>
+                            <span>+€{Number(addon.price).toFixed(2)}</span>
                           </li>
                         ))}
                       </ul>
                       {item.basePrice && (
                         <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
                           <span>Base price:</span>
-                          <span>${Number(item.basePrice).toFixed(2)}</span>
+                          <span>€{Number(item.basePrice).toFixed(2)}</span>
                         </div>
                       )}
                     </div>
@@ -210,7 +210,7 @@ const Cart = () => {
                       </Button>
                     </div>
                     <div className="font-semibold text-right">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      €{(item.price * item.quantity).toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -229,7 +229,7 @@ const Cart = () => {
                     <div key={item.id} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{item.name} × {item.quantity}</span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span>€{(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="text-xs text-muted-foreground pl-4">
@@ -241,7 +241,7 @@ const Cart = () => {
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-semibold">
                       <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>€{total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

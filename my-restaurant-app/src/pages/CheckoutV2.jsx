@@ -409,7 +409,7 @@ export default function CheckoutV2() {
                             </div>
                           )}
                         </div>
-                        <div className="font-medium">${((Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
+                        <div className="font-medium">€{((Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -453,18 +453,18 @@ export default function CheckoutV2() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${(calculateTotal() - (deliveryMethod === 'delivery' ? 5 : 0)).toFixed(2)}</span>
+                      <span>€{(calculateTotal() - (deliveryMethod === 'delivery' ? 5 : 0)).toFixed(2)}</span>
                     </div>
                     {deliveryMethod === 'delivery' && (
                       <div className="flex justify-between">
                         <span>Delivery Fee</span>
-                        <span>$5.00</span>
+                        <span>€5.00</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>€{calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>

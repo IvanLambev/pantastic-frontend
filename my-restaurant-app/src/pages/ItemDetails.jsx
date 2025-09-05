@@ -268,11 +268,11 @@ export default function ItemDetails() {
             <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
             <div className="flex items-center space-x-2 mb-4">
               <p className="text-2xl font-semibold text-primary">
-                ${totalPrice.toFixed(2)}
+                €{totalPrice.toFixed(2)}
               </p>
               {totalPrice !== Number(item.price) && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Base: ${Number(item.price).toFixed(2)}
+                  Base: €{Number(item.price).toFixed(2)}
                 </Badge>
               )}
             </div>

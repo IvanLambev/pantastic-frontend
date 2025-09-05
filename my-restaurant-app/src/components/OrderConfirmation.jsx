@@ -92,14 +92,14 @@ export default function OrderConfirmation({
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium">€{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between items-center font-bold text-lg">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>€{total.toFixed(2)}</span>
               </div>
             </CardContent>
           </Card>

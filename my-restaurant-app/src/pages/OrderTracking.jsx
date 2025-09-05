@@ -157,7 +157,7 @@ export default function OrderTracking() {
                 <div className="border-t pt-4 mt-4">
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>${order.total_price ? order.total_price.toFixed(2) : '0.00'}</span>
+                    <span>€{order.total_price ? order.total_price.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
