@@ -230,7 +230,7 @@ export default function OrderTracking() {
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">Order Total</span>
-                <span className="font-bold">${order.total_price ? order.total_price.toFixed(2) : '0.00'}</span>
+                <span className="font-bold">€{order.total_price ? order.total_price.toFixed(2) : '0.00'}</span>
               </div>
 
               <Separator />
