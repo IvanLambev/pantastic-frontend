@@ -520,7 +520,9 @@ export default function RestaurantSelector({
                             {isOpen ? "We are Open" : "We are Closed"}
                           </span>
                         </span>
-                        <span className="text-sm text-gray-500 text-left">{restaurant[1]}</span>
+                        <span className="text-sm text-gray-500 text-left">
+                          {restaurant[1].split(',')[0]}, {restaurant[3]}
+                        </span>
                       </div>
                       <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto flex flex-col gap-1">
                         {Object.entries(hours).map(([day, h]) => (
