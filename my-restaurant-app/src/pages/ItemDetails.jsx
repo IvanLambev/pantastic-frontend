@@ -27,7 +27,9 @@ export default function ItemDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [addonTemplates, setAddonTemplates] = useState([])
+  const [removableData, setRemovableData] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState({})
+  const [selectedRemovables, setSelectedRemovables] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
   const { addToCart } = useCart()
 
@@ -45,7 +47,7 @@ export default function ItemDetails() {
         let data = await itemRes.json();
         if (Array.isArray(data)) {
           // New backend structure:
-          // [id, [template_ids], addon_obj, created_at, description, image_url, name, price, restaurant_id]
+          // [id, [template_ids], addon_obj, created_at, description, image_url, category, name, price, null, null, restaurant_id]
           data = {
             item_id: data[0],
             template_ids: Array.isArray(data[1]) ? data[1] : [],
@@ -53,9 +55,10 @@ export default function ItemDetails() {
             created_at: data[3],
             description: data[4],
             image_url: data[5],
-            name: data[6],
-            price: Number(data[7]) || 0,
-            restaurant_id: data[8]
+            category: data[6],
+            name: data[7],
+            price: Number(data[8]) || 0,
+            restaurant_id: data[11]
           }
         }
         setItem(data);
@@ -67,6 +70,12 @@ export default function ItemDetails() {
         const templates = await addonsRes.json();
         setAddonTemplates(templates);
 
+        // Fetch removables for this item
+        const removablesRes = await fetchWithAuth(`${API_URL}/restaurant/removables/item/${itemId}`);
+        if (!removablesRes.ok) throw new Error('Failed to fetch removables');
+        const removables = await removablesRes.json();
+        setRemovableData(removables);
+
         // Initialize selectedAddons state - Updated for new API structure
         const initialSelectedAddons = {};
         templates.forEach(template => {
@@ -75,9 +84,19 @@ export default function ItemDetails() {
           }
         });
         setSelectedAddons(initialSelectedAddons);
+
+        // Initialize selectedRemovables state
+        const initialSelectedRemovables = {};
+        if (removables.applied_templates) {
+          removables.applied_templates.forEach(template => {
+            initialSelectedRemovables[template.template_id] = [];
+          });
+        }
+        setSelectedRemovables(initialSelectedRemovables);
+
       } catch (err) {
         setError(err.message);
-        console.error('Error fetching item/addons:', err);
+        console.error('Error fetching item/addons/removables:', err);
       } finally {
         setLoading(false);
       }
@@ -126,20 +145,42 @@ export default function ItemDetails() {
         }
       }
       
-      // Update total price
-      updateTotalPrice(updatedAddons);
+      // Update total price (only addons affect price)
+      updateTotalPrice(updatedAddons, selectedRemovables);
       
       return updatedAddons;
     });
   };
+
+  // Handle selecting/deselecting removables (doesn't affect price)
+  const handleRemovableChange = (templateId, removableKey, isChecked) => {
+    setSelectedRemovables(prev => {
+      const updatedRemovables = { ...prev };
+      
+      if (isChecked) {
+        if (!updatedRemovables[templateId]) {
+          updatedRemovables[templateId] = [];
+        }
+        updatedRemovables[templateId].push(removableKey);
+      } else {
+        if (updatedRemovables[templateId]) {
+          updatedRemovables[templateId] = updatedRemovables[templateId].filter(
+            item => item !== removableKey
+          );
+        }
+      }
+      
+      return updatedRemovables;
+    });
+  };
   
-  // Calculate total price based on item price and selected addons
-  const updateTotalPrice = (selectedAddonObj) => {
+  // Calculate total price based on item price and selected addons (removables don't affect price)
+  const updateTotalPrice = (selectedAddonObj, selectedRemovableObj) => {
     if (!item) return;
     
     let newTotal = Number(item.price);
     
-    // Add price of all selected addons
+    // Add price of all selected addons (removables don't affect price)
     Object.values(selectedAddonObj).forEach(addonArray => {
       addonArray.forEach(addon => {
         newTotal += Number(addon.price);
@@ -153,31 +194,56 @@ export default function ItemDetails() {
   const isAddonSelected = (templateId, addonName) => {
     return selectedAddons[templateId]?.some(addon => addon.name === addonName) || false;
   };
+
+  // Check if a removable is selected
+  const isRemovableSelected = (templateId, removableKey) => {
+    return selectedRemovables[templateId]?.includes(removableKey) || false;
+  };
   
   // Get all selected addons as a flat array
   const getAllSelectedAddons = () => {
     return Object.values(selectedAddons).flat();
   };
+
+  // Get all selected removables as a flat array
+  const getAllSelectedRemovables = () => {
+    return Object.values(selectedRemovables).flat();
+  };
   
   const handleAddToCart = () => {
     const selectedAddonList = getAllSelectedAddons();
+    const selectedRemovableList = getAllSelectedRemovables();
+    
+    // Create a unique identifier for this specific item configuration
+    const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',');
+    const removableIds = selectedRemovableList.sort().join(',');
+    const configurationId = `${item.item_id}-${addonIds}-${removableIds}`;
+    
     const cartItem = {
-      id: item.item_id,
+      id: configurationId, // Unique ID for this configuration
+      originalItemId: item.item_id,
       name: item.name,
       price: totalPrice,
       basePrice: Number(item.price),
       image: item.image_url,
       description: item.description,
       selectedAddons: selectedAddonList,
+      selectedRemovables: selectedRemovableList,
       addonCount: selectedAddonList.length,
+      removableCount: selectedRemovableList.length,
       quantity: 1
     };
+    
     addToCart(cartItem);
+    
+    const addonText = selectedAddonList.length > 0 ? ` with ${selectedAddonList.length} add-ons` : '';
+    const removableText = selectedRemovableList.length > 0 ? ` and ${selectedRemovableList.length} items removed` : '';
+    
     toast.success(
       <div className="flex flex-col">
         <span>Added {item.name} to cart</span>
-        {selectedAddonList.length > 0 && (
-          <span className="text-xs">With {selectedAddonList.length} add-ons</span>
+        {(selectedAddonList.length > 0 || selectedRemovableList.length > 0) && (
+          <span className="text-xs">{addonText}{removableText}</span>
         )}
       </div>
     );
@@ -284,7 +350,7 @@ export default function ItemDetails() {
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Customize Your Order</h2>
+              <h2 className="text-xl font-semibold">Add Extra Items</h2>
               
               {addonTemplates.map((template) => (
                 <Card key={template.template_id} className="overflow-hidden">
@@ -318,7 +384,55 @@ export default function ItemDetails() {
                             />
                             <span className="font-medium">{addonName}</span>
                           </div>
-                          <span className="text-sm font-semibold ml-2">+${Number(price).toFixed(2)}</span>
+                          <span className="text-sm font-semibold ml-2">+€{Number(price).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Removables selection section */}
+          {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold">Remove Items</h2>
+              <p className="text-sm text-muted-foreground">Select ingredients you'd like to remove (no extra charge)</p>
+              
+              {removableData.applied_templates.map((template) => (
+                <Card key={template.template_id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{template.name}</CardTitle>
+                      <Badge variant="outline">{Object.keys(template.removables || {}).length} options</Badge>
+                    </div>
+                    <CardDescription>
+                      Select ingredients you'd like to remove
+                    </CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
+                        <div
+                          key={`${template.template_id}-${removableKey}`}
+                          className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                            isRemovableSelected(template.template_id, removableKey)
+                              ? 'border-red-500 bg-red-50'
+                              : 'border-border bg-background hover:bg-muted/50'
+                          }`}
+                          onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
+                        >
+                          <div className="flex items-center flex-1">
+                            <Checkbox
+                              checked={isRemovableSelected(template.template_id, removableKey)}
+                              onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
+                              className="mr-3"
+                            />
+                            <span className="font-medium capitalize">{removableValue}</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">Remove</span>
                         </div>
                       ))}
                     </div>
@@ -331,7 +445,7 @@ export default function ItemDetails() {
           <div className="pt-4 border-t">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total Price:</span>
-              <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary">€{totalPrice.toFixed(2)}</span>
             </div>
             <Button
               size="lg"
@@ -341,9 +455,15 @@ export default function ItemDetails() {
               Add to Cart
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
-              {getAllSelectedAddons().length > 0 ? 
-                `Including ${getAllSelectedAddons().length} selected add-ons` : 
-                "No add-ons selected"}
+              {getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0 ? (
+                <>
+                  {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} add-ons selected`}
+                  {getAllSelectedAddons().length > 0 && getAllSelectedRemovables().length > 0 && ', '}
+                  {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} items removed`}
+                </>
+              ) : (
+                "No customizations selected"
+              )}
             </p>
           </div>
         </div>
