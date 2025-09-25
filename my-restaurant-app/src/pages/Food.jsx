@@ -30,10 +30,7 @@ import RestaurantSelector from "@/components/ui/RestaurantSelector";
 
 const Food = () => {
   const navigate = useNavigate()
-  const [showCityModal, setShowCityModal] = useState(true)
   const [showRestaurantModal, setShowRestaurantModal] = useState(false)
-  const [restaurants, setRestaurants] = useState([])
-  const [selectedCity, setSelectedCity] = useState(null)
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -47,34 +44,15 @@ const Food = () => {
   const [favoriteItems, setFavoriteItems] = useState([])
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch restaurants')
-        }
-        const data = await response.json()
-        setRestaurants(data)
-      } catch (err) {
-        setError(err.message)
-        console.error('Error fetching restaurants:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     // Check if restaurant is already selected
     const savedRestaurant = sessionStorage.getItem('selectedRestaurant')
     if (savedRestaurant) {
       const restaurant = JSON.parse(savedRestaurant);
       setSelectedRestaurant(restaurant);
-      setSelectedCity(restaurant[2]); // Set the city from the saved restaurant
-      setShowCityModal(false);
       setShowRestaurantModal(false);
       fetchItems(restaurant[0]);
     } else {
-      fetchRestaurants();
-      setShowCityModal(true);
+      setShowRestaurantModal(true);
     }
   }, [])
 
@@ -98,25 +76,10 @@ const Food = () => {
   }, []);
 
   const handleChangeSelection = async () => {
-    setLoading(true)
-    try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch restaurants')
-      }
-      const data = await response.json()
-      setRestaurants(data)
-      setSelectedRestaurant(null)
-      sessionStorage.removeItem('selectedRestaurant')
-      setShowCityModal(true)
-      setSelectedCity(null)
-      setItems([]) // Clear menu items when changing restaurant
-    } catch (err) {
-      setError(err.message)
-      console.error('Error fetching restaurants:', err)
-    } finally {
-      setLoading(false)
-    }
+    setSelectedRestaurant(null)
+    sessionStorage.removeItem('selectedRestaurant')
+    setShowRestaurantModal(true)
+    setItems([]) // Clear menu items when changing restaurant
   }
 
   const fetchItems = async (restaurantId) => {
@@ -193,13 +156,12 @@ const Food = () => {
   function selectRestaurant(restaurant) {
     setSelectedRestaurant(restaurant);
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
-    setShowCityModal(false);
     setShowRestaurantModal(false);
     toast.dismiss();
-    toast.success(`You selected restaurant: ${restaurant[7]}`);
+    toast.success(`You selected restaurant: ${restaurant[8]}`);
     fetchItems(restaurant[0]);
     // LOG: Food selectRestaurant called
-    console.log('[SONNER] Food selectRestaurant called for', restaurant[7]);
+    console.log('[SONNER] Food selectRestaurant called for', restaurant[8]);
   }
 
   // Add filtered and sorted items logic
@@ -234,28 +196,20 @@ const Food = () => {
     }
   })
 
-  if (loading && !showCityModal && !showRestaurantModal) {
+  if (loading && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
   }
 
-  if (error && !showCityModal && !showRestaurantModal) {
+  if (error && !showRestaurantModal) {
     return <div className="min-h-[calc(100vh-4rem)] text-center text-red-500 p-4 pb-32">{error}</div>
   }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
       <RestaurantSelector
-        open={showCityModal || showRestaurantModal}
-        onClose={() => {
-          setShowCityModal(false);
-          setShowRestaurantModal(false);
-        }}
-        restaurants={restaurants}
+        open={showRestaurantModal}
+        onClose={() => setShowRestaurantModal(false)}
         onSelect={selectRestaurant}
-        loading={loading}
-        error={error}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
       />
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
@@ -267,7 +221,7 @@ const Food = () => {
               className="w-full min-h-[4rem] flex justify-between items-center px-6 py-3 gap-4"
             >
               <div className="flex flex-col items-start min-w-0">
-                <span className="font-bold text-lg truncate w-full">{selectedRestaurant[7]}</span>
+                <span className="font-bold text-lg truncate w-full">{selectedRestaurant[8]}</span>
                 <span className="text-sm text-muted-foreground truncate w-full">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
               </div>
               <span className="text-sm text-primary whitespace-nowrap shrink-0">Change Restaurant</span>

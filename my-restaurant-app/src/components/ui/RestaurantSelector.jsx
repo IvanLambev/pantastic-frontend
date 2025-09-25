@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCoordinates } from "@/utils/geocode";
 import { ShoppingBag, MapPin, Navigation, Store, Truck } from "lucide-react";
+import { API_URL } from '@/config/api';
+import { fetchWithAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers in react-leaflet
@@ -29,16 +32,17 @@ function LocationSelector({ onLocationSelect }) {
 export default function RestaurantSelector({
   open,
   onClose,
-  restaurants,
   onSelect,
-  loading,
-  error,
-  selectedCity,
-  setSelectedCity,
 }) {
+  // Restaurant data state
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   // Main flow states
   const [currentStep, setCurrentStep] = useState('delivery-method'); // 'delivery-method', 'address-input', 'city-selection', 'restaurant-selection'
   const [deliveryMethod, setDeliveryMethod] = useState(''); // 'pickup' or 'delivery'
+  const [selectedCity, setSelectedCity] = useState(null);
   
   // Address and location states
   const [address, setAddress] = useState("");
@@ -48,11 +52,38 @@ export default function RestaurantSelector({
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState([42.6977, 23.3219]); // Sofia, Bulgaria as default
 
-  // Get unique cities from restaurants
-  const cities = [...new Set(restaurants.map(restaurant => restaurant[2]))].sort();
-  // Filter restaurants by selected city
+  // Fetch restaurants when component mounts
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurants')
+        }
+        const data = await response.json()
+        setRestaurants(data)
+      } catch (err) {
+        setError(err.message)
+        console.error('Error fetching restaurants:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Check if restaurant is already selected
+    const selectedRestaurant = sessionStorage.getItem('selectedRestaurant')
+    if (!selectedRestaurant && open) {
+      fetchRestaurants()
+    } else if (selectedRestaurant) {
+      setLoading(false)
+    }
+  }, [open])
+
+  // Get unique cities from restaurants (updated index from 2 to 3)
+  const cities = [...new Set(restaurants.map(restaurant => restaurant[3]))].sort();
+  // Filter restaurants by selected city (updated index from 2 to 3)
   const filteredRestaurants = selectedCity 
-    ? restaurants.filter(restaurant => restaurant[2] === selectedCity)
+    ? restaurants.filter(restaurant => restaurant[3] === selectedCity)
     : restaurants;
 
   // Reset states when modal closes
@@ -89,8 +120,8 @@ export default function RestaurantSelector({
     let minDist = Infinity;
     let closest = null;
     for (const r of restaurants) {
-      const rLat = r[5];
-      const rLng = r[6];
+      const rLat = r[6];  // Updated index for latitude
+      const rLng = r[7];  // Updated index for longitude
       if (typeof rLat === "number" && typeof rLng === "number") {
         const dist = getDistance(lat, lng, rLat, rLng);
         if (dist < minDist) {
@@ -447,7 +478,7 @@ export default function RestaurantSelector({
                 const gmt3 = new Date(utc + 3 * 3600000);
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
                 const currentDay = days[gmt3.getDay()];
-                const hours = restaurant[8] || {};
+                const hours = restaurant[9] || {};  // Updated index for working hours
                 const todayHours = hours[currentDay];
                 let isOpen = false;
                 let timeText = "Closed";
@@ -478,12 +509,13 @@ export default function RestaurantSelector({
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
+                      toast.success(`You selected restaurant: ${restaurant[8]}`);
                     }}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
                         <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
-                          {restaurant[7]}
+                          {restaurant[8]}  {/* Updated index for restaurant name */}
                           <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
                             {isOpen ? "We are Open" : "We are Closed"}
                           </span>

@@ -1,17 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { API_URL } from '@/config/api'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { CarouselDots } from "@/components/carousel-dots"
 import Autoplay from "embla-carousel-autoplay"
@@ -19,18 +11,12 @@ import HowItWorks from "@/components/how-it-works"
 import DeliveryPickupInfo from "@/components/delivery-pickup-info"
 import FAQ from "@/components/faq"
 import AboutUs from "@/components/about-us"
-import { fetchWithAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
 
 const Home = () => {
   const [api, setApi] = useState(null)
-  const [showCityModal, setShowCityModal] = useState(true)
-  const [showRestaurantModal, setShowRestaurantModal] = useState(false)
-  const [restaurants, setRestaurants] = useState([])
-  const [selectedCity, setSelectedCity] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [showModal, setShowModal] = useState(false)
 
   const images = [
     "/pancake1.jpg",
@@ -39,57 +25,27 @@ const Home = () => {
   ]
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch restaurants')
-        }
-        const data = await response.json()
-        setRestaurants(data)
-      } catch (err) {
-        setError(err.message)
-        console.error('Error fetching restaurants:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     // Check if restaurant is already selected
     const selectedRestaurant = sessionStorage.getItem('selectedRestaurant')
     if (!selectedRestaurant) {
-      fetchRestaurants()
-    } else {
-      setShowCityModal(false)
-      setShowRestaurantModal(false)
+      setShowModal(true)
     }
   }, [])
 
   // Unified restaurant selection handler
   function selectRestaurant(restaurant) {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
-    setShowCityModal(false);
-    setShowRestaurantModal(false);
+    setShowModal(false);
     toast.dismiss();
     toast.success(`You selected restaurant: ${restaurant[8]}`);
-    // LOG: Home selectRestaurant called
-   // console.log('[SONNER] Home selectRestaurant called for', restaurant[8]);
   }
 
   return (
     <>
       <RestaurantSelector
-        open={showCityModal || showRestaurantModal}
-        onClose={() => {
-          setShowCityModal(false);
-          setShowRestaurantModal(false);
-        }}
-        restaurants={restaurants}
+        open={showModal}
+        onClose={() => setShowModal(false)}
         onSelect={selectRestaurant}
-        loading={loading}
-        error={error}
-        selectedCity={selectedCity}
-        setSelectedCity={setSelectedCity}
       />
 
       <div className="w-full">
