@@ -27,9 +27,32 @@ function Map() {
   const center = useMemo(() => ({ lat: 42.6977, lng: 23.3219 }), []); // Sofia, Bulgaria
   const [selected, setSelected] = useState(null);
 
+  // Handle map clicks
+  const handleMapClick = async (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    const clickedLocation = { lat, lng };
+
+    console.log("Dropped pin at:", clickedLocation);
+
+    // Reverse geocode to get address
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: clickedLocation }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const address = results[0].formatted_address;
+        console.log("Address for dropped pin:", address);
+
+        setSelected({ ...clickedLocation, address });
+      } else {
+        console.error("Geocoder failed due to:", status);
+      }
+    });
+  };
+
   return (
     <div className="w-full space-y-4">
       <div className="places-container">
+        {/* pass setSelected down */}
         <PlacesAutocomplete setSelected={setSelected} />
       </div>
       
@@ -37,6 +60,7 @@ function Map() {
         zoom={12}
         center={selected || center}
         mapContainerClassName="w-full h-96 rounded-lg border"
+        onClick={handleMapClick}
       >
         {selected && <Marker position={selected} />}
       </GoogleMap>
@@ -51,11 +75,7 @@ const PlacesAutocomplete = ({ setSelected }) => {
     setValue,
     suggestions: { status, data },
     clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      // componentRestrictions: { country: "bg" }, // For Bulgaria only
-    },
-  });
+  } = usePlacesAutocomplete();
 
   const handleSelect = async (address) => {
     setValue(address, false);
@@ -64,7 +84,11 @@ const PlacesAutocomplete = ({ setSelected }) => {
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      setSelected({ lat, lng });
+      const selectedLocation = { lat, lng, address };
+
+      console.log("User selected location:", selectedLocation);
+
+      setSelected(selectedLocation);
     } catch (error) {
       console.error("Error getting location:", error);
     }
@@ -76,17 +100,21 @@ const PlacesAutocomplete = ({ setSelected }) => {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         disabled={!ready}
-        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full p-3 border border-gray-300 rounded-lg 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 
+                   focus:border-transparent"
         placeholder="Search for an address..."
       />
-      <ComboboxPopover className="absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1">
+      <ComboboxPopover className="absolute z-50 w-full bg-white 
+                                   border border-gray-300 rounded-lg shadow-lg mt-1">
         <ComboboxList className="max-h-60 overflow-auto">
           {status === "OK" &&
             data.map(({ place_id, description }) => (
               <ComboboxOption 
                 key={place_id} 
                 value={description}
-                className="p-3 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                className="p-3 cursor-pointer hover:bg-gray-100 
+                           border-b border-gray-100 last:border-b-0"
               />
             ))}
         </ComboboxList>
