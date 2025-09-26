@@ -1,10 +1,12 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
+import AddonTemplatesAdminComponent from "@/components/admin/AddonTemplatesAdminComponent";
 import { fetchWithAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +23,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function RestaurantDetailsAdminComponent() {
-  const { restaurantId } = useParams();
+  const { restaurantId: paramRestaurantId } = useParams();
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
+  const [addonTemplates, setAddonTemplates] = useState([]);
   const [currentTab, setCurrentTab] = useState("items");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,6 +43,7 @@ export default function RestaurantDetailsAdminComponent() {
     description: "",
     image: "",
     price: "",
+    addon_templates: []
   });
   const [deletingItem, setDeletingItem] = useState(null);
   const [showAddDeliveryDialog, setShowAddDeliveryDialog] = useState(false);
@@ -45,6 +51,11 @@ export default function RestaurantDetailsAdminComponent() {
   const [editingDelivery, setEditingDelivery] = useState(null);
   const [showEditDeliveryDialog, setShowEditDeliveryDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [availableTemplates, setAvailableTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [resolvedRestaurantId, setResolvedRestaurantId] = useState(paramRestaurantId || "");
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -53,32 +64,76 @@ export default function RestaurantDetailsAdminComponent() {
       try {
         const res = await fetch(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
-        // Find by UUID (restaurantId)
-        const found = data.find(r => r[0] === restaurantId);
-        setRestaurant(found);
-        if (found) {
-          const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
-          setMenuItems(await itemsRes.json());
-          // Only use fetchDeliveryPeople (with fetchWithAuth) for delivery people
-          await fetchDeliveryPeople();
+        console.log('Restaurants data:', data);
+        
+        // Find by UUID (paramRestaurantId) or use first restaurant if no param
+        let found = null;
+        let idToUse = paramRestaurantId;
+        
+        if (paramRestaurantId) {
+          found = data.find(r => r[0] === paramRestaurantId);
+        } else if (data.length > 0) {
+          // If no param provided, use first restaurant
+          found = data[0];
+          idToUse = data[0][0];
         }
-      } catch (err) {
+        
+        if (!found) {
+          setError("Restaurant not found");
+          setLoading(false);
+          return;
+        }
+        
+        setRestaurant(found);
+        setResolvedRestaurantId(idToUse);
+        
+        // Fetch all data in parallel
+        const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
+          fetch(`${API_URL}/restaurant/${idToUse}/items`),
+          fetchWithAuth(`${API_URL}/restaurant/delivery-people`),
+          fetchWithAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
+        ]);
+        
+        const items = await itemsRes.json();
+        const delivery = await deliveryRes.json();
+        const templates = templatesRes.ok ? await templatesRes.json() : [];
+        
+        console.log('Items:', items);
+        console.log('Templates:', templates);
+        
+        setMenuItems(items);
+        setDeliveryPeople(delivery);
+        setAddonTemplates(templates || []);
+        setAvailableTemplates(templates || []);
+        
+      } catch (error) {
         setError("Failed to load restaurant details");
+        console.error('Error loading restaurant details:', error);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchRestaurant();
-  }, [restaurantId]);
+  }, [paramRestaurantId]);
+  
+  // Remove unused functions since all data is fetched in main useEffect
+  // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
 
   const handleEditItem = (item) => {
     setModalMode("edit");
+    // Parse template IDs from item[1] (template_ids field)
+    let addonTemplates = [];
+    if (item[1] && Array.isArray(item[1])) {
+      addonTemplates = item[1];
+    }
     setItemForm({
       id: item[0],
-      name: item[4],
-      description: item[2],
-      image: item[3],
-      price: item[5],
+      name: item[6],
+      description: item[4],
+      image: item[5],
+      price: item[7],
+      addon_templates: addonTemplates
     });
     setShowItemModal(true);
   };
@@ -87,7 +142,7 @@ export default function RestaurantDetailsAdminComponent() {
   };
   const handleAddItem = () => {
     setModalMode("add");
-    setItemForm({ id: "", name: "", description: "", image: "", price: "" });
+    setItemForm({ id: "", name: "", description: "", image: "", price: "", addon_templates: [] });
     setShowItemModal(true);
   };
 
@@ -98,11 +153,16 @@ export default function RestaurantDetailsAdminComponent() {
     let url = `${API_URL}/restaurant/${restaurant[0]}/items`;
     let method = modalMode === "add" ? "POST" : "PUT";
     if (modalMode === "add") {
-      formData.append("name", itemForm.name);
-      formData.append("description", itemForm.description);
-      formData.append("price", itemForm.price);
+      formData.append("data", JSON.stringify({
+        restaurant_id: restaurant[0],
+        name: itemForm.name,
+        description: itemForm.description,
+        price: parseFloat(itemForm.price),
+        addon_templates: itemForm.addon_templates
+      }));
+      
       if (fileInputRef.current && fileInputRef.current.files[0]) {
-        formData.append("image", fileInputRef.current.files[0]);
+        formData.append("file", fileInputRef.current.files[0]);
       }
     } else {
       // For edit, use the backend's required structure
@@ -110,7 +170,8 @@ export default function RestaurantDetailsAdminComponent() {
         item_id: itemForm.id,
         name: itemForm.name,
         description: itemForm.description,
-        price: parseFloat(itemForm.price)
+        price: parseFloat(itemForm.price),
+        addon_templates: itemForm.addon_templates
       };
       formData.append("data", JSON.stringify(data));
       if (fileInputRef.current && fileInputRef.current.files[0]) {
@@ -122,12 +183,12 @@ export default function RestaurantDetailsAdminComponent() {
         method,
         body: formData,
       });
-      // Refresh items
-      const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
-      setMenuItems(await itemsRes.json());
+      // Refresh items after successful save
+      refreshData();
       setShowItemModal(false);
-    } catch (err) {
+    } catch (error) {
       alert("Failed to save item");
+      console.error('Error saving item:', error);
     }
   };
 
@@ -142,24 +203,27 @@ export default function RestaurantDetailsAdminComponent() {
       });
       setMenuItems(menuItems.filter(i => i[0] !== deletingItem[0]));
       setDeletingItem(null);
-    } catch (err) {
+    } catch (error) {
       alert("Failed to delete item");
+      console.error('Error deleting item:', error);
     }
   };
-
-  // Delivery people management state
+  
   // Fetch delivery people (global, not just assigned)
   const fetchDeliveryPeople = async () => {
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
-        method: "GET"
-      });
       const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
-      setDeliveryPeople(await res.json());
-    } catch {
+      const data = await res.json();
+      setDeliveryPeople(data);
+    } catch (error) {
+      console.error('Error fetching delivery people:', error);
       setDeliveryPeople([]);
     }
   };
+
+  // Assign/remove addon template to/from menu item
+  // handleAssignAddonToItem function removed to avoid linting warning
+  // handleRemoveAddonFromItem function removed to avoid linting warning
 
   // Add delivery person handler
   const handleAddDeliveryPerson = async (e) => {
@@ -175,8 +239,9 @@ export default function RestaurantDetailsAdminComponent() {
       setNewDeliveryPerson({ name: "", phone: "" });
       // Always use fetchDeliveryPeople
       await fetchDeliveryPeople();
-    } catch (err) {
+    } catch (error) {
       alert("Failed to add delivery person");
+      console.error('Error adding delivery person:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -187,6 +252,8 @@ export default function RestaurantDetailsAdminComponent() {
     setEditingDelivery(person);
     setShowEditDeliveryDialog(true);
   };
+  // handleEditDeliveryPersonSubmit function commented out to avoid linting warning
+  /*
   const handleEditDeliveryPersonSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -211,6 +278,7 @@ export default function RestaurantDetailsAdminComponent() {
       setIsSubmitting(false);
     }
   };
+  */
 
   // Delete delivery person
   const handleDeleteDeliveryPerson = async (person) => {
@@ -268,8 +336,118 @@ export default function RestaurantDetailsAdminComponent() {
     }
   };
 
+  // Remove unused fetchMenuItems function since refreshData handles this now
+
+  // Refresh data after operations
+  const refreshData = useCallback(async () => {
+    if (!resolvedRestaurantId) return;
+    
+    try {
+      const [itemsRes, templatesRes] = await Promise.all([
+        fetch(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
+        fetchWithAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
+      ]);
+      
+      const items = await itemsRes.json();
+      const templates = templatesRes.ok ? await templatesRes.json() : [];
+      
+      setMenuItems(items);
+      setAvailableTemplates(templates);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, [resolvedRestaurantId]);
+
+  // Apply addon template to menu item
+  const applyTemplateToItem = async (itemId, templateId) => {
+    if (!resolvedRestaurantId) {
+      toast.error('No restaurant ID available');
+      return;
+    }
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/apply-template/${templateId}`,
+        { method: 'POST' }
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('Addon template applied successfully');
+        refreshData(); // Refresh items to show updated templates
+        return result;
+      } else {
+        const error = await response.json();
+        if (error.message?.includes('already applied')) {
+          toast.info('Template is already applied to this item');
+        } else {
+          toast.error('Failed to apply template');
+        }
+      }
+    } catch (error) {
+      console.error('Error applying template:', error);
+      toast.error('Failed to apply template');
+    }
+  };
+
+  // Remove addon template from menu item
+  const removeTemplateFromItem = async (itemId, templateId) => {
+    if (!resolvedRestaurantId) {
+      toast.error('No restaurant ID available');
+      return;
+    }
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/remove-template/${templateId}`,
+        { method: 'DELETE' }
+      );
+      
+      if (response.ok) {
+        toast.success('Addon template removed successfully');
+        refreshData(); // Refresh items
+      } else {
+        const error = await response.json();
+        toast.error(error.message || 'Failed to remove template');
+      }
+    } catch (error) {
+      console.error('Error removing template:', error);
+      toast.error('Failed to remove template');
+    }
+  };
+
+  // Handle opening template management dialog
+  const handleManageTemplates = (item) => {
+    setSelectedItem(item);
+    setShowTemplateDialog(true);
+  };
+
+  // handleApplyTemplate function commented out to avoid linting warning
+  /*
+  const handleApplyTemplate = async () => {
+    if (selectedItem && selectedTemplateId) {
+      await applyTemplateToItem(selectedItem[0], selectedTemplateId);
+      setSelectedTemplateId("");
+      setShowTemplateDialog(false);
+    }
+  };
+  */
+
+  // Get applied template names for an item
+  const getAppliedTemplateNames = (item) => {
+    const templateIds = item[1]; // template_ids field (index 1)
+    if (!templateIds || !Array.isArray(templateIds)) return [];
+    
+    return templateIds.map(id => {
+      const template = availableTemplates.find(t => t.template_id === id);
+      return template ? template.name : `Template ${id.split('-')[0]}`;
+    });
+  };
+
+  // Remove the extra useEffect that was causing duplicate API calls
+  // All data is now fetched in the main useEffect above
+
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
+  if (!resolvedRestaurantId) return <div className="p-8 text-red-500">No restaurant ID found. Please access this page from a valid restaurant context.</div>;
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
@@ -331,6 +509,43 @@ export default function RestaurantDetailsAdminComponent() {
                 {itemForm.image && (
                   <p className="mt-2 text-sm text-gray-500">{itemForm.image}</p>
                 )}
+              </div>
+              
+              {/* Addon Templates Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Addon Templates</label>
+                <div className="mt-2 space-y-2">
+                  {addonTemplates.map((template) => (
+                    <div key={template.template_id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`template-${template.template_id}`}
+                        checked={itemForm.addon_templates.includes(template.template_id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setItemForm({
+                              ...itemForm,
+                              addon_templates: [...itemForm.addon_templates, template.template_id]
+                            });
+                          } else {
+                            setItemForm({
+                              ...itemForm,
+                              addon_templates: itemForm.addon_templates.filter(id => id !== template.template_id)
+                            });
+                          }
+                        }}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`template-${template.template_id}`} className="ml-2 block text-sm text-gray-900">
+                        {template.name}
+                      </label>
+                    </div>
+                  ))}
+                  
+                  {addonTemplates.length === 0 && (
+                    <p className="text-sm text-gray-500">No addon templates available. Create some in the Addon Templates tab.</p>
+                  )}
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -403,6 +618,7 @@ export default function RestaurantDetailsAdminComponent() {
         <TabsList>
           <TabsTrigger value="items">Menu Items</TabsTrigger>
           <TabsTrigger value="delivery">Delivery People</TabsTrigger>
+          <TabsTrigger value="addons">Addon Templates</TabsTrigger>
         </TabsList>
         <TabsContent value="items">
           {/* Menu Items Table */}
@@ -419,6 +635,9 @@ export default function RestaurantDetailsAdminComponent() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Templates
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -428,13 +647,56 @@ export default function RestaurantDetailsAdminComponent() {
                 {menuItems.map((item) => (
                   <tr key={item[0]}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item[4]}</div>
+                      <div className="text-sm font-medium text-gray-900">{item[6]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{item[2]}</div>
+                      <div className="text-sm text-gray-500">{item[4]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item[5]}</div>
+                      <div className="text-sm text-gray-900">{item[7]}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {/* Display applied templates */}
+                            {getAppliedTemplateNames(item).map((templateName, idx) => {
+                              const templateId = item[1][idx];
+                              return (
+                                <Badge key={templateId} variant="outline" className="text-xs">
+                                  {templateName}
+                                  <button 
+                                    onClick={() => removeTemplateFromItem(item[0], templateId)}
+                                    className="ml-1 text-red-500 hover:text-red-700"
+                                    title="Remove template"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              );
+                            })}
+                            
+                            {/* Add new template button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleManageTemplates(item)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              + Add Template
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManageTemplates(item)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            + Add Template
+                          </Button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Button
@@ -471,7 +733,64 @@ export default function RestaurantDetailsAdminComponent() {
             isSubmitting={isSubmitting}
           />
         </TabsContent>
+        <TabsContent value="addons">
+          {/* Addon Templates */}
+          <AddonTemplatesAdminComponent restaurantId={resolvedRestaurantId} />
+        </TabsContent>
       </Tabs>
+
+      {/* Manage Templates Dialog */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Addon Templates</DialogTitle>
+            <DialogDescription>
+              {selectedItem && (
+                <div>
+                  <span className="font-semibold">{selectedItem[6]}</span> - Manage addon templates
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-gray-700">Available Templates</h3>
+            <div className="mt-2 space-y-2">
+              {availableTemplates.map((template) => (
+                <div key={template.template_id} className="flex items-center">
+                  <Badge variant="outline" className="mr-2">
+                    {template.name}
+                  </Badge>
+                  <Button
+                    onClick={() => applyTemplateToItem(selectedItem[0], template.template_id)}
+                    variant="outline"
+                    size="sm"
+                    className="mr-2"
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    onClick={() => removeTemplateFromItem(selectedItem[0], template.template_id)}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => setShowTemplateDialog(false)}
+              variant="outline"
+              className="mr-2"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

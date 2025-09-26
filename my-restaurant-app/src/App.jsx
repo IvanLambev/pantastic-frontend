@@ -40,9 +40,12 @@ import OrderTrackingV2 from '@/pages/OrderTrackingV2'
 import UserDashboard from '@/pages/UserDashboard'
 import ItemDetails from '@/pages/ItemDetails'
 import Cart from '@/pages/Cart'
+import PaymentSuccess from '@/pages/PaymentSuccess'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
 import DeluxeBox from '@/pages/DeluxeBox'
+import 'leaflet/dist/leaflet.css';
+
 
 function useLenisSmoothScroll() {
   useEffect(() => {
@@ -285,6 +288,7 @@ export default function App() {
           <Route path="/restaurants/:restaurantId/items/:itemId" element={<ItemDetails />} />
           <Route path="/order-tracking" element={<OrderTrackingV2 />} />
           <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/deluxe-box" element={<DeluxeBox />} />

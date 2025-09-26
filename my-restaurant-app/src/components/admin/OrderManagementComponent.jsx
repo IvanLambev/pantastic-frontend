@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,7 +64,19 @@ export default function OrderManagementComponent() {
       const data = await response.json();
       if (Array.isArray(data)) {
         const validItems = data.filter(item => Array.isArray(item) && item.length >= 5 && item[0] && item[4]);
-        setItems(validItems);
+        // For each item, parse addons if present
+        const itemsWithAddons = validItems.map(item => {
+          let addons = [];
+          if (item[2]) {
+            try {
+              addons = typeof item[2] === 'string' ? JSON.parse(item[2]) : item[2];
+            } catch (e) {
+              addons = [];
+            }
+          }
+          return { raw: item, addons };
+        });
+        setItems(itemsWithAddons);
       } else {
         setItems([]);
       }
@@ -138,12 +151,11 @@ export default function OrderManagementComponent() {
     }
   };
 
-  const getItemNameById = (itemId) => {
-    const item = items.find(item => String(item[0]) === String(itemId));
-    if (!item) {
-      return `Unknown Item (${itemId})`;
-    }
-    return item[4];
+  // Helper to get item details and addons by ID
+  const getItemDetailsById = (itemId) => {
+    const found = items.find(item => String(item.raw[0]) === String(itemId));
+    if (!found) return null;
+    return found;
   };
 
   useEffect(() => {
@@ -174,6 +186,14 @@ export default function OrderManagementComponent() {
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_at).toLocaleString()}
                       </p>
+                      {order.scheduled_delivery_time && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-400">Scheduled</Badge>
+                          <span className="text-xs text-orange-700 font-semibold">
+                            Scheduled for: {new Date(order.scheduled_delivery_time).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
                       {order.status}
@@ -181,27 +201,78 @@ export default function OrderManagementComponent() {
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {(order.products && Object.entries(order.products).map(([id, quantity]) => {
-                        let instructions = {};
-                        if (order.order_description) {
-                          try {
-                            instructions = JSON.parse(order.order_description);
-                          } catch (e) {
-                            instructions = {};
-                          }
+                    <div className="space-y-3">
+                      {(() => {
+                        // Debug logging
+                        console.log('Order items:', order.items);
+                        console.log('Items length:', order.items?.length);
+                        console.log('Items exists:', !!order.items);
+                        
+                        // Check for new format (items array)
+                        if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+                          return order.items.map((item, itemIndex) => (
+                            <div key={item.item_id || itemIndex} className="border-l-2 border-blue-200 pl-3">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">
+                                    {item.item_quantity}x {item.item_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Base: ${item.item_price} × {item.item_quantity} = ${item.item_base_total?.toFixed(2) || '0.00'}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-medium">${item.item_total?.toFixed(2) || '0.00'}</p>
+                                </div>
+                              </div>
+                              
+                              {item.applied_addons && item.applied_addons.length > 0 && (
+                                <div className="mt-2 ml-2">
+                                  <p className="text-xs font-medium text-green-700 mb-1">Addons:</p>
+                                  <div className="space-y-1">
+                                    {item.applied_addons.map((addon, addonIndex) => (
+                                      <div key={addonIndex} className="flex justify-between items-center text-xs">
+                                        <span className="text-green-600">
+                                          + {addon.addon_name} (×{addon.addon_quantity})
+                                        </span>
+                                        <span className="text-green-600">
+                                          ${addon.addon_total?.toFixed(2) || '0.00'}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="mt-1 pt-1 border-t border-green-200">
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span className="font-medium text-green-700">Addon Total:</span>
+                                      <span className="font-medium text-green-700">
+                                        ${item.item_addon_total?.toFixed(2) || '0.00'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ));
                         }
-                        const itemInstruction = instructions[id];
-                        return (
-                          <li key={id}>
-                            {quantity}x {getItemNameById(id)}
-                            {itemInstruction && (
-                              <span className="ml-2 text-xs text-primary font-medium">(Instructions: {itemInstruction})</span>
-                            )}
-                          </li>
-                        );
-                      })) || <li>No items available</li>}
-                    </ul>
+                        
+                        // Fallback to old format if new format not available
+                        if (order.products && typeof order.products === 'object') {
+                          return Object.entries(order.products).map(([id, quantity]) => {
+                            const itemDetails = getItemDetailsById(id);
+                            return (
+                              <div key={id} className="border-l-2 border-gray-200 pl-3">
+                                <p className="text-sm font-medium">
+                                  {quantity}x {itemDetails ? itemDetails.raw[6] : `Unknown Item (${id})`}
+                                </p>
+                              </div>
+                            );
+                          });
+                        }
+                        
+                        // No items found
+                        return <p className="text-sm text-muted-foreground">No items available</p>;
+                      })()}
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-4">
@@ -243,6 +314,12 @@ export default function OrderManagementComponent() {
                   <p className="text-sm text-muted-foreground">
                     ${order.total_price ? order.total_price.toFixed(2) : '0.00'}
                   </p>
+                  {order.items && order.items.length > 0 && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <div>Items: ${order.items.reduce((sum, item) => sum + (item.item_base_total || 0), 0).toFixed(2)}</div>
+                      <div>Addons: ${order.items.reduce((sum, item) => sum + (item.item_addon_total || 0), 0).toFixed(2)}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
