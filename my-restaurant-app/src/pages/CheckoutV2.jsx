@@ -122,40 +122,70 @@ export default function CheckoutV2() {
         throw new Error('User not logged in or no restaurant selected')
       }
 
-      const products = {}
-      const instructions = {}
-      const order_addons = {}
+      // Format order items according to new API structure
+      const orderItems = []
+      
+      // Group items by their original item ID to combine quantities and addons/removables
+      const groupedItems = {}
       
       cartItems.forEach(item => {
-        products[item.id] = item.quantity
-        if (item.specialInstructions) {
-          instructions[item.id] = item.specialInstructions
+        const itemId = item.originalItemId || item.id
+        
+        if (!groupedItems[itemId]) {
+          groupedItems[itemId] = {
+            item_id: itemId,
+            quantity: 0,
+            addons: {},
+            removables: [],
+            special_instructions: null
+          }
         }
-        // Add selected addons to order_addons
+        
+        // Add quantity
+        groupedItems[itemId].quantity += item.quantity
+        
+        // Add addons (count occurrences)
         if (item.selectedAddons && item.selectedAddons.length > 0) {
-          const addonsObj = {}
           item.selectedAddons.forEach(addon => {
-            // Count how many times each addon is selected (for multiple quantities)
-            addonsObj[addon.name] = (addonsObj[addon.name] || 0) + 1
+            groupedItems[itemId].addons[addon.name] = (groupedItems[itemId].addons[addon.name] || 0) + item.quantity
           })
-          order_addons[item.id] = addonsObj
         }
+        
+        // Add removables (unique list)
+        if (item.selectedRemovables && item.selectedRemovables.length > 0) {
+          item.selectedRemovables.forEach(removable => {
+            if (!groupedItems[itemId].removables.includes(removable)) {
+              groupedItems[itemId].removables.push(removable)
+            }
+          })
+        }
+        
+        // Add special instructions
+        if (item.specialInstructions) {
+          groupedItems[itemId].special_instructions = item.specialInstructions
+        }
+      })
+      
+      // Convert grouped items to order items format
+      Object.values(groupedItems).forEach(groupedItem => {
+        const orderItem = {
+          item_id: groupedItem.item_id,
+          quantity: groupedItem.quantity,
+          addons: Object.keys(groupedItem.addons).length > 0 ? groupedItem.addons : null,
+          removables: groupedItem.removables.length > 0 ? groupedItem.removables : null,
+          special_instructions: groupedItem.special_instructions
+        }
+        orderItems.push(orderItem)
       })
 
       const orderData = {
         restaurant_id: selectedRestaurant[0],
-        products,
+        order_items: orderItems,
+        discount: null,
         payment_method: selectedPayment,
         delivery_method: deliveryMethod,
-        address: deliveryMethod === 'pickup' ? selectedRestaurant[1] : deliveryAddress, 
-        instructions,
-        order_addons
-      }
-
-      // Add scheduled delivery time if applicable
-      const scheduledTime = getScheduledDeliveryTime()
-      if (scheduledTime) {
-        orderData.scheduled_delivery_time = scheduledTime
+        address: deliveryMethod === 'pickup' ? null : deliveryAddress,
+        scheduled_delivery_time: getScheduledDeliveryTime()
       }
 
       console.log('Placing order with:', orderData)
@@ -174,12 +204,34 @@ export default function CheckoutV2() {
       const data = await response.json()
       if (!data.order_id) throw new Error('No order ID received')
       
-      clearCart()
-      cartItems.forEach(item => {
-        sessionStorage.removeItem(`item-instructions-${item.id}`);
-      });
-      toast.success('Order placed successfully!')
-      navigate(`/order-tracking-v2/${data.order_id}`)
+      // Handle different payment methods
+      if (selectedPayment === 'cash') {
+        // Cash payment - redirect directly to order tracking
+        clearCart()
+        cartItems.forEach(item => {
+          sessionStorage.removeItem(`item-instructions-${item.id}`);
+        });
+        toast.success('Order placed successfully!')
+        navigate(`/order-tracking-v2/${data.order_id}`)
+      } else if (selectedPayment === 'card') {
+        // Card payment - save payment info and redirect to payment URL
+        if (!data.payment_url || !data.payment_id) {
+          throw new Error('Payment information missing')
+        }
+        
+        // Save payment info to session storage
+        sessionStorage.setItem('pending_order_id', data.order_id)
+        sessionStorage.setItem('pending_payment_id', data.payment_id)
+        
+        // Clear cart before redirecting to payment
+        clearCart()
+        cartItems.forEach(item => {
+          sessionStorage.removeItem(`item-instructions-${item.id}`);
+        });
+        
+        // Redirect to payment URL
+        window.location.href = data.payment_url
+      }
     } catch (error) {
       console.error('Checkout error:', error)
       toast.error(error.message || 'Failed to place order')
@@ -400,8 +452,36 @@ export default function CheckoutV2() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex flex-col gap-2">
                       <div className="flex justify-between items-start">
-                        <div>
+                        <div className="flex-1">
                           <div className="font-medium">{item.name}</div>
+                          
+                          {/* Display addons */}
+                          {item.selectedAddons && item.selectedAddons.length > 0 && (
+                            <div className="text-sm text-green-600 mt-1">
+                              <span className="font-medium">Add-ons: </span>
+                              {item.selectedAddons.map((addon, index) => (
+                                <span key={index}>
+                                  {addon.name} (+€{addon.price.toFixed(2)})
+                                  {index < item.selectedAddons.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Display removables */}
+                          {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                            <div className="text-sm text-red-600 mt-1">
+                              <span className="font-medium">Removed: </span>
+                              {item.selectedRemovables.map((removable, index) => (
+                                <span key={index} className="capitalize">
+                                  {removable}
+                                  {index < item.selectedRemovables.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Display special instructions */}
                           {item.specialInstructions && (
                             <div className="text-sm text-muted-foreground mt-1">
                               <span className="font-medium">Instructions: </span>
