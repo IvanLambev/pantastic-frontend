@@ -11,6 +11,7 @@ import HowItWorks from "@/components/how-it-works"
 import DeliveryPickupInfo from "@/components/delivery-pickup-info"
 import FAQ from "@/components/faq"
 import AboutUs from "@/components/about-us"
+import GoogleMapsAutocomplete from "@/components/GoogleMapsAutocomplete"
 import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
 
@@ -82,6 +83,12 @@ const Home = () => {
         <DeliveryPickupInfo />
         <FAQ />
         <AboutUs />
+      </div>
+
+      {/* Google Maps with Autocomplete - Testing Section */}
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold mb-6 text-center">Address Search with Map (Testing)</h2>
+        <GoogleMapsAutocomplete />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
