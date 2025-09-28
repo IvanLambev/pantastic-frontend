@@ -37,6 +37,12 @@ export default function CheckoutV2() {
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+  
+  // Get delivery coordinates from sessionStorage
+  const getDeliveryCoordinates = () => {
+    const coordinates = sessionStorage.getItem('delivery_coordinates')
+    return coordinates ? JSON.parse(coordinates) : { latitude: null, longitude: null }
+  }
 
   // Calculate total
   const calculateTotal = () => {
@@ -58,7 +64,15 @@ export default function CheckoutV2() {
 
   const handleAddressSave = () => {
     if (newAddress.trim()) {
-      sessionStorage.setItem('delivery_address', newAddress.trim())
+      // Normalize the address by removing special characters except commas
+      const normalizedAddress = newAddress.trim().replace(/['"„"«»]/g, '').replace(/[^\w\s,.-]/g, '').trim()
+      
+      sessionStorage.setItem('delivery_address', normalizedAddress)
+      
+      // Note: When manually editing address, coordinates are cleared since we don't have exact coordinates
+      // The user should use the map to set precise coordinates if needed
+      sessionStorage.removeItem('delivery_coordinates')
+      
       setShowAddressEdit(false)
     }
   }
@@ -178,6 +192,9 @@ export default function CheckoutV2() {
         orderItems.push(orderItem)
       })
 
+      // Get delivery coordinates if delivery method is delivery
+      const coordinates = getDeliveryCoordinates()
+
       const orderData = {
         restaurant_id: selectedRestaurant[0],
         order_items: orderItems,
@@ -185,6 +202,8 @@ export default function CheckoutV2() {
         payment_method: selectedPayment,
         delivery_method: deliveryMethod,
         address: deliveryMethod === 'pickup' ? null : deliveryAddress,
+        latitude: deliveryMethod === 'delivery' && coordinates.latitude ? coordinates.latitude : null,
+        longitude: deliveryMethod === 'delivery' && coordinates.longitude ? coordinates.longitude : null,
         scheduled_delivery_time: getScheduledDeliveryTime()
       }
 

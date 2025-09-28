@@ -27,22 +27,61 @@ function Map() {
   const center = useMemo(() => ({ lat: 42.6977, lng: 23.3219 }), []); // Sofia, Bulgaria
   const [selected, setSelected] = useState(null);
 
+  // Function to normalize address by removing special characters except commas
+  const normalizeAddress = (address) => {
+    if (!address) return "";
+    // Remove quotes, special characters, but keep commas, spaces, letters, numbers
+    return address.replace(/['"„"«»]/g, '').replace(/[^\w\s,.-]/g, '').trim();
+  };
+
+  // Function to save location to session storage
+  const saveLocationToSession = (locationData) => {
+    const normalizedLocation = {
+      address: normalizeAddress(locationData.address),
+      latitude: locationData.lat,
+      longitude: locationData.lng
+    };
+    
+    console.log("Saving normalized location:", normalizedLocation);
+    
+    // Save to session storage
+    sessionStorage.setItem('delivery_address', normalizedLocation.address);
+    sessionStorage.setItem('delivery_coordinates', JSON.stringify({
+      latitude: normalizedLocation.latitude,
+      longitude: normalizedLocation.longitude
+    }));
+    
+    return normalizedLocation;
+  };
+
   // Handle map clicks
   const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-    const clickedLocation = { lat, lng };
-
-    console.log("Dropped pin at:", clickedLocation);
+    
+    console.log("Dropped pin at:", { lat, lng });
 
     // Reverse geocode to get address
     const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: clickedLocation }, (results, status) => {
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === "OK" && results[0]) {
-        const address = results[0].formatted_address;
-        console.log("Address for dropped pin:", address);
+        const rawAddress = results[0].formatted_address;
+        console.log("Raw address for dropped pin:", rawAddress);
 
-        setSelected({ ...clickedLocation, address });
+        const locationData = {
+          lat,
+          lng,
+          address: rawAddress
+        };
+
+        const normalizedLocation = saveLocationToSession(locationData);
+        console.log("Normalized dropped pin location:", normalizedLocation);
+
+        setSelected({ 
+          lat: normalizedLocation.latitude, 
+          lng: normalizedLocation.longitude, 
+          address: normalizedLocation.address 
+        });
       } else {
         console.error("Geocoder failed due to:", status);
       }
@@ -52,8 +91,8 @@ function Map() {
   return (
     <div className="w-full space-y-4">
       <div className="places-container">
-        {/* pass setSelected down */}
-        <PlacesAutocomplete setSelected={setSelected} />
+        {/* pass setSelected and saveLocationToSession down */}
+        <PlacesAutocomplete setSelected={setSelected} saveLocation={saveLocationToSession} />
       </div>
       
       <GoogleMap
@@ -68,7 +107,7 @@ function Map() {
   );
 }
 
-const PlacesAutocomplete = ({ setSelected }) => {
+const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
   const {
     ready,
     value,
@@ -84,11 +123,23 @@ const PlacesAutocomplete = ({ setSelected }) => {
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      const selectedLocation = { lat, lng, address };
+      
+      console.log("Raw selected address:", address);
+      
+      const locationData = {
+        lat,
+        lng,
+        address
+      };
 
-      console.log("User selected location:", selectedLocation);
+      const normalizedLocation = saveLocation(locationData);
+      console.log("Normalized selected location:", normalizedLocation);
 
-      setSelected(selectedLocation);
+      setSelected({
+        lat: normalizedLocation.latitude,
+        lng: normalizedLocation.longitude,
+        address: normalizedLocation.address
+      });
     } catch (error) {
       console.error("Error getting location:", error);
     }
