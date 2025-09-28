@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { GoogleMap, useLoadScript, Marker as GoogleMarker } from "@react-google-maps/api";
 import usePlacesAutocomplete, {
   getGeocode,
@@ -21,26 +20,6 @@ import { ShoppingBag, MapPin, Navigation, Store, Truck } from "lucide-react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default markers in react-leaflet
-import L from 'leaflet';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Component to handle map clicks for location selection
-function LocationSelector({ onLocationSelect }) {
-  useMapEvents({
-    click(e) {
-      onLocationSelect([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  return null;
-}
 
 // Google Maps Autocomplete Component
 function GoogleMapsAutocomplete({ onLocationSelect }) {
@@ -226,10 +205,6 @@ export default function RestaurantSelector({
   const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [showGoogleMap, setShowGoogleMap] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState([42.6977, 23.3219]); // Sofia, Bulgaria as default
 
   // Fetch restaurants when component mounts
   useEffect(() => {
@@ -271,9 +246,6 @@ export default function RestaurantSelector({
     setDeliveryMethod('');
     setAddress('');
     setAddressError('');
-    setShowMap(false);
-    setShowGoogleMap(false);
-    setSelectedLocation(null);
     setSelectedCity(null);
     onClose();
   };
@@ -353,8 +325,6 @@ export default function RestaurantSelector({
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setSelectedLocation([latitude, longitude]);
-        setMapCenter([latitude, longitude]);
         // Save location in sessionStorage if delivery
         if (deliveryMethod === 'delivery') {
           // Try to reverse geocode if possible, else save as 'Device Location'
@@ -388,46 +358,6 @@ export default function RestaurantSelector({
         setAddressLoading(false);
       }
     );
-  }
-
-  function handleMapLocationSelect(coords) {
-    setSelectedLocation(coords);
-    setMapCenter(coords);
-    // Save location in sessionStorage if delivery
-    if (deliveryMethod === 'delivery') {
-      // Try to reverse geocode if possible, else save as 'Map Location'
-      let mapAddress = 'Map Location';
-      if (window && window.fetch) {
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords[0]}&lon=${coords[1]}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.display_name) {
-              mapAddress = data.display_name;
-            }
-            sessionStorage.setItem('delivery_address', mapAddress);
-            sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
-            sessionStorage.setItem('delivery_method', 'delivery');
-          })
-          .catch(() => {
-            sessionStorage.setItem('delivery_address', mapAddress);
-            sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
-            sessionStorage.setItem('delivery_method', 'delivery');
-          });
-      } else {
-        sessionStorage.setItem('delivery_address', mapAddress);
-        sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords[0], lng: coords[1] }));
-        sessionStorage.setItem('delivery_method', 'delivery');
-      }
-    } else {
-      sessionStorage.setItem('delivery_method', 'pickup');
-    }
-    const closest = findClosestRestaurant(coords[0], coords[1]);
-    if (closest) {
-      onSelect(closest);
-      handleClose();
-    } else {
-      setAddressError("No restaurants found near this location.");
-    }
   }
 
   function handleGoogleMapLocationSelect(coords) {
@@ -535,69 +465,15 @@ export default function RestaurantSelector({
               </Button>
             </form>
 
-            {/* Map Toggle Button */}
-            <div className="text-center space-y-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowMap(!showMap)}
-                className="flex items-center gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {showMap ? 'Hide Leaflet Map' : 'Use Leaflet Map'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowGoogleMap(!showGoogleMap)}
-                className="flex items-center gap-2 ml-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {showGoogleMap ? 'Hide Google Maps' : 'Use Google Maps'}
-              </Button>
+            {/* Google Maps Container - Always Visible */}
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 text-center">
+                Search for an address or click on the map to select your location
+              </p>
+              <div className="w-full">
+                <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
+              </div>
             </div>
-
-            {/* Map Container */}
-            {showMap && (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  Click on the map to select your location
-                </p>
-                <div className="h-[400px] w-full rounded-lg overflow-hidden border">
-                  <MapContainer
-                    center={mapCenter}
-                    zoom={13}
-                    style={{ height: '100%', width: '100%' }}
-                    scrollWheelZoom={true}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <LocationSelector onLocationSelect={handleMapLocationSelect} />
-                    {selectedLocation && (
-                      <Marker position={selectedLocation}>
-                        <Popup>
-                          Selected Location
-                        </Popup>
-                      </Marker>
-                    )}
-                  </MapContainer>
-                </div>
-              </div>
-            )}
-
-            {/* Google Maps Container */}
-            {showGoogleMap && (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  Search for an address or click on the map to select your location
-                </p>
-                <div className="w-full">
-                  <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
-                </div>
-              </div>
-            )}
 
             {/* Device Location Button */}
             <Button 
