@@ -1,5 +1,18 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { GoogleMap, useLoadScript, Marker as GoogleMarker } from "@react-google-maps/api";
+import usePlacesAutocomplete, {
+  getGeocode,
+  getLatLng,
+} from "use-places-autocomplete";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxPopover,
+  ComboboxList,
+  ComboboxOption,
+} from "@reach/combobox";
+import "@reach/combobox/styles.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +42,171 @@ function LocationSelector({ onLocationSelect }) {
   return null;
 }
 
+// Google Maps Autocomplete Component
+function GoogleMapsAutocomplete({ onLocationSelect }) {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
+  });
+
+  if (!isLoaded) return <div className="p-4 text-center">Loading Google Maps...</div>;
+  return <GoogleMap_Component onLocationSelect={onLocationSelect} />;
+}
+
+function GoogleMap_Component({ onLocationSelect }) {
+  const center = { lat: 42.6977, lng: 23.3219 }; // Sofia, Bulgaria
+  const [selected, setSelected] = useState(null);
+
+  // Function to normalize address by removing special characters except commas
+  const normalizeAddress = (address) => {
+    if (!address) return "";
+    return address.replace(/['"„"«»]/g, '').replace(/[^\w\s,.-]/g, '').trim();
+  };
+
+  // Function to save location to session storage and trigger parent callback
+  const saveLocationToSession = (locationData) => {
+    const normalizedLocation = {
+      address: normalizeAddress(locationData.address),
+      latitude: locationData.lat,
+      longitude: locationData.lng
+    };
+    
+    console.log("Saving normalized location:", normalizedLocation);
+    
+    // Save to session storage
+    sessionStorage.setItem('delivery_address', normalizedLocation.address);
+    sessionStorage.setItem('delivery_coordinates', JSON.stringify({
+      latitude: normalizedLocation.latitude,
+      longitude: normalizedLocation.longitude
+    }));
+    
+    // Trigger parent callback with coordinates for restaurant finding
+    if (onLocationSelect) {
+      onLocationSelect([normalizedLocation.latitude, normalizedLocation.longitude]);
+    }
+    
+    return normalizedLocation;
+  };
+
+  // Handle map clicks
+  const handleMapClick = async (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    
+    console.log("Dropped pin at:", { lat, lng });
+
+    // Reverse geocode to get address
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const rawAddress = results[0].formatted_address;
+        console.log("Raw address for dropped pin:", rawAddress);
+
+        const locationData = {
+          lat,
+          lng,
+          address: rawAddress
+        };
+
+        const normalizedLocation = saveLocationToSession(locationData);
+        console.log("Normalized dropped pin location:", normalizedLocation);
+
+        setSelected({ 
+          lat: normalizedLocation.latitude, 
+          lng: normalizedLocation.longitude, 
+          address: normalizedLocation.address 
+        });
+      } else {
+        console.error("Geocoder failed due to:", status);
+      }
+    });
+  };
+
+  return (
+    <div className="w-full space-y-4">
+      <div className="places-container">
+        <PlacesAutocomplete setSelected={setSelected} saveLocation={saveLocationToSession} />
+      </div>
+      
+      <GoogleMap
+        zoom={12}
+        center={selected || center}
+        mapContainerClassName="w-full h-96 rounded-lg border"
+        onClick={handleMapClick}
+      >
+        {selected && <GoogleMarker position={selected} />}
+      </GoogleMap>
+    </div>
+  );
+}
+
+const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
+  const {
+    ready,
+    value,
+    setValue,
+    suggestions: { status, data },
+    clearSuggestions,
+  } = usePlacesAutocomplete();
+
+  const handleSelect = async (address) => {
+    setValue(address, false);
+    clearSuggestions();
+
+    try {
+      const results = await getGeocode({ address });
+      const { lat, lng } = await getLatLng(results[0]);
+      
+      console.log("Raw selected address:", address);
+      
+      const locationData = {
+        lat,
+        lng,
+        address
+      };
+
+      const normalizedLocation = saveLocation(locationData);
+      console.log("Normalized selected location:", normalizedLocation);
+
+      setSelected({
+        lat: normalizedLocation.latitude,
+        lng: normalizedLocation.longitude,
+        address: normalizedLocation.address
+      });
+    } catch (error) {
+      console.error("Error getting location:", error);
+    }
+  };
+
+  return (
+    <Combobox onSelect={handleSelect} className="relative">
+      <ComboboxInput
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={!ready}
+        className="w-full p-3 border border-gray-300 rounded-lg 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 
+                   focus:border-transparent"
+        placeholder="Search for an address..."
+      />
+      <ComboboxPopover className="absolute z-50 w-full bg-white 
+                                   border border-gray-300 rounded-lg shadow-lg mt-1">
+        <ComboboxList className="max-h-60 overflow-auto">
+          {status === "OK" &&
+            data.map(({ place_id, description }) => (
+              <ComboboxOption 
+                key={place_id} 
+                value={description}
+                className="p-3 cursor-pointer hover:bg-gray-100 
+                           border-b border-gray-100 last:border-b-0"
+              />
+            ))}
+        </ComboboxList>
+      </ComboboxPopover>
+    </Combobox>
+  );
+};
+
 export default function RestaurantSelector({
   open,
   onClose,
@@ -49,6 +227,7 @@ export default function RestaurantSelector({
   const [addressError, setAddressError] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [showGoogleMap, setShowGoogleMap] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState([42.6977, 23.3219]); // Sofia, Bulgaria as default
 
@@ -93,6 +272,7 @@ export default function RestaurantSelector({
     setAddress('');
     setAddressError('');
     setShowMap(false);
+    setShowGoogleMap(false);
     setSelectedLocation(null);
     setSelectedCity(null);
     onClose();
@@ -250,6 +430,25 @@ export default function RestaurantSelector({
     }
   }
 
+  function handleGoogleMapLocationSelect(coords) {
+    // Google Maps callback - coordinates are already saved by the Google Maps component
+    // Just set the method and find closest restaurant
+    if (deliveryMethod === 'delivery') {
+      sessionStorage.setItem('delivery_method', 'delivery');
+    } else {
+      sessionStorage.setItem('delivery_method', 'pickup');
+    }
+    
+    setAddressError(""); // Clear any previous errors
+    const closest = findClosestRestaurant(coords[0], coords[1]);
+    if (closest) {
+      onSelect(closest);
+      handleClose();
+    } else {
+      setAddressError("No restaurants found near this location.");
+    }
+  }
+
   function handleDeliveryMethodSelect(method) {
     setDeliveryMethod(method);
     setCurrentStep('address-input');
@@ -337,7 +536,7 @@ export default function RestaurantSelector({
             </form>
 
             {/* Map Toggle Button */}
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -345,7 +544,16 @@ export default function RestaurantSelector({
                 className="flex items-center gap-2"
               >
                 <MapPin className="h-4 w-4" />
-                {showMap ? 'Hide Map' : 'Point on Map'}
+                {showMap ? 'Hide Leaflet Map' : 'Use Leaflet Map'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowGoogleMap(!showGoogleMap)}
+                className="flex items-center gap-2 ml-2"
+              >
+                <MapPin className="h-4 w-4" />
+                {showGoogleMap ? 'Hide Google Maps' : 'Use Google Maps'}
               </Button>
             </div>
 
@@ -375,6 +583,18 @@ export default function RestaurantSelector({
                       </Marker>
                     )}
                   </MapContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Google Maps Container */}
+            {showGoogleMap && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 text-center">
+                  Search for an address or click on the map to select your location
+                </p>
+                <div className="w-full">
+                  <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
                 </div>
               </div>
             )}
