@@ -285,6 +285,11 @@ export default function RestaurantSelector({
   // Address and location states
   const [addressError, setAddressError] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
+  
+  // Confirmation dialog state for distance warning
+  const [showDistanceWarning, setShowDistanceWarning] = useState(false);
+  const [pendingRestaurantSelection, setPendingRestaurantSelection] = useState(null);
+  const [pendingDistance, setPendingDistance] = useState(null);
 
   // Fetch restaurants when component mounts
   useEffect(() => {
@@ -326,6 +331,9 @@ export default function RestaurantSelector({
     setDeliveryMethod('');
     setAddressError('');
     setSelectedCity(null);
+    setShowDistanceWarning(false);
+    setPendingRestaurantSelection(null);
+    setPendingDistance(null);
     onClose();
   };
 
@@ -404,7 +412,7 @@ export default function RestaurantSelector({
         return {
           restaurant: closest,
           distance: minDist,
-          message: `⚠️ The closest working restaurant "${closest[8]}" is ${minDist.toFixed(1)} km away. Delivery fee may be higher due to the distance.`
+          message: `The closest working restaurant "${closest[8]}" is ${minDist.toFixed(1)} km away from your location. Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?`
         };
       }
       
@@ -498,11 +506,15 @@ export default function RestaurantSelector({
         const result = findClosestRestaurant(latitude, longitude);
         if (result.restaurant) {
           if (result.message) {
-            // Show distance warning but still proceed
-            toast.warning(result.message, { duration: 5000 });
+            // Show distance warning confirmation dialog
+            setPendingRestaurantSelection(result.restaurant);
+            setPendingDistance(result.distance);
+            setShowDistanceWarning(true);
+            setAddressError(result.message);
+          } else {
+            onSelect(result.restaurant);
+            handleClose();
           }
-          onSelect(result.restaurant);
-          handleClose();
         } else {
           setAddressError(result.message || "No restaurants found near your location.");
         }
@@ -528,11 +540,15 @@ export default function RestaurantSelector({
     const result = findClosestRestaurant(coords[0], coords[1]);
     if (result.restaurant) {
       if (result.message) {
-        // Show distance warning but still proceed
-        toast.warning(result.message, { duration: 5000 });
+        // Show distance warning confirmation dialog
+        setPendingRestaurantSelection(result.restaurant);
+        setPendingDistance(result.distance);
+        setShowDistanceWarning(true);
+        setAddressError(result.message);
+      } else {
+        onSelect(result.restaurant);
+        handleClose();
       }
-      onSelect(result.restaurant);
-      handleClose();
     } else {
       setAddressError(result.message || "No restaurants found near this location.");
     }
@@ -545,6 +561,24 @@ export default function RestaurantSelector({
 
   function handleManualRestaurantSelect() {
     setCurrentStep('city-selection');
+  }
+
+  function handleConfirmDistantRestaurant() {
+    if (pendingRestaurantSelection) {
+      onSelect(pendingRestaurantSelection);
+      setShowDistanceWarning(false);
+      setPendingRestaurantSelection(null);
+      setPendingDistance(null);
+      setAddressError("");
+      handleClose();
+    }
+  }
+
+  function handleCancelDistantRestaurant() {
+    setShowDistanceWarning(false);
+    setPendingRestaurantSelection(null);
+    setPendingDistance(null);
+    setAddressError("Please try a different location or manually select a restaurant.");
   }
 
   return (
@@ -627,8 +661,49 @@ export default function RestaurantSelector({
             {/* Error Message */}
             {addressError && (
               <div className="text-center">
-                <p className="text-red-500 bg-red-50 p-3 rounded-lg mb-4">{addressError}</p>
-                {addressError.includes("No restaurants are currently open") && (
+                <div className={`p-4 rounded-lg mb-4 ${
+                  showDistanceWarning ? 'text-orange-700 bg-orange-50 border border-orange-200' : 'text-red-500 bg-red-50'
+                }`}>
+                  {showDistanceWarning && pendingRestaurantSelection ? (
+                    <div className="space-y-2">
+                      <div className="font-semibold text-lg text-orange-800">
+                        Distance Warning
+                      </div>
+                      <p className="text-sm">
+                        The closest working restaurant <span className="font-bold">"{pendingRestaurantSelection[8]}"</span> is{' '}
+                        <span className="font-bold">{pendingDistance?.toFixed(1)} km</span> away from your location.
+                      </p>
+                      <p className="text-sm">
+                        Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?
+                      </p>
+                    </div>
+                  ) : (
+                    <p>{addressError}</p>
+                  )}
+                </div>
+                
+                {/* Distance Warning Confirmation */}
+                {showDistanceWarning && (
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      variant="outline"
+                      onClick={handleCancelDistantRestaurant}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Try Different Location
+                    </Button>
+                    <Button 
+                      variant="default"
+                      onClick={handleConfirmDistantRestaurant}
+                      className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700"
+                    >
+                      Yes, Select This Restaurant
+                    </Button>
+                  </div>
+                )}
+                
+                {/* No Open Restaurants Options */}
+                {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button 
                       variant="outline"
