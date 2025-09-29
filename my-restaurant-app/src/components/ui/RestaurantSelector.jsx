@@ -15,8 +15,7 @@ import "@reach/combobox/styles.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getCoordinates } from "@/utils/geocode";
-import { ShoppingBag, MapPin, Navigation, Store, Truck } from "lucide-react";
+import { ShoppingBag, Navigation, Store, Truck } from "lucide-react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -284,7 +283,6 @@ export default function RestaurantSelector({
   const [selectedCity, setSelectedCity] = useState(null);
   
   // Address and location states
-  const [address, setAddress] = useState("");
   const [addressError, setAddressError] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
 
@@ -326,7 +324,6 @@ export default function RestaurantSelector({
   const handleClose = () => {
     setCurrentStep('delivery-method');
     setDeliveryMethod('');
-    setAddress('');
     setAddressError('');
     setSelectedCity(null);
     onClose();
@@ -367,34 +364,7 @@ export default function RestaurantSelector({
     return closest;
   }
 
-  async function handleAddressSubmit(e) {
-    e.preventDefault();
-    setAddressError("");
-    setAddressLoading(true);
-    try {
-      const coords = await getCoordinates(address);
-      if (!coords) throw new Error("Could not geocode address");
-      // Save address and coordinates in sessionStorage if delivery
-      if (deliveryMethod === 'delivery') {
-        sessionStorage.setItem('delivery_address', address);
-        sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: coords.lat, lng: coords.lng }));
-        sessionStorage.setItem('delivery_method', 'delivery');
-      } else {
-        sessionStorage.setItem('delivery_method', 'pickup');
-      }
-      const closest = findClosestRestaurant(coords.lat, coords.lng);
-      if (closest) {
-        onSelect(closest);
-        handleClose();
-      } else {
-        setAddressError("No restaurants found near this address.");
-      }
-    } catch {
-      setAddressError("Failed to find restaurant for this address.");
-    } finally {
-      setAddressLoading(false);
-    }
-  }
+
 
   async function handleDeviceLocation() {
     setAddressError("");
@@ -525,28 +495,6 @@ export default function RestaurantSelector({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
-            {/* Address Input Form */}
-            <form onSubmit={handleAddressSubmit} className="space-y-4">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  className="w-full border rounded-lg pl-10 pr-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your address..."
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  disabled={addressLoading}
-                />
-              </div>
-              <Button 
-                type="submit" 
-                disabled={addressLoading || !address}
-                className="w-full py-3 text-lg"
-              >
-                {addressLoading ? "Finding Restaurant..." : "Find Closest Restaurant"}
-              </Button>
-            </form>
-
             {/* Google Maps Container - Always Visible */}
             <div className="space-y-4">
               <p className="text-sm text-gray-600 text-center">
