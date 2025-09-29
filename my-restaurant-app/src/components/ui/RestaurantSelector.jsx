@@ -345,23 +345,122 @@ export default function RestaurantSelector({
     return R * c;
   }
 
-  // Find closest restaurant by coordinates
+  // Check if restaurant is currently open
+  function isRestaurantOpen(restaurant) {
+    // Get current time in GMT+3
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const gmt3 = new Date(utc + 3 * 3600000);
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const currentDay = days[gmt3.getDay()];
+    const hours = restaurant[9] || {};  // Working hours object
+    const todayHours = hours[currentDay];
+    
+    if (!todayHours) return false;
+    
+    try {
+      // Format: "09:00-18:00"
+      const [open, close] = todayHours.split("-");
+      const [openH, openM] = open.split(":").map(Number);
+      const [closeH, closeM] = close.split(":").map(Number);
+      
+      const openDate = new Date(gmt3);
+      openDate.setHours(openH, openM, 0, 0);
+      const closeDate = new Date(gmt3);
+      closeDate.setHours(closeH, closeM, 0, 0);
+      
+      return gmt3 >= openDate && gmt3 <= closeDate;
+    } catch (error) {
+      console.error("Error parsing restaurant hours:", error);
+      return false;
+    }
+  }
+
+  // Find closest open restaurant by coordinates
   function findClosestRestaurant(lat, lng) {
-    if (!restaurants.length) return null;
-    let minDist = Infinity;
-    let closest = null;
-    for (const r of restaurants) {
-      const rLat = r[6];  // Updated index for latitude
-      const rLng = r[7];  // Updated index for longitude
-      if (typeof rLat === "number" && typeof rLng === "number") {
-        const dist = getDistance(lat, lng, rLat, rLng);
-        if (dist < minDist) {
-          minDist = dist;
-          closest = r;
+    if (!restaurants.length) return { restaurant: null, distance: null, message: null };
+    
+    // First, try to find open restaurants
+    const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
+
+    // If we have open restaurants, find the closest one
+    if (openRestaurants.length > 0) {
+      let minDist = Infinity;
+      let closest = null;
+      for (const r of openRestaurants) {
+        const rLat = r[6];
+        const rLng = r[7];
+        if (typeof rLat === "number" && typeof rLng === "number") {
+          const dist = getDistance(lat, lng, rLat, rLng);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = r;
+          }
+        }
+      }
+      
+      // Check if the closest open restaurant is more than 10km away
+      if (minDist > 10) {
+        return {
+          restaurant: closest,
+          distance: minDist,
+          message: `⚠️ The closest working restaurant "${closest[8]}" is ${minDist.toFixed(1)} km away. Delivery fee may be higher due to the distance.`
+        };
+      }
+      
+      return { restaurant: closest, distance: minDist, message: null };
+    }
+    
+    // No open restaurants found
+    const nextOpenTime = getNextOpenTime();
+    return {
+      restaurant: null,
+      distance: null,
+      message: `No restaurants are currently open in your area. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`
+    };
+  }
+
+  // Helper function to get next opening time
+  function getNextOpenTime() {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const gmt3 = new Date(utc + 3 * 3600000);
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    
+    // Check today and next few days
+    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+      const checkDate = new Date(gmt3);
+      checkDate.setDate(checkDate.getDate() + dayOffset);
+      const dayName = days[checkDate.getDay()];
+      
+      for (const restaurant of restaurants) {
+        const hours = restaurant[9] || {};
+        const dayHours = hours[dayName];
+        
+        if (dayHours) {
+          try {
+            const [open] = dayHours.split("-");
+            const [openH, openM] = open.split(":").map(Number);
+            const openTime = new Date(checkDate);
+            openTime.setHours(openH, openM, 0, 0);
+            
+            // If it's today, make sure the opening time is in the future
+            if (dayOffset === 0 && openTime <= gmt3) continue;
+            
+            if (dayOffset === 0) {
+              return `Today at ${open}`;
+            } else if (dayOffset === 1) {
+              return `Tomorrow at ${open}`;
+            } else {
+              return `${dayName} at ${open}`;
+            }
+          } catch {
+            continue;
+          }
         }
       }
     }
-    return closest;
+    return null;
   }
 
 
@@ -396,12 +495,16 @@ export default function RestaurantSelector({
         } else {
           sessionStorage.setItem('delivery_method', 'pickup');
         }
-        const closest = findClosestRestaurant(latitude, longitude);
-        if (closest) {
-          onSelect(closest);
+        const result = findClosestRestaurant(latitude, longitude);
+        if (result.restaurant) {
+          if (result.message) {
+            // Show distance warning but still proceed
+            toast.warning(result.message, { duration: 5000 });
+          }
+          onSelect(result.restaurant);
           handleClose();
         } else {
-          setAddressError("No restaurants found near your location.");
+          setAddressError(result.message || "No restaurants found near your location.");
         }
         setAddressLoading(false);
       },
@@ -422,12 +525,16 @@ export default function RestaurantSelector({
     }
     
     setAddressError(""); // Clear any previous errors
-    const closest = findClosestRestaurant(coords[0], coords[1]);
-    if (closest) {
-      onSelect(closest);
+    const result = findClosestRestaurant(coords[0], coords[1]);
+    if (result.restaurant) {
+      if (result.message) {
+        // Show distance warning but still proceed
+        toast.warning(result.message, { duration: 5000 });
+      }
+      onSelect(result.restaurant);
       handleClose();
     } else {
-      setAddressError("No restaurants found near this location.");
+      setAddressError(result.message || "No restaurants found near this location.");
     }
   }
 
@@ -519,7 +626,35 @@ export default function RestaurantSelector({
 
             {/* Error Message */}
             {addressError && (
-              <p className="text-red-500 text-center bg-red-50 p-3 rounded-lg">{addressError}</p>
+              <div className="text-center">
+                <p className="text-red-500 bg-red-50 p-3 rounded-lg mb-4">{addressError}</p>
+                {addressError.includes("No restaurants are currently open") && (
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        // Browse catalog - close modal and let user browse
+                        handleClose();
+                        toast.info("You can browse our menu and add items to your cart. Orders will be processed when restaurants open.");
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Browse Catalog
+                    </Button>
+                    <Button 
+                      variant="default"
+                      onClick={() => {
+                        // Schedule delivery - close modal and show scheduling info
+                        handleClose();
+                        toast.info("You can place an order now and we'll prepare it when the restaurant opens. Estimated delivery will be shown at checkout.");
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Schedule Delivery
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Manual Restaurant Selection */}
