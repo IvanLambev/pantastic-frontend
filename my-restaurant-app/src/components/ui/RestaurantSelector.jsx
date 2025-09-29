@@ -35,6 +35,9 @@ function GoogleMapsAutocomplete({ onLocationSelect }) {
 function GoogleMap_Component({ onLocationSelect }) {
   const center = { lat: 42.6977, lng: 23.3219 }; // Sofia, Bulgaria
   const [selected, setSelected] = useState(null);
+  const [pendingLocation, setPendingLocation] = useState(null);
+  const [showPickButton, setShowPickButton] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   // Function to normalize address by removing special characters except commas
   const normalizeAddress = (address) => {
@@ -67,6 +70,37 @@ function GoogleMap_Component({ onLocationSelect }) {
     return normalizedLocation;
   };
 
+  // Handle picking the current address
+  const handlePickAddress = () => {
+    if (pendingLocation) {
+      saveLocationToSession(pendingLocation);
+      setShowPickButton(false);
+    } else {
+      // If no pending location but there's text in the input, try to geocode it
+      if (inputValue?.trim()) {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ address: inputValue }, (results, status) => {
+          if (status === "OK" && results[0]) {
+            const lat = results[0].geometry.location.lat();
+            const lng = results[0].geometry.location.lng();
+            
+            const locationData = {
+              lat,
+              lng,
+              address: inputValue
+            };
+            
+            saveLocationToSession(locationData);
+            setSelected({ lat, lng, address: inputValue });
+            setShowPickButton(false);
+          } else {
+            console.error("Geocoder failed due to:", status);
+          }
+        });
+      }
+    }
+  };
+
   // Handle map clicks
   const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
@@ -87,14 +121,11 @@ function GoogleMap_Component({ onLocationSelect }) {
           address: rawAddress
         };
 
-        const normalizedLocation = saveLocationToSession(locationData);
-        console.log("Normalized dropped pin location:", normalizedLocation);
-
-        setSelected({ 
-          lat: normalizedLocation.latitude, 
-          lng: normalizedLocation.longitude, 
-          address: normalizedLocation.address 
-        });
+        // Set pending location and show pick button instead of saving immediately
+        setPendingLocation(locationData);
+        setSelected({ lat, lng, address: rawAddress });
+        setInputValue(rawAddress);
+        setShowPickButton(true);
       } else {
         console.error("Geocoder failed due to:", status);
       }
@@ -103,8 +134,27 @@ function GoogleMap_Component({ onLocationSelect }) {
 
   return (
     <div className="w-full space-y-4">
-      <div className="places-container">
-        <PlacesAutocomplete setSelected={setSelected} saveLocation={saveLocationToSession} />
+      <div className="places-container relative">
+        <PlacesAutocomplete 
+          setSelected={setSelected} 
+          setPendingLocation={setPendingLocation}
+          setShowPickButton={setShowPickButton}
+          pendingLocation={pendingLocation}
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+        />
+        {/* Pick Address Button with fade animation */}
+        <div className={`absolute right-2 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
+          showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
+        }`}>
+          <Button
+            onClick={handlePickAddress}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm font-medium shadow-lg whitespace-nowrap"
+          >
+            Pick Address
+          </Button>
+        </div>
       </div>
       
       <GoogleMap
@@ -119,17 +169,34 @@ function GoogleMap_Component({ onLocationSelect }) {
   );
 }
 
-const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
+const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton, pendingLocation, inputValue, setInputValue }) => {
   const {
     ready,
     value,
     setValue,
     suggestions: { status, data },
     clearSuggestions,
-  } = usePlacesAutocomplete();
+  } = usePlacesAutocomplete({
+    defaultValue: ""
+  });
+
+  // Sync internal value with external inputValue state
+  useEffect(() => {
+    if (inputValue !== value) {
+      setValue(inputValue, false);
+    }
+  }, [inputValue, setValue, value]);
+
+  // Update input value when pendingLocation changes (from map clicks)
+  useEffect(() => {
+    if (pendingLocation?.address && inputValue !== pendingLocation.address) {
+      setInputValue(pendingLocation.address);
+    }
+  }, [pendingLocation, setInputValue, inputValue]);
 
   const handleSelect = async (address) => {
     setValue(address, false);
+    setInputValue(address);
     clearSuggestions();
 
     try {
@@ -144,16 +211,31 @@ const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
         address
       };
 
-      const normalizedLocation = saveLocation(locationData);
-      console.log("Normalized selected location:", normalizedLocation);
-
-      setSelected({
-        lat: normalizedLocation.latitude,
-        lng: normalizedLocation.longitude,
-        address: normalizedLocation.address
-      });
+      // Set pending location and show pick button instead of saving immediately
+      setPendingLocation(locationData);
+      setSelected({ lat, lng, address });
+      setShowPickButton(true);
     } catch (error) {
       console.error("Error getting location:", error);
+    }
+  };
+
+  // Handle manual typing in the input
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    setInputValue(newValue);
+    
+    // Show pick button if there's text
+    if (newValue.trim()) {
+      setShowPickButton(true);
+      // Clear pending location if user is typing something different
+      if (pendingLocation && newValue !== pendingLocation.address) {
+        setPendingLocation(null);
+      }
+    } else {
+      setShowPickButton(false);
+      setPendingLocation(null);
     }
   };
 
@@ -161,7 +243,7 @@ const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
     <Combobox onSelect={handleSelect} className="relative">
       <ComboboxInput
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={handleInputChange}
         disabled={!ready}
         className="w-full p-3 border border-gray-300 rounded-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
