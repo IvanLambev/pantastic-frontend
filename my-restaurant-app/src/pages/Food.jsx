@@ -102,24 +102,74 @@ const Food = () => {
   }
 
   const handleAddToCart = (item) => {
-    addToCart({
+    // Handle both old array format and new object format
+    const itemData = Array.isArray(item) ? {
       id: item[0],
-      name: item[7],  // Updated: name is at index 7
-      price: Number(item[8]) || 0,  // Updated: price is at index 8
+      name: item[7],
+      price: Number(item[8]) || 0,
       image: item[5],
-      description: item[4],
+      description: item[4]
+    } : {
+      id: item.item_id,
+      name: item.name,
+      price: Number(item.price) || 0,
+      image: item.image_url,
+      description: item.description
+    };
+    
+    addToCart({
+      ...itemData,
       quantity: 1
     })
-    toast.success(`Added ${item[7]} to cart`)  // Updated: name is at index 7
+    toast.success(`Added ${itemData.name} to cart`)
   }
 
+  // Helper functions to handle both array and object formats
+  const getItemId = (item) => Array.isArray(item) ? item[0] : item.item_id;
+  const getItemName = (item) => Array.isArray(item) ? item[7] : item.name;
+  const getItemPrice = (item) => Array.isArray(item) ? Number(item[8]) || 0 : Number(item.price) || 0;
+  const getItemImage = (item) => Array.isArray(item) ? item[5] : item.image_url;
+  const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
+  const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
+  
+  // Helper function to check if item has addons (both direct and template-based)
+  const hasItemAddons = (item) => {
+    if (Array.isArray(item)) return false; // Old format doesn't have addon info
+    return (
+      (item.addons && Object.keys(item.addons).length > 0) ||
+      (item.addon_template_ids && item.addon_template_ids.length > 0)
+    );
+  };
+  
+  // Helper function to check if item has removables (both direct and template-based)
+  const hasItemRemovables = (item) => {
+    if (Array.isArray(item)) return false; // Old format doesn't have removable info
+    return (
+      (item.removables && item.removables.length > 0) ||
+      (item.removable_template_ids && item.removable_template_ids.length > 0)
+    );
+  };
+  
+  // Helper function to get addon count
+  const getAddonCount = (item) => {
+    if (Array.isArray(item)) return 0;
+    return Object.keys(item.addons || {}).length + (item.addon_template_ids || []).length;
+  };
+  
+  // Helper function to get removable count  
+  const getRemovableCount = (item) => {
+    if (Array.isArray(item)) return 0;
+    return (item.removables || []).length + (item.removable_template_ids || []).length;
+  };
+  
   const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
   const getFavoriteId = (itemId) => {
     const fav = favoriteItems.find(f => f.item_id === itemId);
     return fav ? (fav.id || fav.favourite_id || fav._id) : null;
   };
 
-  const handleToggleFavorite = async (itemId) => {
+  const handleToggleFavorite = async (item) => {
+    const itemId = getItemId(item);
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
     if (!user.access_token) return;
     if (!isItemFavorite(itemId)) {
@@ -166,31 +216,34 @@ const Food = () => {
 
   // Add filtered and sorted items logic
   const filteredItems = items.filter(item => {
-    // Make sure the item exists and has the expected structure
-    if (!item || !Array.isArray(item)) return false;
+    // Make sure the item exists
+    if (!item) return false;
     
-    const name = item[7] || '';  // Updated: name is at index 7
-    const description = item[4] || '';
-    const price = Number(item[8]) || 0;  // Updated: price is at index 8
+    const name = getItemName(item) || '';
+    const description = getItemDescription(item) || '';
+    const price = getItemPrice(item);
+    const itemType = getItemType(item) || '';
     
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
     
-    // For now, show all items since category data is not in the response
-    // You can add category logic once you know how categories are represented
-    const matchesCategory = category === "all" || true;
+    // Category filtering based on item_type
+    const matchesCategory = category === "all" || 
+      (category === "sweet" && itemType.includes('sweet')) ||
+      (category === "savory" && itemType.includes('savory')) ||
+      (category === "promo" && itemType.includes('promo'));
     
     return matchesSearch && matchesPrice && matchesCategory;
   }).sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return Number(a[8]) - Number(b[8]); // Updated: price is at index 8
+        return getItemPrice(a) - getItemPrice(b);
       case "price-high":
-        return Number(b[8]) - Number(a[8]); // Updated: price is at index 8
+        return getItemPrice(b) - getItemPrice(a);
       case "most-ordered":
         // If order count is available, use it, otherwise default to 0
-        return ((b[1]?._items?.length || 0) - (a[1]?._items?.length || 0));
+        return 0; // Placeholder for order count logic
       default:
         return 0;
     }
@@ -288,45 +341,73 @@ const Food = () => {
 
             {/* Mobile Menu Items Grid */}
             <div className="grid grid-cols-1 gap-4">
-              {filteredItems.map((item) => (
-                <Card key={item[0]} className="flex flex-row h-24">
-                  <div className="w-24 h-full relative">
-                    <img
-                      src={item[5] || '/elementor-placeholder-image.webp'}
-                      alt={item[7]}  // Updated: name is at index 7
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleToggleFavorite(item[0])}
-                      className="absolute top-1 right-1 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
-                      aria-label={isItemFavorite(item[0]) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Heart
-                        className={`h-6 w-6 ${isItemFavorite(item[0]) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                        fill={isItemFavorite(item[0]) ? 'red' : 'none'}
+              {filteredItems.map((item) => {
+                const itemId = getItemId(item);
+                const itemName = getItemName(item);
+                const itemPrice = getItemPrice(item);
+                const itemImage = getItemImage(item);
+                
+                // Get addons and removables for display using helper functions
+                const hasAddons = hasItemAddons(item);
+                const hasRemovables = hasItemRemovables(item);
+                
+                return (
+                  <Card key={itemId} className="flex flex-row h-24">
+                    <div className="w-24 h-full relative">
+                      <img
+                        src={itemImage || '/elementor-placeholder-image.webp'}
+                        alt={itemName}
+                        className="w-full h-full object-cover"
                       />
-                    </button>
-                  </div>
-                  <CardContent className="flex flex-1 justify-between items-center p-3">                    <div className="flex flex-col justify-center">
-                      <h3 className="font-semibold text-sm">{item[7]}</h3>  {/* Updated: name is at index 7 */}
-                      <span className="font-semibold text-sm">€{(Number(item[8]) || 0).toFixed(2)}</span>  {/* Updated: price is at index 8 */}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate(`/restaurants/${selectedRestaurant[0]}/items/${item[0]}`)}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFavorite(item)}
+                        className="absolute top-1 right-1 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                        aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
-                        Options
-                      </Button>
-                      <Button size="sm" onClick={() => handleAddToCart(item)}>
-                        Add
-                      </Button>
+                        <Heart
+                          className={`h-6 w-6 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                          fill={isItemFavorite(itemId) ? 'red' : 'none'}
+                        />
+                      </button>
+                      
+                      {/* Compact addon/removable indicators */}
+                      {(hasAddons || hasRemovables) && (
+                        <div className="absolute bottom-1 left-1 flex gap-1">
+                          {hasAddons && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                          {hasRemovables && <div className="w-2 h-2 bg-orange-500 rounded-full"></div>}
+                        </div>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardContent className="flex flex-1 justify-between items-center p-3">
+                      <div className="flex flex-col justify-center">
+                        <h3 className="font-semibold text-sm">{itemName}</h3>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">€{itemPrice.toFixed(2)}</span>
+                          {(hasAddons || hasRemovables) && (
+                            <div className="flex gap-1">
+                              {hasAddons && <span className="text-xs text-green-600">+</span>}
+                              {hasRemovables && <span className="text-xs text-orange-600">~</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`)}
+                        >
+                          Options
+                        </Button>
+                        <Button size="sm" onClick={() => handleAddToCart(item)}>
+                          Add
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -410,47 +491,86 @@ const Food = () => {
               {/* Menu Items Grid */}
               <div className="flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map((item) => (
-                    <Card key={item[0]} className="flex flex-col h-full">
-                      <div className="aspect-video relative">
-                        <img
-                          src={item[5] || '/elementor-placeholder-image.webp'}
-                          alt={item[7]}  // Updated: name is at index 7
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleToggleFavorite(item[0])}
-                          className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
-                          aria-label={isItemFavorite(item[0]) ? 'Remove from favorites' : 'Add to favorites'}
-                        >
-                          <Heart
-                            className={`h-6 w-6 ${isItemFavorite(item[0]) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                            fill={isItemFavorite(item[0]) ? 'red' : 'none'}
+                  {filteredItems.map((item) => {
+                    const itemId = getItemId(item);
+                    const itemName = getItemName(item);
+                    const itemPrice = getItemPrice(item);
+                    const itemImage = getItemImage(item);
+                    const itemDescription = getItemDescription(item);
+                    
+                    // Get addons and removables for display using helper functions
+                    const hasAddons = hasItemAddons(item);
+                    const hasRemovables = hasItemRemovables(item);
+                    const addonCount = getAddonCount(item);
+                    const removableCount = getRemovableCount(item);
+                    
+                    return (
+                      <Card key={itemId} className="flex flex-col h-full">
+                        <div className="aspect-video relative">
+                          <img
+                            src={itemImage || '/elementor-placeholder-image.webp'}
+                            alt={itemName}
+                            className="w-full h-full object-cover"
                           />
-                        </button>
-                      </div>
-                      <CardContent className="flex flex-col flex-grow p-4">
-                        <h3 className="font-semibold mb-2">{item[7]}</h3>  {/* Updated: name is at index 7 */}
-                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{item[4]}</p>
-                        <div className="flex justify-between items-start">
-                          <span className="font-semibold">€{(Number(item[8]) || 0).toFixed(2)}</span>  {/* Updated: price is at index 8 */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/restaurants/${selectedRestaurant[0]}/items/${item[0]}`)}
-                            >
-                              Options
-                            </Button>
-                            <Button size="sm" onClick={() => handleAddToCart(item)}>
-                              Add to Cart
-                            </Button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleFavorite(item)}
+                            className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                            aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
+                          >
+                            <Heart
+                              className={`h-6 w-6 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                              fill={isItemFavorite(itemId) ? 'red' : 'none'}
+                            />
+                          </button>
+                          
+                          {/* Addon/Removable indicators */}
+                          {(hasAddons || hasRemovables) && (
+                            <div className="absolute top-2 left-2 flex flex-col gap-1">
+                              {hasAddons && (
+                                <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                  +{addonCount}
+                                </div>
+                              )}
+                              {hasRemovables && (
+                                <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                                  -{removableCount}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        <CardContent className="flex flex-col flex-grow p-4">
+                          <h3 className="font-semibold mb-2">{itemName}</h3>
+                          <p className="text-sm text-muted-foreground mb-2 flex-grow">{itemDescription}</p>
+                          
+                          {/* Show available customizations */}
+                          {(hasAddons || hasRemovables) && (
+                            <div className="text-xs text-muted-foreground mb-3 flex flex-wrap gap-1">
+                              {hasAddons && <span className="bg-green-100 text-green-700 px-2 py-1 rounded">Extras available</span>}
+                              {hasRemovables && <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">Customizable</span>}
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between items-start">
+                            <span className="font-semibold">€{itemPrice.toFixed(2)}</span>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`)}
+                              >
+                                Options
+                              </Button>
+                              <Button size="sm" onClick={() => handleAddToCart(item)}>
+                                Add to Cart
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             </div>
