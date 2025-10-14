@@ -1,12 +1,56 @@
-# React + Vite
+# Pantastic Restaurant App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite application for restaurant management with customer ordering and admin functionality.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Customer ordering system
+- Restaurant management
+- Admin panel with authentication
+- Order tracking
+- Payment integration
 
-## Expanding the ESLint configuration
+## Environment Variables
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Copy `.env.example` to `.env.local` and configure the following variables:
+
+```env
+# Admin functionality toggle
+VITE_ADMIN_ENABLED=true
+```
+
+### Vercel Environment Variables
+
+For production deployment on Vercel, set the following environment variable:
+
+- `VITE_ADMIN_ENABLED`: Set to `true` to enable admin functionality, `false` to disable
+
+## Admin Access
+
+The admin panel is accessible at `/admin` and requires separate authentication:
+
+- Admin login endpoint: `https://api.palachinki.store/restaurant/admin/login`
+- Default credentials: `admin1@pantastic.com` / `admin123`
+- Admin functionality is controlled by the `VITE_ADMIN_ENABLED` environment variable
+
+## Development
+
+```bash
+npm install --legacy-peer-deps
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Deployment
+
+This app is configured for Vercel deployment with the following:
+
+- Build command: `npm run vercel-build`  
+- Output directory: `dist`
+- Framework: Vite
+- Install command: `npm install --legacy-peer-deps`

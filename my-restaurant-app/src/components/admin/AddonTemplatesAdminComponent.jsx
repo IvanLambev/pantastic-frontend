@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams } from "react-router-dom"
 import { API_URL } from '@/config/api'
-import { fetchWithAuth } from "@/context/AuthContext"
+import { fetchWithAdminAuth } from "@/utils/adminAuth"
 import { toast } from "sonner"
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -90,7 +90,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     setLoading(true)
     try {
       // Using the correct endpoint from documentation: GET /restaurant/addon-templates/{restaurantId}
-      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`)
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurantId}`)
       if (!response.ok) throw new Error('Failed to fetch addon templates')
       const data = await response.json()
       setTemplates(data || [])
@@ -139,7 +139,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     try {
       if (editingTemplate) {
         // Update existing template
-        const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates`, {
+        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
         toast.success('Addon template updated successfully')
       } else {
         // Create new template
-        const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates`, {
+        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -190,7 +190,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const handleDeleteTemplate = async (templateId) => {
     setIsSubmitting(true)
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/addon-templates`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -518,3 +518,4 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     </div>
   )
 }
+

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 import AddonTemplatesAdminComponent from "@/components/admin/AddonTemplatesAdminComponent";
-import { fetchWithAuth } from "@/context/AuthContext";
+import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -90,8 +90,8 @@ export default function RestaurantDetailsAdminComponent() {
         // Fetch all data in parallel
         const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
           fetch(`${API_URL}/restaurant/${idToUse}/items`),
-          fetchWithAuth(`${API_URL}/restaurant/delivery-people`),
-          fetchWithAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
+          fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
+          fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
         ]);
         
         const items = await itemsRes.json();
@@ -179,7 +179,7 @@ export default function RestaurantDetailsAdminComponent() {
       }
     }
     try {
-      await fetchWithAuth(url, {
+      await fetchWithAdminAuth(url, {
         method,
         body: formData,
       });
@@ -196,7 +196,7 @@ export default function RestaurantDetailsAdminComponent() {
   const confirmDeleteItem = async () => {
     if (!deletingItem) return;
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ item_id: deletingItem[0] }),
@@ -212,7 +212,7 @@ export default function RestaurantDetailsAdminComponent() {
   // Fetch delivery people (global, not just assigned)
   const fetchDeliveryPeople = async () => {
     try {
-      const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
+      const res = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`);
       const data = await res.json();
       setDeliveryPeople(data);
     } catch (error) {
@@ -230,7 +230,7 @@ export default function RestaurantDetailsAdminComponent() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDeliveryPerson),
@@ -258,7 +258,7 @@ export default function RestaurantDetailsAdminComponent() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -285,7 +285,7 @@ export default function RestaurantDetailsAdminComponent() {
     if (!window.confirm("Are you sure you want to delete this delivery person?")) return;
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ delivery_person_id: person.delivery_person_id || person[0] }),
@@ -302,7 +302,7 @@ export default function RestaurantDetailsAdminComponent() {
   const handleAssignDelivery = async (person) => {
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -320,7 +320,7 @@ export default function RestaurantDetailsAdminComponent() {
   const handleUnassignDelivery = async (person) => {
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -345,7 +345,7 @@ export default function RestaurantDetailsAdminComponent() {
     try {
       const [itemsRes, templatesRes] = await Promise.all([
         fetch(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
-        fetchWithAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
+        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
       ]);
       
       const items = await itemsRes.json();
@@ -365,7 +365,7 @@ export default function RestaurantDetailsAdminComponent() {
       return;
     }
     try {
-      const response = await fetchWithAuth(
+      const response = await fetchWithAdminAuth(
         `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/apply-template/${templateId}`,
         { method: 'POST' }
       );
@@ -396,7 +396,7 @@ export default function RestaurantDetailsAdminComponent() {
       return;
     }
     try {
-      const response = await fetchWithAuth(
+      const response = await fetchWithAdminAuth(
         `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/remove-template/${templateId}`,
         { method: 'DELETE' }
       );
@@ -794,3 +794,4 @@ export default function RestaurantDetailsAdminComponent() {
     </div>
   );
 }
+

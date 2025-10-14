@@ -2,6 +2,9 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { Route, Routes } from "react-router-dom"
+import { AdminProvider } from "@/context/AdminAuth"
+import AdminProtectedRoute from "@/components/AdminProtectedRoute"
+import AdminLogin from "./admin/AdminLogin"
 import Dashboard from "./admin/Dashboard"
 import Analytics from "./admin/Analytics"
 import Projects from "./admin/Projects"
@@ -10,7 +13,7 @@ import Restaurant from "./admin/Restaurant"
 import OrderManagement from "./admin/OrderManagement"
 import RestaurantDetailsAdmin from "./admin/RestaurantDetailsAdmin"
 
-export default function Page() {
+function AdminDashboard() {
   return (
     <div className="min-h-screen">
       <SidebarProvider>
@@ -33,5 +36,20 @@ export default function Page() {
         </div>
       </SidebarProvider>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <AdminProvider>
+      <Routes>
+        <Route path="/login" element={<AdminLogin />} />
+        <Route path="/*" element={
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
+        } />
+      </Routes>
+    </AdminProvider>
   )
 }

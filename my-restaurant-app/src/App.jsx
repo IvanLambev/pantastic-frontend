@@ -77,6 +77,9 @@ function MainLayout() {
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
   // Only hide navbar for /admin and its subroutes
   const isAdminPage = location.pathname.startsWith('/admin')
+  
+  // Check if admin functionality is enabled
+  const isAdminEnabled = import.meta.env.VITE_ADMIN_ENABLED === 'true'
 
   // Show navbar on all pages except /admin and its subroutes
   return isAdminPage ? (
@@ -109,7 +112,7 @@ function MainLayout() {
                     <Link to="/food">Food</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
-                {isLoggedIn && isAdmin && (
+                {isLoggedIn && isAdmin && isAdminEnabled && (
                   <NavigationMenuItem>
                     <NavigationMenuLink asChild>
                       <Link to="/admin">Admin</Link>
@@ -153,7 +156,7 @@ function MainLayout() {
                           <span>Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
-                      {isAdmin && (
+                      {isAdmin && isAdminEnabled && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="flex items-center gap-2">
                             <span>Admin</span>
@@ -208,7 +211,7 @@ function MainLayout() {
                       <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
                         Food
                       </Link>
-                      {isLoggedIn && isAdmin && (
+                      {isLoggedIn && isAdmin && isAdminEnabled && (
                         <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
                           Admin
                         </Link>

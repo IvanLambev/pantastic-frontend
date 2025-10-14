@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { fetchWithAuth } from "@/context/AuthContext";
+import { fetchWithAdminAuth } from "@/utils/adminAuth";
 
 export default function OrderManagementComponent() {
   const [orders, setOrders] = useState([]);
@@ -57,7 +57,7 @@ export default function OrderManagementComponent() {
 
   const fetchItems = useCallback(async (restaurantId) => {
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`);
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurantId}/items`);
       if (!response.ok) {
         throw new Error('Failed to fetch menu items');
       }
@@ -87,14 +87,13 @@ export default function OrderManagementComponent() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user?.access_token) {
+      const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+      if (!adminUser?.access_token) {
         return;
       }
-      const response = await fetchWithAuth(`${API_URL}/order/orders/worker`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/order/orders/worker`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         }
       });
@@ -121,7 +120,7 @@ export default function OrderManagementComponent() {
       });
       setOrders(sortedOrders);
       setLoading(false);
-    } catch (error) {
+    } catch {
       setLoading(false);
     }
   }, [checkForNewOrders, fetchItems]);
@@ -129,11 +128,9 @@ export default function OrderManagementComponent() {
   const updateOrderStatus = async (orderId, newStatus) => {
     if (!orderId) return;
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/order/orders/status`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ order_id: orderId, status: newStatus })
@@ -146,7 +143,7 @@ export default function OrderManagementComponent() {
         return order;
       }));
       toast.success('Order status updated successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update order status');
     }
   };
