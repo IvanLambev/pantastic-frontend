@@ -89,19 +89,33 @@ export default function OrderManagementComponent() {
     try {
       const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
       if (!adminUser?.access_token) {
+        console.log('⚠️ No admin token available');
+        setLoading(false);
         return;
       }
+      
+      console.log('🔄 Fetching orders as admin...');
       const response = await fetchWithAdminAuth(`${API_URL}/order/orders/worker`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch orders');
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch orders: ${response.status} ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('📦 Orders fetched:', data.length);
+      
       if (!Array.isArray(data)) {
+        console.log('⚠️ Orders data is not an array:', data);
+        setLoading(false);
         return;
       }
+      
       checkForNewOrders(data);
       const orderWithRestaurantId = data.find(order => order?.restaurant_id);
       if (orderWithRestaurantId) {
@@ -120,7 +134,12 @@ export default function OrderManagementComponent() {
       });
       setOrders(sortedOrders);
       setLoading(false);
-    } catch {
+    } catch (error) {
+      console.error('❌ Error fetching orders:', error);
+      // Don't show toast for permission errors, as they might be expected
+      if (!error.message.includes('forbidden')) {
+        toast.error(`Failed to load orders: ${error.message}`);
+      }
       setLoading(false);
     }
   }, [checkForNewOrders, fetchItems]);
