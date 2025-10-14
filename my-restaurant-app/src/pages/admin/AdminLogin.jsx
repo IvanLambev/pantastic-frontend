@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAdminAuth } from "@/context/AdminAuth"
+import { useAdminAuth } from "@/context/AdminContext"
 import { Button } from "@/components/ui/button"
 import {
   Card,

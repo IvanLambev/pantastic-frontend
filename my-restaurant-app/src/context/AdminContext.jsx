@@ -1,45 +1,22 @@
-import { createContext, useState, useEffect, useCallback } from "react"
+import { createContext, useState, useEffect, useCallback, useContext } from "react"
 import { API_URL } from '@/config/api'
 
-export const AdminContext = createContext()
+const AdminContext = createContext()
+
+// Custom hook for using admin auth context
+export const useAdminAuth = () => {
+  const context = useContext(AdminContext)
+  if (!context) {
+    throw new Error("useAdminAuth must be used within an AdminProvider")
+  }
+  return context
+}
 
 // Admin Auth Provider component  
 export const AdminProvider = ({ children }) => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false)
   const [adminToken, setAdminToken] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const checkAdminLoginStatus = async () => {
-      const adminUser = sessionStorage.getItem("adminUser")
-      if (adminUser) {
-        try {
-          const parsedUser = JSON.parse(adminUser)
-          if (parsedUser.access_token) {
-            // Verify the token is still valid
-            const verification = await verifyAdminToken(parsedUser.access_token)
-            if (verification.success) {
-              setAdminToken(parsedUser.access_token)
-              setIsAdminLoggedIn(true)
-            } else {
-              // Token is invalid, clear storage
-              sessionStorage.removeItem("adminUser")
-              setIsAdminLoggedIn(false)
-              setAdminToken(null)
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing admin user data:", error)
-          sessionStorage.removeItem("adminUser")
-          setIsAdminLoggedIn(false)
-          setAdminToken(null)
-        }
-      }
-      setLoading(false)
-    }
-
-    checkAdminLoginStatus()
-  }, [verifyAdminToken])
 
   const verifyAdminToken = useCallback(async (token) => {
     try {
@@ -61,6 +38,31 @@ export const AdminProvider = ({ children }) => {
       console.error("Admin verification error:", error)
       return { success: false, error: error.message }
     }
+  }, [])
+
+  useEffect(() => {
+    const checkAdminLoginStatus = async () => {
+      const adminUser = sessionStorage.getItem("adminUser")
+      if (adminUser) {
+        try {
+          const parsedUser = JSON.parse(adminUser)
+          if (parsedUser.access_token) {
+            // For initial load, just check if token exists
+            // We'll verify it when actually making API calls
+            setAdminToken(parsedUser.access_token)
+            setIsAdminLoggedIn(true)
+          }
+        } catch (error) {
+          console.error("Error parsing admin user data:", error)
+          sessionStorage.removeItem("adminUser")
+          setIsAdminLoggedIn(false)
+          setAdminToken(null)
+        }
+      }
+      setLoading(false)
+    }
+
+    checkAdminLoginStatus()
   }, [])
 
   const adminLogin = async (email, password) => {

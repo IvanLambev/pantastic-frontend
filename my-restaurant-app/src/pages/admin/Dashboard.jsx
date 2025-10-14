@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAdminAuth } from "@/context/AdminAuth"
+import { useAdminAuth } from "@/context/AdminContext"
 import { Badge } from "@/components/ui/badge"
 
 export default function Dashboard() {

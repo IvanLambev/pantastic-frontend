@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom"
-import { useAdminAuth } from "@/context/AdminAuth"
+import { useAdminAuth } from "@/context/AdminContext"
 
 export default function AdminProtectedRoute({ children }) {
   const { isAdminLoggedIn, loading, isAdminEnabled } = useAdminAuth()

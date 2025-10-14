@@ -5,6 +5,8 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
+import { useAdminAuth } from "@/context/AdminContext"
+import { useNavigate } from "react-router-dom"
 
 import {
   Avatar,
@@ -27,7 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser({
+export function AdminNavUser({
   user,
 }: {
   user: {
@@ -37,11 +39,12 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { adminLogout } = useAdminAuth()
+  const navigate = useNavigate()
 
   const handleLogout = () => {
-    // For admin logout, we'll handle this differently
-    // This component should be generic and not tied to admin auth
-    console.log("Logout clicked")
+    adminLogout()
+    navigate("/admin/login")
   }
 
   return (
@@ -103,7 +106,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
-              Log out
+              Admin Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
