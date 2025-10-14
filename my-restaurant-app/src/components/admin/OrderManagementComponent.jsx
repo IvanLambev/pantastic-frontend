@@ -189,7 +189,7 @@ export default function OrderManagementComponent() {
   }
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 py-4">
       <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
       <div className="grid gap-4">
         {orders.map(order => (

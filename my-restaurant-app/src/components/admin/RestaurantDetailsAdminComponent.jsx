@@ -62,7 +62,7 @@ export default function RestaurantDetailsAdminComponent() {
     const fetchRestaurant = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/restaurant/restaurants`);
+        const res = await fetchWithAdminAuth(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
         console.log('Restaurants data:', data);
         
@@ -89,7 +89,7 @@ export default function RestaurantDetailsAdminComponent() {
         
         // Fetch all data in parallel
         const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
-          fetch(`${API_URL}/restaurant/${idToUse}/items`),
+          fetchWithAdminAuth(`${API_URL}/restaurant/${idToUse}/items`),
           fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
           fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
         ]);
@@ -150,7 +150,7 @@ export default function RestaurantDetailsAdminComponent() {
   const handleItemFormSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    let url = `${API_URL}/restaurant/${restaurant[0]}/items`;
+    let url = `${API_URL}/restaurant/items`;
     let method = modalMode === "add" ? "POST" : "PUT";
     if (modalMode === "add") {
       formData.append("data", JSON.stringify({
@@ -196,7 +196,7 @@ export default function RestaurantDetailsAdminComponent() {
   const confirmDeleteItem = async () => {
     if (!deletingItem) return;
     try {
-      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ item_id: deletingItem[0] }),
@@ -344,7 +344,7 @@ export default function RestaurantDetailsAdminComponent() {
     
     try {
       const [itemsRes, templatesRes] = await Promise.all([
-        fetch(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
         fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
       ]);
       
@@ -451,10 +451,10 @@ export default function RestaurantDetailsAdminComponent() {
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Add/Edit Item Dialog */}
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-        <DialogContent>
+        <DialogContent className="max-w-md mx-4 md:max-w-lg">
           <DialogHeader>
             <DialogTitle>{modalMode === "add" ? "Add Item" : "Edit Item"}</DialogTitle>
             <DialogDescription>
@@ -621,8 +621,91 @@ export default function RestaurantDetailsAdminComponent() {
           <TabsTrigger value="addons">Addon Templates</TabsTrigger>
         </TabsList>
         <TabsContent value="items">
-          {/* Menu Items Table */}
-          <div className="overflow-x-auto">
+          {/* Menu Items - Responsive Layout */}
+          {/* Mobile Card Layout (hidden on md and up) */}
+          <div className="md:hidden space-y-4">
+            {menuItems.map((item) => (
+              <Card key={item[0]} className="p-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{item[6]}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{item[4]}</p>
+                      <p className="text-lg font-semibold text-gray-900 mt-2">${item[7]}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Templates Section */}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Templates</label>
+                    <div className="mt-2">
+                      {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {getAppliedTemplateNames(item).map((templateName, idx) => {
+                            const templateId = item[1][idx];
+                            return (
+                              <Badge key={templateId} variant="outline" className="text-xs">
+                                {templateName}
+                                <button 
+                                  onClick={() => removeTemplateFromItem(item[0], templateId)}
+                                  className="ml-1 text-red-500 hover:text-red-700"
+                                  title="Remove template"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            );
+                          })}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManageTemplates(item)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            + Add Template
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManageTemplates(item)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          + Add Template
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      onClick={() => handleEditItem(item)}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Pencil className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteItem(item)}
+                      variant="destructive"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Desktop Table Layout (hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -649,17 +732,16 @@ export default function RestaurantDetailsAdminComponent() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{item[6]}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{item[4]}</div>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 max-w-xs truncate">{item[4]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item[7]}</div>
+                      <div className="text-sm text-gray-900">${item[7]}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">
                         {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {/* Display applied templates */}
                             {getAppliedTemplateNames(item).map((templateName, idx) => {
                               const templateId = item[1][idx];
                               return (
@@ -675,8 +757,6 @@ export default function RestaurantDetailsAdminComponent() {
                                 </Badge>
                               );
                             })}
-                            
-                            {/* Add new template button */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -699,21 +779,24 @@ export default function RestaurantDetailsAdminComponent() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button
-                        onClick={() => handleEditItem(item)}
-                        variant="outline"
-                        className="mr-2"
-                      >
-                        <Pencil className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteItem(item)}
-                        variant="destructive"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          onClick={() => handleEditItem(item)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          <span className="hidden lg:inline ml-1">Edit</span>
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteItem(item)}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden lg:inline ml-1">Delete</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

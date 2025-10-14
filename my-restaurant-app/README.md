@@ -32,7 +32,12 @@ The admin panel is accessible at `/admin` and requires separate authentication:
 ### Admin Endpoints
 - **Login**: `POST https://api.palachinki.store/restaurant/admin/login`
 - **Verify**: `GET https://api.palachinki.store/restaurant/admin/verify`
-- **Orders**: `GET https://api.palachinki.store/restaurant/admin/orders`
+- **Restaurants**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/restaurants`
+- **Menu Items**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/items`
+- **Addon Templates**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/addon-templates`
+- **Delivery People**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/delivery-people`
+- **Workers**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/workers`
+- **API Keys**: `GET/POST/PUT/DELETE https://api.palachinki.store/restaurant/api-keys`
 
 ### Default Admin Credentials
 - Email: `admin1@pantastic.com`
