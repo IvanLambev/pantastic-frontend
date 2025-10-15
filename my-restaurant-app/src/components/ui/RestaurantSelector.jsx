@@ -384,9 +384,9 @@ export default function RestaurantSelector({
     }
   }
 
-  // Find closest open restaurant by coordinates
-  function findClosestRestaurant(lat, lng) {
-    if (!restaurants.length) return { restaurant: null, distance: null, message: null };
+  // Find closest restaurant (open or closed) by coordinates
+  function findClosestRestaurant(lat, lng, includeClosedRestaurants = false) {
+    if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
     
     // First, try to find open restaurants
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
@@ -412,11 +412,36 @@ export default function RestaurantSelector({
         return {
           restaurant: closest,
           distance: minDist,
+          isOpen: true,
           message: `The closest working restaurant "${closest[8]}" is ${minDist.toFixed(1)} km away from your location. Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?`
         };
       }
       
-      return { restaurant: closest, distance: minDist, message: null };
+      return { restaurant: closest, distance: minDist, message: null, isOpen: true };
+    }
+    
+    // No open restaurants found - if includeClosedRestaurants, find closest closed restaurant
+    if (includeClosedRestaurants) {
+      let minDist = Infinity;
+      let closest = null;
+      for (const r of restaurants) {
+        const rLat = r[6];
+        const rLng = r[7];
+        if (typeof rLat === "number" && typeof rLng === "number") {
+          const dist = getDistance(lat, lng, rLat, rLng);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = r;
+          }
+        }
+      }
+      
+      return {
+        restaurant: closest,
+        distance: minDist,
+        isOpen: false,
+        message: null
+      };
     }
     
     // No open restaurants found
@@ -424,6 +449,7 @@ export default function RestaurantSelector({
     return {
       restaurant: null,
       distance: null,
+      isOpen: false,
       message: `No restaurants are currently open in your area. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`
     };
   }
@@ -708,9 +734,23 @@ export default function RestaurantSelector({
                     <Button 
                       variant="outline"
                       onClick={() => {
-                        // Browse catalog - close modal and let user browse
-                        handleClose();
-                        toast.info("You can browse our menu and add items to your cart. Orders will be processed when restaurants open.");
+                        // Get user's location to find closest restaurant
+                        const deliveryCoords = sessionStorage.getItem('delivery_coordinates');
+                        if (deliveryCoords) {
+                          const coords = JSON.parse(deliveryCoords);
+                          const result = findClosestRestaurant(coords.latitude, coords.longitude, true);
+                          if (result.restaurant) {
+                            // Mark as scheduled order and select closest restaurant
+                            sessionStorage.setItem('scheduled_order', 'true');
+                            sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
+                            onSelect(result.restaurant);
+                            handleClose();
+                            toast.info("You can browse our menu and add items to your cart. Orders will be processed when the restaurant opens.");
+                          }
+                        } else {
+                          handleClose();
+                          toast.info("Please set your location first to browse the catalog.");
+                        }
                       }}
                       className="flex-1 sm:flex-none"
                     >
@@ -719,9 +759,23 @@ export default function RestaurantSelector({
                     <Button 
                       variant="default"
                       onClick={() => {
-                        // Schedule delivery - close modal and show scheduling info
-                        handleClose();
-                        toast.info("You can place an order now and we'll prepare it when the restaurant opens. Estimated delivery will be shown at checkout.");
+                        // Get user's location to find closest restaurant
+                        const deliveryCoords = sessionStorage.getItem('delivery_coordinates');
+                        if (deliveryCoords) {
+                          const coords = JSON.parse(deliveryCoords);
+                          const result = findClosestRestaurant(coords.latitude, coords.longitude, true);
+                          if (result.restaurant) {
+                            // Mark as scheduled order and select closest restaurant
+                            sessionStorage.setItem('scheduled_order', 'true');
+                            sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
+                            onSelect(result.restaurant);
+                            handleClose();
+                            toast.info("You can place an order now and we'll prepare it when the restaurant opens. Delivery time will be coordinated with restaurant hours during checkout.");
+                          }
+                        } else {
+                          handleClose();
+                          toast.info("Please set your location first to schedule a delivery.");
+                        }
                       }}
                       className="flex-1 sm:flex-none"
                     >

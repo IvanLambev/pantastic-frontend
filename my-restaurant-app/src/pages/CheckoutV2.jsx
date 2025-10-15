@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
+import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
@@ -32,11 +33,13 @@ export default function CheckoutV2() {
   const [selectedDate, setSelectedDate] = useState(undefined)
   const [selectedTime, setSelectedTime] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [, setDeliverySchedule] = useState(null)
   
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+  const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
   
   // Get delivery coordinates from sessionStorage
   const getDeliveryCoordinates = () => {
@@ -99,11 +102,25 @@ export default function CheckoutV2() {
   }
 
   const getScheduledDeliveryTime = () => {
-    if (!isScheduled || !selectedDate || !selectedTime) return null
-    const scheduledDateTime = new Date(selectedDate)
-    const [hours, minutes] = selectedTime.split(":")
-    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-    return scheduledDateTime.toISOString()
+    // Check if there's a scheduled delivery from the banner component
+    const scheduledDelivery = sessionStorage.getItem('order_scheduled_delivery');
+    if (scheduledDelivery) {
+      try {
+        const schedule = JSON.parse(scheduledDelivery);
+        if (schedule.timeSlot && schedule.timeSlot.start) {
+          return new Date(schedule.timeSlot.start).toISOString();
+        }
+      } catch (error) {
+        console.error('Error parsing scheduled delivery:', error);
+      }
+    }
+    
+    // Fallback to manual scheduling
+    if (!isScheduled || !selectedDate || !selectedTime) return null;
+    const scheduledDateTime = new Date(selectedDate);
+    const [hours, minutes] = selectedTime.split(":");
+    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    return scheduledDateTime.toISOString();
   }
 
   const paymentMethods = [
@@ -223,6 +240,11 @@ export default function CheckoutV2() {
       const data = await response.json()
       if (!data.order_id) throw new Error('No order ID received')
       
+      // Clean up scheduling session data
+      sessionStorage.removeItem('scheduled_order');
+      sessionStorage.removeItem('order_scheduling_reason');
+      sessionStorage.removeItem('order_scheduled_delivery');
+
       // Handle different payment methods
       if (selectedPayment === 'cash') {
         // Cash payment - redirect directly to order tracking
@@ -381,84 +403,106 @@ export default function CheckoutV2() {
                 </Card>
               )}
 
-              {/* Order Scheduling */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    Order Timing
-                  </CardTitle>
-                  <CardDescription>
-                    Schedule your order for a specific time (optional)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="schedule-order" 
-                      checked={isScheduled}
-                      onCheckedChange={setIsScheduled}
-                    />
-                    <Label htmlFor="schedule-order">Schedule for later</Label>
-                  </div>
-                  
-                  {isScheduled && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="date-picker">Date</Label>
-                          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                id="date-picker"
-                                className="w-full justify-start font-normal"
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={(date) => {
-                                  setSelectedDate(date)
-                                  setSelectedTime("") // Reset time when date changes
-                                  setCalendarOpen(false)
-                                }}
-                                disabled={isDateDisabled}
-                              />
-                            </PopoverContent>
-                          </Popover>
+              {/* Delivery Scheduling Banner */}
+              {selectedRestaurant.length > 0 && (
+                <DeliverySchedulingBanner
+                  restaurant={selectedRestaurant}
+                  onScheduleSelect={(schedule) => {
+                    if (schedule && schedule.isScheduled) {
+                      setDeliverySchedule(schedule);
+                      setIsScheduled(true);
+                      // Store scheduling info for order processing
+                      sessionStorage.setItem('order_scheduled_delivery', JSON.stringify(schedule));
+                    } else {
+                      setDeliverySchedule(null);
+                      setIsScheduled(false);
+                      sessionStorage.removeItem('order_scheduled_delivery');
+                    }
+                  }}
+                  className="mb-4"
+                />
+              )}
+
+              {/* Manual Order Scheduling (fallback) */}
+              {!isScheduledOrder && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarIcon className="h-5 w-5" />
+                      Order Timing
+                    </CardTitle>
+                    <CardDescription>
+                      Schedule your order for a specific time (optional)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="schedule-order" 
+                        checked={isScheduled}
+                        onCheckedChange={setIsScheduled}
+                      />
+                      <Label htmlFor="schedule-order">Schedule for later</Label>
+                    </div>
+                    
+                    {isScheduled && (
+                      <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="date-picker">Date</Label>
+                            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  id="date-picker"
+                                  className="w-full justify-start font-normal"
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={selectedDate}
+                                  onSelect={(date) => {
+                                    setSelectedDate(date)
+                                    setSelectedTime("") // Reset time when date changes
+                                    setCalendarOpen(false)
+                                  }}
+                                  disabled={isDateDisabled}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="time-picker">Time</Label>
+                            <select
+                              id="time-picker"
+                              value={selectedTime}
+                              onChange={(e) => setSelectedTime(e.target.value)}
+                              className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                              disabled={!selectedDate}
+                            >
+                              <option value="" disabled>Select time</option>
+                              {getAvailableTimeSlots().map(slot => (
+                                <option key={slot} value={slot}>{slot}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label htmlFor="time-picker">Time</Label>
-                          <select
-                            id="time-picker"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                            className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
-                            disabled={!selectedDate}
-                          >
-                            <option value="" disabled>Select time</option>
-                            {getAvailableTimeSlots().map(slot => (
-                              <option key={slot} value={slot}>{slot}</option>
-                            ))}
-                          </select>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>• You can schedule orders up to 3 days in advance</p>
+                          <p>• Available times: 08:00 - 22:30</p>
+                          <p>• Times are in 30-minute intervals</p>
                         </div>
                       </div>
-                      
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>• You can schedule orders up to 3 days in advance</p>
-                        <p>• Available times: 08:00 - 22:30</p>
-                        <p>• Times are in 30-minute intervals</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Order Summary */}
