@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import React, { useEffect, useState, useRef, FormEvent } from "react";
 import { API_URL } from '@/config/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
@@ -66,16 +66,38 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
     const fetchRestaurant = async () => {
       setLoading(true);
       try {
+        console.log('🏪 RestaurantDetailsAdmin (TS): Fetching restaurants...');
+        console.log('🏪 RestaurantDetailsAdmin (TS): Looking for restaurantId:', restaurantId);
+        
         const res = await fetch(`${API_URL}/restaurant/restaurants`);
         const data = await res.json();
-        const found = data.find((r: any) => r[0] === restaurantId);
+        console.log('🏪 RestaurantDetailsAdmin (TS): All restaurants:', data);
+        console.log('🏪 RestaurantDetailsAdmin (TS): Data length:', data?.length);
+        console.log('🏪 RestaurantDetailsAdmin (TS): First restaurant structure:', data?.[0]);
+        
+        // If no restaurantId provided, use the first restaurant
+        let found;
+        if (restaurantId) {
+          found = data.find((r: any) => r[0] === restaurantId);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Found specific restaurant:', found);
+        } else if (data && data.length > 0) {
+          found = data[0]; // Use first restaurant if no specific ID
+          console.log('🏪 RestaurantDetailsAdmin (TS): Using first restaurant:', found);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant ID will be:', found?.[0]);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant name will be:', found?.[8]);
+        }
+        
         setRestaurant(found);
         if (found) {
+          console.log('🏪 RestaurantDetailsAdmin (TS): Fetching items for restaurant:', found[0]);
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
           setMenuItems(await itemsRes.json());
           await fetchDeliveryPeople();
+        } else {
+          console.log('🏪 RestaurantDetailsAdmin (TS): No restaurant found');
         }
       } catch (err) {
+        console.error('🏪 RestaurantDetailsAdmin (TS): Error fetching restaurant:', err);
         setError("Failed to load restaurant details");
       } finally {
         setLoading(false);
@@ -267,14 +289,102 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8">Loading restaurant details...</div>;
   if (error) return <div className="p-8 text-red-500">{error}</div>;
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
-    // ...existing JSX from RestaurantDetailsAdminComponent...
     <div className="container mx-auto px-4 py-8">
-      {/* ...existing dialogs, cards, tabs, and content... */}
+      <div className="space-y-6">
+        {/* Restaurant Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Restaurant Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div>
+                <h3 className="text-lg font-semibold">{restaurant[8]}</h3>
+                <p className="text-sm text-muted-foreground">ID: {restaurant[0]}</p>
+              </div>
+              <div>
+                <p><strong>Address:</strong> {restaurant[1]}</p>
+                <p><strong>City:</strong> {restaurant[3]}</p>
+                <p><strong>Coordinates:</strong> {restaurant[6]}, {restaurant[7]}</p>
+              </div>
+              <div>
+                <p><strong>Glovo Address Book ID:</strong> {restaurant[2]}</p>
+              </div>
+              {restaurant[9] && (
+                <div>
+                  <p><strong>Opening Hours:</strong></p>
+                  <ul className="list-disc list-inside text-sm">
+                    {Object.entries(restaurant[9]).map(([day, hours]) => (
+                      <li key={day}>{day}: {hours as string}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Menu Items */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Menu Items ({menuItems.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {menuItems.length === 0 ? (
+              <p className="text-muted-foreground">No menu items found.</p>
+            ) : (
+              <div className="grid gap-4">
+                {menuItems.map((item: any) => (
+                  <div key={item[0]} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold">{item[4]}</h4>
+                        <p className="text-sm text-muted-foreground">{item[2]}</p>
+                        <p className="text-sm font-medium">${item[5]}</p>
+                      </div>
+                      {item[3] && (
+                        <img 
+                          src={item[3]} 
+                          alt={item[4]} 
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Delivery People */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Delivery People</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {deliveryPeople.length === 0 ? (
+              <p className="text-muted-foreground">No delivery people found.</p>
+            ) : (
+              <div className="grid gap-2">
+                {deliveryPeople.map((person: any) => (
+                  <div key={person[0] || person.delivery_person_id} className="flex justify-between items-center p-2 border rounded">
+                    <div>
+                      <p className="font-medium">{person[2] || person.name}</p>
+                      <p className="text-sm text-muted-foreground">{person[3] || person.phone}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
