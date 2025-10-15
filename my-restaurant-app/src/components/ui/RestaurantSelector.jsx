@@ -745,6 +745,8 @@ export default function RestaurantSelector({
                             sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
                             onSelect(result.restaurant);
                             handleClose();
+                            // Redirect to food page
+                            window.location.href = '/food';
                             toast.info("You can browse our menu and add items to your cart. Orders will be processed when the restaurant opens.");
                           }
                         } else {
@@ -770,6 +772,8 @@ export default function RestaurantSelector({
                             sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
                             onSelect(result.restaurant);
                             handleClose();
+                            // Redirect to food page
+                            window.location.href = '/food';
                             toast.info("You can place an order now and we'll prepare it when the restaurant opens. Delivery time will be coordinated with restaurant hours during checkout.");
                           }
                         } else {

@@ -258,7 +258,7 @@ const Food = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background min-w-[100vw]">
+    <div className="min-h-[calc(100vh-4rem)] bg-background w-full overflow-x-hidden">
       <RestaurantSelector
         open={showRestaurantModal}
         onClose={() => setShowRestaurantModal(false)}
@@ -285,38 +285,38 @@ const Food = () => {
 
       {/* Category Buttons Row */}
       {selectedRestaurant && (
-        <div className="flex justify-center my-6">
-          <div className="flex w-[80vw] max-w-5xl gap-4">
+        <div className="container mx-auto px-4 my-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             <Button
-              className="flex-1 text-lg py-8 font-bold rounded-xl"
-              style={{ minWidth: 0 }}
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "sweet" ? "default" : "outline"}
               onClick={() => setCategory("sweet")}
             >
-              Sweet Pancakes
+              <span className="hidden sm:inline">Sweet Pancakes</span>
+              <span className="sm:hidden">Sweet</span>
             </Button>
             <Button
-              className="flex-1 text-lg py-8 font-bold rounded-xl"
-              style={{ minWidth: 0 }}
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "savory" ? "default" : "outline"}
               onClick={() => setCategory("savory")}
             >
-              Sour Pancakes
+              <span className="hidden sm:inline">Sour Pancakes</span>
+              <span className="sm:hidden">Sour</span>
             </Button>
             <Button
-              className="flex-1 text-lg py-8 font-bold rounded-xl"
-              style={{ minWidth: 0 }}
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "promo" ? "default" : "outline"}
               onClick={() => setCategory("promo")}
             >
               Promo
             </Button>
             <Button
-              className="flex-1 text-lg py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
-              style={{ minWidth: 0, letterSpacing: 1 }}
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
+              style={{ letterSpacing: 1 }}
               onClick={() => navigate("/deluxe-box")}
             >
-              PANTASTIC DELUXE BOX
+              <span className="hidden lg:inline">PANTASTIC DELUXE BOX</span>
+              <span className="lg:hidden">DELUXE BOX</span>
             </Button>
           </div>
         </div>

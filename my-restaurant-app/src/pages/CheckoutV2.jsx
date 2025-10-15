@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL } from "@/config/api"
@@ -34,6 +34,20 @@ export default function CheckoutV2() {
   const [selectedTime, setSelectedTime] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [, setDeliverySchedule] = useState(null)
+  
+  // Memoized callback to prevent infinite re-renders
+  const handleScheduleSelect = useCallback((schedule) => {
+    if (schedule && schedule.isScheduled) {
+      setDeliverySchedule(schedule);
+      setIsScheduled(true);
+      // Store scheduling info for order processing
+      sessionStorage.setItem('order_scheduled_delivery', JSON.stringify(schedule));
+    } else {
+      setDeliverySchedule(null);
+      setIsScheduled(false);
+      sessionStorage.removeItem('order_scheduled_delivery');
+    }
+  }, []);
   
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
@@ -407,18 +421,7 @@ export default function CheckoutV2() {
               {selectedRestaurant.length > 0 && (
                 <DeliverySchedulingBanner
                   restaurant={selectedRestaurant}
-                  onScheduleSelect={(schedule) => {
-                    if (schedule && schedule.isScheduled) {
-                      setDeliverySchedule(schedule);
-                      setIsScheduled(true);
-                      // Store scheduling info for order processing
-                      sessionStorage.setItem('order_scheduled_delivery', JSON.stringify(schedule));
-                    } else {
-                      setDeliverySchedule(null);
-                      setIsScheduled(false);
-                      sessionStorage.removeItem('order_scheduled_delivery');
-                    }
-                  }}
+                  onScheduleSelect={handleScheduleSelect}
                   className="mb-4"
                 />
               )}
