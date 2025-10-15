@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
-import { API_URL } from "@/config/api"
+import { API_URL, FRONTEND_BASE_URL } from "@/config/api"
 import { fetchWithAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

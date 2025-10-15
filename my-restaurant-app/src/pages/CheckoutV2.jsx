@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
-import { API_URL } from "@/config/api"
+import { API_URL, FRONTEND_BASE_URL } from "@/config/api"
 import { toast } from "sonner"
 import { CreditCard, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, Edit, MapPin, Store, X, Calendar as CalendarIcon, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -254,7 +254,9 @@ export default function CheckoutV2() {
         address: deliveryMethod === 'pickup' ? null : deliveryAddress,
         latitude: deliveryMethod === 'delivery' && coordinates.latitude ? coordinates.latitude : null,
         longitude: deliveryMethod === 'delivery' && coordinates.longitude ? coordinates.longitude : null,
-        scheduled_delivery_time: getScheduledDeliveryTime()
+        scheduled_delivery_time: getScheduledDeliveryTime(),
+        success_url: `${FRONTEND_BASE_URL}/payment-success`,
+        cancel_url: `${FRONTEND_BASE_URL}/cart`
       }
 
       console.log('Placing order with:', orderData)
