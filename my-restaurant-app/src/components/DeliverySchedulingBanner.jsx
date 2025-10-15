@@ -18,9 +18,13 @@ export default function DeliverySchedulingBanner({
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [selectedDay, setSelectedDay] = useState('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
-
+  const [initialized, setInitialized] = useState(false);
+  // Initialize scheduling info and auto-select first available options
   useEffect(() => {
-    if (!restaurant) return;
+    if (!restaurant) {
+      setInitialized(false);
+      return;
+    }
 
     const info = checkOrderScheduling(restaurant, 60); // 60 minutes preparation time
     setSchedulingInfo(info);
@@ -37,7 +41,8 @@ export default function DeliverySchedulingBanner({
       // Auto-select first available time slot
       if (timeSlots.length > 0) {
         setSelectedTimeSlot(timeSlots[0].value);
-        // Notify parent component
+        
+        // Notify parent component immediately on initialization
         if (onScheduleSelect) {
           onScheduleSelect({
             date: firstSlot.date,
@@ -48,10 +53,12 @@ export default function DeliverySchedulingBanner({
         }
       }
     }
+    setInitialized(true);
   }, [restaurant, onScheduleSelect]);
 
+  // Handle day changes
   useEffect(() => {
-    if (!schedulingInfo || !selectedDay) return;
+    if (!schedulingInfo || !selectedDay || !initialized) return;
 
     // Find the selected day's delivery window
     const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
@@ -62,21 +69,16 @@ export default function DeliverySchedulingBanner({
       // Reset time slot selection when day changes
       if (timeSlots.length > 0) {
         setSelectedTimeSlot(timeSlots[0].value);
-        // Notify parent component
-        if (onScheduleSelect) {
-          onScheduleSelect({
-            date: selectedDay,
-            dayName: daySlot.dayName,
-            timeSlot: timeSlots[0],
-            isScheduled: true
-          });
-        }
       }
     }
-  }, [selectedDay, schedulingInfo, onScheduleSelect]);
+  }, [selectedDay, schedulingInfo, initialized]);
+
+
 
   const handleTimeSlotChange = (timeSlotValue) => {
     setSelectedTimeSlot(timeSlotValue);
+    
+    // Notify parent component immediately for user interactions
     const selectedSlot = availableTimeSlots.find(slot => slot.value === timeSlotValue);
     const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
     
@@ -90,7 +92,33 @@ export default function DeliverySchedulingBanner({
     }
   };
 
-  if (!restaurant || !schedulingInfo) {
+  const handleDayChange = (dayValue) => {
+    setSelectedDay(dayValue);
+    
+    // Find the new day's delivery window and auto-select first time slot
+    const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === dayValue);
+    if (daySlot) {
+      const timeSlots = generateTimeSlots(daySlot, 30);
+      setAvailableTimeSlots(timeSlots);
+      
+      if (timeSlots.length > 0) {
+        const firstTimeSlot = timeSlots[0];
+        setSelectedTimeSlot(firstTimeSlot.value);
+        
+        // Notify parent component
+        if (onScheduleSelect) {
+          onScheduleSelect({
+            date: dayValue,
+            dayName: daySlot.dayName,
+            timeSlot: firstTimeSlot,
+            isScheduled: true
+          });
+        }
+      }
+    }
+  };
+
+  if (!restaurant || !schedulingInfo || !Array.isArray(restaurant) || restaurant.length === 0) {
     return null;
   }
 
@@ -100,7 +128,7 @@ export default function DeliverySchedulingBanner({
       <Alert className={`border-green-200 bg-green-50 ${className}`}>
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{restaurant[8]}</strong> is open now! Your order will be prepared and delivered as soon as possible.
+          <strong>{restaurant[8] || 'Restaurant'}</strong> is open now! Your order will be prepared and delivered as soon as possible.
         </AlertDescription>
       </Alert>
     );
@@ -112,7 +140,7 @@ export default function DeliverySchedulingBanner({
       <Alert className={`border-red-200 bg-red-50 ${className}`}>
         <AlertCircle className="h-4 w-4 text-red-600" />
         <AlertDescription className="text-red-800">
-          <strong>{restaurant[8]}</strong> is currently closed and has no available delivery slots in the next 7 days. 
+          <strong>{restaurant[8] || 'Restaurant'}</strong> is currently closed and has no available delivery slots in the next 7 days. 
           {schedulingInfo.nextOpening && (
             <span> Next opening: {schedulingInfo.nextOpening}</span>
           )}
@@ -134,7 +162,7 @@ export default function DeliverySchedulingBanner({
         <Alert className="border-orange-300 bg-orange-100">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            <strong>{restaurant[8]}</strong> is currently closed. Please select a delivery time that coordinates with the restaurant's working hours.
+            <strong>{restaurant[8] || 'Restaurant'}</strong> is currently closed. Please select a delivery time that coordinates with the restaurant's working hours.
           </AlertDescription>
         </Alert>
 
@@ -142,7 +170,7 @@ export default function DeliverySchedulingBanner({
           {/* Day Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-orange-800">Select Day</label>
-            <Select value={selectedDay} onValueChange={setSelectedDay}>
+            <Select value={selectedDay} onValueChange={handleDayChange}>
               <SelectTrigger className="border-orange-300">
                 <SelectValue placeholder="Choose a day" />
               </SelectTrigger>
