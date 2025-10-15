@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { validateToken } from "@/utils/auth"
 import { API_URL } from '@/config/api'
+import { fetchWithAdminAuth } from "@/utils/adminAuth"
 import imageCompression from 'browser-image-compression';
 import {
   Card,
@@ -138,18 +139,14 @@ export function RestaurantManager() {
 
   const fetchDeliveryPeople = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`
-        }
-      })
+      console.log('🚚 RestaurantManager: Fetching delivery people with admin auth')
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`)
       if (!response.ok) throw new Error('Failed to fetch delivery people')
       const data = await response.json()
-      console.log('Fetched delivery people:', data)
+      console.log('🚚 RestaurantManager: Fetched delivery people:', data)
       setDeliveryPeople(data)
     } catch (err) {
-      console.error('Error fetching delivery people:', err)
+      console.error('🚚 RestaurantManager: Error fetching delivery people:', err)
     }
   }
 

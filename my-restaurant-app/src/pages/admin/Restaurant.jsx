@@ -1,4 +1,4 @@
-import { RestaurantManager } from "@/components/restaurant-manager.jsx"
+import RestaurantDetailsAdminComponent from "@/components/admin-tsx-comps/RestaurantDetailsAdminComponent"
 
 export default function RestaurantPage() {
   return (
@@ -7,7 +7,7 @@ export default function RestaurantPage() {
         <h2 className="text-3xl font-bold tracking-tight">Restaurant Management</h2>
       </div>
       <div className="space-y-4">
-        <RestaurantManager />
+        <RestaurantDetailsAdminComponent />
       </div>
     </div>
   )

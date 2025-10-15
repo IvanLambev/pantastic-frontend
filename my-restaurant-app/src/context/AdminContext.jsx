@@ -35,6 +35,15 @@ export const AdminProvider = ({ children }) => {
 
       if (!response.ok) {
         console.log('🔍 AdminContext: Token verification failed with status:', response.status)
+        
+        // If token is expired/invalid (401), clear the stored admin data
+        if (response.status === 401) {
+          console.log('🔍 AdminContext: Token expired/invalid, clearing admin session')
+          sessionStorage.removeItem("adminUser")
+          setAdminToken(null)
+          setIsAdminLoggedIn(false)
+        }
+        
         throw new Error("Admin verification failed")
       }
 
@@ -63,11 +72,19 @@ export const AdminProvider = ({ children }) => {
           })
           
           if (parsedUser.access_token) {
-            // For initial load, just check if token exists
-            // We'll verify it when actually making API calls
-            setAdminToken(parsedUser.access_token)
-            setIsAdminLoggedIn(true)
-            console.log('🚀 AdminContext: Admin login status set to true')
+            // Verify the token on initial load
+            console.log('🚀 AdminContext: Found token, verifying...')
+            const verification = await verifyAdminToken(parsedUser.access_token)
+            if (verification.success) {
+              setAdminToken(parsedUser.access_token)
+              setIsAdminLoggedIn(true)
+              console.log('🚀 AdminContext: Admin login status set to true')
+            } else {
+              console.log('🚀 AdminContext: Token verification failed, clearing session')
+              sessionStorage.removeItem("adminUser")
+              setAdminToken(null)
+              setIsAdminLoggedIn(false)
+            }
           } else {
             console.log('🚀 AdminContext: No access token found in stored admin data')
           }
@@ -86,7 +103,7 @@ export const AdminProvider = ({ children }) => {
     }
 
     checkAdminLoginStatus()
-  }, [])
+  }, [verifyAdminToken])
 
   const adminLogin = async (email, password) => {
     try {
@@ -128,6 +145,7 @@ export const AdminProvider = ({ children }) => {
   }
 
   const adminLogout = () => {
+    console.log('🚪 AdminContext: Admin logout requested')
     sessionStorage.removeItem("adminUser")
     setIsAdminLoggedIn(false)
     setAdminToken(null)
