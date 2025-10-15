@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { API_URL } from '@/config/api'
+import { fetchWithAdminAuth } from "@/utils/adminAuth"
 import {
   Card,
   CardContent,
@@ -36,12 +37,10 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
   const handleAdd = async (e) => {
     e.preventDefault()
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify(formData)
       })
@@ -59,12 +58,10 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
   const handleEdit = async (e) => {
     e.preventDefault()
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           delivery_person_id: currentPerson.delivery_person_id,
@@ -84,12 +81,10 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
 
   const handleDelete = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/delivery-people`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           delivery_person_id: currentPerson.delivery_person_id
@@ -108,12 +103,10 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
 
   const handleAssign = async (person) => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           restaurant_id: restaurantId,
@@ -130,12 +123,10 @@ export function DeliveryPeopleManager({ restaurantId, deliveryPeople, onUpdate }
 
   const handleUnassign = async (person) => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
-      const response = await fetch(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           restaurant_id: restaurantId,

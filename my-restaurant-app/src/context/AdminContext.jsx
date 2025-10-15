@@ -20,6 +20,9 @@ export const AdminProvider = ({ children }) => {
 
   const verifyAdminToken = useCallback(async (token) => {
     try {
+      console.log('🔍 AdminContext: Verifying admin token...')
+      console.log('🔍 AdminContext: Token (first 20 chars):', token?.substring(0, 20))
+      
       const response = await fetch(`${API_URL}/restaurant/admin/verify`, {
         method: "GET",
         headers: {
@@ -28,37 +31,57 @@ export const AdminProvider = ({ children }) => {
         },
       })
 
+      console.log('🔍 AdminContext: Token verification response status:', response.status)
+
       if (!response.ok) {
+        console.log('🔍 AdminContext: Token verification failed with status:', response.status)
         throw new Error("Admin verification failed")
       }
 
       const data = await response.json()
+      console.log('🔍 AdminContext: Token verification successful, admin data:', data)
       return { success: true, data }
     } catch (error) {
-      console.error("Admin verification error:", error)
+      console.error("🔍 AdminContext: Admin verification error:", error)
       return { success: false, error: error.message }
     }
   }, [])
 
   useEffect(() => {
     const checkAdminLoginStatus = async () => {
+      console.log('🚀 AdminContext: Initializing admin auth check')
       const adminUser = sessionStorage.getItem("adminUser")
+      console.log('🚀 AdminContext: Admin user in storage:', adminUser ? 'Found' : 'Not found')
+      
       if (adminUser) {
         try {
           const parsedUser = JSON.parse(adminUser)
+          console.log('🚀 AdminContext: Parsed admin user data:', { 
+            hasToken: !!parsedUser.access_token,
+            role: parsedUser.admin_info?.role,
+            email: parsedUser.admin_info?.email
+          })
+          
           if (parsedUser.access_token) {
             // For initial load, just check if token exists
             // We'll verify it when actually making API calls
             setAdminToken(parsedUser.access_token)
             setIsAdminLoggedIn(true)
+            console.log('🚀 AdminContext: Admin login status set to true')
+          } else {
+            console.log('🚀 AdminContext: No access token found in stored admin data')
           }
         } catch (error) {
-          console.error("Error parsing admin user data:", error)
+          console.error("🚀 AdminContext: Error parsing admin user data:", error)
           sessionStorage.removeItem("adminUser")
           setIsAdminLoggedIn(false)
           setAdminToken(null)
         }
+      } else {
+        console.log('🚀 AdminContext: No admin user found in session storage')
       }
+      
+      console.log('🚀 AdminContext: Setting loading to false')
       setLoading(false)
     }
 

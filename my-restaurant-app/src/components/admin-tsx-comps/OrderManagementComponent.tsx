@@ -67,10 +67,32 @@ const OrderManagementComponent: React.FC = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
+      console.log('📦 OrderManagement: Fetching orders as admin...');
       const response = await fetchWithAdminAuth(`${API_URL}/order/orders/worker`);
-      if (!response.ok) return;
+      
+      if (response.status === 403) {
+        console.log('📦 OrderManagement: Admin cannot access worker orders endpoint (403)');
+        // For now, set empty orders array since admin doesn't have worker permissions
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        console.log('📦 OrderManagement: Response not ok, status:', response.status);
+        setLoading(false);
+        return;
+      }
+      
       const data = await response.json();
-      if (!Array.isArray(data)) return;
+      console.log('📦 OrderManagement: Received orders data:', data);
+      
+      if (!Array.isArray(data)) {
+        console.log('📦 OrderManagement: Data is not an array');
+        setLoading(false);
+        return;
+      }
+      
       checkForNewOrders(data);
       const orderWithRestaurantId = data.find((order: any) => order?.restaurant_id);
       if (orderWithRestaurantId) {
@@ -89,7 +111,8 @@ const OrderManagementComponent: React.FC = () => {
       });
       setOrders(sortedOrders);
       setLoading(false);
-    } catch {
+    } catch (error) {
+      console.error('📦 OrderManagement: Error fetching orders:', error);
       setLoading(false);
     }
   }, [checkForNewOrders, fetchItems]);
@@ -143,7 +166,18 @@ const OrderManagementComponent: React.FC = () => {
     <div className="container mx-auto px-4">
       <h1 className="text-xl md:text-2xl font-bold mb-6">Order Management</h1>
       <div className="grid gap-4">
-        {orders.map(order => (
+        {orders.length === 0 ? (
+          <Card className="shadow-sm">
+            <CardContent className="p-6 text-center">
+              <h3 className="text-lg font-semibold mb-2">No Orders Available</h3>
+              <p className="text-muted-foreground">
+                Admin users currently cannot access worker orders directly. 
+                This feature may require additional permissions or a different API endpoint.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          orders.map(order => (
           <Card key={order.id || order.order_id || 'unknown'} className="shadow-sm">
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
@@ -226,7 +260,8 @@ const OrderManagementComponent: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
