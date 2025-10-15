@@ -15,7 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreVertical, Pencil, Trash2, UserPlus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { MoreVertical, Pencil, Trash2, UserPlus, Plus, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +69,62 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Addons display state
+  const [showAddonsDialog, setShowAddonsDialog] = useState<boolean>(false);
+  const [selectedItemAddons, setSelectedItemAddons] = useState<any[]>([]);
+  const [selectedItemForAddons, setSelectedItemForAddons] = useState<any>(null);
+
+  // Template management states
+  const [addonTemplates, setAddonTemplates] = useState<any[]>([]);
+  const [removablesTemplates, setRemovablesTemplates] = useState<any[]>([]);
+  const [showApplyTemplateDialog, setShowApplyTemplateDialog] = useState<boolean>(false);
+  const [showRemoveTemplateDialog, setShowRemoveTemplateDialog] = useState<boolean>(false);
+  const [showAddRemovablesDialog, setShowAddRemovablesDialog] = useState<boolean>(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedRemovablesTemplateId, setSelectedRemovablesTemplateId] = useState<string>("");
+  
+  // Template creation states
+  const [showCreateAddonTemplateDialog, setShowCreateAddonTemplateDialog] = useState<boolean>(false);
+  const [showCreateRemovablesTemplateDialog, setShowCreateRemovablesTemplateDialog] = useState<boolean>(false);
+  const [newAddonTemplate, setNewAddonTemplate] = useState({ name: "", description: "", addons: [] as any[] });
+  const [newRemovablesTemplate, setNewRemovablesTemplate] = useState({ name: "", description: "", removables: [] as any[] });
+  
+  // Direct addon/removable creation states
+  const [showCreateAddonDialog, setShowCreateAddonDialog] = useState<boolean>(false);
+  const [showCreateRemovableDialog, setShowCreateRemovableDialog] = useState<boolean>(false);
+  const [newAddon, setNewAddon] = useState({ name: "", price: 0, available: true });
+  const [newRemovable, setNewRemovable] = useState({ name: "", price: 0 });
+
+  // Fetch templates
+  const fetchTemplates = async () => {
+    if (!restaurant || !restaurant[0]) {
+      console.log('No restaurant available for fetching templates');
+      return;
+    }
+    
+    try {
+      console.log('🔄 Fetching templates for restaurant:', restaurant[0]);
+      const [addonRes, removablesRes] = await Promise.all([
+        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant[0]}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant[0]}`)
+      ]);
+      
+      if (addonRes.ok) {
+        const addonData = await addonRes.json();
+        console.log('📋 Addon templates loaded:', addonData);
+        setAddonTemplates(addonData.templates || addonData || []);
+      }
+      
+      if (removablesRes.ok) {
+        const removablesData = await removablesRes.json();
+        console.log('🗑️ Removables templates loaded:', removablesData);
+        setRemovablesTemplates(removablesData.templates || removablesData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -98,6 +157,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
           const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
           setMenuItems(await itemsRes.json());
           await fetchDeliveryPeople();
+          await fetchTemplates(); // Fetch templates
         } else {
           console.log('🏪 RestaurantDetailsAdmin (TS): No restaurant found');
         }
@@ -138,10 +198,12 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${item[0]}/addons`);
       const addons = await response.json();
       console.log('🧩 Item addons:', addons);
-      alert(`Addons for ${item[7]}:\n${JSON.stringify(addons, null, 2)}`);
+      setSelectedItemAddons(addons);
+      setSelectedItemForAddons(item);
+      setShowAddonsDialog(true);
     } catch (error) {
       console.error('Error fetching addons:', error);
-      alert('Failed to fetch addons');
+      toast.error('Failed to fetch addons');
     }
   };
 
@@ -151,77 +213,225 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/item/${item[0]}`);
       const removables = await response.json();
       console.log('🗑️ Item removables:', removables);
-      alert(`Removables for ${item[7]}:\n${JSON.stringify(removables, null, 2)}`);
+      toast.info(`Removables for ${item[7]}: ${removables.length} items found`);
     } catch (error) {
       console.error('Error fetching removables:', error);
-      alert('Failed to fetch removables');
+      toast.error('Failed to fetch removables');
     }
   };
 
-  const handleApplyAddonTemplate = async (item: any) => {
-    const templateId = prompt('Enter addon template ID to apply:');
-    if (!templateId) return;
-    
+  const handleApplyAddonTemplate = (item: any) => {
+    setSelectedItem(item);
+    setShowApplyTemplateDialog(true);
+  };
+
+  const handleApplyTemplateSubmit = async () => {
     try {
-      console.log('🔧 Applying addon template:', templateId, 'to item:', item[0]);
-      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${item[0]}/apply-template/${templateId}`, {
+      if (!selectedTemplateId) {
+        toast.error("Please select a template");
+        return;
+      }
+
+      console.log('🔧 Applying addon template:', selectedTemplateId, 'to item:', selectedItem[0]);
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${selectedItem[0]}/apply-template/${selectedTemplateId}`, {
         method: "POST"
       });
       
       // Refresh menu items
       const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
-      alert('Addon template applied successfully!');
+      toast.success('Addon template applied successfully!');
+      setShowApplyTemplateDialog(false);
+      setSelectedTemplateId("");
     } catch (error) {
       console.error('Error applying addon template:', error);
-      alert('Failed to apply addon template');
+      toast.error('Failed to apply addon template');
     }
   };
 
-  const handleRemoveAddonTemplate = async (item: any) => {
-    const templateId = prompt('Enter addon template ID to remove:');
-    if (!templateId) return;
-    
+  const handleRemoveAddonTemplate = (item: any) => {
+    setSelectedItem(item);
+    setShowRemoveTemplateDialog(true);
+  };
+
+  const handleRemoveTemplateSubmit = async () => {
     try {
-      console.log('🗑️ Removing addon template:', templateId, 'from item:', item[0]);
-      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${item[0]}/remove-template/${templateId}`, {
+      if (!selectedTemplateId) {
+        toast.error("Please select a template to remove");
+        return;
+      }
+
+      console.log('🗑️ Removing addon template:', selectedTemplateId, 'from item:', selectedItem[0]);
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${selectedItem[0]}/remove-template/${selectedTemplateId}`, {
         method: "DELETE"
       });
       
       // Refresh menu items
       const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
-      alert('Addon template removed successfully!');
+      toast.success('Addon template removed successfully!');
+      setShowRemoveTemplateDialog(false);
+      setSelectedTemplateId("");
     } catch (error) {
       console.error('Error removing addon template:', error);
-      alert('Failed to remove addon template');
+      toast.error('Failed to remove addon template');
     }
   };
 
-  const handleAddRemovables = async (item: any) => {
-    const removablesStr = prompt('Enter removables as JSON (e.g., {"sugar": "sugar", "cream": "cream"}):');
-    if (!removablesStr) return;
-    
+  const handleAddRemovables = (item: any) => {
+    setSelectedItem(item);
+    setShowAddRemovablesDialog(true);
+  };
+
+  const handleAddRemovablesSubmit = async () => {
     try {
-      const removables = JSON.parse(removablesStr);
-      console.log('➕ Adding removables to item:', item[0], removables);
+      if (!selectedRemovablesTemplateId) {
+        toast.error("Please select a removables template");
+        return;
+      }
+
+      console.log('➕ Adding removables template:', selectedRemovablesTemplateId, 'to item:', selectedItem[0]);
       
       await fetchWithAdminAuth(`${API_URL}/restaurant/items/add-removables`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          item_id: item[0],
-          removables: removables
+          item_id: selectedItem[0],
+          template_id: selectedRemovablesTemplateId
         })
       });
       
       // Refresh menu items
       const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
-      alert('Removables added successfully!');
+      toast.success('Removables added successfully!');
+      setShowAddRemovablesDialog(false);
+      setSelectedRemovablesTemplateId("");
     } catch (error) {
       console.error('Error adding removables:', error);
-      alert('Failed to add removables. Please check the JSON format.');
+      toast.error('Failed to add removables.');
+    }
+  };
+
+  // Template creation functions
+  const handleCreateAddonTemplate = async () => {
+    try {
+      if (!newAddonTemplate.name.trim()) {
+        toast.error("Please enter template name");
+        return;
+      }
+
+      if (!restaurant || !restaurant[0]) {
+        toast.error("No restaurant selected");
+        return;
+      }
+
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant[0]}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAddonTemplate)
+      });
+
+      if (response.ok) {
+        toast.success("Addon template created successfully!");
+        setShowCreateAddonTemplateDialog(false);
+        setNewAddonTemplate({ name: "", description: "", addons: [] });
+        await fetchTemplates(); // Refresh templates
+      } else {
+        const errorData = await response.json();
+        toast.error(`Error: ${errorData.message || 'Failed to create template'}`);
+      }
+    } catch (error) {
+      console.error('Error creating addon template:', error);
+      toast.error('Error creating addon template');
+    }
+  };
+
+  const handleCreateRemovablesTemplate = async () => {
+    try {
+      if (!newRemovablesTemplate.name.trim()) {
+        toast.error("Please enter template name");
+        return;
+      }
+
+      if (!restaurant || !restaurant[0]) {
+        toast.error("No restaurant selected");
+        return;
+      }
+
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant[0]}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRemovablesTemplate)
+      });
+
+      if (response.ok) {
+        toast.success("Removables template created successfully!");
+        setShowCreateRemovablesTemplateDialog(false);
+        setNewRemovablesTemplate({ name: "", description: "", removables: [] });
+        await fetchTemplates(); // Refresh templates
+      } else {
+        const errorData = await response.json();
+        toast.error(`Error: ${errorData.message || 'Failed to create template'}`);
+      }
+    } catch (error) {
+      console.error('Error creating removables template:', error);
+      toast.error('Error creating removables template');
+    }
+  };
+
+  // Direct addon/removable creation functions
+  const handleCreateAddon = async () => {
+    try {
+      if (!newAddon.name.trim()) {
+        toast.error("Please enter addon name");
+        return;
+      }
+
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAddon)
+      });
+
+      if (response.ok) {
+        toast.success("Addon created successfully!");
+        setShowCreateAddonDialog(false);
+        setNewAddon({ name: "", price: 0, available: true });
+      } else {
+        const errorData = await response.json();
+        toast.error(`Error: ${errorData.message || 'Failed to create addon'}`);
+      }
+    } catch (error) {
+      console.error('Error creating addon:', error);
+      toast.error('Error creating addon');
+    }
+  };
+
+  const handleCreateRemovable = async () => {
+    try {
+      if (!newRemovable.name.trim()) {
+        toast.error("Please enter removable name");
+        return;
+      }
+
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRemovable)
+      });
+
+      if (response.ok) {
+        toast.success("Removable created successfully!");
+        setShowCreateRemovableDialog(false);
+        setNewRemovable({ name: "", price: 0 });
+      } else {
+        const errorData = await response.json();
+        toast.error(`Error: ${errorData.message || 'Failed to create removable'}`);
+      }
+    } catch (error) {
+      console.error('Error creating removable:', error);
+      toast.error('Error creating removable');
     }
   };
 
@@ -277,10 +487,10 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
       setShowItemModal(false);
-      alert(modalMode === "add" ? "Item created successfully!" : "Item updated successfully!");
+      toast.success(modalMode === "add" ? "Item created successfully!" : "Item updated successfully!");
     } catch (err) {
       console.error("Error saving item:", err);
-      alert("Failed to save item");
+      toast.error("Failed to save item");
     }
   };
 
@@ -298,10 +508,10 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
       setDeletingItem(null);
-      alert("Item deleted successfully!");
+      toast.success("Item deleted successfully!");
     } catch (err) {
       console.error("Error deleting item:", err);
-      alert("Failed to delete item");
+      toast.error("Failed to delete item");
     }
   };
 
@@ -514,6 +724,24 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Restaurant Details</CardTitle>
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" size="sm" onClick={() => setShowCreateAddonTemplateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Addon Template
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCreateRemovablesTemplateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Removables Template
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCreateAddonDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Addon
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowCreateRemovableDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Removable
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
@@ -661,6 +889,326 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Template Management Dialogs */}
+      
+      {/* Apply Addon Template Dialog */}
+      <Dialog open={showApplyTemplateDialog} onOpenChange={setShowApplyTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Apply Addon Template</DialogTitle>
+            <DialogDescription>
+              Select an addon template to apply to "{selectedItem?.[1]}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="templateSelect">Addon Template</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {addonTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} - {template.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApplyTemplateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleApplyTemplateSubmit}>
+              Apply Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Addon Template Dialog */}
+      <Dialog open={showRemoveTemplateDialog} onOpenChange={setShowRemoveTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Addon Template</DialogTitle>
+            <DialogDescription>
+              Select an addon template to remove from "{selectedItem?.[1]}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="templateSelect">Addon Template to Remove</Label>
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select template to remove..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {addonTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} - {template.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRemoveTemplateDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRemoveTemplateSubmit}>
+              Remove Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Removables Dialog */}
+      <Dialog open={showAddRemovablesDialog} onOpenChange={setShowAddRemovablesDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Removables</DialogTitle>
+            <DialogDescription>
+              Select a removables template to add to "{selectedItem?.[1]}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="removablesTemplateSelect">Removables Template</Label>
+              <Select value={selectedRemovablesTemplateId} onValueChange={setSelectedRemovablesTemplateId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select removables template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {removablesTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name} - {template.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddRemovablesDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddRemovablesSubmit}>
+              Add Removables
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Addon Template Dialog */}
+      <Dialog open={showCreateAddonTemplateDialog} onOpenChange={setShowCreateAddonTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Addon Template</DialogTitle>
+            <DialogDescription>
+              Create a new addon template that can be applied to menu items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="templateName">Template Name</Label>
+              <Input
+                id="templateName"
+                value={newAddonTemplate.name}
+                onChange={(e) => setNewAddonTemplate({...newAddonTemplate, name: e.target.value})}
+                placeholder="Enter template name..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="templateDescription">Description</Label>
+              <Textarea
+                id="templateDescription"
+                value={newAddonTemplate.description}
+                onChange={(e) => setNewAddonTemplate({...newAddonTemplate, description: e.target.value})}
+                placeholder="Enter template description..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateAddonTemplateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateAddonTemplate}>
+              Create Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Removables Template Dialog */}
+      <Dialog open={showCreateRemovablesTemplateDialog} onOpenChange={setShowCreateRemovablesTemplateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Removables Template</DialogTitle>
+            <DialogDescription>
+              Create a new removables template that can be applied to menu items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="removablesTemplateName">Template Name</Label>
+              <Input
+                id="removablesTemplateName"
+                value={newRemovablesTemplate.name}
+                onChange={(e) => setNewRemovablesTemplate({...newRemovablesTemplate, name: e.target.value})}
+                placeholder="Enter template name..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="removablesTemplateDescription">Description</Label>
+              <Textarea
+                id="removablesTemplateDescription"
+                value={newRemovablesTemplate.description}
+                onChange={(e) => setNewRemovablesTemplate({...newRemovablesTemplate, description: e.target.value})}
+                placeholder="Enter template description..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateRemovablesTemplateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRemovablesTemplate}>
+              Create Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Addon Dialog */}
+      <Dialog open={showCreateAddonDialog} onOpenChange={setShowCreateAddonDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Addon</DialogTitle>
+            <DialogDescription>
+              Create a new addon that can be added to menu items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="addonName">Addon Name</Label>
+              <Input
+                id="addonName"
+                value={newAddon.name}
+                onChange={(e) => setNewAddon({...newAddon, name: e.target.value})}
+                placeholder="Enter addon name..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="addonPrice">Price</Label>
+              <Input
+                id="addonPrice"
+                type="number"
+                step="0.01"
+                value={newAddon.price}
+                onChange={(e) => setNewAddon({...newAddon, price: parseFloat(e.target.value) || 0})}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateAddonDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateAddon}>
+              Create Addon
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Removable Dialog */}
+      <Dialog open={showCreateRemovableDialog} onOpenChange={setShowCreateRemovableDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Removable</DialogTitle>
+            <DialogDescription>
+              Create a new removable item that can be removed from menu items
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="removableName">Removable Name</Label>
+              <Input
+                id="removableName"
+                value={newRemovable.name}
+                onChange={(e) => setNewRemovable({...newRemovable, name: e.target.value})}
+                placeholder="Enter removable name..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="removablePrice">Price Reduction</Label>
+              <Input
+                id="removablePrice"
+                type="number"
+                step="0.01"
+                value={newRemovable.price}
+                onChange={(e) => setNewRemovable({...newRemovable, price: parseFloat(e.target.value) || 0})}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateRemovableDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRemovable}>
+              Create Removable
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Addons Dialog */}
+      <Dialog open={showAddonsDialog} onOpenChange={setShowAddonsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Addons for "{selectedItemForAddons?.[7]}"</DialogTitle>
+            <DialogDescription>
+              View all addons currently associated with this menu item
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {selectedItemAddons.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No addons found for this item.</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {selectedItemAddons.map((addon, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{addon.name || addon.addon_name || 'Unnamed Addon'}</div>
+                      {addon.description && (
+                        <div className="text-sm text-muted-foreground">{addon.description}</div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        ${(addon.price || 0).toFixed(2)}
+                      </Badge>
+                      <Badge variant={addon.available !== false ? "default" : "secondary"}>
+                        {addon.available !== false ? "Available" : "Unavailable"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddonsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
