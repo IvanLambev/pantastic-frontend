@@ -1,0 +1,1 @@
+export declare function fetchWithAdminAuth(url: string, options?: RequestInit): Promise<Response>;

@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { fetchWithAuth } from "@/context/AuthContext";
+import { fetchWithAdminAuth } from "@/utils/adminAuth";
 
 const OrderManagementComponent: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
@@ -51,7 +51,7 @@ const OrderManagementComponent: React.FC = () => {
 
   const fetchItems = useCallback(async (restaurantId: string) => {
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`);
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurantId}/items`);
       if (!response.ok) return;
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -67,15 +67,7 @@ const OrderManagementComponent: React.FC = () => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user?.access_token) return;
-      const response = await fetchWithAuth(`${API_URL}/order/orders/worker`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json',
-        }
-      });
+      const response = await fetchWithAdminAuth(`${API_URL}/order/orders/worker`);
       if (!response.ok) return;
       const data = await response.json();
       if (!Array.isArray(data)) return;
@@ -105,11 +97,9 @@ const OrderManagementComponent: React.FC = () => {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     if (!orderId) return;
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/order/orders/status`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ order_id: orderId, status: newStatus })

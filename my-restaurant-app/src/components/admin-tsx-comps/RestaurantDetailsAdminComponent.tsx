@@ -4,7 +4,7 @@ import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
-import { fetchWithAuth } from "@/context/AuthContext";
+import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,11 +129,11 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       }
     }
     try {
-      await fetchWithAuth(url, {
+      await fetchWithAdminAuth(url, {
         method,
         body: formData,
       });
-      const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
       setMenuItems(await itemsRes.json());
       setShowItemModal(false);
     } catch (err) {
@@ -144,7 +144,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const confirmDeleteItem = async () => {
     if (!deletingItem) return;
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/${restaurant[0]}/items`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ item_id: deletingItem[0] }),
@@ -158,10 +158,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
 
   const fetchDeliveryPeople = async () => {
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
-        method: "GET"
-      });
-      const res = await fetchWithAuth(`${API_URL}/restaurant/delivery-people`);
+      const res = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`);
       setDeliveryPeople(await res.json());
     } catch {
       setDeliveryPeople([]);
@@ -172,7 +169,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDeliveryPerson),
@@ -195,7 +192,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -220,7 +217,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this delivery person?")) return;
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/delivery-people`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ delivery_person_id: person.delivery_person_id || person[0] }),
@@ -236,7 +233,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const handleAssignDelivery = async (person: DeliveryPerson) => {
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/assign-delivery-person-to-restaurant`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -254,7 +251,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const handleUnassignDelivery = async (person: DeliveryPerson) => {
     setIsSubmitting(true);
     try {
-      await fetchWithAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/unassign-delivery-person-from-restaurant`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
