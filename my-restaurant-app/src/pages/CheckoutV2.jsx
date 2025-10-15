@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL } from "@/config/api"
@@ -34,19 +34,38 @@ export default function CheckoutV2() {
   const [selectedTime, setSelectedTime] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [, setDeliverySchedule] = useState(null)
+  const debounceTimeoutRef = useRef(null)
   
   // Memoized callback to prevent infinite re-renders
   const handleScheduleSelect = useCallback((schedule) => {
-    if (schedule && schedule.isScheduled) {
-      setDeliverySchedule(schedule);
-      setIsScheduled(true);
-      // Store scheduling info for order processing
-      sessionStorage.setItem('order_scheduled_delivery', JSON.stringify(schedule));
-    } else {
-      setDeliverySchedule(null);
-      setIsScheduled(false);
-      sessionStorage.removeItem('order_scheduled_delivery');
+    console.log('handleScheduleSelect called with:', schedule);
+    
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
+    
+    // Debounce the actual update
+    debounceTimeoutRef.current = setTimeout(() => {
+      // Don't update if the schedule is the same as current
+      const currentSchedule = sessionStorage.getItem('order_scheduled_delivery');
+      const newScheduleString = JSON.stringify(schedule);
+      
+      if (currentSchedule === newScheduleString) {
+        return; // No change, skip update
+      }
+      
+      if (schedule && schedule.isScheduled) {
+        setDeliverySchedule(schedule);
+        setIsScheduled(true);
+        // Store scheduling info for order processing
+        sessionStorage.setItem('order_scheduled_delivery', newScheduleString);
+      } else {
+        setDeliverySchedule(null);
+        setIsScheduled(false);
+        sessionStorage.removeItem('order_scheduled_delivery');
+      }
+    }, 100); // 100ms debounce
   }, []);
   
   // Get delivery information from sessionStorage

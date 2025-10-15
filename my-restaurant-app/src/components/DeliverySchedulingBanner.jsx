@@ -42,19 +42,12 @@ export default function DeliverySchedulingBanner({
       if (timeSlots.length > 0) {
         setSelectedTimeSlot(timeSlots[0].value);
         
-        // Notify parent component immediately on initialization
-        if (onScheduleSelect) {
-          onScheduleSelect({
-            date: firstSlot.date,
-            dayName: firstSlot.dayName,
-            timeSlot: timeSlots[0],
-            isScheduled: true
-          });
-        }
+        // DO NOT call onScheduleSelect here - it causes infinite loops
+        // Let the user manually trigger the selection or use a separate effect
       }
     }
     setInitialized(true);
-  }, [restaurant, onScheduleSelect]);
+  }, [restaurant]); // Remove onScheduleSelect dependency
 
   // Handle day changes
   useEffect(() => {
@@ -73,6 +66,22 @@ export default function DeliverySchedulingBanner({
     }
   }, [selectedDay, schedulingInfo, initialized]);
 
+  // Notify parent when both day and time are selected
+  useEffect(() => {
+    if (!initialized || !schedulingInfo?.needsScheduling || !selectedDay || !selectedTimeSlot) return;
+    
+    const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
+    const timeSlot = availableTimeSlots.find(slot => slot.value === selectedTimeSlot);
+    
+    if (daySlot && timeSlot && onScheduleSelect) {
+      onScheduleSelect({
+        date: selectedDay,
+        dayName: daySlot.dayName,
+        timeSlot: timeSlot,
+        isScheduled: true
+      });
+    }
+  }, [selectedDay, selectedTimeSlot, initialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   const handleTimeSlotChange = (timeSlotValue) => {
