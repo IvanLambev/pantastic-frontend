@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { API_URL } from '@/config/api'
+import { API_URL, FRONTEND_BASE_URL } from '@/config/api'
 import { useCart } from '@/hooks/use-cart'
 import { toast } from "sonner"
 import {
