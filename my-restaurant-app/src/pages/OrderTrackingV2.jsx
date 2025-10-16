@@ -219,7 +219,7 @@ export default function OrderTrackingV2() {
             <CardContent className="space-y-4">              <div className="flex justify-between items-center">
                 <span className="font-medium">Order ID</span>
                 <Badge variant="outline" className="font-mono text-xs">
-                  {order.order_id}
+                  {order.order_id.substring(0, 6)}
                 </Badge>
               </div>
 
