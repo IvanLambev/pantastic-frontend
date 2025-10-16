@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useSearchParams, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { API_URL, FRONTEND_BASE_URL } from "@/config/api"
 import { fetchWithAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 export default function PaymentSuccess() {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [verificationStatus, setVerificationStatus] = useState('verifying') // 'verifying', 'success', 'failed'
   const [orderData, setOrderData] = useState(null)
@@ -18,7 +17,7 @@ export default function PaymentSuccess() {
     const currentUrl = window.location.href
     if (currentUrl.includes('dev.palachinki.store')) {
       // Redirect to production domain with same search parameters
-      const newUrl = `${FRONTEND_BASE_URL}/payment-success${window.location.search}`
+      const newUrl = `https://www.palachinki.store/payment-success${window.location.search}`
       console.log('Redirecting from dev domain to production:', newUrl)
       window.location.replace(newUrl)
       return
@@ -28,37 +27,28 @@ export default function PaymentSuccess() {
       try {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}')
         
-        // Try to get order ID from URL parameters first (from payment gateway)
-        const orderIdFromUrl = searchParams.get('orderId')
-        const pendingOrderId = orderIdFromUrl || sessionStorage.getItem('pending_order_id')
+        const pendingOrderId = sessionStorage.getItem('pending_order_id')
         const pendingPaymentId = sessionStorage.getItem('pending_payment_id')
 
         if (!user?.access_token) {
           throw new Error('User not logged in')
         }
 
-        if (!pendingOrderId) {
-          throw new Error('Missing order information')
+        if (!pendingOrderId || !pendingPaymentId) {
+          throw new Error('Missing payment information')
         }
 
         // Verify payment with backend
-        // If we have order ID from URL (payment gateway callback), we might not need payment_id
-        const verifyPayload = {
-          order_id: pendingOrderId
-        }
-        
-        // Include payment_id if available (for session-based verification)
-        if (pendingPaymentId) {
-          verifyPayload.payment_id = pendingPaymentId
-        }
-
         const response = await fetchWithAuth(`${API_URL}/order/payment/verify`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${user.access_token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(verifyPayload)
+          body: JSON.stringify({
+            payment_id: pendingPaymentId,
+            order_id: pendingOrderId
+          })
         })
 
         if (!response.ok) {
@@ -78,10 +68,8 @@ export default function PaymentSuccess() {
           toast.success('Payment verified successfully!')
           
           // Auto-redirect after 3 seconds
-          // Use order ID from response or from URL parameter
-          const redirectOrderId = data.order_id || pendingOrderId
           setTimeout(() => {
-            navigate(`/order-tracking-v2/${redirectOrderId}`)
+            navigate(`/order-tracking-v2/${data.order_id}`)
           }, 3000)
         } else {
           setVerificationStatus('failed')
@@ -95,21 +83,11 @@ export default function PaymentSuccess() {
     }
 
     verifyPayment()
-  }, [navigate, searchParams])
+  }, [navigate])
 
   const handleContinue = () => {
-    if (verificationStatus === 'success') {
-      // Try to get order ID from different sources
-      const orderIdFromUrl = searchParams.get('orderId')
-      const orderIdFromData = orderData?.order_id
-      const orderIdFromSession = sessionStorage.getItem('pending_order_id')
-      const redirectOrderId = orderIdFromData || orderIdFromUrl || orderIdFromSession
-      
-      if (redirectOrderId) {
-        navigate(`/order-tracking-v2/${redirectOrderId}`)
-      } else {
-        navigate('/food') // Go to food page if no order ID available
-      }
+    if (verificationStatus === 'success' && orderData?.order_id) {
+      navigate(`/order-tracking-v2/${orderData.order_id}`)
     } else {
       navigate('/cart')
     }

@@ -77,7 +77,7 @@ function MainLayout() {
   useEffect(() => {
     const currentUrl = window.location.href
     if (currentUrl.includes('dev.palachinki.store')) {
-      const newUrl = currentUrl.replace('dev.palachinki.store', 'palachinki.store')
+      const newUrl = currentUrl.replace('dev.palachinki.store', 'www.palachinki.store')
       console.log('Redirecting from dev domain to production:', newUrl)
       window.location.replace(newUrl)
     }
