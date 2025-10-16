@@ -32,41 +32,68 @@ export default function OrderTrackingV2() {
     return item ? item[4] : `Unknown Item (${itemId})`
   }
 
-  // Define the tracking steps with icons
-  const trackingSteps = [
-    {
-      id: 1,
-      title: "Order Received",
-      description: "Your order has been received and confirmed",
-      icon: CheckCircle,
-      status: "Pending",
-    },
-    {
-      id: 2,
-      title: "Processing",
-      description: "Your order is being prepared",
-      icon: Package,
-      status: "In Progress",
-    },
-    {
-      id: 3,
-      title: "Ready",
-      description: order?.delivery_method === "delivery" 
-        ? "Your order is on its way"
-        : "Your order is ready for pickup",
-      icon: order?.delivery_method === "delivery" ? Truck : MapPin,
-      status: "Ready",
-    },
-    {
-      id: 4,
-      title: "Delivered",
-      description: order?.delivery_method === "delivery"
-        ? "Your order has been delivered"
-        : "Your order has been picked up",
-      icon: CheckCircle,
-      status: "Delivered",
-    },
-  ]
+  // Define the tracking steps with icons based on delivery method
+  const getTrackingSteps = () => {
+    if (order?.delivery_method === "pickup") {
+      return [
+        {
+          id: 1,
+          title: "Order Received",
+          description: "Your order has been received and confirmed",
+          icon: CheckCircle,
+          status: "Pending",
+        },
+        {
+          id: 2,
+          title: "Processing",
+          description: "Your order is being prepared",
+          icon: Package,
+          status: "In Progress",
+        },
+        {
+          id: 3,
+          title: "Ready for Pickup",
+          description: "Your order is ready for pickup",
+          icon: MapPin,
+          status: "Ready",
+        },
+      ]
+    } else {
+      // Delivery orders
+      return [
+        {
+          id: 1,
+          title: "Order Received",
+          description: "Your order has been received and confirmed",
+          icon: CheckCircle,
+          status: "Pending",
+        },
+        {
+          id: 2,
+          title: "Processing",
+          description: "Your order is being prepared",
+          icon: Package,
+          status: "In Progress",
+        },
+        {
+          id: 3,
+          title: "Out for Delivery",
+          description: "Your order is on its way",
+          icon: Truck,
+          status: "Ready",
+        },
+        {
+          id: 4,
+          title: "Delivered",
+          description: "Your order has been delivered",
+          icon: CheckCircle,
+          status: "Delivered",
+        },
+      ]
+    }
+  }
+
+  const trackingSteps = getTrackingSteps()
 
   // Helper function to determine step status
   const getStepStatus = (stepStatus, orderStatus) => {
@@ -346,7 +373,7 @@ export default function OrderTrackingV2() {
         </div>
 
         <div className="mt-8 text-center space-x-4">
-          {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+          {order.status === 'Pending' && (
             <Button variant="destructive" onClick={handleCancelOrder}>
               Cancel Order
             </Button>
