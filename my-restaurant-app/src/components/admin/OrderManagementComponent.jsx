@@ -234,11 +234,11 @@ export default function OrderManagementComponent() {
                                     {item.item_quantity}x {item.item_name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    Base: ${item.item_price} × {item.item_quantity} = ${item.item_base_total?.toFixed(2) || '0.00'}
+                                    Base: €{(item.item_price / 1.95583).toFixed(2)} × {item.item_quantity} = €{(item.item_base_total / 1.95583)?.toFixed(2) || '0.00'}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-sm font-medium">${item.item_total?.toFixed(2) || '0.00'}</p>
+                                  <p className="text-sm font-medium">€{(item.item_total / 1.95583)?.toFixed(2) || '0.00'}</p>
                                 </div>
                               </div>
                               
@@ -252,7 +252,7 @@ export default function OrderManagementComponent() {
                                           + {addon.addon_name} (×{addon.addon_quantity})
                                         </span>
                                         <span className="text-green-600">
-                                          ${addon.addon_total?.toFixed(2) || '0.00'}
+                                          €{(addon.addon_total / 1.95583)?.toFixed(2) || '0.00'}
                                         </span>
                                       </div>
                                     ))}
@@ -261,7 +261,7 @@ export default function OrderManagementComponent() {
                                     <div className="flex justify-between items-center text-xs">
                                       <span className="font-medium text-green-700">Addon Total:</span>
                                       <span className="font-medium text-green-700">
-                                        ${item.item_addon_total?.toFixed(2) || '0.00'}
+                                        €{(item.item_addon_total / 1.95583)?.toFixed(2) || '0.00'}
                                       </span>
                                     </div>
                                   </div>

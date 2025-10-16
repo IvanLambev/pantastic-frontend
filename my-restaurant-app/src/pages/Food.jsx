@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
+import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -226,7 +227,8 @@ const Food = () => {
     
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
+    const priceInEur = convertBgnToEur(price);
+    const matchesPrice = priceInEur >= priceRange[0] && priceInEur <= priceRange[1];
     
     // Category filtering based on item_type
     const matchesCategory = category === "all" || 
@@ -383,7 +385,7 @@ const Food = () => {
                       <div className="flex flex-col justify-center">
                         <h3 className="font-semibold text-sm">{itemName}</h3>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">€{itemPrice.toFixed(2)}</span>
+                          <span className="font-semibold text-sm">€{convertAndFormatPrice(itemPrice)}</span>
                           {(hasAddons || hasRemovables) && (
                             <div className="flex gap-1">
                               {hasAddons && <span className="text-xs text-green-600">+</span>}
@@ -553,7 +555,7 @@ const Food = () => {
                           )}
                           
                           <div className="flex justify-between items-start">
-                            <span className="font-semibold">€{itemPrice.toFixed(2)}</span>
+                            <span className="font-semibold">€{convertAndFormatPrice(itemPrice)}</span>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"

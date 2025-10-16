@@ -254,7 +254,7 @@ const OrderManagementComponent: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium">Total</p>
                   <p className="text-sm text-muted-foreground">
-                    ${order.total_price ? order.total_price.toFixed(2) : '0.00'}
+                    €{order.total_price ? (order.total_price / 1.95583).toFixed(2) : '0.00'}
                   </p>
                 </div>
               </div>

@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
+import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
@@ -62,7 +63,7 @@ export default function ItemDetails() {
           }
         }
         setItem(data);
-        setTotalPrice(Number(data.price));
+        setTotalPrice(convertBgnToEur(Number(data.price)));
 
         // Fetch addons for this item
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}/addons`);
@@ -178,12 +179,12 @@ export default function ItemDetails() {
   const updateTotalPrice = (selectedAddonObj, selectedRemovableObj) => {
     if (!item) return;
     
-    let newTotal = Number(item.price);
+    let newTotal = convertBgnToEur(Number(item.price));
     
     // Add price of all selected addons (removables don't affect price)
     Object.values(selectedAddonObj).forEach(addonArray => {
       addonArray.forEach(addon => {
-        newTotal += Number(addon.price);
+        newTotal += convertBgnToEur(Number(addon.price));
       });
     });
     
@@ -224,7 +225,7 @@ export default function ItemDetails() {
       originalItemId: item.item_id,
       name: item.name,
       price: totalPrice,
-      basePrice: Number(item.price),
+      basePrice: convertBgnToEur(Number(item.price)),
       image: item.image_url,
       description: item.description,
       selectedAddons: selectedAddonList,
@@ -336,9 +337,9 @@ export default function ItemDetails() {
               <p className="text-2xl font-semibold text-primary">
                 €{totalPrice.toFixed(2)}
               </p>
-              {totalPrice !== Number(item.price) && (
+              {totalPrice !== convertBgnToEur(Number(item.price)) && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Base: €{Number(item.price).toFixed(2)}
+                  Base: €{convertAndFormatPrice(item.price)}
                 </Badge>
               )}
             </div>
@@ -384,7 +385,7 @@ export default function ItemDetails() {
                             />
                             <span className="font-medium">{addonName}</span>
                           </div>
-                          <span className="text-sm font-semibold ml-2">+€{Number(price).toFixed(2)}</span>
+                          <span className="text-sm font-semibold ml-2">+€{convertAndFormatPrice(price)}</span>
                         </div>
                       ))}
                     </div>

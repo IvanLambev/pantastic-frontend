@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { API_URL } from "@/config/api"
+import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
 
 const Cart = () => {
   const { 
@@ -32,7 +33,7 @@ const Cart = () => {
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '{}')
   const isDelivery = deliveryAddress && deliveryCoords
 
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const total = cartItems.reduce((sum, item) => sum + (convertBgnToEur(item.price) * item.quantity), 0)
 
   const handleEditAddress = () => {
     // Clear current delivery address and navigate back to restaurant selection
@@ -171,14 +172,14 @@ const Cart = () => {
                         {item.selectedAddons.map((addon, index) => (
                           <li key={index} className="flex justify-between">
                             <span>{addon.name}</span>
-                            <span>+€{Number(addon.price).toFixed(2)}</span>
+                            <span>+€{convertAndFormatPrice(addon.price)}</span>
                           </li>
                         ))}
                       </ul>
                       {item.basePrice && (
                         <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
                           <span>Base price:</span>
-                          <span>€{Number(item.basePrice).toFixed(2)}</span>
+                          <span>€{convertAndFormatPrice(item.basePrice)}</span>
                         </div>
                       )}
                     </div>
@@ -210,7 +211,7 @@ const Cart = () => {
                       </Button>
                     </div>
                     <div className="font-semibold text-right">
-                      €{(item.price * item.quantity).toFixed(2)}
+                      €{(convertBgnToEur(item.price) * item.quantity).toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -229,7 +230,7 @@ const Cart = () => {
                     <div key={item.id} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{item.name} × {item.quantity}</span>
-                        <span>€{(item.price * item.quantity).toFixed(2)}</span>
+                        <span>€{(convertBgnToEur(item.price) * item.quantity).toFixed(2)}</span>
                       </div>
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="text-xs text-muted-foreground pl-4">

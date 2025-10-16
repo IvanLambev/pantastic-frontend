@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
+import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
@@ -80,15 +81,15 @@ export default function CheckoutV2() {
     return coordinates ? JSON.parse(coordinates) : { latitude: null, longitude: null }
   }
 
-  // Calculate total
+  // Calculate total (converting from BGN to EUR)
   const calculateTotal = () => {
     const subtotal = cartItems.reduce((sum, item) => {
       const addOnsTotal = item.addOns ? 
-        item.addOns.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) : 0;
-      return sum + (item.price * item.quantity) + (addOnsTotal * item.quantity);
+        item.addOns.reduce((addOnSum, addOn) => addOnSum + convertBgnToEur(addOn.price), 0) : 0;
+      return sum + (convertBgnToEur(item.price) * item.quantity) + (addOnsTotal * item.quantity);
     }, 0);
     
-    const deliveryFee = deliveryMethod === 'delivery' ? 5 : 0;
+    const deliveryFee = deliveryMethod === 'delivery' ? 5 : 0; // 5 EUR display
     return subtotal + deliveryFee;
   };
 
@@ -548,7 +549,7 @@ export default function CheckoutV2() {
                               <span className="font-medium">Add-ons: </span>
                               {item.selectedAddons.map((addon, index) => (
                                 <span key={index}>
-                                  {addon.name} (+€{addon.price.toFixed(2)})
+                                  {addon.name} (+€{convertAndFormatPrice(addon.price)})
                                   {index < item.selectedAddons.length - 1 ? ', ' : ''}
                                 </span>
                               ))}
@@ -576,7 +577,7 @@ export default function CheckoutV2() {
                             </div>
                           )}
                         </div>
-                        <div className="font-medium">€{((Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
+                        <div className="font-medium">€{(convertBgnToEur(Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">

@@ -316,7 +316,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                       <TableRow key={addonName}>
                         <TableCell className="font-medium">{addonName}</TableCell>
                         <TableCell>-</TableCell>
-                        <TableCell className="text-right">${Number(price).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">€{(Number(price) / 1.95583).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
