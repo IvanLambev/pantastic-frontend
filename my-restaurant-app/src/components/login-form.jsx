@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { t } from "@/utils/translations"
 
 export function LoginForm({ className }) {
   const { updateLoginState } = useAuth()
@@ -40,10 +41,10 @@ export function LoginForm({ className }) {
       if (!response.ok) {
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Login failed");
+          throw new Error(errorData.message || t('login.errors.invalidCredentials'));
         } else {
           const errorText = await response.text();
-          throw new Error(errorText || "Login failed");
+          throw new Error(errorText || t('login.errors.invalidCredentials'));
         }
       }
   
@@ -55,20 +56,20 @@ export function LoginForm({ className }) {
         // alert("Login successful!");
         navigate("/food");
       } else {
-        throw new Error("Unexpected response format");
+        throw new Error(t('login.errors.serverError'));
       }
     } catch (err) {
       console.error("Error during login:", err);
-      setError(err.message || "An unexpected error occurred");
+      setError(err.message || t('login.errors.serverError'));
     }
   };
   return (
     <div className={cn("flex flex-col gap-6", className)}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Добре дошли отново</CardTitle>
           <CardDescription>
-            Login with your Apple or Google account
+            Влезте с вашия Apple или Google акаунт
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -81,7 +82,7 @@ export function LoginForm({ className }) {
                       fill="currentColor"
                     />
                   </svg>
-                  Login with Apple
+                  Вход с Apple
                 </Button>
                 <Button variant="outline" className="w-full">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -90,32 +91,32 @@ export function LoginForm({ className }) {
                       fill="currentColor"
                     />
                   </svg>
-                  Login with Google
+                  Вход с Google
                 </Button>
               </div>
               <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border py-4">
                 <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Или продължете с
                 </span>
               </div>
             <div className="grid gap-6">
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('login.emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('login.passwordLabel')}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t('login.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -123,15 +124,15 @@ export function LoginForm({ className }) {
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full">
-                Login
+                {t('login.loginButton')}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
       <div className="text-muted-foreground text-center text-xs">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Чрез кликване върху продължи, вие се съгласявате с нашите <a href="#">Условия за ползване</a>{" "}
+        и <a href="#">Политика за поверителност</a>.
       </div>
     </div>
   )

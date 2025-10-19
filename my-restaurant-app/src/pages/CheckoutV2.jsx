@@ -19,6 +19,7 @@ import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { t } from "@/utils/translations"
 
 // Utility functions for restaurant status
 function isRestaurantOpen(restaurant) {
@@ -256,7 +257,7 @@ export default function CheckoutV2() {
   // Discount validation function
   const validateDiscountCode = async () => {
     if (!discountCode.trim()) {
-      setDiscountError("Please enter a discount code")
+      setDiscountError(t('checkout.enterDiscountCodeError'))
       return
     }
 
@@ -266,7 +267,7 @@ export default function CheckoutV2() {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       if (!user.access_token) {
-        setDiscountError("Please log in to apply discount codes")
+        setDiscountError(t('checkout.loginToApplyDiscount'))
         setDiscountValidating(false)
         return
       }
@@ -287,12 +288,12 @@ export default function CheckoutV2() {
         setDiscountError("")
         toast.success(data.message)
       } else {
-        setDiscountError(data.message || "Invalid discount code")
+        setDiscountError(data.message || t('checkout.invalidDiscountCode'))
         setDiscountInfo(null)
       }
     } catch (error) {
       console.error('Error validating discount:', error)
-      setDiscountError("Failed to validate discount code. Please try again.")
+      setDiscountError(t('checkout.discountValidationError'))
       setDiscountInfo(null)
     } finally {
       setDiscountValidating(false)
@@ -347,17 +348,55 @@ export default function CheckoutV2() {
         body: JSON.stringify(guestData)
       })
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      const isJson = contentType && contentType.includes('application/json')
+
       if (!response.ok) {
+        // Handle non-JSON responses (like 404 HTML pages)
+        if (!isJson) {
+          if (response.status === 404) {
+            throw new Error("Quick registration is currently unavailable. Please use the Sign Up button above to create an account.")
+          }
+          if (response.status === 500) {
+            throw new Error("Server error occurred. Please try again in a few moments.")
+          }
+          throw new Error(`Registration failed (Error ${response.status}). Please try the Sign Up option above.`)
+        }
+
+        // Parse JSON error response
         const errorData = await response.json()
-        throw new Error(errorData.detail || "Registration failed")
+        
+        // Handle specific error messages from API
+        if (errorData.detail) {
+          if (typeof errorData.detail === 'string') {
+            throw new Error(errorData.detail)
+          } else if (Array.isArray(errorData.detail)) {
+            // FastAPI validation errors
+            const errorMessages = errorData.detail.map(err => err.msg || err.message).join(', ')
+            throw new Error(errorMessages)
+          }
+        }
+        
+        throw new Error("Registration failed. Please check your information and try again.")
+      }
+
+      // Parse successful response
+      if (!isJson) {
+        throw new Error("Unexpected response from server")
       }
 
       const data = await response.json()
       
+      // Validate response data
+      if (!data.access_token) {
+        throw new Error("Registration completed but login failed. Please sign in manually.")
+      }
+
       // Save the access token to sessionStorage
       sessionStorage.setItem('user', JSON.stringify({
         access_token: data.access_token,
-        token_type: data.token_type
+        token_type: data.token_type || 'bearer'
       }))
 
       // Reset guest state
@@ -371,13 +410,24 @@ export default function CheckoutV2() {
         password: ""
       })
 
-      toast.success("Account created successfully! Proceeding to checkout...")
+      toast.success(t('checkout.accountCreatedSuccess'))
       
       // Proceed with order confirmation
       setShowOrderConfirmation(true)
     } catch (error) {
       console.error('Guest registration error:', error)
-      setGuestError(error.message || "Failed to create account. Please try again.")
+      
+      // Display user-friendly error messages
+      let errorMessage = t('checkout.accountCreationError')
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = t('checkout.networkError')
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setGuestError(errorMessage)
+      toast.error(t('checkout.failedToCreateAccount'))
     } finally {
       setGuestRegistering(false)
     }
@@ -408,15 +458,15 @@ export default function CheckoutV2() {
   const paymentMethods = [
     {
       id: "card",
-      name: "Credit/Debit Card",
-      description: "Pay with your credit or debit card",
+      name: t('checkout.payment.card'),
+      description: t('checkout.payment.cardDesc'),
       icon: CreditCard,
       available: true,
     },
     {
       id: "cash",
-      name: "Cash on Delivery/Pickup",
-      description: "Pay with cash when your order arrives",
+      name: t('checkout.payment.cash'),
+      description: t('checkout.payment.cashDesc'),
       icon: DollarSign,
       available: true,
     },
@@ -541,7 +591,7 @@ export default function CheckoutV2() {
         cartItems.forEach(item => {
           sessionStorage.removeItem(`item-instructions-${item.id}`);
         });
-        toast.success('Order placed successfully!')
+        toast.success(t('checkout.orderPlacedSuccess'))
         navigate(`/order-tracking-v2/${data.order_id}`)
       } else if (selectedPayment === 'card') {
         // Card payment - save payment info and redirect to payment URL
@@ -564,7 +614,7 @@ export default function CheckoutV2() {
       }
     } catch (error) {
       console.error('Checkout error:', error)
-      toast.error(error.message || 'Failed to place order')
+      toast.error(error.message || t('checkout.failedToPlaceOrder'))
     } finally {
       setIsProcessing(false)
       setShowOrderConfirmation(false)
@@ -579,9 +629,9 @@ export default function CheckoutV2() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
+          <h2 className="text-2xl font-bold mb-4">{t('cart.empty')}</h2>
           <Button onClick={() => navigate('/food')}>
-            Continue Shopping
+            {t('cart.continueShopping')}
           </Button>
         </div>
       </div>
@@ -597,8 +647,8 @@ export default function CheckoutV2() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Checkout</h1>
-              <p className="text-muted-foreground">Complete your order</p>
+              <h1 className="text-3xl font-bold">{t('checkout.title')}</h1>
+              <p className="text-muted-foreground">{t('checkout.subtitle')}</p>
             </div>
           </div>
           
@@ -607,15 +657,15 @@ export default function CheckoutV2() {
               {/* Discount Code */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Discount Code</CardTitle>
-                  <CardDescription>Have a promotional code? Apply it here</CardDescription>
+                  <CardTitle>{t('checkout.discountCode')}</CardTitle>
+                  <CardDescription>{t('checkout.discountCodeDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {!discountInfo ? (
                     <div className="space-y-4">
                       <div className="flex gap-2">
                         <Input
-                          placeholder="Enter discount code"
+                          placeholder={t('checkout.enterDiscountCode')}
                           value={discountCode}
                           onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                           onKeyPress={(e) => e.key === 'Enter' && validateDiscountCode()}
@@ -626,7 +676,7 @@ export default function CheckoutV2() {
                           disabled={!discountCode.trim() || discountValidating}
                           size="default"
                         >
-                          {discountValidating ? "Checking..." : "Apply"}
+                          {discountValidating ? t('checkout.checking') : t('checkout.apply')}
                         </Button>
                       </div>
                       {discountError && (
@@ -648,7 +698,7 @@ export default function CheckoutV2() {
                           onClick={removeDiscount}
                           className="text-green-600 hover:text-green-800"
                         >
-                          Remove
+                          {t('checkout.remove')}
                         </Button>
                       </div>
                       <p className="text-sm text-green-600">{discountInfo.message}</p>
@@ -661,8 +711,8 @@ export default function CheckoutV2() {
               {!isLoggedIn && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Account Required</CardTitle>
-                    <CardDescription>Sign in or create an account to complete your order</CardDescription>
+                    <CardTitle>{t('checkout.accountRequired')}</CardTitle>
+                    <CardDescription>{t('checkout.accountRequiredDesc')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {!isGuest ? (
@@ -673,14 +723,14 @@ export default function CheckoutV2() {
                             className="flex-1"
                             onClick={() => navigate('/login', { state: { from: '/checkout-v2' } })}
                           >
-                            Sign In
+                            {t('nav.login')}
                           </Button>
                           <Button 
                             variant="outline"
                             className="flex-1"
                             onClick={() => navigate('/signup', { state: { from: '/checkout-v2' } })}
                           >
-                            Sign Up
+                            {t('nav.signup')}
                           </Button>
                         </div>
                         
@@ -689,7 +739,7 @@ export default function CheckoutV2() {
                             <span className="w-full border-t" />
                           </div>
                           <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or</span>
+                            <span className="bg-background px-2 text-muted-foreground">{t('common.or')}</span>
                           </div>
                         </div>
                         
@@ -698,26 +748,26 @@ export default function CheckoutV2() {
                           className="w-full"
                           onClick={() => setIsGuest(true)}
                         >
-                          Create Account & Checkout
+                          {t('checkout.createAccountAndCheckout')}
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="first_name">First Name *</Label>
+                            <Label htmlFor="first_name">{t('checkout.guest.firstName')} *</Label>
                             <Input
                               id="first_name"
-                              placeholder="Ivan"
+                              placeholder={t('checkout.guest.firstNamePlaceholder')}
                               value={guestData.first_name}
                               onChange={(e) => setGuestData({ ...guestData, first_name: e.target.value })}
                             />
                           </div>
                           <div>
-                            <Label htmlFor="last_name">Last Name *</Label>
+                            <Label htmlFor="last_name">{t('checkout.guest.lastName')} *</Label>
                             <Input
                               id="last_name"
-                              placeholder="Ivanov"
+                              placeholder={t('checkout.guest.lastNamePlaceholder')}
                               value={guestData.last_name}
                               onChange={(e) => setGuestData({ ...guestData, last_name: e.target.value })}
                             />
@@ -725,48 +775,48 @@ export default function CheckoutV2() {
                         </div>
                         
                         <div>
-                          <Label htmlFor="email">Email *</Label>
+                          <Label htmlFor="email">{t('checkout.guest.email')} *</Label>
                           <Input
                             id="email"
                             type="email"
-                            placeholder="newuser@example.com"
+                            placeholder={t('checkout.guest.emailPlaceholder')}
                             value={guestData.email}
                             onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
                           />
                         </div>
                         
                         <div>
-                          <Label htmlFor="phone">Phone *</Label>
+                          <Label htmlFor="phone">{t('checkout.guest.phone')} *</Label>
                           <Input
                             id="phone"
                             type="tel"
-                            placeholder="+359888000000"
+                            placeholder={t('checkout.guest.phonePlaceholder')}
                             value={guestData.phone}
                             onChange={(e) => setGuestData({ ...guestData, phone: e.target.value })}
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Format: +359888000000</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('checkout.guest.phoneFormat')}</p>
                         </div>
                         
                         <div>
-                          <Label htmlFor="city">City *</Label>
+                          <Label htmlFor="city">{t('checkout.guest.city')} *</Label>
                           <Input
                             id="city"
-                            placeholder="Sofia"
+                            placeholder={t('checkout.guest.cityPlaceholder')}
                             value={guestData.city}
                             onChange={(e) => setGuestData({ ...guestData, city: e.target.value })}
                           />
                         </div>
                         
                         <div>
-                          <Label htmlFor="password">Password *</Label>
+                          <Label htmlFor="password">{t('checkout.guest.password')} *</Label>
                           <Input
                             id="password"
                             type="password"
-                            placeholder="Create a strong password"
+                            placeholder={t('checkout.guest.passwordPlaceholder')}
                             value={guestData.password}
                             onChange={(e) => setGuestData({ ...guestData, password: e.target.value })}
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Minimum 8 characters</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('checkout.guest.passwordHint')}</p>
                         </div>
                         
                         {guestError && (
@@ -791,7 +841,7 @@ export default function CheckoutV2() {
                             }}
                             disabled={guestRegistering}
                           >
-                            Back
+                            {t('common.back')}
                           </Button>
                           <Button
                             variant="default"
@@ -802,10 +852,10 @@ export default function CheckoutV2() {
                             {guestRegistering ? (
                               <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Creating Account...
+                                {t('checkout.creatingAccount')}
                               </div>
                             ) : (
-                              "Create Account & Continue"
+                              t('checkout.createAccountAndContinue')
                             )}
                           </Button>
                         </div>
@@ -818,8 +868,8 @@ export default function CheckoutV2() {
               {/* Payment Method */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
-                  <CardDescription>Choose how you'd like to pay for your order</CardDescription>
+                  <CardTitle>{t('checkout.paymentMethod')}</CardTitle>
+                  <CardDescription>{t('checkout.paymentMethodDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <RadioGroup value={selectedPayment} onValueChange={setSelectedPayment}>
@@ -840,7 +890,7 @@ export default function CheckoutV2() {
                               </div>
                               {method.available && (
                                 <Badge variant="secondary" className="text-xs">
-                                  Available
+                                  {t('checkout.available')}
                                 </Badge>
                               )}
                             </Label>
@@ -858,7 +908,7 @@ export default function CheckoutV2() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
-                      Delivery Address
+                      {t('checkout.deliveryAddress')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -866,7 +916,7 @@ export default function CheckoutV2() {
                       <div className="flex-1">
                         <p className="font-medium">{deliveryAddress}</p>
                         <p className="text-sm text-muted-foreground">
-                          Delivery to this address
+                          {t('checkout.deliveryToAddress')}
                         </p>
                       </div>
                       <Button 
@@ -876,7 +926,7 @@ export default function CheckoutV2() {
                         className="flex items-center gap-2"
                       >
                         <Edit className="h-4 w-4" />
-                        Edit
+                        {t('common.edit')}
                       </Button>
                     </div>
                   </CardContent>
@@ -889,7 +939,7 @@ export default function CheckoutV2() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Store className="h-5 w-5" />
-                      Pickup Location
+                      {t('checkout.pickupLocation')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -998,7 +1048,7 @@ export default function CheckoutV2() {
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+                  <CardTitle>{t('cart.orderSummary')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {cartItems.map((item) => (
@@ -1010,7 +1060,7 @@ export default function CheckoutV2() {
                           {/* Display addons */}
                           {item.selectedAddons && item.selectedAddons.length > 0 && (
                             <div className="text-sm text-green-600 mt-1">
-                              <span className="font-medium">Add-ons: </span>
+                              <span className="font-medium">{t('menu.addons')}: </span>
                               {item.selectedAddons.map((addon, index) => (
                                 <span key={index}>
                                   {addon.name} (+{formatDualCurrencyCompact(addon.price)})
@@ -1023,7 +1073,7 @@ export default function CheckoutV2() {
                           {/* Display removables */}
                           {item.selectedRemovables && item.selectedRemovables.length > 0 && (
                             <div className="text-sm text-red-600 mt-1">
-                              <span className="font-medium">Removed: </span>
+                              <span className="font-medium">{t('menu.removed')}: </span>
                               {item.selectedRemovables.map((removable, index) => (
                                 <span key={index} className="capitalize">
                                   {removable}
@@ -1036,7 +1086,7 @@ export default function CheckoutV2() {
                           {/* Display special instructions */}
                           {item.specialInstructions && (
                             <div className="text-sm text-muted-foreground mt-1">
-                              <span className="font-medium">Instructions: </span>
+                              <span className="font-medium">{t('menu.instructions')}: </span>
                               {item.specialInstructions}
                             </div>
                           )}
@@ -1071,7 +1121,7 @@ export default function CheckoutV2() {
                           onClick={() => {
                             sessionStorage.removeItem(`item-instructions-${item.id}`);
                             removeFromCart(item.id);
-                            toast.success(`Removed ${item.name} from cart`);
+                            toast.success(t('cart.removedFromCart', { name: item.name }));
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1084,24 +1134,24 @@ export default function CheckoutV2() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Subtotal</span>
+                      <span>{t('cart.subtotal')}</span>
                       <span>{formatDualCurrencyCompact(calculateSubtotalBGN())}</span>
                     </div>
                     {discountInfo && discountInfo.valid && (
                       <div className="flex justify-between text-green-600">
-                        <span>Discount ({discountInfo.discount_percentage}%)</span>
+                        <span>{t('cart.discount')} ({discountInfo.discount_percentage}%)</span>
                         <span>-{formatDualCurrencyCompact(calculateDiscountAmountBGN())}</span>
                       </div>
                     )}
                     {deliveryMethod === 'delivery' && (
                       <div className="flex justify-between">
-                        <span>Delivery Fee</span>
+                        <span>{t('cart.deliveryFee')}</span>
                         <span>{formatDualCurrencyCompact(9.78)}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
-                      <span>Total</span>
+                      <span>{t('cart.total')}</span>
                       <span>{formatDualCurrencyCompact(calculateTotalBGN())}</span>
                     </div>
                   </div>
@@ -1109,13 +1159,13 @@ export default function CheckoutV2() {
                 <CardFooter className="flex flex-col gap-2">
                   {!isLoggedIn && (
                     <div className="text-center p-2 bg-blue-50 border border-blue-200 rounded-lg w-full">
-                      <p className="text-sm text-blue-800 font-medium">Please sign in or create an account to continue</p>
+                      <p className="text-sm text-blue-800 font-medium">{t('checkout.pleaseSignIn')}</p>
                     </div>
                   )}
                   {!isOpen && nextOpenTime && (
                     <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
-                      <p className="text-sm text-orange-800 font-medium">Restaurant is currently closed</p>
-                      <p className="text-xs text-orange-600">Next opening: {nextOpenTime}</p>
+                      <p className="text-sm text-orange-800 font-medium">{t('checkout.restaurantClosed')}</p>
+                      <p className="text-xs text-orange-600">{t('checkout.nextOpening')}: {nextOpenTime}</p>
                     </div>
                   )}
                   <Button 
@@ -1127,22 +1177,22 @@ export default function CheckoutV2() {
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Processing Payment...
+                        {t('checkout.processingPayment')}
                       </div>
                     ) : !isLoggedIn ? (
                       <div className="flex items-center gap-2">
                         <X className="h-4 w-4" />
-                        Account Required
+                        {t('checkout.accountRequired')}
                       </div>
                     ) : !isOpen ? (
                       <div className="flex items-center gap-2">
                         <X className="h-4 w-4" />
-                        Restaurant Closed
+                        {t('checkout.restaurantClosed')}
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
                         <Check className="h-4 w-4" />
-                        Review Order
+                        {t('checkout.reviewOrder')}
                       </div>
                     )}
                   </Button>
@@ -1155,27 +1205,27 @@ export default function CheckoutV2() {
           <Dialog open={showAddressEdit} onOpenChange={setShowAddressEdit}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Edit Delivery Address</DialogTitle>
+                <DialogTitle>{t('checkout.editDeliveryAddress')}</DialogTitle>
                 <DialogDescription>
-                  Update your delivery address
+                  {t('checkout.updateDeliveryAddress')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <Input
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
-                  placeholder="Enter new address"
+                  placeholder={t('checkout.enterNewAddress')}
                   className="w-full"
                 />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowAddressEdit(false)}>
                   <X className="h-4 w-4 mr-2" />
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleAddressSave}>
                   <Check className="h-4 w-4 mr-2" />
-                  Save Address
+                  {t('checkout.saveAddress')}
                 </Button>
               </DialogFooter>
             </DialogContent>

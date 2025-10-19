@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { t } from "@/utils/translations"
 
 export function SignUpForm({ className, ...props }) {
   const { updateLoginState } = useAuth()
@@ -41,7 +42,7 @@ export function SignUpForm({ className, ...props }) {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || "Login failed")
+        throw new Error(errorData.message || t('signup.errors.serverError'))
       }
 
       const data = await response.json()
@@ -52,7 +53,7 @@ export function SignUpForm({ className, ...props }) {
       navigate("/food")
     } catch (err) {
       console.error("Error during sign up:", err)
-      setError(err.message || "An unexpected error occurred")
+      setError(err.message || t('signup.errors.serverError'))
     }
   }
 
@@ -60,9 +61,9 @@ export function SignUpForm({ className, ...props }) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome to Pantastic Pancakes</CardTitle>
+          <CardTitle className="text-xl">Добре дошли в Pantastic Палачинки</CardTitle>
           <CardDescription>
-            Sign up with your Apple or Google account
+            Регистрирайте се с вашия Apple или Google акаунт
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,7 +76,7 @@ export function SignUpForm({ className, ...props }) {
                     fill="currentColor"
                   />
                 </svg>
-                Sign up with Apple
+                Регистрация с Apple
               </Button>
               <Button variant="outline" className="w-full">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -84,34 +85,34 @@ export function SignUpForm({ className, ...props }) {
                     fill="currentColor"
                   />
                 </svg>
-                Sign up with Google
+                Регистрация с Google
               </Button>
             </div>
             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border py-4">
               <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                Or continue with
+                Или продължете с
               </span>
             </div>
             <div className="grid gap-6 ">
               {/* First Name and Last Name */}
               <div className="grid grid-cols-2 gap-6 ">
                 <div className="grid gap-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('signup.firstNameLabel')}</Label>
                   <Input
                     id="firstName"
                     type="text"
-                    placeholder="John"
+                    placeholder={t('signup.firstNamePlaceholder')}
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('signup.lastNameLabel')}</Label>
                   <Input
                     id="lastName"
                     type="text"
-                    placeholder="Doe"
+                    placeholder={t('signup.lastNamePlaceholder')}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
@@ -121,11 +122,11 @@ export function SignUpForm({ className, ...props }) {
 
               {/* City */}
               <div className="grid gap-3">
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">{t('signup.cityLabel')}</Label>
                 <Input
                   id="city"
                   type="text"
-                  placeholder="New York"
+                  placeholder={t('signup.cityPlaceholder')}
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   required
@@ -134,11 +135,11 @@ export function SignUpForm({ className, ...props }) {
 
               {/* Phone */}
               <div className="grid gap-3">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{t('signup.phoneLabel')}</Label>
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+1 234 567 890"
+                  placeholder={t('signup.phonePlaceholder')}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
@@ -147,11 +148,11 @@ export function SignUpForm({ className, ...props }) {
 
               {/* Email */}
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('signup.emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder={t('signup.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -160,11 +161,11 @@ export function SignUpForm({ className, ...props }) {
 
               {/* Password */}
               <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('signup.passwordLabel')}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t('signup.passwordPlaceholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -173,15 +174,15 @@ export function SignUpForm({ className, ...props }) {
 
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full">
-                Sign up
+                {t('signup.signUpButton')}
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
       <div className="text-muted-foreground text-center text-xs">
-        By signing up, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Чрез регистрация, вие се съгласявате с нашите <a href="#">Условия за ползване</a>{" "}
+        и <a href="#">Политика за поверителност</a>.
       </div>
     </div>
   )

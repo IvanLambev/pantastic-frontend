@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { API_URL } from "@/config/api"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { t } from "@/utils/translations"
 
 const Cart = () => {
   const { 
@@ -48,18 +49,18 @@ const Cart = () => {
 
   const handleRemoveFromCart = (itemId, itemName) => {
     removeFromCart(itemId)
-    toast.info(`Removed ${itemName} from cart`)
+    toast.info(t('cart.removedFromCart', { name: itemName }))
   }
 
   const handleCancelOrder = async () => {
     try {
       await cancelOrder()
-      toast.success('Order cancelled successfully')
+      toast.success(t('cart.orderCancelledSuccess'))
       navigate('/food')
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+      const errorMessage = err instanceof Error ? err.message : t('common.unexpectedError')
       setState(prev => ({ ...prev, error: errorMessage }))
-      toast.error('Failed to cancel order: ' + errorMessage)
+      toast.error(t('cart.failedToCancelOrder') + ': ' + errorMessage)
     }
   }
 
@@ -72,9 +73,9 @@ const Cart = () => {
       <div className="min-h-[calc(100vh-4rem)] bg-background">
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
           <div className="w-full max-w-sm space-y-6 mx-auto px-4">
-            <h1 className="text-2xl font-bold text-center">Your Cart is Empty</h1>
-            <p className="text-muted-foreground text-center">Add some delicious items to get started!</p>
-            <Button onClick={() => navigate('/food')} className="w-full">Browse Menu</Button>
+            <h1 className="text-2xl font-bold text-center">{t('cart.empty')}</h1>
+            <p className="text-muted-foreground text-center">{t('cart.emptyDescription')}</p>
+            <Button onClick={() => navigate('/food')} className="w-full">{t('cart.browseMenu')}</Button>
           </div>
         </div>
       </div>
@@ -84,7 +85,7 @@ const Cart = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       <div className="container mx-auto px-4 py-8 mt-16 pb-32">
-        <h1 className="text-2xl font-bold mb-8">Your Cart</h1>
+        <h1 className="text-2xl font-bold mb-8">{t('cart.title')}</h1>
         
         {/* Delivery/Pickup Information */}
         {selectedRestaurant?.length && (
@@ -99,25 +100,25 @@ const Cart = () => {
                       <Store className="h-5 w-5 text-blue-600" />
                     )}
                     <h3 className="font-semibold text-lg">
-                      {isDelivery ? 'Delivery Information' : 'Pickup Information'}
+                      {isDelivery ? t('cart.deliveryInformation') : t('cart.pickupInformation')}
                     </h3>
                   </div>
                   
                   <div className="space-y-2">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Restaurant:</p>
+                      <p className="text-sm font-medium text-gray-600">{t('cart.restaurant')}:</p>
                       <p className="font-medium">{selectedRestaurant[7]}</p>
                       <p className="text-sm text-gray-500">{selectedRestaurant[1]}</p>
                     </div>
                     
                     {isDelivery ? (
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Delivery Address:</p>
+                        <p className="text-sm font-medium text-gray-600">{t('cart.deliveryAddressLabel')}:</p>
                         <p className="font-medium">{deliveryAddress}</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Pickup from:</p>
+                        <p className="text-sm font-medium text-gray-600">{t('cart.pickupFrom')}:</p>
                         <p className="font-medium">{selectedRestaurant[1]}</p>
                       </div>
                     )}
@@ -132,7 +133,7 @@ const Cart = () => {
                     className="flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
-                    Edit Address
+                    {t('cart.editAddress')}
                   </Button>
                 )}
               </div>
@@ -167,7 +168,7 @@ const Cart = () => {
                   {/* Display selected addons if any */}
                   {item.selectedAddons && item.selectedAddons.length > 0 && (
                     <div className="text-sm mb-2 bg-muted p-2 rounded-md">
-                      <p className="font-semibold mb-1">Add-ons:</p>
+                      <p className="font-semibold mb-1">{t('menu.addons')}:</p>
                       <ul className="space-y-1 pl-2">
                         {item.selectedAddons.map((addon, index) => (
                           <li key={index} className="flex justify-between">
@@ -178,7 +179,7 @@ const Cart = () => {
                       </ul>
                       {item.basePrice && (
                         <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
-                          <span>Base price:</span>
+                          <span>{t('cart.basePrice')}:</span>
                           <span>{formatDualCurrencyCompact(item.basePrice)}</span>
                         </div>
                       )}
@@ -187,7 +188,7 @@ const Cart = () => {
                   
                   {item.specialInstructions && (
                     <div className="text-sm mb-4">
-                      <span className="font-semibold">Special Instructions: </span>
+                      <span className="font-semibold">{t('menu.instructions')}: </span>
                       <span className="text-muted-foreground">{item.specialInstructions}</span>
                     </div>
                   )}
@@ -222,7 +223,7 @@ const Cart = () => {
           <div className="w-full lg:w-96 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>{t('cart.orderSummary')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -234,14 +235,14 @@ const Cart = () => {
                       </div>
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="text-xs text-muted-foreground pl-4">
-                          {item.selectedAddons.length} add-ons selected
+                          {item.selectedAddons.length} {t('cart.addonsSelected')}
                         </div>
                       )}
                     </div>
                   ))}
                   <div className="border-t pt-4">
                     <div className="flex justify-between font-semibold">
-                      <span>Total</span>
+                      <span>{t('cart.total')}</span>
                       <span>{formatDualCurrencyCompact(total)}</span>
                     </div>
                   </div>
@@ -257,14 +258,14 @@ const Cart = () => {
                     className="w-full"
                     onClick={handleCancelOrder}
                   >
-                    Cancel Order
+                    {t('cart.cancelOrder')}
                   </Button>
                 ) : (
                   <Button 
                     className="w-full" 
                     onClick={handleCheckout}
                   >
-                    Checkout
+                    {t('cart.checkout')}
                   </Button>
                 )}
                 <Button 
@@ -272,7 +273,7 @@ const Cart = () => {
                   className="w-full"
                   onClick={() => navigate('/food')}
                 >
-                  Continue Shopping
+                  {t('cart.continueShopping')}
                 </Button>
               </CardFooter>
             </Card>

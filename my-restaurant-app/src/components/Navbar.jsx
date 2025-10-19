@@ -13,6 +13,7 @@ import {
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { User } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { t } from '@/utils/translations';
 
 const Navbar = () => {
   const { isLoggedIn, handleLogout, isAdmin } = useAuth();
@@ -25,21 +26,21 @@ const Navbar = () => {
             <NavigationMenuItem>
               <Link to="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Home
+                  {t('nav.home')}
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link to="/about" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  About
+                  {t('nav.about')}
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <Link to="/food" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Food
+                  {t('nav.food')}
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
@@ -56,23 +57,23 @@ const Navbar = () => {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2">
                   <User className="h-6 w-6" />
-                  <span className="sr-only">User Menu</span>
+                  <span className="sr-only">{t('nav.profile')}</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link to="/user-dashboard">Dashboard</Link>
+                  <Link to="/user-dashboard">{t('nav.dashboard')}</Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/admin">Admin</Link>
+                    <Link to="/admin">{t('nav.admin')}</Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>{t('nav.logout')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-background")}>Login</Link>
+            <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-background")}>{t('nav.login')}</Link>
           )}
         </div>
       </div>
