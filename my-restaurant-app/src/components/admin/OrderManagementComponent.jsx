@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +6,7 @@ import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
+import { formatDualCurrencyCompact } from "@/utils/currency";
 
 export default function OrderManagementComponent() {
   const [orders, setOrders] = useState([]);
@@ -234,11 +234,11 @@ export default function OrderManagementComponent() {
                                     {item.item_quantity}x {item.item_name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    Base: €{(item.item_price / 1.95583).toFixed(2)} × {item.item_quantity} = €{(item.item_base_total / 1.95583)?.toFixed(2) || '0.00'}
+                                    Base: {formatDualCurrencyCompact(item.item_price)} × {item.item_quantity} = {formatDualCurrencyCompact(item.item_base_total || 0)}
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-sm font-medium">€{(item.item_total / 1.95583)?.toFixed(2) || '0.00'}</p>
+                                  <p className="text-sm font-medium">{formatDualCurrencyCompact(item.item_total || 0)}</p>
                                 </div>
                               </div>
                               
@@ -252,7 +252,7 @@ export default function OrderManagementComponent() {
                                           + {addon.addon_name} (×{addon.addon_quantity})
                                         </span>
                                         <span className="text-green-600">
-                                          €{(addon.addon_total / 1.95583)?.toFixed(2) || '0.00'}
+                                          {formatDualCurrencyCompact(addon.addon_total || 0)}
                                         </span>
                                       </div>
                                     ))}
@@ -261,7 +261,7 @@ export default function OrderManagementComponent() {
                                     <div className="flex justify-between items-center text-xs">
                                       <span className="font-medium text-green-700">Addon Total:</span>
                                       <span className="font-medium text-green-700">
-                                        €{(item.item_addon_total / 1.95583)?.toFixed(2) || '0.00'}
+                                        {formatDualCurrencyCompact(item.item_addon_total || 0)}
                                       </span>
                                     </div>
                                   </div>

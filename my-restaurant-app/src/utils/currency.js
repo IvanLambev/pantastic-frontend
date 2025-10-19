@@ -30,3 +30,23 @@ export const formatCurrency = (amount) => {
 export const convertAndFormatPrice = (bgnAmount) => {
   return formatCurrency(convertBgnToEur(bgnAmount));
 };
+
+/**
+ * Displays both BGN and EUR prices
+ * @param {number} bgnAmount - Amount in BGN
+ * @returns {string} - Formatted string showing both currencies
+ */
+export const formatDualCurrency = (bgnAmount) => {
+  const eurAmount = convertBgnToEur(bgnAmount);
+  return `${formatCurrency(bgnAmount)} лв / €${formatCurrency(eurAmount)}`;
+};
+
+/**
+ * Displays both BGN and EUR prices in compact format
+ * @param {number} bgnAmount - Amount in BGN
+ * @returns {string} - Compact formatted string showing both currencies
+ */
+export const formatDualCurrencyCompact = (bgnAmount) => {
+  const eurAmount = convertBgnToEur(bgnAmount);
+  return `${formatCurrency(eurAmount)} € (${formatCurrency(bgnAmount)} лв)`;
+};

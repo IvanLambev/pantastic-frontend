@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
-import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
+import { formatDualCurrencyCompact, convertBgnToEur } from "@/utils/currency"
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
@@ -81,16 +81,21 @@ export default function CheckoutV2() {
     return coordinates ? JSON.parse(coordinates) : { latitude: null, longitude: null }
   }
 
-  // Calculate total (converting from BGN to EUR)
-  const calculateTotal = () => {
+  // Calculate total in BGN
+  const calculateTotalBGN = () => {
     const subtotal = cartItems.reduce((sum, item) => {
       const addOnsTotal = item.addOns ? 
-        item.addOns.reduce((addOnSum, addOn) => addOnSum + convertBgnToEur(addOn.price), 0) : 0;
-      return sum + (convertBgnToEur(item.price) * item.quantity) + (addOnsTotal * item.quantity);
+        item.addOns.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) : 0;
+      return sum + (item.price * item.quantity) + (addOnsTotal * item.quantity);
     }, 0);
     
-    const deliveryFee = deliveryMethod === 'delivery' ? 5 : 0; // 5 EUR display
+    const deliveryFee = deliveryMethod === 'delivery' ? 9.78 : 0; // ~5 EUR in BGN
     return subtotal + deliveryFee;
+  };
+
+  // Calculate total in EUR
+  const calculateTotalEUR = () => {
+    return convertBgnToEur(calculateTotalBGN());
   };
 
   // Handle address editing
@@ -549,7 +554,7 @@ export default function CheckoutV2() {
                               <span className="font-medium">Add-ons: </span>
                               {item.selectedAddons.map((addon, index) => (
                                 <span key={index}>
-                                  {addon.name} (+€{convertAndFormatPrice(addon.price)})
+                                  {addon.name} (+{formatDualCurrencyCompact(addon.price)})
                                   {index < item.selectedAddons.length - 1 ? ', ' : ''}
                                 </span>
                               ))}
@@ -577,7 +582,7 @@ export default function CheckoutV2() {
                             </div>
                           )}
                         </div>
-                        <div className="font-medium">€{(convertBgnToEur(Number(item.price) || 0) * item.quantity).toFixed(2)}</div>
+                        <div className="font-medium">{formatDualCurrencyCompact((Number(item.price) || 0) * item.quantity)}</div>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -621,18 +626,18 @@ export default function CheckoutV2() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>€{(calculateTotal() - (deliveryMethod === 'delivery' ? 5 : 0)).toFixed(2)}</span>
+                      <span>{formatDualCurrencyCompact(calculateTotalBGN() - (deliveryMethod === 'delivery' ? 9.78 : 0))}</span>
                     </div>
                     {deliveryMethod === 'delivery' && (
                       <div className="flex justify-between">
                         <span>Delivery Fee</span>
-                        <span>€5.00</span>
+                        <span>{formatDualCurrencyCompact(9.78)}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
-                      <span>€{calculateTotal().toFixed(2)}</span>
+                      <span>{formatDualCurrencyCompact(calculateTotalBGN())}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -696,7 +701,7 @@ export default function CheckoutV2() {
             onClose={handleOrderConfirmationClose}
             onConfirm={handleOrderConfirm}
             cartItems={cartItems}
-            total={calculateTotal()}
+            total={calculateTotalBGN()}
             isLoading={isProcessing}
           />
         </div>

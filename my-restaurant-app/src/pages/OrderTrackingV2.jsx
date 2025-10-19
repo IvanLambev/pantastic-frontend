@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { fetchWithAuth } from "@/context/AuthContext"
-import { convertAndFormatPrice } from "@/utils/currency"
+import { formatDualCurrencyCompact } from "@/utils/currency"
 
 export default function OrderTrackingV2() {
   const [order, setOrder] = useState(null)
@@ -258,7 +258,7 @@ export default function OrderTrackingV2() {
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">Order Total</span>
-                <span className="font-bold">€{order.total_price ? convertAndFormatPrice(order.total_price) : '0.00'}</span>
+                <span className="font-bold">{order.total_price ? formatDualCurrencyCompact(order.total_price) : '0.00 лв / €0.00'}</span>
               </div>
 
               <Separator />

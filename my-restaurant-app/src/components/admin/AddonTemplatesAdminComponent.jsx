@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Plus, MoreVertical, Pencil, Trash2, Save } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { formatDualCurrencyCompact } from "@/utils/currency"
 
 // Zod schemas for form validation - Updated to match new API structure
 const templateSchema = z.object({
@@ -316,7 +317,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                       <TableRow key={addonName}>
                         <TableCell className="font-medium">{addonName}</TableCell>
                         <TableCell>-</TableCell>
-                        <TableCell className="text-right">€{(Number(price) / 1.95583).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatDualCurrencyCompact(price)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

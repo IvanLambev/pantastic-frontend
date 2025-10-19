@@ -27,7 +27,7 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
-import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
+import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -385,7 +385,7 @@ const Food = () => {
                       <div className="flex flex-col justify-center">
                         <h3 className="font-semibold text-sm">{itemName}</h3>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">€{convertAndFormatPrice(itemPrice)}</span>
+                          <span className="font-semibold text-sm">{formatDualCurrencyCompact(itemPrice)}</span>
                           {(hasAddons || hasRemovables) && (
                             <div className="flex gap-1">
                               {hasAddons && <span className="text-xs text-green-600">+</span>}
@@ -555,7 +555,7 @@ const Food = () => {
                           )}
                           
                           <div className="flex justify-between items-start">
-                            <span className="font-semibold">€{convertAndFormatPrice(itemPrice)}</span>
+                            <span className="font-semibold">{formatDualCurrencyCompact(itemPrice)}</span>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"

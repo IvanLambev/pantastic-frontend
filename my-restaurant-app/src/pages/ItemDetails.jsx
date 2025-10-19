@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
-import { convertAndFormatPrice, convertBgnToEur } from "@/utils/currency"
+import { formatDualCurrencyCompact } from "@/utils/currency"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
@@ -63,7 +63,7 @@ export default function ItemDetails() {
           }
         }
         setItem(data);
-        setTotalPrice(convertBgnToEur(Number(data.price)));
+        setTotalPrice(Number(data.price));
 
         // Fetch addons for this item
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}/addons`);
@@ -147,7 +147,7 @@ export default function ItemDetails() {
       }
       
       // Update total price (only addons affect price)
-      updateTotalPrice(updatedAddons, selectedRemovables);
+      updateTotalPrice(updatedAddons);
       
       return updatedAddons;
     });
@@ -176,15 +176,15 @@ export default function ItemDetails() {
   };
   
   // Calculate total price based on item price and selected addons (removables don't affect price)
-  const updateTotalPrice = (selectedAddonObj, selectedRemovableObj) => {
+  const updateTotalPrice = (selectedAddonObj) => {
     if (!item) return;
     
-    let newTotal = convertBgnToEur(Number(item.price));
+    let newTotal = Number(item.price);
     
     // Add price of all selected addons (removables don't affect price)
     Object.values(selectedAddonObj).forEach(addonArray => {
       addonArray.forEach(addon => {
-        newTotal += convertBgnToEur(Number(addon.price));
+        newTotal += Number(addon.price);
       });
     });
     
@@ -225,7 +225,7 @@ export default function ItemDetails() {
       originalItemId: item.item_id,
       name: item.name,
       price: totalPrice,
-      basePrice: convertBgnToEur(Number(item.price)),
+      basePrice: Number(item.price),
       image: item.image_url,
       description: item.description,
       selectedAddons: selectedAddonList,
@@ -335,11 +335,11 @@ export default function ItemDetails() {
             <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
             <div className="flex items-center space-x-2 mb-4">
               <p className="text-2xl font-semibold text-primary">
-                €{totalPrice.toFixed(2)}
+                {formatDualCurrencyCompact(totalPrice)}
               </p>
-              {totalPrice !== convertBgnToEur(Number(item.price)) && (
+              {totalPrice !== Number(item.price) && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Base: €{convertAndFormatPrice(item.price)}
+                  Base: {formatDualCurrencyCompact(item.price)}
                 </Badge>
               )}
             </div>
@@ -385,7 +385,7 @@ export default function ItemDetails() {
                             />
                             <span className="font-medium">{addonName}</span>
                           </div>
-                          <span className="text-sm font-semibold ml-2">+€{convertAndFormatPrice(price)}</span>
+                          <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
                         </div>
                       ))}
                     </div>
@@ -446,7 +446,7 @@ export default function ItemDetails() {
           <div className="pt-4 border-t">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total Price:</span>
-              <span className="text-xl font-bold text-primary">€{totalPrice.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice)}</span>
             </div>
             <Button
               size="lg"
