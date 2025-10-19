@@ -106,6 +106,19 @@ export default function CheckoutV2() {
   const [newAddress, setNewAddress] = useState("")
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
   
+  // Guest checkout states
+  const [isGuest, setIsGuest] = useState(false)
+  const [guestData, setGuestData] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    phone: "",
+    city: "",
+    password: ""
+  })
+  const [guestRegistering, setGuestRegistering] = useState(false)
+  const [guestError, setGuestError] = useState("")
+  
   // Discount states
   const [discountCode, setDiscountCode] = useState("")
   const [discountInfo, setDiscountInfo] = useState(null)
@@ -157,6 +170,10 @@ export default function CheckoutV2() {
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
   const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
+  
+  // Check if user is logged in
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+  const isLoggedIn = !!user?.access_token
   
   // Check if restaurant is currently open
   const isOpen = isRestaurantOpen(selectedRestaurant)
@@ -287,6 +304,83 @@ export default function CheckoutV2() {
     setDiscountCode("")
     setDiscountInfo(null)
     setDiscountError("")
+  }
+
+  // Guest registration function
+  const handleGuestRegister = async () => {
+    // Validate guest data
+    if (!guestData.email || !guestData.first_name || !guestData.last_name || 
+        !guestData.phone || !guestData.city || !guestData.password) {
+      setGuestError("All fields are required")
+      return
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(guestData.email)) {
+      setGuestError("Please enter a valid email address")
+      return
+    }
+
+    // Phone validation (Bulgarian format)
+    const phoneRegex = /^\+359\d{9}$/
+    if (!phoneRegex.test(guestData.phone)) {
+      setGuestError("Phone must be in format: +359888000000")
+      return
+    }
+
+    // Password validation
+    if (guestData.password.length < 8) {
+      setGuestError("Password must be at least 8 characters long")
+      return
+    }
+
+    setGuestRegistering(true)
+    setGuestError("")
+
+    try {
+      const response = await fetch(`${API_URL}/user/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(guestData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || "Registration failed")
+      }
+
+      const data = await response.json()
+      
+      // Save the access token to sessionStorage
+      sessionStorage.setItem('user', JSON.stringify({
+        access_token: data.access_token,
+        token_type: data.token_type
+      }))
+
+      // Reset guest state
+      setIsGuest(false)
+      setGuestData({
+        email: "",
+        first_name: "",
+        last_name: "",
+        phone: "",
+        city: "",
+        password: ""
+      })
+
+      toast.success("Account created successfully! Proceeding to checkout...")
+      
+      // Proceed with order confirmation
+      setShowOrderConfirmation(true)
+    } catch (error) {
+      console.error('Guest registration error:', error)
+      setGuestError(error.message || "Failed to create account. Please try again.")
+    } finally {
+      setGuestRegistering(false)
+    }
   }
 
   const getScheduledDeliveryTime = () => {
@@ -562,6 +656,164 @@ export default function CheckoutV2() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Guest Checkout Section - Only show if not logged in */}
+              {!isLoggedIn && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Account Required</CardTitle>
+                    <CardDescription>Sign in or create an account to complete your order</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!isGuest ? (
+                      <div className="space-y-4">
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="default"
+                            className="flex-1"
+                            onClick={() => navigate('/login', { state: { from: '/checkout-v2' } })}
+                          >
+                            Sign In
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => navigate('/signup', { state: { from: '/checkout-v2' } })}
+                          >
+                            Sign Up
+                          </Button>
+                        </div>
+                        
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">Or</span>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="secondary"
+                          className="w-full"
+                          onClick={() => setIsGuest(true)}
+                        >
+                          Create Account & Checkout
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="first_name">First Name *</Label>
+                            <Input
+                              id="first_name"
+                              placeholder="Ivan"
+                              value={guestData.first_name}
+                              onChange={(e) => setGuestData({ ...guestData, first_name: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="last_name">Last Name *</Label>
+                            <Input
+                              id="last_name"
+                              placeholder="Ivanov"
+                              value={guestData.last_name}
+                              onChange={(e) => setGuestData({ ...guestData, last_name: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="newuser@example.com"
+                            value={guestData.email}
+                            onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="phone">Phone *</Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            placeholder="+359888000000"
+                            value={guestData.phone}
+                            onChange={(e) => setGuestData({ ...guestData, phone: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Format: +359888000000</p>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="city">City *</Label>
+                          <Input
+                            id="city"
+                            placeholder="Sofia"
+                            value={guestData.city}
+                            onChange={(e) => setGuestData({ ...guestData, city: e.target.value })}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="password">Password *</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="Create a strong password"
+                            value={guestData.password}
+                            onChange={(e) => setGuestData({ ...guestData, password: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Minimum 8 characters</p>
+                        </div>
+                        
+                        {guestError && (
+                          <p className="text-sm text-red-600">{guestError}</p>
+                        )}
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              setIsGuest(false)
+                              setGuestData({
+                                email: "",
+                                first_name: "",
+                                last_name: "",
+                                phone: "",
+                                city: "",
+                                password: ""
+                              })
+                              setGuestError("")
+                            }}
+                            disabled={guestRegistering}
+                          >
+                            Back
+                          </Button>
+                          <Button
+                            variant="default"
+                            className="flex-1"
+                            onClick={handleGuestRegister}
+                            disabled={guestRegistering}
+                          >
+                            {guestRegistering ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Creating Account...
+                              </div>
+                            ) : (
+                              "Create Account & Continue"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Payment Method */}
               <Card>
@@ -855,6 +1107,11 @@ export default function CheckoutV2() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
+                  {!isLoggedIn && (
+                    <div className="text-center p-2 bg-blue-50 border border-blue-200 rounded-lg w-full">
+                      <p className="text-sm text-blue-800 font-medium">Please sign in or create an account to continue</p>
+                    </div>
+                  )}
                   {!isOpen && nextOpenTime && (
                     <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
                       <p className="text-sm text-orange-800 font-medium">Restaurant is currently closed</p>
@@ -862,15 +1119,20 @@ export default function CheckoutV2() {
                     </div>
                   )}
                   <Button 
-                    className={`w-full ${!isOpen ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
+                    className={`w-full ${(!isOpen || !isLoggedIn) ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
                     size="lg"
                     onClick={handleCheckout} 
-                    disabled={isProcessing || !isOpen}
+                    disabled={isProcessing || !isOpen || !isLoggedIn}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Processing Payment...
+                      </div>
+                    ) : !isLoggedIn ? (
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4" />
+                        Account Required
                       </div>
                     ) : !isOpen ? (
                       <div className="flex items-center gap-2">
