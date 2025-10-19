@@ -385,7 +385,7 @@ export default function RestaurantSelector({
   }
 
   // Find closest restaurant (open or closed) by coordinates
-  function findClosestRestaurant(lat, lng, includeClosedRestaurants = false) {
+  function findClosestRestaurant(lat, lng) {
     if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
     
     // First, try to find open restaurants
@@ -420,37 +420,29 @@ export default function RestaurantSelector({
       return { restaurant: closest, distance: minDist, message: null, isOpen: true };
     }
     
-    // No open restaurants found - if includeClosedRestaurants, find closest closed restaurant
-    if (includeClosedRestaurants) {
-      let minDist = Infinity;
-      let closest = null;
-      for (const r of restaurants) {
-        const rLat = r.latitude;
-        const rLng = r.longitude;
-        if (typeof rLat === "number" && typeof rLng === "number") {
-          const dist = getDistance(lat, lng, rLat, rLng);
-          if (dist < minDist) {
-            minDist = dist;
-            closest = r;
-          }
+    // No open restaurants found - Always find the closest restaurant for menu browsing
+    let minDist = Infinity;
+    let closest = null;
+    for (const r of restaurants) {
+      const rLat = r.latitude;
+      const rLng = r.longitude;
+      if (typeof rLat === "number" && typeof rLng === "number") {
+        const dist = getDistance(lat, lng, rLat, rLng);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = r;
         }
       }
-      
-      return {
-        restaurant: closest,
-        distance: minDist,
-        isOpen: false,
-        message: null
-      };
     }
     
-    // No open restaurants found
+    // Return the closest restaurant even though it's closed (for menu browsing)
     const nextOpenTime = getNextOpenTime();
     return {
-      restaurant: null,
-      distance: null,
+      restaurant: closest,
+      distance: minDist,
       isOpen: false,
-      message: `No restaurants are currently open in your area. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`
+      message: `No restaurants are currently open in your area. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`,
+      allowBrowsing: true // Flag to indicate user can browse menu but not order
     };
   }
 
@@ -611,7 +603,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">How would you like to get your food?</DialogTitle>
           </DialogHeader>
@@ -655,7 +647,7 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
               {deliveryMethod === 'pickup' ? 'Where are you located?' : 'Where should we deliver?'}
@@ -728,12 +720,36 @@ export default function RestaurantSelector({
                   </div>
                 )}
                 
-                {/* No Open Restaurants - Remove scheduling options per requirements */}
+                {/* No Open Restaurants - Show nearest restaurant for menu browsing */}
                 {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
-                  <div className="text-center">
+                  <div className="text-center space-y-4">
                     <p className="text-sm text-muted-foreground mt-2">
-                      Please check back during restaurant operating hours to place an order.
+                      No restaurants are currently open for ordering, but you can browse the menu of your nearest restaurant.
                     </p>
+                    {pendingRestaurantSelection && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2 flex items-center justify-center gap-2">
+                          <Store className="h-5 w-5" />
+                          Nearest Restaurant
+                        </h4>
+                        <p className="text-sm text-blue-800 mb-1">{pendingRestaurantSelection.name}</p>
+                        <p className="text-xs text-blue-600 mb-3">
+                          {pendingRestaurantSelection.address || 'Address not available'}
+                          {pendingDistance && ` - ${pendingDistance.toFixed(1)} km away`}
+                        </p>
+                        <Button 
+                          variant="default"
+                          onClick={() => {
+                            onSelect(pendingRestaurantSelection);
+                            handleClose();
+                            toast.info("This restaurant is currently closed. You can browse the menu but cannot place orders until it opens.");
+                          }}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          Browse Menu
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -760,7 +776,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-row justify-between items-center">
             <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
             <Button 
@@ -796,7 +812,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-row justify-between items-center">
             <DialogTitle className="text-2xl font-bold">
               Select a Restaurant in {selectedCity}
