@@ -18,7 +18,84 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
-import { formatDualCurrencyCompact, convertBgnToEur } from "@/utils/currency"
+import { formatDualCurrencyCompact } from "@/utils/currency"
+
+// Utility functions for restaurant status
+function isRestaurantOpen(restaurant) {
+  if (!restaurant) return false;
+  
+  // Get current time in GMT+3
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const gmt3 = new Date(utc + 3 * 3600000);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDay = days[gmt3.getDay()];
+  
+  const hours = (Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours) || {};
+  const todayHours = hours[currentDay];
+  
+  if (!todayHours) return false;
+  
+  try {
+    // Format: "09:00-18:00"
+    const [open, close] = todayHours.split("-");
+    const [openH, openM] = open.split(":").map(Number);
+    const [closeH, closeM] = close.split(":").map(Number);
+    
+    const openDate = new Date(gmt3);
+    openDate.setHours(openH, openM, 0, 0);
+    const closeDate = new Date(gmt3);
+    closeDate.setHours(closeH, closeM, 0, 0);
+    
+    return gmt3 >= openDate && gmt3 <= closeDate;
+  } catch (error) {
+    console.error("Error parsing restaurant hours:", error);
+    return false;
+  }
+}
+
+function getNextOpenTime(restaurant) {
+  if (!restaurant) return null;
+  
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const gmt3 = new Date(utc + 3 * 3600000);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  
+  const hours = (Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours) || {};
+  
+  // Check today and next few days
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const checkDate = new Date(gmt3);
+    checkDate.setDate(checkDate.getDate() + dayOffset);
+    const dayName = days[checkDate.getDay()];
+    
+    const dayHours = hours[dayName];
+    
+    if (dayHours) {
+      try {
+        const [open] = dayHours.split("-");
+        const [openH, openM] = open.split(":").map(Number);
+        const openTime = new Date(checkDate);
+        openTime.setHours(openH, openM, 0, 0);
+        
+        // If it's today, make sure the opening time is in the future
+        if (dayOffset === 0 && openTime <= gmt3) continue;
+        
+        if (dayOffset === 0) {
+          return `Today at ${open}`;
+        } else if (dayOffset === 1) {
+          return `Tomorrow at ${open}`;
+        } else {
+          return `${dayName} at ${open}`;
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
+}
 
 export default function CheckoutV2() {
   const navigate = useNavigate()
@@ -28,6 +105,12 @@ export default function CheckoutV2() {
   const [showAddressEdit, setShowAddressEdit] = useState(false)
   const [newAddress, setNewAddress] = useState("")
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
+  
+  // Discount states
+  const [discountCode, setDiscountCode] = useState("")
+  const [discountInfo, setDiscountInfo] = useState(null)
+  const [discountValidating, setDiscountValidating] = useState(false)
+  const [discountError, setDiscountError] = useState("")
   
   // Scheduling states
   const [isScheduled, setIsScheduled] = useState(false)
@@ -75,28 +158,41 @@ export default function CheckoutV2() {
   const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
   const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
   
+  // Check if restaurant is currently open
+  const isOpen = isRestaurantOpen(selectedRestaurant)
+  const nextOpenTime = !isOpen ? getNextOpenTime(selectedRestaurant) : null
+  
   // Get delivery coordinates from sessionStorage
   const getDeliveryCoordinates = () => {
     const coordinates = sessionStorage.getItem('delivery_coordinates')
     return coordinates ? JSON.parse(coordinates) : { latitude: null, longitude: null }
   }
 
-  // Calculate total in BGN
-  const calculateTotalBGN = () => {
-    const subtotal = cartItems.reduce((sum, item) => {
+  // Calculate subtotal in BGN (without delivery fee)
+  const calculateSubtotalBGN = () => {
+    return cartItems.reduce((sum, item) => {
       const addOnsTotal = item.addOns ? 
         item.addOns.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) : 0;
       return sum + (item.price * item.quantity) + (addOnsTotal * item.quantity);
     }, 0);
-    
-    const deliveryFee = deliveryMethod === 'delivery' ? 9.78 : 0; // ~5 EUR in BGN
-    return subtotal + deliveryFee;
   };
 
-  // Calculate total in EUR
-  const calculateTotalEUR = () => {
-    return convertBgnToEur(calculateTotalBGN());
+  // Calculate discount amount in BGN
+  const calculateDiscountAmountBGN = () => {
+    if (!discountInfo || !discountInfo.valid) return 0;
+    const subtotal = calculateSubtotalBGN();
+    return (subtotal * discountInfo.discount_percentage) / 100;
   };
+
+  // Calculate total in BGN (with discount and delivery fee)
+  const calculateTotalBGN = () => {
+    const subtotal = calculateSubtotalBGN();
+    const discountAmount = calculateDiscountAmountBGN();
+    const deliveryFee = deliveryMethod === 'delivery' ? 9.78 : 0; // ~5 EUR in BGN
+    return subtotal - discountAmount + deliveryFee;
+  };
+
+
 
   // Handle address editing
   const handleAddressEdit = () => {
@@ -138,6 +234,59 @@ export default function CheckoutV2() {
     maxDate.setDate(today.getDate() + 3) // 3 days ahead
     date.setHours(0, 0, 0, 0)
     return date < today || date > maxDate
+  }
+
+  // Discount validation function
+  const validateDiscountCode = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code")
+      return
+    }
+
+    setDiscountValidating(true)
+    setDiscountError("")
+
+    try {
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      if (!user.access_token) {
+        setDiscountError("Please log in to apply discount codes")
+        setDiscountValidating(false)
+        return
+      }
+
+      const response = await fetch(`${API_URL}/order/discount/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.access_token}`
+        },
+        body: JSON.stringify({ discount_code: discountCode.trim() })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.valid) {
+        setDiscountInfo(data)
+        setDiscountError("")
+        toast.success(data.message)
+      } else {
+        setDiscountError(data.message || "Invalid discount code")
+        setDiscountInfo(null)
+      }
+    } catch (error) {
+      console.error('Error validating discount:', error)
+      setDiscountError("Failed to validate discount code. Please try again.")
+      setDiscountInfo(null)
+    } finally {
+      setDiscountValidating(false)
+    }
+  }
+
+  // Remove discount function
+  const removeDiscount = () => {
+    setDiscountCode("")
+    setDiscountInfo(null)
+    setDiscountError("")
   }
 
   const getScheduledDeliveryTime = () => {
@@ -252,9 +401,9 @@ export default function CheckoutV2() {
       const coordinates = getDeliveryCoordinates()
 
       const orderData = {
-        restaurant_id: selectedRestaurant[0],
+        restaurant_id: Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id,
         order_items: orderItems,
-        discount: null,
+        discount: discountInfo && discountInfo.valid ? discountCode.trim() : null,
         payment_method: selectedPayment,
         delivery_method: deliveryMethod,
         address: deliveryMethod === 'pickup' ? null : deliveryAddress,
@@ -285,6 +434,11 @@ export default function CheckoutV2() {
       sessionStorage.removeItem('scheduled_order');
       sessionStorage.removeItem('order_scheduling_reason');
       sessionStorage.removeItem('order_scheduled_delivery');
+      
+      // Clean up discount data
+      setDiscountCode("");
+      setDiscountInfo(null);
+      setDiscountError("");
 
       // Handle different payment methods
       if (selectedPayment === 'cash') {
@@ -356,6 +510,59 @@ export default function CheckoutV2() {
           
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="space-y-6">
+              {/* Discount Code */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Discount Code</CardTitle>
+                  <CardDescription>Have a promotional code? Apply it here</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!discountInfo ? (
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter discount code"
+                          value={discountCode}
+                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                          onKeyPress={(e) => e.key === 'Enter' && validateDiscountCode()}
+                          disabled={discountValidating}
+                        />
+                        <Button 
+                          onClick={validateDiscountCode}
+                          disabled={!discountCode.trim() || discountValidating}
+                          size="default"
+                        >
+                          {discountValidating ? "Checking..." : "Apply"}
+                        </Button>
+                      </div>
+                      {discountError && (
+                        <p className="text-sm text-red-600">{discountError}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800">
+                            {discountCode} - {discountInfo.discount_percentage}% off
+                          </span>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={removeDiscount}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      <p className="text-sm text-green-600">{discountInfo.message}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Payment Method */}
               <Card>
                 <CardHeader>
@@ -435,17 +642,17 @@ export default function CheckoutV2() {
                   </CardHeader>
                   <CardContent>
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="font-medium">{selectedRestaurant[7]}</p>
+                      <p className="font-medium">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedRestaurant[1]}
+                        {Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address}
                       </p>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Delivery Scheduling Banner */}
-              {selectedRestaurant.length > 0 && (
+              {/* Delivery Scheduling Banner - Only show when restaurant is open */}
+              {selectedRestaurant.length > 0 && isOpen && (
                 <DeliverySchedulingBanner
                   restaurant={selectedRestaurant}
                   onScheduleSelect={handleScheduleSelect}
@@ -453,8 +660,8 @@ export default function CheckoutV2() {
                 />
               )}
 
-              {/* Manual Order Scheduling (fallback) */}
-              {!isScheduledOrder && (
+              {/* Manual Order Scheduling (fallback) - Only show when restaurant is open */}
+              {!isScheduledOrder && isOpen && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -626,8 +833,14 @@ export default function CheckoutV2() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>{formatDualCurrencyCompact(calculateTotalBGN() - (deliveryMethod === 'delivery' ? 9.78 : 0))}</span>
+                      <span>{formatDualCurrencyCompact(calculateSubtotalBGN())}</span>
                     </div>
+                    {discountInfo && discountInfo.valid && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({discountInfo.discount_percentage}%)</span>
+                        <span>-{formatDualCurrencyCompact(calculateDiscountAmountBGN())}</span>
+                      </div>
+                    )}
                     {deliveryMethod === 'delivery' && (
                       <div className="flex justify-between">
                         <span>Delivery Fee</span>
@@ -641,17 +854,28 @@ export default function CheckoutV2() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-2">
+                  {!isOpen && nextOpenTime && (
+                    <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
+                      <p className="text-sm text-orange-800 font-medium">Restaurant is currently closed</p>
+                      <p className="text-xs text-orange-600">Next opening: {nextOpenTime}</p>
+                    </div>
+                  )}
                   <Button 
-                    className="w-full" 
+                    className={`w-full ${!isOpen ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
                     size="lg"
                     onClick={handleCheckout} 
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isOpen}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Processing Payment...
+                      </div>
+                    ) : !isOpen ? (
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4" />
+                        Restaurant Closed
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">

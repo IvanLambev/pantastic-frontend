@@ -318,11 +318,11 @@ export default function RestaurantSelector({
     }
   }, [open])
 
-  // Get unique cities from restaurants (updated index from 2 to 3)
-  const cities = [...new Set(restaurants.map(restaurant => restaurant[3]))].sort();
-  // Filter restaurants by selected city (updated index from 2 to 3)
+  // Get unique cities from restaurants
+  const cities = [...new Set(restaurants.map(restaurant => restaurant.city))].sort();
+  // Filter restaurants by selected city
   const filteredRestaurants = selectedCity 
-    ? restaurants.filter(restaurant => restaurant[3] === selectedCity)
+    ? restaurants.filter(restaurant => restaurant.city === selectedCity)
     : restaurants;
 
   // Reset states when modal closes
@@ -361,7 +361,7 @@ export default function RestaurantSelector({
     const gmt3 = new Date(utc + 3 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = days[gmt3.getDay()];
-    const hours = restaurant[9] || {};  // Working hours object
+    const hours = restaurant.opening_hours || {};  // Working hours object
     const todayHours = hours[currentDay];
     
     if (!todayHours) return false;
@@ -396,8 +396,8 @@ export default function RestaurantSelector({
       let minDist = Infinity;
       let closest = null;
       for (const r of openRestaurants) {
-        const rLat = r[6];
-        const rLng = r[7];
+        const rLat = r.latitude;
+        const rLng = r.longitude;
         if (typeof rLat === "number" && typeof rLng === "number") {
           const dist = getDistance(lat, lng, rLat, rLng);
           if (dist < minDist) {
@@ -413,7 +413,7 @@ export default function RestaurantSelector({
           restaurant: closest,
           distance: minDist,
           isOpen: true,
-          message: `The closest working restaurant "${closest[8]}" is ${minDist.toFixed(1)} km away from your location. Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?`
+          message: `The closest working restaurant "${closest.name}" is ${minDist.toFixed(1)} km away from your location. Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?`
         };
       }
       
@@ -425,8 +425,8 @@ export default function RestaurantSelector({
       let minDist = Infinity;
       let closest = null;
       for (const r of restaurants) {
-        const rLat = r[6];
-        const rLng = r[7];
+        const rLat = r.latitude;
+        const rLng = r.longitude;
         if (typeof rLat === "number" && typeof rLng === "number") {
           const dist = getDistance(lat, lng, rLat, rLng);
           if (dist < minDist) {
@@ -468,7 +468,7 @@ export default function RestaurantSelector({
       const dayName = days[checkDate.getDay()];
       
       for (const restaurant of restaurants) {
-        const hours = restaurant[9] || {};
+        const hours = restaurant.opening_hours || {};
         const dayHours = hours[dayName];
         
         if (dayHours) {
@@ -696,7 +696,7 @@ export default function RestaurantSelector({
                         Distance Warning
                       </div>
                       <p className="text-sm">
-                        The closest working restaurant <span className="font-bold">"{pendingRestaurantSelection[8]}"</span> is{' '}
+                        The closest working restaurant <span className="font-bold">"{pendingRestaurantSelection.name}"</span> is{' '}
                         <span className="font-bold">{pendingDistance?.toFixed(1)} km</span> away from your location.
                       </p>
                       <p className="text-sm">
@@ -728,63 +728,12 @@ export default function RestaurantSelector({
                   </div>
                 )}
                 
-                {/* No Open Restaurants Options */}
+                {/* No Open Restaurants - Remove scheduling options per requirements */}
                 {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        // Get user's location to find closest restaurant
-                        const deliveryCoords = sessionStorage.getItem('delivery_coordinates');
-                        if (deliveryCoords) {
-                          const coords = JSON.parse(deliveryCoords);
-                          const result = findClosestRestaurant(coords.latitude, coords.longitude, true);
-                          if (result.restaurant) {
-                            // Mark as scheduled order and select closest restaurant
-                            sessionStorage.setItem('scheduled_order', 'true');
-                            sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
-                            onSelect(result.restaurant);
-                            handleClose();
-                            // Redirect to food page
-                            window.location.href = '/food';
-                            toast.info("You can browse our menu and add items to your cart. Orders will be processed when the restaurant opens.");
-                          }
-                        } else {
-                          handleClose();
-                          toast.info("Please set your location first to browse the catalog.");
-                        }
-                      }}
-                      className="flex-1 sm:flex-none"
-                    >
-                      Browse Catalog
-                    </Button>
-                    <Button 
-                      variant="default"
-                      onClick={() => {
-                        // Get user's location to find closest restaurant
-                        const deliveryCoords = sessionStorage.getItem('delivery_coordinates');
-                        if (deliveryCoords) {
-                          const coords = JSON.parse(deliveryCoords);
-                          const result = findClosestRestaurant(coords.latitude, coords.longitude, true);
-                          if (result.restaurant) {
-                            // Mark as scheduled order and select closest restaurant
-                            sessionStorage.setItem('scheduled_order', 'true');
-                            sessionStorage.setItem('order_scheduling_reason', 'restaurant_closed');
-                            onSelect(result.restaurant);
-                            handleClose();
-                            // Redirect to food page
-                            window.location.href = '/food';
-                            toast.info("You can place an order now and we'll prepare it when the restaurant opens. Delivery time will be coordinated with restaurant hours during checkout.");
-                          }
-                        } else {
-                          handleClose();
-                          toast.info("Please set your location first to schedule a delivery.");
-                        }
-                      }}
-                      className="flex-1 sm:flex-none"
-                    >
-                      Schedule Delivery
-                    </Button>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Please check back during restaurant operating hours to place an order.
+                    </p>
                   </div>
                 )}
               </div>
@@ -872,7 +821,7 @@ export default function RestaurantSelector({
                 const gmt3 = new Date(utc + 3 * 3600000);
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
                 const currentDay = days[gmt3.getDay()];
-                const hours = restaurant[9] || {};  // Updated index for working hours
+                const hours = restaurant.opening_hours || {};  // Opening hours object
                 const todayHours = hours[currentDay];
                 let isOpen = false;
                 let timeText = "Closed";
@@ -896,26 +845,26 @@ export default function RestaurantSelector({
                 }
                 return (
                   <Button
-                    key={restaurant[0]}
+                    key={restaurant.restaurant_id}
                     variant="outline"
                     className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100 relative"
                     onClick={() => {
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
-                      toast.success(`You selected restaurant: ${restaurant[8]}`);
+                      toast.success(`You selected restaurant: ${restaurant.name}`);
                     }}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
                         <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
-                          {restaurant[8]}  {/* Updated index for restaurant name */}
+                          {restaurant.name}
                           <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
                             {isOpen ? "We are Open" : "We are Closed"}
                           </span>
                         </span>
                         <span className="text-sm text-gray-500 text-left">
-                          {restaurant[1].split(',')[0]}, {restaurant[3]}
+                          {restaurant.address.split(',')[0]}, {restaurant.city}
                         </span>
                       </div>
                       <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto flex flex-col gap-1">

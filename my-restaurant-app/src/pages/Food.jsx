@@ -51,7 +51,8 @@ const Food = () => {
       const restaurant = JSON.parse(savedRestaurant);
       setSelectedRestaurant(restaurant);
       setShowRestaurantModal(false);
-      fetchItems(restaurant[0]);
+      const restaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+      fetchItems(restaurantId);
     } else {
       setShowRestaurantModal(true);
     }
@@ -209,10 +210,12 @@ const Food = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowRestaurantModal(false);
     toast.dismiss();
-    toast.success(`You selected restaurant: ${restaurant[8]}`);
-    fetchItems(restaurant[0]);
+    const restaurantName = Array.isArray(restaurant) ? restaurant[8] : restaurant.name;
+    const restaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+    toast.success(`You selected restaurant: ${restaurantName}`);
+    fetchItems(restaurantId);
     // LOG: Food selectRestaurant called
-    console.log('[SONNER] Food selectRestaurant called for', restaurant[8]);
+    console.log('[SONNER] Food selectRestaurant called for', restaurantName);
   }
 
   // Add filtered and sorted items logic
@@ -276,8 +279,8 @@ const Food = () => {
               className="w-full min-h-[4rem] flex justify-between items-center px-6 py-3 gap-4"
             >
               <div className="flex flex-col items-start min-w-0">
-                <span className="font-bold text-lg truncate w-full">{selectedRestaurant[8]}</span>
-                <span className="text-sm text-muted-foreground truncate w-full">{selectedRestaurant[1]}, {selectedRestaurant[2]}</span>
+                <span className="font-bold text-lg truncate w-full">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</span>
+                <span className="text-sm text-muted-foreground truncate w-full">{Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}</span>
               </div>
               <span className="text-sm text-primary whitespace-nowrap shrink-0">Change Restaurant</span>
             </Button>
