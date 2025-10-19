@@ -122,6 +122,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Prevent body scroll when dialog is open */
+  body:has([data-state="open"][data-slot="dialog-content"]) {
+    overflow: hidden;
+  }
 }
 
 .container {

@@ -524,11 +524,19 @@ export default function RestaurantSelector({
         const result = findClosestRestaurant(latitude, longitude);
         if (result.restaurant) {
           if (result.message) {
-            // Show distance warning confirmation dialog
             setPendingRestaurantSelection(result.restaurant);
             setPendingDistance(result.distance);
-            setShowDistanceWarning(true);
-            setAddressError(result.message);
+            
+            // Differentiate between open-but-far vs closed restaurants
+            if (result.isOpen) {
+              // Open but far away - show distance warning
+              setShowDistanceWarning(true);
+              setAddressError(result.message);
+            } else {
+              // Closed restaurant - show browse menu option
+              setShowDistanceWarning(false);
+              setAddressError(result.message);
+            }
           } else {
             onSelect(result.restaurant);
             handleClose();
@@ -558,11 +566,19 @@ export default function RestaurantSelector({
     const result = findClosestRestaurant(coords[0], coords[1]);
     if (result.restaurant) {
       if (result.message) {
-        // Show distance warning confirmation dialog
         setPendingRestaurantSelection(result.restaurant);
         setPendingDistance(result.distance);
-        setShowDistanceWarning(true);
-        setAddressError(result.message);
+        
+        // Differentiate between open-but-far vs closed restaurants
+        if (result.isOpen) {
+          // Open but far away - show distance warning
+          setShowDistanceWarning(true);
+          setAddressError(result.message);
+        } else {
+          // Closed restaurant - show browse menu option
+          setShowDistanceWarning(false);
+          setAddressError(result.message);
+        }
       } else {
         onSelect(result.restaurant);
         handleClose();
