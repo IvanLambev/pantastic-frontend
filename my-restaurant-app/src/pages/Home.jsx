@@ -13,6 +13,7 @@ import FAQ from "@/components/faq"
 import AboutUs from "@/components/about-us"
 import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
+import { t } from "@/utils/translations"
 
 const Home = () => {
   const [api, setApi] = useState(null)
@@ -37,7 +38,7 @@ const Home = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowModal(false);
     toast.dismiss();
-    toast.success(`You selected restaurant: ${restaurant[8]}`);
+    toast.success(t('home.restaurantSelected', { name: restaurant[8] }));
   }
 
   return (

@@ -1,23 +1,23 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { t } from "@/utils/translations"
 
 export default function FAQ() {
   const faqs = [
     {
-      question: "Do you offer vegan or gluten-free pancakes?",
-      answer: "Yes, we have both vegan and gluten-free options clearly labeled on the menu.",
+      question: t('faq.question1'),
+      answer: t('faq.answer1'),
     },
     {
-      question: "Can I schedule an order in advance?",
-      answer: "Yes, during checkout you can select a preferred delivery or pickup time.",
+      question: t('faq.question2'),
+      answer: t('faq.answer2'),
     },
     {
-      question: "What payment methods do you accept?",
-      answer: "We accept credit cards, Apple Pay, Google Pay, and cash on pickup.",
+      question: t('faq.question3'),
+      answer: t('faq.answer3'),
     },
     {
-      question: "How can I contact support?",
-      answer:
-        "You can reach us via email at support@yourpancakesite.com or by calling us directly at [insert phone number].",
+      question: t('faq.question4'),
+      answer: t('faq.answer4'),
     },
   ]
 
@@ -25,7 +25,7 @@ export default function FAQ() {
     <section className="py-16 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('faq.title')}</h2>
         </div>
 
         <Accordion type="single" collapsible className="space-y-4">
