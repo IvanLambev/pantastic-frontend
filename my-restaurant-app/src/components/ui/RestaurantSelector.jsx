@@ -19,6 +19,7 @@ import { ShoppingBag, Navigation, Store, Truck } from "lucide-react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { t } from "@/utils/translations";
 
 // Google Maps Autocomplete Component
 function GoogleMapsAutocomplete({ onLocationSelect }) {
@@ -27,7 +28,7 @@ function GoogleMapsAutocomplete({ onLocationSelect }) {
     libraries: ["places"],
   });
 
-  if (!isLoaded) return <div className="p-4 text-center">Loading Google Maps...</div>;
+  if (!isLoaded) return <div className="p-4 text-center">{t('common.loading')}</div>;
   return <GoogleMap_Component onLocationSelect={onLocationSelect} />;
 }
 
@@ -62,9 +63,7 @@ function GoogleMap_Component({ onLocationSelect }) {
     }));
     
     // Trigger parent callback with coordinates for restaurant finding
-    if (onLocationSelect) {
-      onLocationSelect([normalizedLocation.latitude, normalizedLocation.longitude]);
-    }
+    onLocationSelect([normalizedLocation.latitude, normalizedLocation.longitude]);
     
     return normalizedLocation;
   };
@@ -151,7 +150,7 @@ function GoogleMap_Component({ onLocationSelect }) {
             size="sm"
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm font-medium shadow-lg whitespace-nowrap"
           >
-            Pick Address
+            {t('common.select')}
           </Button>
         </div>
       </div>
@@ -247,7 +246,7 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
         className="w-full p-3 border border-gray-300 rounded-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
                    focus:border-transparent"
-        placeholder="Search for an address..."
+        placeholder={t('restaurantSelector.searchAddress')}
       />
       <ComboboxPopover className="absolute z-50 w-full bg-white 
                                    border border-gray-300 rounded-lg shadow-lg mt-1">
@@ -621,7 +620,7 @@ export default function RestaurantSelector({
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">How would you like to get your food?</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 py-6">
             <Card 
@@ -634,8 +633,8 @@ export default function RestaurantSelector({
                     <ShoppingBag className="h-8 w-8 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">Pickup</h3>
-                    <p className="text-gray-600 mt-2">Pick up your order from the restaurant</p>
+                    <h3 className="text-xl font-semibold">{t('restaurantSelector.pickup')}</h3>
+                    <p className="text-gray-600 mt-2">{t('restaurantSelector.pickupDesc')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -651,8 +650,8 @@ export default function RestaurantSelector({
                     <Truck className="h-8 w-8 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">Delivery</h3>
-                    <p className="text-gray-600 mt-2">Get your food delivered to your address</p>
+                    <h3 className="text-xl font-semibold">{t('restaurantSelector.delivery')}</h3>
+                    <p className="text-gray-600 mt-2">{t('restaurantSelector.deliveryDesc')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -666,14 +665,14 @@ export default function RestaurantSelector({
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
-              {deliveryMethod === 'pickup' ? 'Where are you located?' : 'Where should we deliver?'}
+              {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
             {/* Google Maps Container - Always Visible */}
             <div className="space-y-4">
               <p className="text-sm text-gray-600 text-center">
-                Search for an address or click on the map to select your location
+                {t('restaurantSelector.searchAddress')}
               </p>
               <div className="w-full">
                 <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
@@ -689,7 +688,7 @@ export default function RestaurantSelector({
               className="w-full py-3 text-lg flex items-center justify-center gap-2"
             >
               <Navigation className="h-4 w-4" />
-              Use My Current Location
+              {t('restaurantSelector.useCurrentLocation')}
             </Button>
 
             {/* Error Message */}
@@ -701,14 +700,13 @@ export default function RestaurantSelector({
                   {showDistanceWarning && pendingRestaurantSelection ? (
                     <div className="space-y-2">
                       <div className="font-semibold text-lg text-orange-800">
-                        Distance Warning
+                        {t('restaurantSelector.distanceWarning')}
                       </div>
                       <p className="text-sm">
-                        The closest working restaurant <span className="font-bold">"{pendingRestaurantSelection.name}"</span> is{' '}
-                        <span className="font-bold">{pendingDistance?.toFixed(1)} km</span> away from your location.
+                        {t('restaurantSelector.distanceMessage', { distance: pendingDistance?.toFixed(1) })}
                       </p>
                       <p className="text-sm">
-                        Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?
+                        {t('restaurantSelector.distanceQuestion')}
                       </p>
                     </div>
                   ) : (
@@ -724,14 +722,14 @@ export default function RestaurantSelector({
                       onClick={handleCancelDistantRestaurant}
                       className="flex-1 sm:flex-none"
                     >
-                      Try Different Location
+                      {t('restaurantSelector.tryDifferent')}
                     </Button>
                     <Button 
                       variant="default"
                       onClick={handleConfirmDistantRestaurant}
                       className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700"
                     >
-                      Yes, Select This Restaurant
+                      {t('restaurantSelector.yesSelect')}
                     </Button>
                   </div>
                 )}
@@ -740,18 +738,18 @@ export default function RestaurantSelector({
                 {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
                   <div className="text-center space-y-4">
                     <p className="text-sm text-muted-foreground mt-2">
-                      No restaurants are currently open for ordering, but you can browse the menu of your nearest restaurant.
+                      {t('restaurantSelector.noRestaurantsOpenDesc')}
                     </p>
                     {pendingRestaurantSelection && (
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h4 className="font-semibold text-blue-900 mb-2 flex items-center justify-center gap-2">
                           <Store className="h-5 w-5" />
-                          Nearest Restaurant
+                          {t('restaurantSelector.nearestRestaurant')}
                         </h4>
                         <p className="text-sm text-blue-800 mb-1">{pendingRestaurantSelection.name}</p>
                         <p className="text-xs text-blue-600 mb-3">
                           {pendingRestaurantSelection.address || 'Address not available'}
-                          {pendingDistance && ` - ${pendingDistance.toFixed(1)} km away`}
+                          {pendingDistance && ` - ${pendingDistance.toFixed(1)} km ${t('restaurantSelector.away')}`}
                         </p>
                         <Button 
                           variant="default"
@@ -762,7 +760,7 @@ export default function RestaurantSelector({
                           }}
                           className="w-full bg-blue-600 hover:bg-blue-700"
                         >
-                          Browse Menu
+                          {t('restaurantSelector.browseMenu')}
                         </Button>
                       </div>
                     )}
@@ -774,7 +772,7 @@ export default function RestaurantSelector({
             {/* Manual Restaurant Selection */}
             {deliveryMethod === 'pickup' && (
               <div className="border-t pt-6">
-                <p className="text-center text-gray-600 mb-4">Or</p>
+                <p className="text-center text-gray-600 mb-4">{t('restaurantSelector.or')}</p>
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -782,7 +780,7 @@ export default function RestaurantSelector({
                   className="w-full py-3 text-lg flex items-center justify-center gap-2"
                 >
                   <Store className="h-4 w-4" />
-                  Manually Select Restaurant
+                  {t('restaurantSelector.manuallySelect')}
                 </Button>
               </div>
             )}
@@ -794,17 +792,17 @@ export default function RestaurantSelector({
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-row justify-between items-center">
-            <DialogTitle className="text-2xl font-bold">Select a City</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep('address-input')}
             >
-              Back to Address
+              {t('restaurantSelector.backToAddress')}
             </Button>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {loading ? (
-              <p className="text-center">Loading cities...</p>
+              <p className="text-center">{t('common.loading')}</p>
             ) : error ? (
               <p className="text-red-500 text-center">{error}</p>
             ) : (
@@ -831,18 +829,18 @@ export default function RestaurantSelector({
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-row justify-between items-center">
             <DialogTitle className="text-2xl font-bold">
-              Select a Restaurant in {selectedCity}
+              {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep('city-selection')}
             >
-              Change City
+              {t('restaurantSelector.changeCity')}
             </Button>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {loading ? (
-              <p className="text-center">Loading restaurants...</p>
+              <p className="text-center">{t('common.loading')}</p>
             ) : error ? (
               <p className="text-red-500 text-center">{error}</p>
             ) : (
@@ -884,7 +882,7 @@ export default function RestaurantSelector({
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
-                      toast.success(`You selected restaurant: ${restaurant.name}`);
+                      toast.success(t('home.restaurantSelected', { name: restaurant.name }));
                     }}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
@@ -892,7 +890,7 @@ export default function RestaurantSelector({
                         <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
                           {restaurant.name}
                           <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
-                            {isOpen ? "We are Open" : "We are Closed"}
+                            {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
                           </span>
                         </span>
                         <span className="text-sm text-gray-500 text-left">

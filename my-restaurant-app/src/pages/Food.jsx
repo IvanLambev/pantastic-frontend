@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
+import { t } from "@/utils/translations"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -255,7 +256,7 @@ const Food = () => {
   })
 
   if (loading && !showRestaurantModal) {
-    return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">Loading...</div>
+    return <div className="min-h-[calc(100vh-4rem)] text-center p-4 pb-32">{t('common.loading')}</div>
   }
 
   if (error && !showRestaurantModal) {
@@ -282,7 +283,7 @@ const Food = () => {
                 <span className="font-bold text-lg truncate w-full">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</span>
                 <span className="text-sm text-muted-foreground truncate w-full">{Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}</span>
               </div>
-              <span className="text-sm text-primary whitespace-nowrap shrink-0">Change Restaurant</span>
+              <span className="text-sm text-primary whitespace-nowrap shrink-0">{t('menu.changeRestaurant')}</span>
             </Button>
           </div>
         </div>
@@ -297,23 +298,23 @@ const Food = () => {
               variant={category === "sweet" ? "default" : "outline"}
               onClick={() => setCategory("sweet")}
             >
-              <span className="hidden sm:inline">Sweet Pancakes</span>
-              <span className="sm:hidden">Sweet</span>
+              <span className="hidden sm:inline">{t('menu.sweetPancakes')}</span>
+              <span className="sm:hidden">{t('menu.sweet')}</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "savory" ? "default" : "outline"}
               onClick={() => setCategory("savory")}
             >
-              <span className="hidden sm:inline">Sour Pancakes</span>
-              <span className="sm:hidden">Sour</span>
+              <span className="hidden sm:inline">{t('menu.sourPancakes')}</span>
+              <span className="sm:hidden">{t('menu.sour')}</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "promo" ? "default" : "outline"}
               onClick={() => setCategory("promo")}
             >
-              Promo
+              {t('menu.promo')}
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
@@ -332,11 +333,11 @@ const Food = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label>Search</Label>
+              <Label>{t('menu.search')}</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search menu items..."
+                  placeholder={t('menu.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8"
@@ -403,10 +404,10 @@ const Food = () => {
                           size="sm" 
                           onClick={() => navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`)}
                         >
-                          Options
+                          {t('menu.options')}
                         </Button>
                         <Button size="sm" onClick={() => handleAddToCart(item)}>
-                          Add
+                          {t('menu.add')}
                         </Button>
                       </div>
                     </CardContent>
@@ -424,11 +425,11 @@ const Food = () => {
                 {/* Filters Section */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Search</Label>
+                    <Label>{t('menu.search')}</Label>
                     <div className="relative">
                       <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Search menu items..."
+                        placeholder={t('menu.searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-8"
@@ -437,7 +438,7 @@ const Food = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Price Range</Label>
+                    <Label>{t('menu.priceRange')}</Label>
                     <div className="pt-2">
                       <Slider
                         min={0}
@@ -568,7 +569,7 @@ const Food = () => {
                                 Options
                               </Button>
                               <Button size="sm" onClick={() => handleAddToCart(item)}>
-                                Add to Cart
+                                {t('menu.addToCart')}
                               </Button>
                             </div>
                           </div>

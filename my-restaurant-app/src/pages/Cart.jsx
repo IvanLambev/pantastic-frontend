@@ -74,8 +74,8 @@ const Cart = () => {
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
           <div className="w-full max-w-sm space-y-6 mx-auto px-4">
             <h1 className="text-2xl font-bold text-center">{t('cart.empty')}</h1>
-            <p className="text-muted-foreground text-center">{t('cart.emptyDescription')}</p>
-            <Button onClick={() => navigate('/food')} className="w-full">{t('cart.browseMenu')}</Button>
+            <p className="text-muted-foreground text-center">{t('cart.emptyDesc')}</p>
+            <Button onClick={() => navigate('/food')} className="w-full">{t('cart.continueShopping')}</Button>
           </div>
         </div>
       </div>

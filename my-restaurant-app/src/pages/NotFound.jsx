@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Home, ArrowLeft } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { t } from "@/utils/translations"
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -20,9 +21,9 @@ export default function NotFound() {
 
         {/* Error Message */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">Page Not Found</h2>
-          <p className="text-gray-600 text-lg mb-2">Oops! The page you're looking for doesn't exist.</p>
-          <p className="text-gray-500">It might have been moved, deleted, or you entered the wrong URL.</p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">{t('common.pageNotFound')}</h2>
+          <p className="text-gray-600 text-lg mb-2">{t('common.pageNotFoundDesc')}</p>
+          <p className="text-gray-500">{t('common.pageNotFoundHint')}</p>
         </div>
 
         {/* Action Buttons */}
@@ -33,7 +34,7 @@ export default function NotFound() {
           >
             <Link to="/" className="flex items-center gap-2">
               <Home className="w-4 h-4" />
-              Go Home
+              {t('common.goHome')}
             </Link>
           </Button>
 
@@ -43,7 +44,7 @@ export default function NotFound() {
             className="border-orange-500 text-orange-500 hover:bg-orange-50 px-6 py-3 rounded-lg font-medium transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Go Back
+            {t('common.goBack')}
           </Button>
         </div>
 

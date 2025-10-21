@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { t } from '@/utils/translations'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -14,15 +15,15 @@ export function Footer() {
           
           <div className="flex flex-col items-center gap-4">
             <nav className="flex gap-6">
-              <Link to="/" className="text-muted-foreground font-medium hover:text-primary transition-colors">Home</Link>
-              <Link to="/food" className="text-muted-foreground font-medium hover:text-primary transition-colors">Food</Link>
-              <Link to="/about" className="text-muted-foreground font-medium hover:text-primary transition-colors">About</Link>
+              <Link to="/" className="text-muted-foreground font-medium hover:text-primary transition-colors">{t('nav.home')}</Link>
+              <Link to="/food" className="text-muted-foreground font-medium hover:text-primary transition-colors">{t('nav.food')}</Link>
+              <Link to="/about" className="text-muted-foreground font-medium hover:text-primary transition-colors">{t('nav.about')}</Link>
             </nav>
-            <p className="text-sm text-muted-foreground">© {currentYear} All rights reserved</p>
+            <p className="text-sm text-muted-foreground">© {currentYear} {t('footer.allRightsReserved')}</p>
           </div>
           
           <div className="text-right">
-            <div className="text-sm text-muted-foreground mb-1">Support Line</div>
+            <div className="text-sm text-muted-foreground mb-1">{t('footer.phone')}</div>
             <a href="tel:+359889869698" className="text-lg font-semibold hover:text-primary transition-colors">
               +359 889 869 698
             </a>

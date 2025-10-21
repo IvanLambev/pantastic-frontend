@@ -54,7 +54,17 @@ export const translations = {
     error: "Грешка при зареждане на менюто",
     selectRestaurant: "Моля, изберете ресторант първо",
     category: "Категория",
-    allCategories: "Всички категории"
+    allCategories: "Всички категории",
+    changeRestaurant: "Промени ресторант",
+    sweetPancakes: "Сладки палачинки",
+    sweet: "Сладки",
+    sourPancakes: "Солени палачинки",
+    sour: "Солени",
+    promo: "Промо",
+    search: "Търсене",
+    options: "Опции",
+    add: "Добави",
+    priceRange: "Ценови диапазон"
   },
 
   // Cart
@@ -73,7 +83,20 @@ export const translations = {
     addons: "Добавки",
     removables: "Премахнати",
     specialInstructions: "Специални инструкции",
-    editInstructions: "Редактирай инструкции"
+    editInstructions: "Редактирай инструкции",
+    removedFromCart: "Премахнато {name} от количката",
+    orderCancelledSuccess: "Поръчката е отказана успешно",
+    failedToCancelOrder: "Неуспешно отказване на поръчката",
+    deliveryInformation: "Информация за доставка",
+    pickupInformation: "Информация за вземане",
+    restaurant: "Ресторант",
+    deliveryAddressLabel: "Адрес за доставка",
+    pickupFrom: "Вземане от",
+    editAddress: "Редактирай адрес",
+    basePrice: "Основна цена",
+    orderSummary: "Обобщение на поръчката",
+    addonsSelected: "добавки избрани",
+    cancelOrder: "Отказ на поръчка"
   },
 
   // Checkout
@@ -220,7 +243,7 @@ export const translations = {
     closesAt: "Затваря в",
     
     distanceWarning: "Предупреждение за разстояние",
-    distanceMessage: "Най-близкият работещ ресторант е на {{distance}} км от вашето местоположение.",
+    distanceMessage: "Най-близкият работещ ресторант е на {distance} км от вашето местоположение.",
     distanceQuestion: "Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?",
     yesSelect: "Да, изберете този ресторант",
     tryDifferent: "Опитайте друго местоположение",
@@ -395,7 +418,13 @@ export const translations = {
     selected: "Избрано",
     all: "Всички",
     none: "Нищо",
-    other: "Друго"
+    other: "Друго",
+    pageNotFound: "Страницата не е намерена",
+    pageNotFoundDesc: "Упс! Страницата, която търсите, не съществува.",
+    pageNotFoundHint: "Възможно е да е преместена, изтрита или сте въвели грешен URL адрес.",
+    goHome: "Към начало",
+    goBack: "Назад",
+    unexpectedError: "Неочаквана грешка"
   },
 
   // Time
