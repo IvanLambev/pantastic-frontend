@@ -618,23 +618,23 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-6 py-6">
+          <div className="grid gap-4 sm:gap-6 py-4 sm:py-6">
             <Card 
               className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-gray-300"
               onClick={() => handleDeliveryMethodSelect('pickup')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="p-4 bg-blue-100 rounded-full">
-                    <ShoppingBag className="h-8 w-8 text-blue-600" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="flex flex-col items-center gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 bg-blue-100 rounded-full">
+                    <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">{t('restaurantSelector.pickup')}</h3>
-                    <p className="text-gray-600 mt-2">{t('restaurantSelector.pickupDesc')}</p>
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('restaurantSelector.pickup')}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mt-2">{t('restaurantSelector.pickupDesc')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -644,14 +644,14 @@ export default function RestaurantSelector({
               className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-gray-300"
               onClick={() => handleDeliveryMethodSelect('delivery')}
             >
-              <CardContent className="p-6 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="p-4 bg-green-100 rounded-full">
-                    <Truck className="h-8 w-8 text-green-600" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="flex flex-col items-center gap-3 sm:gap-4">
+                  <div className="p-3 sm:p-4 bg-green-100 rounded-full">
+                    <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">{t('restaurantSelector.delivery')}</h3>
-                    <p className="text-gray-600 mt-2">{t('restaurantSelector.deliveryDesc')}</p>
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('restaurantSelector.delivery')}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mt-2">{t('restaurantSelector.deliveryDesc')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -662,9 +662,9 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-lg sm:text-2xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
@@ -790,11 +790,12 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
-          <DialogHeader className="flex flex-row justify-between items-center">
-            <DialogTitle className="text-2xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
+          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <DialogTitle className="text-lg sm:text-2xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => setCurrentStep('address-input')}
             >
               {t('restaurantSelector.backToAddress')}
@@ -826,13 +827,14 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain">
-          <DialogHeader className="flex flex-row justify-between items-center">
-            <DialogTitle className="text-2xl font-bold">
+        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
+          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <DialogTitle className="text-lg sm:text-2xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => setCurrentStep('city-selection')}
             >
               {t('restaurantSelector.changeCity')}

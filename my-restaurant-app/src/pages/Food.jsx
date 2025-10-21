@@ -18,7 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Search, Heart, ZoomIn } from "lucide-react"
+import { Search, Heart } from "lucide-react"
+import { LuExpand } from "react-icons/lu"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -370,9 +371,9 @@ const Food = () => {
                         alt={itemName}
                         className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                       />
-                      {/* Hover overlay with zoom icon */}
+                      {/* Hover overlay with expand icon */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <ZoomIn className="h-8 w-8 text-white" />
+                        <LuExpand className="h-8 w-8 text-white" />
                       </div>
                       
                       <button
@@ -536,9 +537,9 @@ const Food = () => {
                             alt={itemName}
                             className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                           />
-                          {/* Hover overlay with zoom icon */}
+                          {/* Hover overlay with expand icon */}
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <ZoomIn className="h-10 w-10 text-white" />
+                            <LuExpand className="h-10 w-10 text-white" />
                           </div>
                           
                           <button

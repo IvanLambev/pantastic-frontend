@@ -104,6 +104,7 @@ export const translations = {
   // Checkout
   checkout: {
     title: "Поръчка",
+    subtitle: "Завършете поръчката си",
     completeOrder: "Завършете поръчката си",
     accountRequired: "Изисква се акаунт",
     accountRequiredDesc: "Влезте или създайте акаунт, за да завършите поръчката си",
@@ -111,6 +112,7 @@ export const translations = {
     signUp: "Регистрация",
     or: "Или",
     createAccountCheckout: "Създай акаунт и поръчай",
+    createAccountAndCheckout: "Създай акаунт и поръчай",
     back: "Назад",
     createAccountContinue: "Създай акаунт и продължи",
     creatingAccount: "Създаване на акаунт...",
@@ -126,10 +128,24 @@ export const translations = {
     passwordMin: "Минимум 8 символа",
     allFieldsRequired: "Всички полета са задължителни",
     
+    // Guest form placeholders
+    guest: {
+      firstNamePlaceholder: "Иван",
+      lastNamePlaceholder: "Иванов", 
+      emailPlaceholder: "name@example.com",
+      phonePlaceholder: "+359888000000",
+      phoneFormat: "Формат: +359888000000",
+      cityPlaceholder: "София",
+      passwordPlaceholder: "Създайте силна парола",
+      passwordHint: "Минимум 8 символа"
+    },
+    
     // Discount
     discountCode: "Код за отстъпка",
     discountCodeDesc: "Имате промоционален код? Приложете го тук",
     enterCode: "Въведете код за отстъпка",
+    enterDiscountCode: "Въведете код за отстъпка",
+    enterDiscountCodeError: "Моля, въведете код за отстъпка",
     apply: "Приложи",
     checking: "Проверка...",
     remove: "Премахни",
@@ -159,6 +175,11 @@ export const translations = {
     scheduleNote1: "Можете да планирате поръчки до 3 дни предварително",
     scheduleNote2: "Налични часове: 08:00 - 22:30",
     scheduleNote3: "Часовете са на 30-минутни интервали",
+    
+    // Order timing
+    orderTiming: "Време за поръчка",
+    orderTimingDesc: "Планирайте поръчката си за определено време (по желание)",
+    scheduleForLater: "Планирай за по-късно",
     
     // Order summary
     orderSummary: "Обобщение на поръчката",

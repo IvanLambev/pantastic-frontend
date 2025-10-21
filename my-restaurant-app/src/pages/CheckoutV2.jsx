@@ -968,10 +968,10 @@ export default function CheckoutV2() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <CalendarIcon className="h-5 w-5" />
-                      Order Timing
+                      {t('checkout.orderTiming')}
                     </CardTitle>
                     <CardDescription>
-                      Schedule your order for a specific time (optional)
+                      {t('checkout.orderTimingDesc')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -981,7 +981,7 @@ export default function CheckoutV2() {
                         checked={isScheduled}
                         onCheckedChange={setIsScheduled}
                       />
-                      <Label htmlFor="schedule-order">Schedule for later</Label>
+                      <Label htmlFor="schedule-order">{t('checkout.scheduleForLater')}</Label>
                     </div>
                     
                     {isScheduled && (
