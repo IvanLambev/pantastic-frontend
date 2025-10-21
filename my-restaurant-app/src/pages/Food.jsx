@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Search, Heart } from "lucide-react"
+import { Search, Heart, ZoomIn } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -126,6 +126,11 @@ const Food = () => {
     })
     toast.success(`Added ${itemData.name} to cart`)
   }
+
+  const handleItemNavigation = (item) => {
+    const itemId = getItemId(item);
+    navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`);
+  };
 
   // Helper functions to handle both array and object formats
   const getItemId = (item) => Array.isArray(item) ? item[0] : item.item_id;
@@ -358,55 +363,68 @@ const Food = () => {
                 const hasRemovables = hasItemRemovables(item);
                 
                 return (
-                  <Card key={itemId} className="flex flex-row h-24">
-                    <div className="w-24 h-full relative">
+                  <Card key={itemId} className="flex flex-col sm:flex-row overflow-hidden">
+                    <div className="w-full sm:w-32 h-48 sm:h-32 relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
                         alt={itemName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                       />
+                      {/* Hover overlay with zoom icon */}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <ZoomIn className="h-8 w-8 text-white" />
+                      </div>
+                      
                       <button
                         type="button"
-                        onClick={() => handleToggleFavorite(item)}
-                        className="absolute top-1 right-1 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleFavorite(item);
+                        }}
+                        className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors"
                         aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
-                          className={`h-6 w-6 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                          className={`h-4 w-4 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                           fill={isItemFavorite(itemId) ? 'red' : 'none'}
                         />
                       </button>
                       
                       {/* Compact addon/removable indicators */}
                       {(hasAddons || hasRemovables) && (
-                        <div className="absolute bottom-1 left-1 flex gap-1">
+                        <div className="absolute bottom-2 left-2 flex gap-1">
                           {hasAddons && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
                           {hasRemovables && <div className="w-2 h-2 bg-orange-500 rounded-full"></div>}
                         </div>
                       )}
                     </div>
-                    <CardContent className="flex flex-1 justify-between items-center p-3">
-                      <div className="flex flex-col justify-center">
-                        <h3 className="font-semibold text-sm">{itemName}</h3>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{formatDualCurrencyCompact(itemPrice)}</span>
+                    <CardContent className="flex flex-1 flex-col sm:flex-row sm:justify-between sm:items-center p-4 gap-3">
+                      <div className="flex flex-col justify-center flex-1 min-w-0">
+                        <h3 className="font-semibold text-base mb-1 truncate">{itemName}</h3>
+                        <div className="flex items-center justify-between sm:justify-start sm:gap-3">
+                          <span className="font-bold text-lg text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                           {(hasAddons || hasRemovables) && (
                             <div className="flex gap-1">
-                              {hasAddons && <span className="text-xs text-green-600">+</span>}
-                              {hasRemovables && <span className="text-xs text-orange-600">~</span>}
+                              {hasAddons && <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+</span>}
+                              {hasRemovables && <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">~</span>}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0 justify-end">
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`)}
+                          onClick={() => handleItemNavigation(item)}
+                          className="whitespace-nowrap"
                         >
                           {t('menu.options')}
                         </Button>
-                        <Button size="sm" onClick={() => handleAddToCart(item)}>
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleAddToCart(item)}
+                          className="whitespace-nowrap"
+                        >
                           {t('menu.add')}
                         </Button>
                       </div>
@@ -511,35 +529,43 @@ const Food = () => {
                     const removableCount = getRemovableCount(item);
                     
                     return (
-                      <Card key={itemId} className="flex flex-col h-full">
-                        <div className="aspect-video relative">
+                      <Card key={itemId} className="flex flex-col h-full overflow-hidden">
+                        <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                           <img
                             src={itemImage || '/elementor-placeholder-image.webp'}
                             alt={itemName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                           />
+                          {/* Hover overlay with zoom icon */}
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <ZoomIn className="h-10 w-10 text-white" />
+                          </div>
+                          
                           <button
                             type="button"
-                            onClick={() => handleToggleFavorite(item)}
-                            className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFavorite(item);
+                            }}
+                            className="absolute top-3 right-3 z-10 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors"
                             aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                           >
                             <Heart
-                              className={`h-6 w-6 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                              className={`h-5 w-5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                               fill={isItemFavorite(itemId) ? 'red' : 'none'}
                             />
                           </button>
                           
                           {/* Addon/Removable indicators */}
                           {(hasAddons || hasRemovables) && (
-                            <div className="absolute top-2 left-2 flex flex-col gap-1">
+                            <div className="absolute top-3 left-3 flex flex-col gap-1">
                               {hasAddons && (
-                                <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                                <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow">
                                   +{addonCount}
                                 </div>
                               )}
                               {hasRemovables && (
-                                <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                                <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow">
                                   -{removableCount}
                                 </div>
                               )}
@@ -547,28 +573,35 @@ const Food = () => {
                           )}
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
-                          <h3 className="font-semibold mb-2">{itemName}</h3>
-                          <p className="text-sm text-muted-foreground mb-2 flex-grow">{itemDescription}</p>
+                          <h3 className="font-semibold mb-2 text-lg">{itemName}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 flex-grow overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{itemDescription}</p>
                           
                           {/* Show available customizations */}
                           {(hasAddons || hasRemovables) && (
-                            <div className="text-xs text-muted-foreground mb-3 flex flex-wrap gap-1">
-                              {hasAddons && <span className="bg-green-100 text-green-700 px-2 py-1 rounded">Extras available</span>}
-                              {hasRemovables && <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded">Customizable</span>}
+                            <div className="text-xs text-muted-foreground mb-4 flex flex-wrap gap-1">
+                              {hasAddons && <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-medium">{t('menu.extrasAvailable')}</span>}
+                              {hasRemovables && <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">{t('menu.customizable')}</span>}
                             </div>
                           )}
                           
-                          <div className="flex justify-between items-start">
-                            <span className="font-semibold">{formatDualCurrencyCompact(itemPrice)}</span>
-                            <div className="flex gap-2">
+                          <div className="flex flex-col gap-3 mt-auto">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                            </div>
+                            <div className="flex gap-2 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`)}
+                                onClick={() => handleItemNavigation(item)}
+                                className="flex-1"
                               >
-                                Options
+                                {t('menu.options')}
                               </Button>
-                              <Button size="sm" onClick={() => handleAddToCart(item)}>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleAddToCart(item)}
+                                className="flex-1"
+                              >
                                 {t('menu.addToCart')}
                               </Button>
                             </div>

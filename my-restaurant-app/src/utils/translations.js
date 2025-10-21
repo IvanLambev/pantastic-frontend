@@ -62,9 +62,11 @@ export const translations = {
     sour: "Солени",
     promo: "Промо",
     search: "Търсене",
-    options: "Опции",
+    options: "Добавки",
     add: "Добави",
-    priceRange: "Ценови диапазон"
+    priceRange: "Ценови диапазон",
+    extrasAvailable: "Налични екстри",
+    customizable: "Персонализируемо"
   },
 
   // Cart
