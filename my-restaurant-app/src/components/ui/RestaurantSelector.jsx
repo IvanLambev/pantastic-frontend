@@ -131,7 +131,7 @@ function GoogleMap_Component({ onLocationSelect }) {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 overflow-hidden">
       <div className="places-container relative">
         <PlacesAutocomplete 
           setSelected={setSelected} 
@@ -155,14 +155,41 @@ function GoogleMap_Component({ onLocationSelect }) {
         </div>
       </div>
       
-      <GoogleMap
-        zoom={12}
-        center={selected || center}
-        mapContainerClassName="w-full h-96 rounded-lg border"
-        onClick={handleMapClick}
-      >
-        {selected && <GoogleMarker position={selected} />}
-      </GoogleMap>
+      <div className="w-full overflow-hidden rounded-lg border relative">
+        <GoogleMap
+          zoom={12}
+          center={selected || center}
+          mapContainerClassName="w-full h-96 touch-pan-y"
+          onClick={handleMapClick}
+          options={{
+            gestureHandling: 'cooperative',
+            scrollwheel: false,
+            disableDefaultUI: true,
+            zoomControl: true,
+            mapTypeControl: false,
+            scaleControl: false,
+            streetViewControl: false,
+            rotateControl: false,
+            fullscreenControl: false,
+            keyboardShortcuts: false,
+            restriction: {
+              latLngBounds: {
+                north: 90,
+                south: -90,
+                west: -180,
+                east: 180,
+              },
+              strictBounds: false,
+            }
+          }}
+        >
+          {selected && <GoogleMarker position={selected} />}
+        </GoogleMap>
+        {/* Mobile scroll hint */}
+        <div className="absolute top-2 left-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md md:hidden pointer-events-none">
+          {t('restaurantSelector.mapHint') || 'Use two fingers to move the map'}
+        </div>
+      </div>
     </div>
   );
 }
@@ -618,7 +645,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
+        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-xl sm:text-2xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
@@ -662,19 +689,19 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
-          <DialogHeader>
+        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-lg sm:text-2xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 px-6 pb-6">
             {/* Google Maps Container - Always Visible */}
-            <div className="space-y-4">
+            <div className="space-y-4 w-full overflow-hidden">
               <p className="text-sm text-gray-600 text-center">
                 {t('restaurantSelector.searchAddress')}
               </p>
-              <div className="w-full">
+              <div className="w-full overflow-hidden">
                 <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
               </div>
             </div>
@@ -790,7 +817,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
+        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-lg sm:text-2xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
@@ -827,7 +854,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] overflow-y-auto overscroll-contain mx-4">
+        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-lg sm:text-2xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
@@ -884,7 +911,8 @@ export default function RestaurantSelector({
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
-                      toast.success(t('home.restaurantSelected', { name: restaurant.name }));
+                      const restaurantName = restaurant?.name || 'Unknown Restaurant';
+                      toast.success(t('home.restaurantSelected', { name: restaurantName }));
                     }}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">

@@ -278,7 +278,8 @@ export const translations = {
     away: "разстояние",
     
     or: "Или",
-    manuallySelect: "Избери ръчно ресторант"
+    manuallySelect: "Избери ръчно ресторант",
+    mapHint: "Използвайте два пръста за движение на картата"
   },
 
   // FAQ
