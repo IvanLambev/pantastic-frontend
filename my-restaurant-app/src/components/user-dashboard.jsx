@@ -171,6 +171,7 @@ export default function UserDashboard() {
             restaurant_id: details.category_id ? details.category_id : details.restaurant_id || '', // fallback for restaurant id
           };
         });
+        console.log('Detailed favorites data:', detailedFavorites);
         setFavoriteItems(detailedFavorites);
       }
       setIsItemMapLoading(false);
@@ -242,8 +243,8 @@ export default function UserDashboard() {
       if (res.ok) {
         setFavoriteItems(favoriteItems.filter(fav => fav.favourite_id !== favouriteId && fav.id !== favouriteId && fav._id !== favouriteId));
       }
-    } catch (e) {
-      // Optionally show error
+    } catch (error) {
+      console.error('Error removing favourite:', error);
     }
   };
 
@@ -364,8 +365,8 @@ export default function UserDashboard() {
                                           />
                                           <span className="font-medium">{details.name || 'Unknown Item'}</span>
                                           <span className="text-xs text-muted-foreground ml-2">x {product.quantity}</span>
-                                          {details.price !== undefined && (
-                                            <span className="ml-2 text-xs">{formatDualCurrencyCompact(details.price)}</span>
+                                          {details.price !== undefined && details.price !== null && !isNaN(Number(details.price)) && (
+                                            <span className="ml-2 text-xs">{formatDualCurrencyCompact(Number(details.price))}</span>
                                           )}
                                         </li>
                                       );
@@ -409,7 +410,11 @@ export default function UserDashboard() {
                                 <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
                                   <p className="font-medium">{t('cart.total')}</p>
-                                  <p className="text-sm font-medium">{formatDualCurrencyCompact(order.total_price)}</p>
+                                  <p className="text-sm font-medium">
+                                    {order.total_price && !isNaN(Number(order.total_price)) 
+                                      ? formatDualCurrencyCompact(Number(order.total_price)) 
+                                      : '0.00 € (0.00 лв)'}
+                                  </p>
                                 </div>
                               </div>
                             </div>

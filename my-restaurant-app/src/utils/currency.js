@@ -10,7 +10,9 @@ export const BGN_TO_EUR_RATE = 1.95583;
  */
 export const convertBgnToEur = (bgnAmount) => {
   if (!bgnAmount || isNaN(bgnAmount)) return 0;
-  return Number(bgnAmount) / BGN_TO_EUR_RATE;
+  const amount = Number(bgnAmount);
+  if (amount <= 0) return 0;
+  return amount / BGN_TO_EUR_RATE;
 };
 
 /**
@@ -47,6 +49,12 @@ export const formatDualCurrency = (bgnAmount) => {
  * @returns {string} - Compact formatted string showing both currencies
  */
 export const formatDualCurrencyCompact = (bgnAmount) => {
-  const eurAmount = convertBgnToEur(bgnAmount);
-  return `${formatCurrency(eurAmount)} € (${formatCurrency(bgnAmount)} лв)`;
+  // Handle invalid inputs
+  if (!bgnAmount || isNaN(bgnAmount)) {
+    return '0.00 € (0.00 лв)';
+  }
+  
+  const amount = Number(bgnAmount);
+  const eurAmount = convertBgnToEur(amount);
+  return `${formatCurrency(eurAmount)} € (${formatCurrency(amount)} лв)`;
 };
