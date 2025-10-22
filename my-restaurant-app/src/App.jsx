@@ -109,17 +109,17 @@ function MainLayout() {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/">Home</Link>
+                    <Link to="/">Начало</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/about">About</Link>
+                    <Link to="/about">За нас</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink asChild>
-                    <Link to="/food">Food</Link>
+                    <Link to="/food">Палачинки</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 {isLoggedIn && isAdmin && isAdminEnabled && (

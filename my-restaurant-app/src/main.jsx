@@ -13,6 +13,7 @@ createRoot(document.getElementById('root')).render(
     <AuthProvider>
         <App />
         <SonnerToasterRoot />
+        <SpeedInsights/>
     </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

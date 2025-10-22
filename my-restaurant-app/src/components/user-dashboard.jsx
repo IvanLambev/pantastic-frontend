@@ -10,6 +10,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/config/api";
 import { fetchWithAuth } from "@/context/AuthContext";
+import { t } from "@/utils/translations";
+import { formatDualCurrencyCompact } from "@/utils/currency";
 
 export default function UserDashboard() {
   const { user, token, setToken } = useAuth();
@@ -247,20 +249,20 @@ export default function UserDashboard() {
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">
-      <h1 className="text-2xl font-bold mb-6">My Account</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('dashboard.myAccount')}</h1>
 
       <Tabs defaultValue="profile">
         <TabsList className="mb-4">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="favourites">Favourites</TabsTrigger>
+          <TabsTrigger value="profile">{t('dashboard.profile')}</TabsTrigger>
+          <TabsTrigger value="orders">{t('dashboard.orders')}</TabsTrigger>
+          <TabsTrigger value="favourites">{t('dashboard.favourites')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Manage your personal information and contact details</CardDescription>
+              <CardTitle>{t('dashboard.personalInformation')}</CardTitle>
+              <CardDescription>{t('dashboard.personalInformationDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
@@ -294,18 +296,18 @@ export default function UserDashboard() {
         <TabsContent value="orders">
           <Card>
             <CardHeader>
-              <CardTitle>Order History</CardTitle>
-              <CardDescription>View all your previous orders</CardDescription>
+              <CardTitle>{t('dashboard.orderHistory')}</CardTitle>
+              <CardDescription>{t('dashboard.orderHistoryDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading || isItemMapLoading ? (
                 <div className="py-8 text-center">
                   <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading your orders...</p>
+                  <p className="text-muted-foreground">{t('dashboard.loadingOrders')}</p>
                 </div>
               ) : error ? (
                 <div className="py-8 text-center">
-                  <p className="text-red-500 mb-2">Failed to load orders</p>
+                  <p className="text-red-500 mb-2">{t('dashboard.failedToLoadOrders')}</p>
                   <p className="text-sm text-muted-foreground">{error}</p>
                 </div>
               ) : orders.length === 0 ? (
@@ -321,7 +323,7 @@ export default function UserDashboard() {
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full text-left">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Order #{order.order_id.substring(0, 8)}</span>
+                            <span className="font-medium">{t('dashboard.orderNumber')} #{order.order_id.substring(0, 8)}</span>
                             <Badge
                               variant={
                                 order.status === "Delivered"
@@ -346,7 +348,7 @@ export default function UserDashboard() {
                               <div className="flex items-start gap-2">
                                 <ShoppingBag className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
-                                  <p className="font-medium">Items</p>
+                                  <p className="font-medium">{t('dashboard.items')}</p>
                                   <ul className="text-sm">
                                     {(Array.isArray(order.products)
                                       ? order.products
@@ -363,7 +365,7 @@ export default function UserDashboard() {
                                           <span className="font-medium">{details.name || 'Unknown Item'}</span>
                                           <span className="text-xs text-muted-foreground ml-2">x {product.quantity}</span>
                                           {details.price !== undefined && (
-                                            <span className="ml-2 text-xs">${details.price}</span>
+                                            <span className="ml-2 text-xs">{formatDualCurrencyCompact(details.price)}</span>
                                           )}
                                         </li>
                                       );
@@ -375,7 +377,7 @@ export default function UserDashboard() {
                               <div className="flex items-start gap-2">
                                 <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
-                                  <p className="font-medium">Delivery Address</p>
+                                  <p className="font-medium">{t('dashboard.deliveryAddress')}</p>
                                   <p className="text-sm">{order.address}</p>
                                 </div>
                               </div>
@@ -385,9 +387,9 @@ export default function UserDashboard() {
                               <div className="flex items-start gap-2">
                                 <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
-                                  <p className="font-medium">Delivery Time</p>
+                                  <p className="font-medium">{t('dashboard.deliveryTime')}</p>
                                   <p className="text-sm">
-                                    {order.delivery_time ? formatDate(order.delivery_time) : "Pending"}
+                                    {order.delivery_time ? formatDate(order.delivery_time) : t('dashboard.pending')}
                                   </p>
                                 </div>
                               </div>
@@ -396,7 +398,7 @@ export default function UserDashboard() {
                                 <div className="flex items-start gap-2">
                                   <Truck className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                   <div>
-                                    <p className="font-medium">Delivery Person</p>
+                                    <p className="font-medium">{t('dashboard.deliveryPerson')}</p>
                                     <p className="text-sm">{order.delivery_person_name}</p>
                                     <p className="text-sm">{order.delivery_person_phone}</p>
                                   </div>
@@ -406,8 +408,8 @@ export default function UserDashboard() {
                               <div className="flex items-start gap-2">
                                 <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
-                                  <p className="font-medium">Total</p>
-                                  <p className="text-sm font-medium">${order.total_price.toFixed(2)}</p>
+                                  <p className="font-medium">{t('cart.total')}</p>
+                                  <p className="text-sm font-medium">{formatDualCurrencyCompact(order.total_price)}</p>
                                 </div>
                               </div>
                             </div>
@@ -425,17 +427,17 @@ export default function UserDashboard() {
         <TabsContent value="favourites">
           <Card>
             <CardHeader>
-              <CardTitle>Favourite Items</CardTitle>
-              <CardDescription>Your saved favourite menu items</CardDescription>
+              <CardTitle>{t('dashboard.favouriteItems')}</CardTitle>
+              <CardDescription>{t('dashboard.favouriteItemsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               {isItemMapLoading ? (
                 <div className="py-8 text-center">
                   <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading your favourites...</p>
+                  <p className="text-muted-foreground">{t('dashboard.loadingFavourites')}</p>
                 </div>
               ) : favoriteItems.length === 0 ? (
-                <div className="text-muted-foreground">No favourite items yet.</div>
+                <div className="text-muted-foreground">{t('dashboard.noFavouriteItems')}</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {favoriteItems.map((fav) => (
@@ -457,15 +459,20 @@ export default function UserDashboard() {
                       <div className="p-4">
                         <div className="font-semibold">{fav.name || 'Unknown Item'}</div>
                         <div className="text-sm text-muted-foreground">{fav.description || ''}</div>
-                        <div className="font-bold mt-2">{fav.price !== undefined ? `$${fav.price}` : ''}</div>
+                        {fav.addons && Object.keys(fav.addons).length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {t('cart.addons')}: {Object.entries(fav.addons).map(([name, price]) => 
+                              `${name} (+${formatDualCurrencyCompact(price)})`
+                            ).join(', ')}
+                          </div>
+                        )}
+                        <div className="font-bold mt-2">{fav.price !== undefined ? formatDualCurrencyCompact(fav.price) : ''}</div>
                         <div className="mt-3 flex gap-2">
                           <a
-                            href={`https://www.palachinki.store/restaurants/${fav.restaurant_id}/items/${fav.item_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/food?restaurant=${fav.restaurant_id || ''}&item=${fav.item_id || fav._id}`}
                             className="inline-block bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
                           >
-                            See Details
+                            {t('dashboard.seeDetails')}
                           </a>
                         </div>
                       </div>

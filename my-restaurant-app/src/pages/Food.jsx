@@ -219,7 +219,7 @@ const Food = () => {
     toast.dismiss();
     const restaurantName = Array.isArray(restaurant) ? restaurant[8] : restaurant.name;
     const restaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
-    toast.success(`You selected restaurant: ${restaurantName}`);
+    toast.success(t('home.restaurantSelected', { name: restaurantName }));
     fetchItems(restaurantId);
     // LOG: Food selectRestaurant called
     console.log('[SONNER] Food selectRestaurant called for', restaurantName);
