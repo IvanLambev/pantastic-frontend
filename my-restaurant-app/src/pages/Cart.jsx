@@ -168,7 +168,7 @@ const Cart = () => {
                   {/* Display selected addons if any */}
                   {item.selectedAddons && item.selectedAddons.length > 0 && (
                     <div className="text-sm mb-2 bg-muted p-2 rounded-md">
-                      <p className="font-semibold mb-1">{t('menu.addons')}:</p>
+                      <p className="font-semibold mb-1">{t('cart.addons')}:</p>
                       <ul className="space-y-1 pl-2">
                         {item.selectedAddons.map((addon, index) => (
                           <li key={index} className="flex justify-between">

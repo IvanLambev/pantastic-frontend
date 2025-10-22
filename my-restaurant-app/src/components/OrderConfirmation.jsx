@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { MapPin, Store, Clock, CreditCard } from "lucide-react";
+import { formatDualCurrencyCompact } from "@/utils/currency";
+import { t } from "@/utils/translations";
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers in react-leaflet
@@ -31,6 +33,7 @@ export default function OrderConfirmation({
       // Get order details from sessionStorage
       const deliveryAddress = sessionStorage.getItem('delivery_address');
       const deliveryCoords = sessionStorage.getItem('delivery_coords');
+      const deliveryMethod = sessionStorage.getItem('delivery_method');
       const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '{}');
       
       let coords = null;
@@ -46,7 +49,7 @@ export default function OrderConfirmation({
         deliveryAddress,
         coords,
         restaurant: selectedRestaurant,
-        isDelivery: deliveryAddress && deliveryCoords,
+        isDelivery: deliveryMethod === 'delivery',
         estimatedTime: new Date(Date.now() + 45 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
     }
@@ -58,10 +61,10 @@ export default function OrderConfirmation({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="flex-shrink-0 p-6 pb-0">
           <DialogTitle className="text-2xl font-bold text-center">
-            Confirm Your Order
+            {t('checkout.confirmOrder')}
           </DialogTitle>
         </DialogHeader>
 
@@ -71,7 +74,7 @@ export default function OrderConfirmation({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Store className="h-5 w-5" />
-                Order Items
+                {t('checkout.orderItems')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -79,27 +82,27 @@ export default function OrderConfirmation({
                 <div key={item.id} className="flex justify-between items-start">
                   <div className="flex-1">
                     <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <p className="text-sm text-gray-600">{t('cart.quantity')}: {item.quantity}</p>
                     {item.selectedAddons && item.selectedAddons.length > 0 && (
                       <div className="text-sm text-gray-500 mt-1">
-                        Add-ons: {item.selectedAddons.map(addon => addon.name).join(', ')}
+                        {t('cart.addons')}: {item.selectedAddons.map(addon => addon.name).join(', ')}
                       </div>
                     )}
                     {item.specialInstructions && (
                       <div className="text-sm text-gray-500 mt-1">
-                        Note: {item.specialInstructions}
+                        {t('cart.specialInstructions')}: {item.specialInstructions}
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">€{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium">{formatDualCurrencyCompact(item.price * item.quantity)}</p>
                   </div>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between items-center font-bold text-lg">
-                <span>Total</span>
-                <span>€{total.toFixed(2)}</span>
+                <span>{t('cart.total')}</span>
+                <span>{formatDualCurrencyCompact(total)}</span>
               </div>
             </CardContent>
           </Card>
@@ -109,16 +112,19 @@ export default function OrderConfirmation({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Store className="h-5 w-5" />
-                Restaurant Details
+                {t('checkout.restaurantDetails')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <h4 className="font-semibold">{restaurant[7]}</h4>
-                <p className="text-gray-600">{restaurant[1]}</p>
+                <h4 className="font-semibold">{Array.isArray(restaurant) ? restaurant[7] : restaurant.name}</h4>
+                <p className="text-gray-600">{Array.isArray(restaurant) ? restaurant[1] : restaurant.address}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Clock className="h-4 w-4" />
-                  <span>Estimated {isDelivery ? 'delivery' : 'pickup'} time: {estimatedTime}</span>
+                  <span>{t('checkout.estimatedTime', { 
+                    method: isDelivery ? t('tracking.delivery') : t('tracking.pickup'), 
+                    time: estimatedTime 
+                  })}</span>
                 </div>
               </div>
             </CardContent>
@@ -133,7 +139,7 @@ export default function OrderConfirmation({
                 ) : (
                   <Store className="h-5 w-5 text-blue-600" />
                 )}
-                {isDelivery ? 'Delivery Address' : 'Pickup Information'}
+                {isDelivery ? t('checkout.deliveryAddress') : t('checkout.pickupInformation')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -158,7 +164,7 @@ export default function OrderConfirmation({
                         />
                         <Marker position={[coords.lat, coords.lng]}>
                           <Popup>
-                            Delivery Location
+                            {t('checkout.deliveryLocation')}
                           </Popup>
                         </Marker>
                       </MapContainer>
@@ -167,10 +173,10 @@ export default function OrderConfirmation({
                 </>
               ) : (
                 <div>
-                  <p className="font-medium">Pickup from restaurant</p>
-                  <p className="text-gray-600">{restaurant[1]}</p>
+                  <p className="font-medium">{t('checkout.pickupFromRestaurant')}</p>
+                  <p className="text-gray-600">{Array.isArray(restaurant) ? restaurant[1] : restaurant.address}</p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Please arrive at the estimated time to collect your order.
+                    {t('checkout.arriveAtEstimatedTime')}
                   </p>
                 </div>
               )}
@@ -182,21 +188,21 @@ export default function OrderConfirmation({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Method
+                {t('checkout.paymentMethod')}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">Cash on {isDelivery ? 'delivery' : 'pickup'}</p>
+              <p className="text-gray-600">{t('checkout.cashOn', { method: isDelivery ? t('tracking.delivery') : t('tracking.pickup') })}</p>
             </CardContent>
           </Card>
         </div>
 
         <DialogFooter className="flex gap-3 flex-shrink-0 p-6 pt-0">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Back to Cart
+            {t('checkout.backToCart')}
           </Button>
           <Button onClick={onConfirm} disabled={isLoading} className="flex-1">
-            {isLoading ? 'Placing Order...' : 'Confirm Order'}
+            {isLoading ? t('checkout.placingOrder') : t('checkout.confirmOrder')}
           </Button>
         </DialogFooter>
       </DialogContent>

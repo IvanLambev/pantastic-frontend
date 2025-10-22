@@ -38,7 +38,9 @@ const Home = () => {
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowModal(false);
     toast.dismiss();
-    toast.success(t('home.restaurantSelected', { name: restaurant[8] }));
+    // Handle both array format and object format
+    const restaurantName = Array.isArray(restaurant) ? restaurant[8] : restaurant.name;
+    toast.success(t('home.restaurantSelected', { name: restaurantName }));
   }
 
   return (

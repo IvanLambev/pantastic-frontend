@@ -159,9 +159,17 @@ export const translations = {
     cashDesc: "Платете в брой когато пристигне поръчката ви",
     available: "Налично",
     
+    payment: {
+      card: "Кредитна/Дебитна карта",
+      cardDesc: "Платете с вашата кредитна или дебитна карта",
+      cash: "В брой при доставка/вземане",
+      cashDesc: "Платете в брой когато пристигне поръчката ви"
+    },
+    
     // Delivery info
     deliveryAddress: "Адрес за доставка",
     deliveryTo: "Доставка до този адрес",
+    deliveryToAddress: "Доставка до този адрес",
     edit: "Редактирай",
     pickupLocation: "Място за вземане",
     
@@ -188,6 +196,19 @@ export const translations = {
     restaurantClosedMsg: "Ресторантът в момента е затворен",
     nextOpening: "Следващо отваряне",
     processingPayment: "Обработка на плащане...",
+    
+    // Order confirmation
+    confirmOrder: "Потвърди поръчка",
+    orderItems: "Артикули от поръчката",
+    restaurantDetails: "Детайли за ресторанта",
+    estimatedTime: "Очаквано време за {method}: {time}",
+    deliveryLocation: "Място за доставка",
+    pickupFromRestaurant: "Вземане от ресторант",
+    arriveAtEstimatedTime: "Моля, пристигнете в очакваното време, за да получите поръчката си",
+    cashOn: "В брой при {method}",
+    backToCart: "Обратно към количката",
+    placingOrder: "Обработваме поръчката...",
+    pickupInformation: "Информация за вземане",
     
     // Errors
     pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите"

@@ -1060,7 +1060,7 @@ export default function CheckoutV2() {
                           {/* Display addons */}
                           {item.selectedAddons && item.selectedAddons.length > 0 && (
                             <div className="text-sm text-green-600 mt-1">
-                              <span className="font-medium">{t('menu.addons')}: </span>
+                              <span className="font-medium">{t('cart.addons')}: </span>
                               {item.selectedAddons.map((addon, index) => (
                                 <span key={index}>
                                   {addon.name} (+{formatDualCurrencyCompact(addon.price)})
