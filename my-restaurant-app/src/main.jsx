@@ -6,6 +6,8 @@ import './index.css'
 import App from './App.jsx'
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import SonnerToasterRoot from './components/ui/SonnerToasterRoot'
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
