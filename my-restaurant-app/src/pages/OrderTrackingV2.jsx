@@ -253,7 +253,11 @@ export default function OrderTrackingV2() {
 
               <div className="flex justify-between items-center">
                 <span className="font-medium">Начин на плащане</span>
-                <span className="capitalize">{order.payment_method || 'Не е посочен'}</span>
+                <span className="capitalize">
+                  {order.payment_method === 'cash' ? 'Кеш' : 
+                   order.payment_method === 'card' ? 'Плащане с карта' : 
+                   order.payment_method || 'Не е посочен'}
+                </span>
               </div>
 
               <div className="flex justify-between items-center">
@@ -265,7 +269,37 @@ export default function OrderTrackingV2() {
 
               <div>
                 <h4 className="font-medium mb-2">Артикули от поръчката</h4>
-                <div className="space-y-2">                  {order.products && Object.entries(order.products).map(([productId, quantity]) => (
+                <div className="space-y-2">
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item) => (
+                      <div key={item.item_id} className="space-y-1">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>{item.item_name}</span>
+                          <span>x{item.item_quantity}</span>
+                        </div>
+                        {item.applied_addons && item.applied_addons.length > 0 && (
+                          <div className="text-xs text-muted-foreground pl-4">
+                            <span className="font-medium">Добавки: </span>
+                            {item.applied_addons.map((addon) => 
+                              `${addon.name} (+${formatDualCurrencyCompact(addon.total)})`
+                            ).join(', ')}
+                          </div>
+                        )}
+                        {item.removables && item.removables.length > 0 && (
+                          <div className="text-xs text-muted-foreground pl-4">
+                            <span className="font-medium">Премахнато: </span>
+                            {item.removables.join(', ')}
+                          </div>
+                        )}
+                        {item.special_instructions && (
+                          <div className="text-sm text-muted-foreground pl-4">
+                            <span className="font-medium">Инструкции: </span>
+                            {item.special_instructions}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : order.products && Object.entries(order.products).map(([productId, quantity]) => (
                     <div key={productId} className="space-y-1">
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span>{getItemNameById(productId)}</span>
@@ -350,7 +384,11 @@ export default function OrderTrackingV2() {
                               Завършено
                             </Badge>
                           )}
-                          {isCurrent && <Badge className="text-xs">В процес</Badge>}
+                          {isCurrent && (
+                            <Badge className="text-xs">
+                              {order.delivery_method === 'pickup' && step.status === 'Ready' ? 'Готово' : 'В процес'}
+                            </Badge>
+                          )}
                           {isCancelled && (
                             <Badge variant="destructive" className="text-xs">
                               Отменено
