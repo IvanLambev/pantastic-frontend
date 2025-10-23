@@ -17,7 +17,7 @@ export function GoogleLoginButton({ className = "" }) {
                              import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'your_google_client_id_here'
 
   const googleLogin = useGoogleLogin({
-    scope: "openid email profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read",
+    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read",
     onSuccess: async (tokenResponse) => {
       setIsLoading(true)
       

@@ -137,10 +137,11 @@ The backend should return the same format as regular login:
 ## 📝 Additional Scopes
 
 The implementation requests these Google API scopes:
-- `openid` - Basic OAuth
-- `email` - User email address
-- `profile` - User profile information
-- `https://www.googleapis.com/auth/user.phonenumbers.read` - Phone numbers
-- `https://www.googleapis.com/auth/user.addresses.read` - Address information
+- `https://www.googleapis.com/auth/userinfo.email` - User email address
+- `https://www.googleapis.com/auth/userinfo.profile` - User profile information (name, picture)
+- `https://www.googleapis.com/auth/user.phonenumbers.read` - Phone numbers (optional for People API fallback)
+- `https://www.googleapis.com/auth/user.addresses.read` - Address information (optional for People API fallback)
+
+The last two scopes are optional and used as fallback if the People API fails to provide phone and city information.
 
 These can be adjusted in `GoogleLoginButton.jsx` if needed.
