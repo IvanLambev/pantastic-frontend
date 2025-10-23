@@ -343,11 +343,13 @@ export const translations = {
     loggingIn: "Влизане...",
     noAccount: "Нямате акаунт?",
     signUpLink: "Регистрирайте се",
+    googleLoginSuccess: "Успешно влизане с Google!",
     errors: {
       emailRequired: "Имейлът е задължителен",
       passwordRequired: "Паролата е задължителна",
       invalidCredentials: "Невалидни данни",
-      serverError: "Грешка на сървъра. Моля, опитайте отново."
+      serverError: "Грешка на сървъра. Моля, опитайте отново.",
+      googleLoginFailed: "Неуспешно влизане с Google. Моля, опитайте отново."
     }
   },
 
