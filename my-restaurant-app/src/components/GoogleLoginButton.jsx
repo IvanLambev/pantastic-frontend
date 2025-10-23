@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { Button } from "@/components/ui/button"
-import { API_URL } from '@/config/api'
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { t } from "@/utils/translations"
+import { authenticateWithGoogle } from "@/utils/apiClient"
 
 export function GoogleLoginButton({ className = "" }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -22,25 +22,8 @@ export function GoogleLoginButton({ className = "" }) {
       setIsLoading(true)
       
       try {
-        const response = await fetch(`${API_URL}/auth/google`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json' 
-          },
-          body: JSON.stringify({ 
-            access_token: tokenResponse.access_token 
-          })
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Google login failed')
-        }
-
-        const data = await response.json()
-        
-        // Save the backend JWT token
-        sessionStorage.setItem('user', JSON.stringify(data))
+        // Use the new API client for Google authentication
+        await authenticateWithGoogle(tokenResponse.access_token)
         
         // Update auth state
         await updateLoginState()

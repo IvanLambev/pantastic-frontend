@@ -15,11 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
-import { fetchWithAuth } from "@/context/AuthContext"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
+import { api } from "@/utils/apiClient"
 
 // Utility functions for restaurant status
 function isRestaurantOpen(restaurant) {
@@ -272,18 +272,11 @@ export default function CheckoutV2() {
         return
       }
 
-      const response = await fetch(`${API_URL}/order/discount/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
-        },
-        body: JSON.stringify({ discount_code: discountCode.trim() })
+      const data = await api.post('/order/discount/validate', { 
+        discount_code: discountCode.trim() 
       })
 
-      const data = await response.json()
-
-      if (response.ok && data.valid) {
+      if (data.valid) {
         setDiscountInfo(data)
         setDiscountError("")
         toast.success(data.message)
@@ -560,18 +553,8 @@ export default function CheckoutV2() {
 
       console.log('Placing order with:', orderData)
 
-      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
-      })
+      const data = await api.post('/order/orders', orderData)
 
-      if (!response.ok) throw new Error('Failed to create order')
-      
-      const data = await response.json()
       if (!data.order_id) throw new Error('No order ID received')
       
       // Clean up scheduling session data
