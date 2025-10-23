@@ -478,6 +478,7 @@ export const translations = {
     yes: "Да",
     no: "Не",
     ok: "OK",
+    or: "или",
     required: "Задължително",
     optional: "По избор",
     select: "Избери",

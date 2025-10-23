@@ -30,7 +30,7 @@ export default function OrderTrackingV2() {
   const getItemNameById = (itemId) => {
     console.log('Looking up item:', itemId, 'in items:', items)
     const item = items.find(item => String(item[0]) === String(itemId))
-    return item ? item[4] : `Unknown Item (${itemId})`
+    return item ? item[4] : `Непознат артикул (${itemId})`
   }
 
   // Define the tracking steps with icons based on delivery method
@@ -39,22 +39,22 @@ export default function OrderTrackingV2() {
       return [
         {
           id: 1,
-          title: "Order Received",
-          description: "Your order has been received and confirmed",
+          title: "Поръчката е получена",
+          description: "Вашата поръчка е получена и потвърдена",
           icon: CheckCircle,
           status: "Pending",
         },
         {
           id: 2,
-          title: "Processing",
-          description: "Your order is being prepared",
+          title: "Подготвя се",
+          description: "Вашата поръчка се подготвя",
           icon: Package,
           status: "In Progress",
         },
         {
           id: 3,
-          title: "Ready for Pickup",
-          description: "Your order is ready for pickup",
+          title: "Готова за вземане",
+          description: "Вашата поръчка е готова за вземане",
           icon: MapPin,
           status: "Ready",
         },
@@ -64,29 +64,29 @@ export default function OrderTrackingV2() {
       return [
         {
           id: 1,
-          title: "Order Received",
-          description: "Your order has been received and confirmed",
+          title: "Поръчката е получена",
+          description: "Вашата поръчка е получена и потвърдена",
           icon: CheckCircle,
           status: "Pending",
         },
         {
           id: 2,
-          title: "Processing",
-          description: "Your order is being prepared",
+          title: "Подготвя се",
+          description: "Вашата поръчка се подготвя",
           icon: Package,
           status: "In Progress",
         },
         {
           id: 3,
-          title: "Out for Delivery",
-          description: "Your order is on its way",
+          title: "В доставка",
+          description: "Вашата поръчка е на път",
           icon: Truck,
           status: "Ready",
         },
         {
           id: 4,
-          title: "Delivered",
-          description: "Your order has been delivered",
+          title: "Доставена",
+          description: "Вашата поръчка е доставена",
           icon: CheckCircle,
           status: "Delivered",
         },
@@ -156,7 +156,7 @@ export default function OrderTrackingV2() {
       setLoading(false)
     } catch (error) {
       console.error('Error fetching order:', error)
-      toast.error('Failed to fetch order details')
+      toast.error('Неуспешно зареждане на детайли за поръчката')
       setLoading(false)
     }
   }, [orderId])
@@ -181,12 +181,12 @@ export default function OrderTrackingV2() {
         body: JSON.stringify({ order_id: orderId }),
       })
       if (!response.ok) throw new Error('Failed to cancel order')
-      toast.success('Order cancelled successfully')
+      toast.success('Поръчката е отменена успешно')
       clearCart()
       navigate('/')
     } catch (error) {
       console.error('Error cancelling order:', error)
-      toast.error('Failed to cancel order')
+      toast.error('Неуспешно отменяне на поръчката')
     }
   }
 
@@ -196,8 +196,8 @@ export default function OrderTrackingV2() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center">
-            <h2 className="text-xl font-semibold">Loading order details...</h2>
-            <p className="text-muted-foreground">Please wait while we fetch your order information.</p>
+            <h2 className="text-xl font-semibold">Зареждане на детайли за поръчката...</h2>
+            <p className="text-muted-foreground">Моля изчакайте, докато зареждаме информацията за вашата поръчка.</p>
           </div>
         </div>
       </div>
@@ -211,13 +211,13 @@ export default function OrderTrackingV2() {
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center">
             <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Order not found</h2>
-            <p className="text-muted-foreground mb-8">The order you're looking for doesn't exist.</p>
+            <h2 className="text-xl font-semibold mb-2">Поръчката не е намерена</h2>
+            <p className="text-muted-foreground mb-8">Поръчката, която търсите, не съществува.</p>
             <Button 
               onClick={() => navigate('/food')}
               className="mt-4"
             >
-              Browse Menu
+              Разгледай менюто
             </Button>
           </div>
         </div>
@@ -233,38 +233,38 @@ export default function OrderTrackingV2() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h1 className="text-3xl font-bold text-green-600 mb-2">Order Placed!</h1>
-          <p className="text-muted-foreground">Here's your order tracking information.</p>
+          <h1 className="text-3xl font-bold text-green-600 mb-2">Поръчката е направена!</h1>
+          <p className="text-muted-foreground">Ето информацията за проследяване на вашата поръчка.</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Order Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Details</CardTitle>
-              <CardDescription>Your order information and payment details</CardDescription>
+              <CardTitle>Детайли за поръчката</CardTitle>
+              <CardDescription>Информация за вашата поръчка и данни за плащането</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">              <div className="flex justify-between items-center">
-                <span className="font-medium">Order ID</span>
+                <span className="font-medium">ID на поръчката</span>
                 <Badge variant="outline" className="font-mono text-xs">
                   {order.order_id.substring(0, 6)}
                 </Badge>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="font-medium">Payment Method</span>
-                <span className="capitalize">{order.payment_method || 'Not specified'}</span>
+                <span className="font-medium">Начин на плащане</span>
+                <span className="capitalize">{order.payment_method || 'Не е посочен'}</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="font-medium">Order Total</span>
+                <span className="font-medium">Общо за поръчката</span>
                 <span className="font-bold">{order.total_price ? formatDualCurrencyCompact(order.total_price) : '0.00 лв / €0.00'}</span>
               </div>
 
               <Separator />
 
               <div>
-                <h4 className="font-medium mb-2">Order Items</h4>
+                <h4 className="font-medium mb-2">Артикули от поръчката</h4>
                 <div className="space-y-2">                  {order.products && Object.entries(order.products).map(([productId, quantity]) => (
                     <div key={productId} className="space-y-1">
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -273,7 +273,7 @@ export default function OrderTrackingV2() {
                       </div>
                       {order.instructions?.[productId] && (
                         <div className="text-sm text-muted-foreground pl-4">
-                          <span className="font-medium">Instructions: </span>
+                          <span className="font-medium">Инструкции: </span>
                           {order.instructions[productId]}
                         </div>
                       )}
@@ -285,14 +285,14 @@ export default function OrderTrackingV2() {
               <Separator />
 
               <div>
-                <h4 className="font-medium mb-2">{order.delivery_method === 'delivery' ? 'Delivery' : 'Pickup'} Details</h4>
+                <h4 className="font-medium mb-2">{order.delivery_method === 'delivery' ? 'Доставка' : 'Вземане'} Детайли</h4>
                 <div className="text-sm text-muted-foreground">
-                  <div>Method: <span className="capitalize">{order.delivery_method}</span></div>
-                  {order.address && <div>Address: {order.address}</div>}
+                  <div>Метод: <span className="capitalize">{order.delivery_method === 'delivery' ? 'Доставка' : 'Вземане'}</span></div>
+                  {order.address && <div>Адрес: {order.address}</div>}
                   {order.delivery_person_name && (
                     <>
-                      <div>Delivery Person: {order.delivery_person_name}</div>
-                      {order.delivery_person_phone && <div>Contact: {order.delivery_person_phone}</div>}
+                      <div>Куриер: {order.delivery_person_name}</div>
+                      {order.delivery_person_phone && <div>Контакт: {order.delivery_person_phone}</div>}
                     </>
                   )}
                 </div>
@@ -303,8 +303,8 @@ export default function OrderTrackingV2() {
           {/* Order Tracking */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Tracking</CardTitle>
-              <CardDescription>Track your order status in real-time</CardDescription>
+              <CardTitle>Проследяване на поръчката</CardTitle>
+              <CardDescription>Проследявайте статуса на вашата поръчка в реално време</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -347,13 +347,13 @@ export default function OrderTrackingV2() {
                           </h4>
                           {isCompleted && (
                             <Badge variant="secondary" className="text-xs">
-                              Completed
+                              Завършено
                             </Badge>
                           )}
-                          {isCurrent && <Badge className="text-xs">In Progress</Badge>}
+                          {isCurrent && <Badge className="text-xs">В процес</Badge>}
                           {isCancelled && (
                             <Badge variant="destructive" className="text-xs">
-                              Cancelled
+                              Отменено
                             </Badge>
                           )}
                         </div>
@@ -361,7 +361,7 @@ export default function OrderTrackingV2() {
                         {order.estimated_delivery_time && step.status === 'Delivered' && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            Estimated: {new Date(order.estimated_delivery_time).toLocaleString()}
+                            Очаквано: {new Date(order.estimated_delivery_time).toLocaleString()}
                           </div>
                         )}
                       </div>
@@ -376,11 +376,11 @@ export default function OrderTrackingV2() {
         <div className="mt-8 text-center space-x-4">
           {order.status === 'Pending' && (
             <Button variant="destructive" onClick={handleCancelOrder}>
-              Cancel Order
+              Отмени поръчката
             </Button>
           )}
           <Button variant="outline" onClick={() => navigate('/food')}>
-            Continue Shopping
+            Продължи пазаруването
           </Button>
         </div>
       </div>
