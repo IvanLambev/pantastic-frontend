@@ -123,40 +123,71 @@ export async function makeAuthenticatedRequest(url, options = {}) {
 
 /**
  * Convenience methods for common HTTP operations
+ * All methods return parsed JSON data, not raw responses
  */
 export const api = {
   // GET request
-  get: (url, options = {}) => makeAuthenticatedRequest(url, {
-    method: 'GET',
-    ...options
-  }),
+  get: async (url, options = {}) => {
+    const response = await makeAuthenticatedRequest(url, {
+      method: 'GET',
+      ...options
+    })
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
+  },
 
   // POST request
-  post: (url, data, options = {}) => makeAuthenticatedRequest(url, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    ...options
-  }),
+  post: async (url, data, options = {}) => {
+    const response = await makeAuthenticatedRequest(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      ...options
+    })
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
+  },
 
   // PUT request
-  put: (url, data, options = {}) => makeAuthenticatedRequest(url, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-    ...options
-  }),
+  put: async (url, data, options = {}) => {
+    const response = await makeAuthenticatedRequest(url, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      ...options
+    })
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
+  },
 
   // DELETE request
-  delete: (url, options = {}) => makeAuthenticatedRequest(url, {
-    method: 'DELETE',
-    ...options
-  }),
+  delete: async (url, options = {}) => {
+    const response = await makeAuthenticatedRequest(url, {
+      method: 'DELETE',
+      ...options
+    })
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
+  },
 
   // PATCH request
-  patch: (url, data, options = {}) => makeAuthenticatedRequest(url, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-    ...options
-  })
+  patch: async (url, data, options = {}) => {
+    const response = await makeAuthenticatedRequest(url, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      ...options
+    })
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
+  }
 }
 
 /**
