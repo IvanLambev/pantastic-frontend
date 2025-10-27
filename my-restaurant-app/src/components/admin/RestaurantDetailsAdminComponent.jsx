@@ -55,7 +55,7 @@ export default function RestaurantDetailsAdminComponent() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
-  const [resolvedRestaurantId, setResolvedRestaurantId] = useState(paramRestaurantId || "");
+  const [resolvedRestaurantId, setResolvedRestaurantId] = useState(paramRestaurantId || null);
   const fileInputRef = useRef();
 
   useEffect(() => {
@@ -68,17 +68,18 @@ export default function RestaurantDetailsAdminComponent() {
         
         // Find by UUID (paramRestaurantId) or use first restaurant if no param
         let found = null;
-        let idToUse = paramRestaurantId;
+        let idToUse = null;
         
         if (paramRestaurantId) {
           found = data.find(r => r[0] === paramRestaurantId);
+          idToUse = paramRestaurantId;
         } else if (data.length > 0) {
           // If no param provided, use first restaurant
           found = data[0];
           idToUse = data[0][0];
         }
         
-        if (!found) {
+        if (!found || !idToUse) {
           setError("Restaurant not found");
           setLoading(false);
           return;
