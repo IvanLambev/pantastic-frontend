@@ -74,7 +74,13 @@ export default function ItemDetails() {
         // Fetch removables for this item
         const removablesRes = await fetchWithAuth(`${API_URL}/restaurant/removables/item/${itemId}`);
         if (!removablesRes.ok) throw new Error('Failed to fetch removables');
-        const removables = await removablesRes.json();
+        let removables = await removablesRes.json();
+        
+        // Handle both old and new API response formats
+        if (Array.isArray(removables)) {
+          // New format: array of templates with removables array
+          removables = { applied_templates: removables };
+        }
         setRemovableData(removables);
 
         // Initialize selectedAddons state - Updated for new API structure
@@ -406,7 +412,12 @@ export default function ItemDetails() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <Badge variant="outline">{Object.keys(template.removables || {}).length} options</Badge>
+                      <Badge variant="outline">
+                        {Array.isArray(template.removables) 
+                          ? template.removables.length 
+                          : Object.keys(template.removables || {}).length
+                        } options
+                      </Badge>
                     </div>
                     <CardDescription>
                       Select ingredients you'd like to remove
@@ -415,27 +426,53 @@ export default function ItemDetails() {
                   
                   <CardContent className="pt-2">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
-                        <div
-                          key={`${template.template_id}-${removableKey}`}
-                          className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                            isRemovableSelected(template.template_id, removableKey)
-                              ? 'border-red-500 bg-red-50'
-                              : 'border-border bg-background hover:bg-muted/50'
-                          }`}
-                          onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
-                        >
-                          <div className="flex items-center flex-1">
-                            <Checkbox
-                              checked={isRemovableSelected(template.template_id, removableKey)}
-                              onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
-                              className="mr-3"
-                            />
-                            <span className="font-medium capitalize">{removableValue}</span>
+                      {Array.isArray(template.removables) ? (
+                        // New format: array of removables
+                        template.removables.map((removableItem, index) => (
+                          <div
+                            key={`${template.template_id}-${index}`}
+                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                              isRemovableSelected(template.template_id, removableItem)
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-border bg-background hover:bg-muted/50'
+                            }`}
+                            onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
+                          >
+                            <div className="flex items-center flex-1">
+                              <Checkbox
+                                checked={isRemovableSelected(template.template_id, removableItem)}
+                                onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableItem, checked)}
+                                className="mr-3"
+                              />
+                              <span className="font-medium">{removableItem}</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">Remove</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">Remove</span>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        // Old format: object with key-value pairs
+                        Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
+                          <div
+                            key={`${template.template_id}-${removableKey}`}
+                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                              isRemovableSelected(template.template_id, removableKey)
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-border bg-background hover:bg-muted/50'
+                            }`}
+                            onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
+                          >
+                            <div className="flex items-center flex-1">
+                              <Checkbox
+                                checked={isRemovableSelected(template.template_id, removableKey)}
+                                onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
+                                className="mr-3"
+                              />
+                              <span className="font-medium capitalize">{removableValue}</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">Remove</span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>
