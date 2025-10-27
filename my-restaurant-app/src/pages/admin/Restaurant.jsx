@@ -1,4 +1,4 @@
-import RestaurantDetailsAdminComponent from "@/components/admin-tsx-comps/RestaurantDetailsAdminComponent"
+import RestaurantDetailsAdminComponent from "@/components/admin/RestaurantDetailsAdminComponent.jsx"
 
 export default function RestaurantPage() {
   return (
