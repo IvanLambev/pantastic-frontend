@@ -14,7 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Pencil, Trash2, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { MoreVertical, Pencil, Trash2, UserPlus, Plus, X, CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,8 +26,33 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { t } from "@/utils/translations";
 
 export default function RestaurantDetailsAdminComponent() {
   const { restaurantId: paramRestaurantId } = useParams();
@@ -57,6 +85,32 @@ export default function RestaurantDetailsAdminComponent() {
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [resolvedRestaurantId, setResolvedRestaurantId] = useState(paramRestaurantId || null);
   const fileInputRef = useRef();
+
+  // Enhanced item creation state
+  const [availableAddonTemplates, setAvailableAddonTemplates] = useState([]);
+  const [availableRemovableTemplates, setAvailableRemovableTemplates] = useState([]);
+  const [selectedAddonTemplates, setSelectedAddonTemplates] = useState([]);
+  const [selectedRemovableTemplates, setSelectedRemovableTemplates] = useState([]);
+  
+  // Addon template creation
+  const [showCreateAddonTemplate, setShowCreateAddonTemplate] = useState(false);
+  const [newAddonTemplate, setNewAddonTemplate] = useState({
+    name: "",
+    description: "",
+    addons: [{ name: "", price: "" }]
+  });
+  
+  // Removable template creation
+  const [showCreateRemovableTemplate, setShowCreateRemovableTemplate] = useState(false);
+  const [newRemovableTemplate, setNewRemovableTemplate] = useState({
+    name: "",
+    description: "",
+    removables: [""]
+  });
+  
+  // Combobox states
+  const [addonTemplateOpen, setAddonTemplateOpen] = useState(false);
+  const [removableTemplateOpen, setRemovableTemplateOpen] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -104,23 +158,28 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('Using restaurant ID:', idToUse);
         
         // Fetch all data in parallel
-        const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
+        const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes] = await Promise.all([
           fetchWithAdminAuth(`${API_URL}/restaurant/${idToUse}/items`),
           fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
-          fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`)
+          fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`),
+          fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates/${idToUse}`)
         ]);
         
         const items = await itemsRes.json();
         const delivery = await deliveryRes.json();
-        const templates = templatesRes.ok ? await templatesRes.json() : [];
+        const addonTemplates = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
+        const removableTemplates = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
         
         console.log('Items:', items);
-        console.log('Templates:', templates);
+        console.log('Addon Templates:', addonTemplates);
+        console.log('Removable Templates:', removableTemplates);
         
         setMenuItems(items);
         setDeliveryPeople(delivery);
-        setAddonTemplates(templates || []);
-        setAvailableTemplates(templates || []);
+        setAddonTemplates(addonTemplates || []);
+        setAvailableTemplates(addonTemplates || []);
+        setAvailableAddonTemplates(addonTemplates || []);
+        setAvailableRemovableTemplates(removableTemplates || []);
         
       } catch (error) {
         setError("Failed to load restaurant details");
@@ -132,6 +191,163 @@ export default function RestaurantDetailsAdminComponent() {
     
     fetchRestaurant();
   }, [paramRestaurantId]);
+  
+  // Function to create addon template
+  const createAddonTemplate = async () => {
+    if (!newAddonTemplate.name.trim()) {
+      toast.error("Моля въведете име на шаблона");
+      return;
+    }
+    
+    if (!resolvedRestaurantId) {
+      toast.error("Няма избран ресторант");
+      return;
+    }
+    
+    // Convert addons array to object format
+    const addonsObject = {};
+    newAddonTemplate.addons.forEach(addon => {
+      if (addon.name.trim() && addon.price) {
+        addonsObject[addon.name.trim()] = parseFloat(addon.price);
+      }
+    });
+    
+    if (Object.keys(addonsObject).length === 0) {
+      toast.error("Моля добавете поне една добавка");
+      return;
+    }
+    
+    try {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurant_id: resolvedRestaurantId,
+          template: {
+            name: newAddonTemplate.name,
+            description: newAddonTemplate.description,
+            addons: addonsObject,
+            is_predefined: false
+          }
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`Шаблонът за добавки "${newAddonTemplate.name}" е създаден успешно`);
+        setShowCreateAddonTemplate(false);
+        setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }] });
+        
+        // Refresh addon templates
+        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
+        const templates = templatesRes.ok ? await templatesRes.json() : [];
+        setAvailableAddonTemplates(templates);
+        
+        // Auto-select the new template
+        if (result.template_id) {
+          setSelectedAddonTemplates(prev => [...prev, result.template_id]);
+        }
+      } else {
+        const error = await response.json();
+        toast.error(`Грешка: ${error.message || 'Неуспешно създаване на шаблон'}`);
+      }
+    } catch (error) {
+      console.error('Error creating addon template:', error);
+      toast.error('Грешка при създаване на шаблон за добавки');
+    }
+  };
+  
+  // Function to create removable template
+  const createRemovableTemplate = async () => {
+    if (!newRemovableTemplate.name.trim()) {
+      toast.error("Моля въведете име на шаблона");
+      return;
+    }
+    
+    if (!resolvedRestaurantId) {
+      toast.error("Няма избран ресторант");
+      return;
+    }
+    
+    // Filter out empty removables
+    const removables = newRemovableTemplate.removables.filter(removable => removable.trim());
+    
+    if (removables.length === 0) {
+      toast.error("Моля добавете поне един премахваем елемент");
+      return;
+    }
+    
+    try {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurant_id: resolvedRestaurantId,
+          template: {
+            name: newRemovableTemplate.name,
+            description: newRemovableTemplate.description,
+            removables: removables,
+            is_predefined: false
+          }
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`Шаблонът за премахвания "${newRemovableTemplate.name}" е създаден успешно`);
+        setShowCreateRemovableTemplate(false);
+        setNewRemovableTemplate({ name: "", description: "", removables: [""] });
+        
+        // Refresh removable templates
+        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates/${resolvedRestaurantId}`);
+        const templates = templatesRes.ok ? await templatesRes.json() : [];
+        setAvailableRemovableTemplates(templates);
+        
+        // Auto-select the new template
+        if (result.template_id) {
+          setSelectedRemovableTemplates(prev => [...prev, result.template_id]);
+        }
+      } else {
+        const error = await response.json();
+        toast.error(`Грешка: ${error.message || 'Неуспешно създаване на шаблон'}`);
+      }
+    } catch (error) {
+      console.error('Error creating removable template:', error);
+      toast.error('Грешка при създаване на шаблон за премахвания');
+    }
+  };
+  
+  // Function to add addon input field
+  const addAddonField = () => {
+    setNewAddonTemplate(prev => ({
+      ...prev,
+      addons: [...prev.addons, { name: "", price: "" }]
+    }));
+  };
+  
+  // Function to remove addon input field
+  const removeAddonField = (index) => {
+    setNewAddonTemplate(prev => ({
+      ...prev,
+      addons: prev.addons.filter((_, i) => i !== index)
+    }));
+  };
+  
+  // Function to add removable input field
+  const addRemovableField = () => {
+    setNewRemovableTemplate(prev => ({
+      ...prev,
+      removables: [...prev.removables, ""]
+    }));
+  };
+  
+  // Function to remove removable input field
+  const removeRemovableField = (index) => {
+    setNewRemovableTemplate(prev => ({
+      ...prev,
+      removables: prev.removables.filter((_, i) => i !== index)
+    }));
+  };
   
   // Remove unused functions since all data is fetched in main useEffect
   // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
@@ -159,6 +375,8 @@ export default function RestaurantDetailsAdminComponent() {
   const handleAddItem = () => {
     setModalMode("add");
     setItemForm({ id: "", name: "", description: "", image: "", price: "", addon_templates: [] });
+    setSelectedAddonTemplates([]);
+    setSelectedRemovableTemplates([]);
     setShowItemModal(true);
   };
 
@@ -166,22 +384,46 @@ export default function RestaurantDetailsAdminComponent() {
   const handleItemFormSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    let url = `${API_URL}/restaurant/items`;
-    let method = modalMode === "add" ? "POST" : "PUT";
+    
     if (modalMode === "add") {
-      formData.append("data", JSON.stringify({
+      // Use template-based API for new items
+      const itemData = {
         restaurant_id: restaurant.restaurant_id,
-        name: itemForm.name,
-        description: itemForm.description,
-        price: parseFloat(itemForm.price),
-        addon_templates: itemForm.addon_templates
-      }));
+        item: {
+          name: itemForm.name,
+          description: itemForm.description,
+          item_type: "pancake", // Default type
+          price: parseFloat(itemForm.price),
+          addons: {}, // Custom addons can be added here if needed
+          addon_template_ids: selectedAddonTemplates,
+          removables: [], // Custom removables can be added here if needed
+          removable_template_ids: selectedRemovableTemplates
+        }
+      };
+      
+      formData.append("data", JSON.stringify(itemData));
       
       if (fileInputRef.current && fileInputRef.current.files[0]) {
         formData.append("file", fileInputRef.current.files[0]);
       }
+      
+      try {
+        await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
+          method: "POST",
+          body: formData,
+        });
+        toast.success(`Продуктът "${itemForm.name}" е създаден успешно`);
+        // Refresh items after successful save
+        refreshData();
+        setShowItemModal(false);
+        setSelectedAddonTemplates([]);
+        setSelectedRemovableTemplates([]);
+      } catch (error) {
+        console.error('Error creating item:', error);
+        toast.error("Неуспешно създаване на продукт");
+      }
     } else {
-      // For edit, use the backend's required structure
+      // For edit, use the existing API
       const data = {
         item_id: itemForm.id,
         name: itemForm.name,
@@ -193,18 +435,20 @@ export default function RestaurantDetailsAdminComponent() {
       if (fileInputRef.current && fileInputRef.current.files[0]) {
         formData.append("file", fileInputRef.current.files[0]);
       }
-    }
-    try {
-      await fetchWithAdminAuth(url, {
-        method,
-        body: formData,
-      });
-      // Refresh items after successful save
-      refreshData();
-      setShowItemModal(false);
-    } catch (error) {
-      alert("Failed to save item");
-      console.error('Error saving item:', error);
+      
+      try {
+        await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
+          method: "PUT",
+          body: formData,
+        });
+        toast.success(`Продуктът "${itemForm.name}" е обновен успешно`);
+        // Refresh items after successful save
+        refreshData();
+        setShowItemModal(false);
+      } catch (error) {
+        console.error('Error updating item:', error);
+        toast.error("Неуспешно обновяване на продукт");
+      }
     }
   };
 
@@ -470,111 +714,403 @@ export default function RestaurantDetailsAdminComponent() {
     <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Add/Edit Item Dialog */}
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-        <DialogContent className="max-w-md mx-4 md:max-w-lg">
+        <DialogContent className="max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{modalMode === "add" ? "Add Item" : "Edit Item"}</DialogTitle>
+            <DialogTitle>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</DialogTitle>
             <DialogDescription>
               {modalMode === "add"
-                ? "Fill in the details to add a new menu item."
-                : "Edit the details of the menu item."}
+                ? "Попълнете детайлите за да добавите нов продукт в менюто."
+                : "Редактирайте детайлите на продукта."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleItemFormSubmit}>
-            <div className="grid gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <input
-                  type="text"
-                  value={itemForm.name}
-                  onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  value={itemForm.description}
-                  onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={itemForm.price}
-                  onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Image</label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={(e) => {
-                    if (e.target.files.length > 0) {
-                      setItemForm({ ...itemForm, image: e.target.files[0].name });
-                    }
-                  }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                {itemForm.image && (
-                  <p className="mt-2 text-sm text-gray-500">{itemForm.image}</p>
-                )}
-              </div>
-              
-              {/* Addon Templates Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Addon Templates</label>
-                <div className="mt-2 space-y-2">
-                  {addonTemplates.map((template) => (
-                    <div key={template.template_id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`template-${template.template_id}`}
-                        checked={itemForm.addon_templates.includes(template.template_id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setItemForm({
-                              ...itemForm,
-                              addon_templates: [...itemForm.addon_templates, template.template_id]
-                            });
-                          } else {
-                            setItemForm({
-                              ...itemForm,
-                              addon_templates: itemForm.addon_templates.filter(id => id !== template.template_id)
-                            });
-                          }
-                        }}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor={`template-${template.template_id}`} className="ml-2 block text-sm text-gray-900">
-                        {template.name}
-                      </label>
-                    </div>
-                  ))}
-                  
-                  {addonTemplates.length === 0 && (
-                    <p className="text-sm text-gray-500">No addon templates available. Create some in the Addon Templates tab.</p>
+            <div className="grid gap-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Основна информация</h3>
+                <div>
+                  <Label htmlFor="name">Име на продукта</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={itemForm.name}
+                    onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+                    required
+                    placeholder="Напр. Класическа палачинка"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Описание</Label>
+                  <Textarea
+                    id="description"
+                    value={itemForm.description}
+                    onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
+                    placeholder="Кратко описание на продукта..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="price">Цена (лв.)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    value={itemForm.price}
+                    onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                    required
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="image">Снимка</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files.length > 0) {
+                        setItemForm({ ...itemForm, image: e.target.files[0].name });
+                      }
+                    }}
+                  />
+                  {itemForm.image && (
+                    <p className="mt-2 text-sm text-gray-500">{itemForm.image}</p>
                   )}
                 </div>
               </div>
+
+              {/* Addon Templates Section */}
+              {modalMode === "add" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Шаблони за добавки</h3>
+                  <div className="space-y-2">
+                    <Label>Изберете шаблони за добавки</Label>
+                    <div className="flex gap-2">
+                      <Popover open={addonTemplateOpen} onOpenChange={setAddonTemplateOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={addonTemplateOpen}
+                            className="w-full justify-between"
+                          >
+                            {selectedAddonTemplates.length > 0
+                              ? `Избрани ${selectedAddonTemplates.length} шаблона`
+                              : "Изберете шаблон за добавки..."}
+                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Търсете шаблон..." />
+                            <CommandList>
+                              <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
+                              <CommandGroup>
+                                {availableAddonTemplates.map((template) => (
+                                  <CommandItem
+                                    key={template.id || template.template_id}
+                                    value={template.name}
+                                    onSelect={() => {
+                                      const templateId = template.id || template.template_id;
+                                      setSelectedAddonTemplates(prev => 
+                                        prev.includes(templateId)
+                                          ? prev.filter(id => id !== templateId)
+                                          : [...prev, templateId]
+                                      );
+                                    }}
+                                  >
+                                    <CheckIcon
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedAddonTemplates.includes(template.id || template.template_id) 
+                                          ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {template.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <Drawer>
+                        <DrawerTrigger asChild>
+                          <Button variant="outline" size="icon">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>Създаване на нов шаблон за добавки</DrawerTitle>
+                            <DrawerDescription>
+                              Създайте нов шаблон който може да бъде приложен към продукти.
+                            </DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 pb-4 space-y-4">
+                            <div>
+                              <Label htmlFor="template-name">Име на шаблона</Label>
+                              <Input
+                                id="template-name"
+                                value={newAddonTemplate.name}
+                                onChange={(e) => setNewAddonTemplate({...newAddonTemplate, name: e.target.value})}
+                                placeholder="Напр. Сладки добавки"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="template-description">Описание</Label>
+                              <Textarea
+                                id="template-description"
+                                value={newAddonTemplate.description}
+                                onChange={(e) => setNewAddonTemplate({...newAddonTemplate, description: e.target.value})}
+                                placeholder="Кратко описание на шаблона..."
+                              />
+                            </div>
+                            <div>
+                              <Label>Добавки</Label>
+                              {newAddonTemplate.addons.map((addon, index) => (
+                                <div key={index} className="flex gap-2 mt-2">
+                                  <Input
+                                    placeholder="Име на добавката"
+                                    value={addon.name}
+                                    onChange={(e) => {
+                                      const newAddons = [...newAddonTemplate.addons];
+                                      newAddons[index].name = e.target.value;
+                                      setNewAddonTemplate({...newAddonTemplate, addons: newAddons});
+                                    }}
+                                  />
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Цена"
+                                    value={addon.price}
+                                    onChange={(e) => {
+                                      const newAddons = [...newAddonTemplate.addons];
+                                      newAddons[index].price = e.target.value;
+                                      setNewAddonTemplate({...newAddonTemplate, addons: newAddons});
+                                    }}
+                                  />
+                                  {newAddonTemplate.addons.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => removeAddonField(index)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addAddonField}
+                                className="mt-2"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Добави добавка
+                              </Button>
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <Button onClick={createAddonTemplate}>Създай шаблон</Button>
+                            <DrawerClose asChild>
+                              <Button variant="outline">Отказ</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
+                    </div>
+                    {selectedAddonTemplates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedAddonTemplates.map(templateId => {
+                          const template = availableAddonTemplates.find(t => (t.id || t.template_id) === templateId);
+                          return template ? (
+                            <Badge key={templateId} variant="secondary">
+                              {template.name}
+                              <button
+                                onClick={() => setSelectedAddonTemplates(prev => prev.filter(id => id !== templateId))}
+                                className="ml-2 hover:text-red-500"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Removable Templates Section */}
+              {modalMode === "add" && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Шаблони за премахвания</h3>
+                  <div className="space-y-2">
+                    <Label>Изберете шаблони за премахвания</Label>
+                    <div className="flex gap-2">
+                      <Popover open={removableTemplateOpen} onOpenChange={setRemovableTemplateOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={removableTemplateOpen}
+                            className="w-full justify-between"
+                          >
+                            {selectedRemovableTemplates.length > 0
+                              ? `Избрани ${selectedRemovableTemplates.length} шаблона`
+                              : "Изберете шаблон за премахвания..."}
+                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Търсете шаблон..." />
+                            <CommandList>
+                              <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
+                              <CommandGroup>
+                                {availableRemovableTemplates.map((template) => (
+                                  <CommandItem
+                                    key={template.id || template.template_id}
+                                    value={template.name}
+                                    onSelect={() => {
+                                      const templateId = template.id || template.template_id;
+                                      setSelectedRemovableTemplates(prev => 
+                                        prev.includes(templateId)
+                                          ? prev.filter(id => id !== templateId)
+                                          : [...prev, templateId]
+                                      );
+                                    }}
+                                  >
+                                    <CheckIcon
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedRemovableTemplates.includes(template.id || template.template_id) 
+                                          ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {template.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <Drawer>
+                        <DrawerTrigger asChild>
+                          <Button variant="outline" size="icon">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>Създаване на нов шаблон за премахвания</DrawerTitle>
+                            <DrawerDescription>
+                              Създайте нов шаблон за елементи които могат да бъдат премахнати от продукти.
+                            </DrawerDescription>
+                          </DrawerHeader>
+                          <div className="px-4 pb-4 space-y-4">
+                            <div>
+                              <Label htmlFor="removable-template-name">Име на шаблона</Label>
+                              <Input
+                                id="removable-template-name"
+                                value={newRemovableTemplate.name}
+                                onChange={(e) => setNewRemovableTemplate({...newRemovableTemplate, name: e.target.value})}
+                                placeholder="Напр. Алергени"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="removable-template-description">Описание</Label>
+                              <Textarea
+                                id="removable-template-description"
+                                value={newRemovableTemplate.description}
+                                onChange={(e) => setNewRemovableTemplate({...newRemovableTemplate, description: e.target.value})}
+                                placeholder="Кратко описание на шаблона..."
+                              />
+                            </div>
+                            <div>
+                              <Label>Премахваеми елементи</Label>
+                              {newRemovableTemplate.removables.map((removable, index) => (
+                                <div key={index} className="flex gap-2 mt-2">
+                                  <Input
+                                    placeholder="Име на премахваемия елемент"
+                                    value={removable}
+                                    onChange={(e) => {
+                                      const newRemovables = [...newRemovableTemplate.removables];
+                                      newRemovables[index] = e.target.value;
+                                      setNewRemovableTemplate({...newRemovableTemplate, removables: newRemovables});
+                                    }}
+                                  />
+                                  {newRemovableTemplate.removables.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => removeRemovableField(index)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addRemovableField}
+                                className="mt-2"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Добави елемент
+                              </Button>
+                            </div>
+                          </div>
+                          <DrawerFooter>
+                            <Button onClick={createRemovableTemplate}>Създай шаблон</Button>
+                            <DrawerClose asChild>
+                              <Button variant="outline">Отказ</Button>
+                            </DrawerClose>
+                          </DrawerFooter>
+                        </DrawerContent>
+                      </Drawer>
+                    </div>
+                    {selectedRemovableTemplates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedRemovableTemplates.map(templateId => {
+                          const template = availableRemovableTemplates.find(t => (t.id || t.template_id) === templateId);
+                          return template ? (
+                            <Badge key={templateId} variant="secondary">
+                              {template.name}
+                              <button
+                                onClick={() => setSelectedRemovableTemplates(prev => prev.filter(id => id !== templateId))}
+                                className="ml-2 hover:text-red-500"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-6">
               <Button
                 type="button"
                 onClick={() => setShowItemModal(false)}
                 variant="outline"
                 className="mr-2"
               >
-                Cancel
+                Отказ
               </Button>
-              <Button type="submit" isLoading={isSubmitting}>
-                {modalMode === "add" ? "Add Item" : "Save Changes"}
+              <Button type="submit">
+                {modalMode === "add" ? "Създай продукт" : "Запази промените"}
               </Button>
             </DialogFooter>
           </form>
