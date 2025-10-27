@@ -23,7 +23,11 @@ export default function OrderConfirmation({
   onClose, 
   onConfirm, 
   cartItems, 
+  subtotal,
+  discountInfo,
+  discountAmount,
   total, 
+  deliveryFee,
   isLoading 
 }) {
   const [orderDetails, setOrderDetails] = useState(null);
@@ -84,8 +88,13 @@ export default function OrderConfirmation({
                     <h4 className="font-medium">{item.name}</h4>
                     <p className="text-sm text-gray-600">{t('cart.quantity')}: {item.quantity}</p>
                     {item.selectedAddons && item.selectedAddons.length > 0 && (
-                      <div className="text-sm text-gray-500 mt-1">
+                      <div className="text-sm text-green-600 mt-1">
                         {t('cart.addons')}: {item.selectedAddons.map(addon => addon.name).join(', ')}
+                      </div>
+                    )}
+                    {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                      <div className="text-sm text-red-600 mt-1">
+                        {t('menu.removed')}: {item.selectedRemovables.join(', ')}
                       </div>
                     )}
                     {item.specialInstructions && (
@@ -100,9 +109,28 @@ export default function OrderConfirmation({
                 </div>
               ))}
               <Separator />
-              <div className="flex justify-between items-center font-bold text-lg">
-                <span>{t('cart.total')}</span>
-                <span>{formatDualCurrencyCompact(total)}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>{t('cart.subtotal')}</span>
+                  <span>{formatDualCurrencyCompact(subtotal)}</span>
+                </div>
+                {discountInfo && discountInfo.valid && (
+                  <div className="flex justify-between text-green-600">
+                    <span>{t('cart.discount')} ({discountInfo.discount_percentage}%)</span>
+                    <span>-{formatDualCurrencyCompact(discountAmount)}</span>
+                  </div>
+                )}
+                {deliveryFee > 0 && (
+                  <div className="flex justify-between">
+                    <span>{t('cart.deliveryFee')}</span>
+                    <span>{formatDualCurrencyCompact(deliveryFee)}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between items-center font-bold text-lg">
+                  <span>{t('cart.total')}</span>
+                  <span>{formatDualCurrencyCompact(total)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>

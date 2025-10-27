@@ -141,35 +141,7 @@ const Food = () => {
   const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
   const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
   
-  // Helper function to check if item has addons (both direct and template-based)
-  const hasItemAddons = (item) => {
-    if (Array.isArray(item)) return false; // Old format doesn't have addon info
-    return (
-      (item.addons && Object.keys(item.addons).length > 0) ||
-      (item.addon_template_ids && item.addon_template_ids.length > 0)
-    );
-  };
-  
-  // Helper function to check if item has removables (both direct and template-based)
-  const hasItemRemovables = (item) => {
-    if (Array.isArray(item)) return false; // Old format doesn't have removable info
-    return (
-      (item.removables && item.removables.length > 0) ||
-      (item.removable_template_ids && item.removable_template_ids.length > 0)
-    );
-  };
-  
-  // Helper function to get addon count
-  const getAddonCount = (item) => {
-    if (Array.isArray(item)) return 0;
-    return Object.keys(item.addons || {}).length + (item.addon_template_ids || []).length;
-  };
-  
-  // Helper function to get removable count  
-  const getRemovableCount = (item) => {
-    if (Array.isArray(item)) return 0;
-    return (item.removables || []).length + (item.removable_template_ids || []).length;
-  };
+
   
   const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
   const getFavoriteId = (itemId) => {
@@ -359,10 +331,6 @@ const Food = () => {
                 const itemPrice = getItemPrice(item);
                 const itemImage = getItemImage(item);
                 
-                // Get addons and removables for display using helper functions
-                const hasAddons = hasItemAddons(item);
-                const hasRemovables = hasItemRemovables(item);
-                
                 return (
                   <Card key={itemId} className="flex flex-col sm:flex-row overflow-hidden">
                     <div className="w-full sm:w-32 h-48 sm:h-32 relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
@@ -390,26 +358,13 @@ const Food = () => {
                           fill={isItemFavorite(itemId) ? 'red' : 'none'}
                         />
                       </button>
-                      
-                      {/* Compact addon/removable indicators */}
-                      {(hasAddons || hasRemovables) && (
-                        <div className="absolute bottom-2 left-2 flex gap-1">
-                          {hasAddons && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
-                          {hasRemovables && <div className="w-2 h-2 bg-orange-500 rounded-full"></div>}
-                        </div>
-                      )}
+
                     </div>
                     <CardContent className="flex flex-1 flex-col sm:flex-row sm:justify-between sm:items-center p-4 gap-3">
                       <div className="flex flex-col justify-center flex-1 min-w-0">
                         <h3 className="font-semibold text-base mb-1 truncate">{itemName}</h3>
                         <div className="flex items-center justify-between sm:justify-start sm:gap-3">
                           <span className="font-bold text-lg text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
-                          {(hasAddons || hasRemovables) && (
-                            <div className="flex gap-1">
-                              {hasAddons && <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+</span>}
-                              {hasRemovables && <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">~</span>}
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex gap-2 flex-shrink-0 justify-end">
@@ -523,12 +478,6 @@ const Food = () => {
                     const itemImage = getItemImage(item);
                     const itemDescription = getItemDescription(item);
                     
-                    // Get addons and removables for display using helper functions
-                    const hasAddons = hasItemAddons(item);
-                    const hasRemovables = hasItemRemovables(item);
-                    const addonCount = getAddonCount(item);
-                    const removableCount = getRemovableCount(item);
-                    
                     return (
                       <Card key={itemId} className="flex flex-col h-full overflow-hidden">
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
@@ -556,34 +505,11 @@ const Food = () => {
                               fill={isItemFavorite(itemId) ? 'red' : 'none'}
                             />
                           </button>
-                          
-                          {/* Addon/Removable indicators */}
-                          {(hasAddons || hasRemovables) && (
-                            <div className="absolute top-3 left-3 flex flex-col gap-1">
-                              {hasAddons && (
-                                <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow">
-                                  +{addonCount}
-                                </div>
-                              )}
-                              {hasRemovables && (
-                                <div className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow">
-                                  -{removableCount}
-                                </div>
-                              )}
-                            </div>
-                          )}
+
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
                           <h3 className="font-semibold mb-2 text-lg">{itemName}</h3>
                           <p className="text-sm text-muted-foreground mb-3 flex-grow overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{itemDescription}</p>
-                          
-                          {/* Show available customizations */}
-                          {(hasAddons || hasRemovables) && (
-                            <div className="text-xs text-muted-foreground mb-4 flex flex-wrap gap-1">
-                              {hasAddons && <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-medium">{t('menu.extrasAvailable')}</span>}
-                              {hasRemovables && <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">{t('menu.customizable')}</span>}
-                            </div>
-                          )}
                           
                           <div className="flex flex-col gap-3 mt-auto">
                             <div className="flex justify-between items-center">

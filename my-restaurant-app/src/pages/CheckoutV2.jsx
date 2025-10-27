@@ -1220,7 +1220,11 @@ export default function CheckoutV2() {
             onClose={handleOrderConfirmationClose}
             onConfirm={handleOrderConfirm}
             cartItems={cartItems}
+            subtotal={calculateSubtotalBGN()}
+            discountInfo={discountInfo}
+            discountAmount={calculateDiscountAmountBGN()}
             total={calculateTotalBGN()}
+            deliveryFee={deliveryMethod === 'delivery' ? 9.78 : 0}
             isLoading={isProcessing}
           />
         </div>

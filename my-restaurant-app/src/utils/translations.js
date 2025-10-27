@@ -66,7 +66,9 @@ export const translations = {
     add: "Добави",
     priceRange: "Ценови диапазон",
     extrasAvailable: "Налични екстри",
-    customizable: "Персонализируемо"
+    customizable: "Персонализируемо",
+    removed: "Премахнато",
+    instructions: "Инструкции"
   },
 
   // Cart
