@@ -740,10 +740,10 @@ export default function RestaurantDetailsAdminComponent() {
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
+    <div className="w-full px-4 py-4 md:py-8">
       {/* Add/Edit Item Dialog */}
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-        <DialogContent className="w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</DialogTitle>
             <DialogDescription>
@@ -753,20 +753,34 @@ export default function RestaurantDetailsAdminComponent() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleItemFormSubmit}>
-            <div className="grid gap-4">
+            <div className="grid gap-6">
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Основна информация</h3>
-                <div>
-                  <Label htmlFor="name">Име на продукта</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={itemForm.name}
-                    onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
-                    required
-                    placeholder="Напр. Класическа палачинка"
-                  />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Име на продукта</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      value={itemForm.name}
+                      onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
+                      required
+                      placeholder="Напр. Класическа палачинка"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="price">Цена (лв.)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={itemForm.price}
+                      onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
+                      required
+                      placeholder="0.00"
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="description">Описание</Label>
@@ -775,18 +789,6 @@ export default function RestaurantDetailsAdminComponent() {
                     value={itemForm.description}
                     onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                     placeholder="Кратко описание на продукта..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="price">Цена (лв.)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    value={itemForm.price}
-                    onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })}
-                    required
-                    placeholder="0.00"
                   />
                 </div>
                 <div>
@@ -810,7 +812,7 @@ export default function RestaurantDetailsAdminComponent() {
 
               {/* Template Selection Section */}
               {modalMode === "add" && (
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-8">
                   {/* Addon Templates */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Шаблони за добавки</h3>
