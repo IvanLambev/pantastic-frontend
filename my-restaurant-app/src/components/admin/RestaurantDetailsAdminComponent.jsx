@@ -237,6 +237,7 @@ export default function RestaurantDetailsAdminComponent() {
         toast.success(`Шаблонът за добавки "${newAddonTemplate.name}" е създаден успешно`);
         setShowCreateAddonTemplate(false);
         setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }] });
+        setAddonTemplateOpen(false); // Close the popover
         
         // Refresh addon templates
         const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
@@ -297,6 +298,7 @@ export default function RestaurantDetailsAdminComponent() {
         toast.success(`Шаблонът за премахвания "${newRemovableTemplate.name}" е създаден успешно`);
         setShowCreateRemovableTemplate(false);
         setNewRemovableTemplate({ name: "", description: "", removables: [""] });
+        setRemovableTemplateOpen(false); // Close the popover
         
         // Refresh removable templates
         const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${resolvedRestaurantId}`);
@@ -800,10 +802,10 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
+                        <PopoverContent className="w-auto min-w-[200px] max-w-[400px] p-0 max-h-[300px]">
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
-                            <CommandList>
+                            <CommandList className="max-h-[200px] overflow-y-auto">
                               <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
                               <CommandGroup>
                                 {availableAddonTemplates.map((template) => (
@@ -966,10 +968,10 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
+                        <PopoverContent className="w-auto min-w-[200px] max-w-[400px] p-0 max-h-[300px]">
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
-                            <CommandList>
+                            <CommandList className="max-h-[200px] overflow-y-auto">
                               <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
                               <CommandGroup>
                                 {availableRemovableTemplates.map((template) => (
