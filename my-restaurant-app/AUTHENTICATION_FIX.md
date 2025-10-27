@@ -9,6 +9,7 @@ The issue was not that we were using Google tokens incorrectly, but that we had 
 ### 1. **Created Centralized API Client** (`src/utils/apiClient.js`)
 
 A comprehensive API client that:
+
 - ✅ **Handles Authentication**: Automatically adds Bearer tokens to all requests
 - ✅ **Token Refresh**: Automatically refreshes expired tokens
 - ✅ **Error Handling**: Proper 401 handling and logout on auth failure
@@ -24,36 +25,39 @@ A comprehensive API client that:
 ## 🔄 **Migration Guide**
 
 ### **OLD Code Pattern (Inconsistent):**
+
 ```javascript
 // ❌ Manual fetch - no token refresh handling
-const user = JSON.parse(sessionStorage.getItem('user'))
+const user = JSON.parse(sessionStorage.getItem("user"));
 const response = await fetch(`${API_URL}/order/orders`, {
-  method: 'POST',
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${user.access_token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${user.access_token}`,
   },
-  body: JSON.stringify(orderData)
-})
+  body: JSON.stringify(orderData),
+});
 ```
 
 ### **NEW Code Pattern (Recommended):**
+
 ```javascript
 // ✅ Using centralized API client - automatic token refresh
-import { api } from '@/utils/apiClient'
+import { api } from "@/utils/apiClient";
 
-const response = await api.post('/order/orders', orderData)
+const response = await api.post("/order/orders", orderData);
 ```
 
 ### **Alternative Pattern:**
+
 ```javascript
 // ✅ Using makeAuthenticatedRequest for custom requests
-import { makeAuthenticatedRequest } from '@/utils/apiClient'
+import { makeAuthenticatedRequest } from "@/utils/apiClient";
 
-const response = await makeAuthenticatedRequest('/order/orders', {
-  method: 'POST',
-  body: JSON.stringify(orderData)
-})
+const response = await makeAuthenticatedRequest("/order/orders", {
+  method: "POST",
+  body: JSON.stringify(orderData),
+});
 ```
 
 ## 📋 **Files That Need Migration**
@@ -61,16 +65,19 @@ const response = await makeAuthenticatedRequest('/order/orders', {
 The following files have manual `fetch` calls that should be updated to use the new API client:
 
 ### **High Priority (Order/Checkout Related):**
+
 1. `src/pages/CheckoutV2.jsx` - Lines 279, 566
 2. `src/context/CartContext.jsx` - Lines 106, 159, 187
 3. `src/pages/OrderTrackingV2.jsx` - Lines 125, 178
 
 ### **Medium Priority (User Management):**
+
 4. `src/components/user-dashboard.jsx` - Lines 50, 74, 102, 115, 156, 240
 5. `src/pages/Food.jsx` - Lines 70, 189, 204
 6. `src/pages/ItemDetails.jsx` - Lines 115, 264, 279
 
 ### **Admin Related:**
+
 7. `src/components/restaurant-manager.jsx` - Multiple lines
 8. `src/context/AdminContext.jsx` - Line 29
 9. `src/utils/adminAuth.js` - Multiple lines
@@ -78,24 +85,26 @@ The following files have manual `fetch` calls that should be updated to use the 
 ## 🔍 **Example Migration**
 
 ### **Before (CheckoutV2.jsx):**
+
 ```javascript
 const response = await fetch(`${API_URL}/order/discount/validate`, {
-  method: 'POST',
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${user.access_token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${user.access_token}`,
   },
-  body: JSON.stringify({ discount_code: discountCode.trim() })
-})
+  body: JSON.stringify({ discount_code: discountCode.trim() }),
+});
 ```
 
 ### **After (CheckoutV2.jsx):**
-```javascript
-import { api } from '@/utils/apiClient'
 
-const response = await api.post('/order/discount/validate', {
-  discount_code: discountCode.trim()
-})
+```javascript
+import { api } from "@/utils/apiClient";
+
+const response = await api.post("/order/discount/validate", {
+  discount_code: discountCode.trim(),
+});
 ```
 
 ## ✅ **Benefits of Migration**
@@ -116,16 +125,19 @@ const response = await api.post('/order/discount/validate', {
 ## 📝 **Implementation Priority**
 
 ### **Phase 1 (Critical - Order Flow):**
+
 - ✅ GoogleLoginButton (completed)
 - 🔄 CheckoutV2.jsx (order creation)
 - 🔄 CartContext.jsx (cart operations)
 
 ### **Phase 2 (Important - User Features):**
+
 - 🔄 OrderTrackingV2.jsx
 - 🔄 user-dashboard.jsx
 - 🔄 Food.jsx
 
 ### **Phase 3 (Admin Features):**
+
 - 🔄 Admin components
 - 🔄 Restaurant management
 

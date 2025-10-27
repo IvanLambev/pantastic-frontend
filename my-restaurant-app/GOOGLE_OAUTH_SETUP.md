@@ -5,14 +5,17 @@ This document explains how to set up and use Google OAuth login in the Pantastic
 ## ✅ Already Completed
 
 1. **Dependencies Installed**
+
    - `@react-oauth/google` ✅ (already in package.json)
    - `jwt-decode` ✅ (just installed)
 
 2. **Google OAuth Provider Setup** ✅
+
    - Configured in `main.jsx` with conditional rendering
    - Falls back gracefully if Google Client ID is not configured
 
 3. **Google Login Button Component** ✅
+
    - Created `GoogleLoginButton.jsx` with full functionality
    - Includes loading states, error handling, and success flow
    - Integrated into both login and signup forms
@@ -89,21 +92,25 @@ The backend should return the same format as regular login:
 ## 🎯 Features Implemented
 
 ### Loading States
+
 - Shows spinner and "Влизане..." text while processing
 - Disables button during loading
 
 ### Error Handling
+
 - Shows toast notifications for errors
 - Handles OAuth errors and API errors separately
 - Graceful fallback if Google OAuth is not configured
 
 ### Success Flow
+
 - Shows success toast message
 - Updates global authentication state
 - Redirects to food page
 - Stores session data properly
 
 ### Bulgarian Localization
+
 - All UI text is in Bulgarian
 - Error messages are translated
 - Success messages are translated
@@ -137,6 +144,7 @@ The backend should return the same format as regular login:
 ## 📝 Additional Scopes
 
 The implementation requests these Google API scopes:
+
 - `https://www.googleapis.com/auth/userinfo.email` - User email address
 - `https://www.googleapis.com/auth/userinfo.profile` - User profile information (name, picture)
 - `https://www.googleapis.com/auth/user.phonenumbers.read` - Phone numbers (optional for People API fallback)

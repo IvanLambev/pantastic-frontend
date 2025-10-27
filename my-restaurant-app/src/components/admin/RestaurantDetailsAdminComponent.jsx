@@ -162,7 +162,7 @@ export default function RestaurantDetailsAdminComponent() {
           fetchWithAdminAuth(`${API_URL}/restaurant/${idToUse}/items`),
           fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
           fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`),
-          fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates/${idToUse}`)
+          fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${idToUse}`)
         ]);
         
         const items = await itemsRes.json();
@@ -278,7 +278,7 @@ export default function RestaurantDetailsAdminComponent() {
     }
     
     try {
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -299,7 +299,7 @@ export default function RestaurantDetailsAdminComponent() {
         setNewRemovableTemplate({ name: "", description: "", removables: [""] });
         
         // Refresh removable templates
-        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates/${resolvedRestaurantId}`);
+        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${resolvedRestaurantId}`);
         const templates = templatesRes.ok ? await templatesRes.json() : [];
         setAvailableRemovableTemplates(templates);
         
