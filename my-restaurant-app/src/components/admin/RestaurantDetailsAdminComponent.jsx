@@ -71,12 +71,12 @@ export default function RestaurantDetailsAdminComponent() {
         let idToUse = null;
         
         if (paramRestaurantId) {
-          found = data.find(r => r[0] === paramRestaurantId);
+          found = data.find(r => r.restaurant_id === paramRestaurantId);
           idToUse = paramRestaurantId;
         } else if (data.length > 0) {
           // If no param provided, use first restaurant
           found = data[0];
-          idToUse = data[0][0];
+          idToUse = data[0].restaurant_id;
         }
         
         if (!found || !idToUse) {
@@ -87,6 +87,9 @@ export default function RestaurantDetailsAdminComponent() {
         
         setRestaurant(found);
         setResolvedRestaurantId(idToUse);
+        
+        console.log('Restaurant found:', found);
+        console.log('Using restaurant ID:', idToUse);
         
         // Fetch all data in parallel
         const [itemsRes, deliveryRes, templatesRes] = await Promise.all([
@@ -155,7 +158,7 @@ export default function RestaurantDetailsAdminComponent() {
     let method = modalMode === "add" ? "POST" : "PUT";
     if (modalMode === "add") {
       formData.append("data", JSON.stringify({
-        restaurant_id: restaurant[0],
+        restaurant_id: restaurant.restaurant_id,
         name: itemForm.name,
         description: itemForm.description,
         price: parseFloat(itemForm.price),
@@ -307,7 +310,7 @@ export default function RestaurantDetailsAdminComponent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurant_id: restaurant[0],
+          restaurant_id: restaurant.restaurant_id,
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
@@ -325,7 +328,7 @@ export default function RestaurantDetailsAdminComponent() {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurant_id: restaurant[0],
+          restaurant_id: restaurant.restaurant_id,
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
@@ -598,8 +601,8 @@ export default function RestaurantDetailsAdminComponent() {
       {/* Restaurant Details */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle className="text-xl font-bold">{restaurant[1]}</CardTitle>
-          <CardDescription>{restaurant[2]}</CardDescription>
+          <CardTitle className="text-xl font-bold">{restaurant.name}</CardTitle>
+          <CardDescription>{restaurant.address}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
