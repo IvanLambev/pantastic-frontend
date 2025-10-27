@@ -356,17 +356,24 @@ export default function RestaurantDetailsAdminComponent() {
 
   const handleEditItem = (item) => {
     setModalMode("edit");
-    // Parse template IDs from item[1] (template_ids field)
+    // Handle both new object format and old array format
     let addonTemplates = [];
-    if (item[1] && Array.isArray(item[1])) {
+    if (item.addon_template_ids && Array.isArray(item.addon_template_ids)) {
+      addonTemplates = item.addon_template_ids;
+    } else if (item[1] && Array.isArray(item[1])) {
       addonTemplates = item[1];
     }
+    
+    // Set selected templates for editing
+    setSelectedAddonTemplates(item.addon_template_ids || []);
+    setSelectedRemovableTemplates(item.removable_template_ids || []);
+    
     setItemForm({
-      id: item[0],
-      name: item[6],
-      description: item[4],
-      image: item[5],
-      price: item[7],
+      id: item.item_id || item[0],
+      name: item.name || item[6],
+      description: item.description || item[4],
+      image: item.image_url || item[5],
+      price: item.price || item[7],
       addon_templates: addonTemplates
     });
     setShowItemModal(true);
@@ -458,12 +465,13 @@ export default function RestaurantDetailsAdminComponent() {
   const confirmDeleteItem = async () => {
     if (!deletingItem) return;
     try {
+      const itemId = deletingItem.item_id || deletingItem[0];
       await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ item_id: deletingItem[0] }),
+        body: JSON.stringify({ item_id: itemId }),
       });
-      setMenuItems(menuItems.filter(i => i[0] !== deletingItem[0]));
+      setMenuItems(menuItems.filter(i => (i.item_id || i[0]) !== itemId));
       setDeletingItem(null);
     } catch (error) {
       alert("Failed to delete item");
@@ -695,11 +703,30 @@ export default function RestaurantDetailsAdminComponent() {
 
   // Get applied template names for an item
   const getAppliedTemplateNames = (item) => {
-    const templateIds = item[1]; // template_ids field (index 1)
-    if (!templateIds || !Array.isArray(templateIds)) return [];
+    let templateIds = [];
+    
+    // Handle new object format
+    if (item.addon_template_ids && Array.isArray(item.addon_template_ids)) {
+      templateIds = [...templateIds, ...item.addon_template_ids];
+    }
+    if (item.removable_template_ids && Array.isArray(item.removable_template_ids)) {
+      templateIds = [...templateIds, ...item.removable_template_ids];
+    }
+    
+    // Handle old array format (fallback)
+    if (templateIds.length === 0 && item[1] && Array.isArray(item[1])) {
+      templateIds = item[1];
+    }
+    
+    if (!templateIds || templateIds.length === 0) return [];
     
     return templateIds.map(id => {
-      const template = availableTemplates.find(t => t.template_id === id);
+      // Check both addon and removable templates
+      const addonTemplate = availableAddonTemplates.find(t => t.template_id === id);
+      const removableTemplate = availableRemovableTemplates.find(t => t.template_id === id);
+      const fallbackTemplate = availableTemplates && availableTemplates.find(t => t.template_id === id);
+      
+      const template = addonTemplate || removableTemplate || fallbackTemplate;
       return template ? template.name : `Template ${id.split('-')[0]}`;
     });
   };
@@ -716,7 +743,7 @@ export default function RestaurantDetailsAdminComponent() {
     <div className="container mx-auto px-4 py-4 md:py-8">
       {/* Add/Edit Item Dialog */}
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-        <DialogContent className="max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</DialogTitle>
             <DialogDescription>
@@ -726,7 +753,7 @@ export default function RestaurantDetailsAdminComponent() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleItemFormSubmit}>
-            <div className="grid gap-6">
+            <div className="grid gap-4">
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Основна информация</h3>
@@ -781,10 +808,12 @@ export default function RestaurantDetailsAdminComponent() {
                 </div>
               </div>
 
-              {/* Addon Templates Section */}
+              {/* Template Selection Section */}
               {modalMode === "add" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Шаблони за добавки</h3>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* Addon Templates */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Шаблони за добавки</h3>
                   <div className="space-y-2">
                     <Label>Изберете шаблони за добавки</Label>
                     <div className="flex gap-2">
@@ -945,12 +974,10 @@ export default function RestaurantDetailsAdminComponent() {
                     )}
                   </div>
                 </div>
-              )}
 
-              {/* Removable Templates Section */}
-              {modalMode === "add" && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Шаблони за премахвания</h3>
+                  {/* Removable Templates */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Шаблони за премахвания</h3>
                   <div className="space-y-2">
                     <Label>Изберете шаблони за премахвания</Label>
                     <div className="flex gap-2">
@@ -1100,6 +1127,7 @@ export default function RestaurantDetailsAdminComponent() {
                     )}
                   </div>
                 </div>
+                </div>
               )}
             </div>
             <DialogFooter className="mt-6">
@@ -1179,13 +1207,13 @@ export default function RestaurantDetailsAdminComponent() {
           {/* Mobile Card Layout (hidden on md and up) */}
           <div className="md:hidden space-y-4">
             {menuItems.map((item) => (
-              <Card key={item[0]} className="p-4">
+              <Card key={item.item_id || item[0]} className="p-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{item[6]}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{item[4]}</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-2">${item[7]}</p>
+                      <h3 className="font-medium text-gray-900">{item.name || item[6]}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{item.description || item[4]}</p>
+                      <p className="text-lg font-semibold text-gray-900 mt-2">${item.price || item[7]}</p>
                     </div>
                   </div>
                   
@@ -1193,15 +1221,16 @@ export default function RestaurantDetailsAdminComponent() {
                   <div>
                     <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Templates</label>
                     <div className="mt-2">
-                      {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
+                      {((item.addon_template_ids && item.addon_template_ids.length > 0) || (item.removable_template_ids && item.removable_template_ids.length > 0) || (item[1] && Array.isArray(item[1]) && item[1].length > 0)) ? (
                         <div className="flex flex-wrap gap-1">
                           {getAppliedTemplateNames(item).map((templateName, idx) => {
-                            const templateId = item[1][idx];
+                            const templateIds = item.addon_template_ids || item.removable_template_ids || item[1] || [];
+                            const templateId = templateIds[idx];
                             return (
                               <Badge key={templateId} variant="outline" className="text-xs">
                                 {templateName}
                                 <button 
-                                  onClick={() => removeTemplateFromItem(item[0], templateId)}
+                                  onClick={() => removeTemplateFromItem(item.item_id || item[0], templateId)}
                                   className="ml-1 text-red-500 hover:text-red-700"
                                   title="Remove template"
                                 >
@@ -1282,27 +1311,28 @@ export default function RestaurantDetailsAdminComponent() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {menuItems.map((item) => (
-                  <tr key={item[0]}>
+                  <tr key={item.item_id || item[0]}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item[6]}</div>
+                      <div className="text-sm font-medium text-gray-900">{item.name || item[6]}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 max-w-xs truncate">{item[4]}</div>
+                      <div className="text-sm text-gray-500 max-w-xs truncate">{item.description || item[4]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">${item[7]}</div>
+                      <div className="text-sm text-gray-900">${item.price || item[7]}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">
-                        {item[1] && Array.isArray(item[1]) && item[1].length > 0 ? (
+                        {((item.addon_template_ids && item.addon_template_ids.length > 0) || (item.removable_template_ids && item.removable_template_ids.length > 0) || (item[1] && Array.isArray(item[1]) && item[1].length > 0)) ? (
                           <div className="flex flex-wrap gap-1">
                             {getAppliedTemplateNames(item).map((templateName, idx) => {
-                              const templateId = item[1][idx];
+                              const templateIds = item.addon_template_ids || item.removable_template_ids || item[1] || [];
+                              const templateId = templateIds[idx];
                               return (
                                 <Badge key={templateId} variant="outline" className="text-xs">
                                   {templateName}
                                   <button 
-                                    onClick={() => removeTemplateFromItem(item[0], templateId)}
+                                    onClick={() => removeTemplateFromItem(item.item_id || item[0], templateId)}
                                     className="ml-1 text-red-500 hover:text-red-700"
                                     title="Remove template"
                                   >
