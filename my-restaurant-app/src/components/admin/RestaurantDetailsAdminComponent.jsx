@@ -70,20 +70,32 @@ export default function RestaurantDetailsAdminComponent() {
         let found = null;
         let idToUse = null;
         
+        console.log('🏪 RestaurantDetailsAdmin (TS): Looking for restaurantId:', paramRestaurantId);
+        console.log('🏪 RestaurantDetailsAdmin (TS): All restaurants:', data);
+        console.log('🏪 RestaurantDetailsAdmin (TS): Data length:', data.length);
+        
         if (paramRestaurantId) {
+          console.log('🏪 RestaurantDetailsAdmin (TS): Using param restaurant ID');
           found = data.find(r => r.restaurant_id === paramRestaurantId);
           idToUse = paramRestaurantId;
         } else if (data.length > 0) {
+          console.log('🏪 RestaurantDetailsAdmin (TS): First restaurant structure:', data[0]);
           // If no param provided, use first restaurant
           found = data[0];
           idToUse = data[0].restaurant_id;
+          console.log('🏪 RestaurantDetailsAdmin (TS): Using first restaurant:', found);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant ID will be:', idToUse);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant name will be:', found.name);
         }
         
         if (!found || !idToUse) {
+          console.log('🏪 RestaurantDetailsAdmin (TS): No restaurant found or no ID');
           setError("Restaurant not found");
           setLoading(false);
           return;
         }
+        
+        console.log('🏪 RestaurantDetailsAdmin (TS): Fetching items for restaurant:', idToUse);
         
         setRestaurant(found);
         setResolvedRestaurantId(idToUse);

@@ -98,16 +98,16 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
 
   // Fetch templates
   const fetchTemplates = async () => {
-    if (!restaurant || !restaurant[0]) {
+    if (!restaurant || !restaurant.restaurant_id) {
       console.log('No restaurant available for fetching templates');
       return;
     }
     
     try {
-      console.log('🔄 Fetching templates for restaurant:', restaurant[0]);
+      console.log('🔄 Fetching templates for restaurant:', restaurant.restaurant_id);
       const [addonRes, removablesRes] = await Promise.all([
-        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant[0]}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant[0]}`)
+        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant.restaurant_id}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant.restaurant_id}`)
       ]);
       
       if (addonRes.ok) {
@@ -142,19 +142,19 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         // If no restaurantId provided, use the first restaurant
         let found;
         if (restaurantId) {
-          found = data.find((r: any) => r[0] === restaurantId);
+          found = data.find((r: any) => r.restaurant_id === restaurantId);
           console.log('🏪 RestaurantDetailsAdmin (TS): Found specific restaurant:', found);
         } else if (data && data.length > 0) {
           found = data[0]; // Use first restaurant if no specific ID
           console.log('🏪 RestaurantDetailsAdmin (TS): Using first restaurant:', found);
-          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant ID will be:', found?.[0]);
-          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant name will be:', found?.[8]);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant ID will be:', found?.restaurant_id);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Restaurant name will be:', found?.name);
         }
         
         setRestaurant(found);
         if (found) {
-          console.log('🏪 RestaurantDetailsAdmin (TS): Fetching items for restaurant:', found[0]);
-          const itemsRes = await fetch(`${API_URL}/restaurant/${found[0]}/items`);
+          console.log('🏪 RestaurantDetailsAdmin (TS): Fetching items for restaurant:', found.restaurant_id);
+          const itemsRes = await fetch(`${API_URL}/restaurant/${found.restaurant_id}/items`);
           setMenuItems(await itemsRes.json());
           await fetchDeliveryPeople();
           await fetchTemplates(); // Fetch templates
@@ -195,7 +195,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const handleViewAddons = async (item: any) => {
     try {
       console.log('🧩 Fetching addons for item:', item[0]);
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${item[0]}/addons`);
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items/${item[0]}/addons`);
       const addons = await response.json();
       console.log('🧩 Item addons:', addons);
       setSelectedItemAddons(addons);
@@ -233,12 +233,12 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       }
 
       console.log('🔧 Applying addon template:', selectedTemplateId, 'to item:', selectedItem[0]);
-      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${selectedItem[0]}/apply-template/${selectedTemplateId}`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items/${selectedItem[0]}/apply-template/${selectedTemplateId}`, {
         method: "POST"
       });
       
       // Refresh menu items
-      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items`);
       setMenuItems(await itemsRes.json());
       toast.success('Addon template applied successfully!');
       setShowApplyTemplateDialog(false);
@@ -262,12 +262,12 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       }
 
       console.log('🗑️ Removing addon template:', selectedTemplateId, 'from item:', selectedItem[0]);
-      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items/${selectedItem[0]}/remove-template/${selectedTemplateId}`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items/${selectedItem[0]}/remove-template/${selectedTemplateId}`, {
         method: "DELETE"
       });
       
       // Refresh menu items
-      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items`);
       setMenuItems(await itemsRes.json());
       toast.success('Addon template removed successfully!');
       setShowRemoveTemplateDialog(false);
@@ -302,7 +302,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       });
       
       // Refresh menu items
-      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items`);
       setMenuItems(await itemsRes.json());
       toast.success('Removables added successfully!');
       setShowAddRemovablesDialog(false);
@@ -321,12 +321,12 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         return;
       }
 
-      if (!restaurant || !restaurant[0]) {
+      if (!restaurant || !restaurant.restaurant_id) {
         toast.error("No restaurant selected");
         return;
       }
 
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant[0]}`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${restaurant.restaurant_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAddonTemplate)
@@ -354,12 +354,12 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         return;
       }
 
-      if (!restaurant || !restaurant[0]) {
+      if (!restaurant || !restaurant.restaurant_id) {
         toast.error("No restaurant selected");
         return;
       }
 
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant[0]}`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${restaurant.restaurant_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newRemovablesTemplate)
@@ -443,7 +443,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       if (modalMode === "add") {
         // Create new item using the correct API structure
         const itemData = {
-          restaurant_id: restaurant[0],
+          restaurant_id: restaurant.restaurant_id,
           items: [{
             name: itemForm.name,
             description: itemForm.description,
@@ -484,7 +484,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       }
       
       // Refresh menu items
-      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items`);
       setMenuItems(await itemsRes.json());
       setShowItemModal(false);
       toast.success(modalMode === "add" ? "Item created successfully!" : "Item updated successfully!");
@@ -505,7 +505,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       });
       
       // Refresh menu items
-      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant[0]}/items`);
+      const itemsRes = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurant.restaurant_id}/items`);
       setMenuItems(await itemsRes.json());
       setDeletingItem(null);
       toast.success("Item deleted successfully!");
@@ -596,7 +596,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurant_id: restaurant[0],
+          restaurant_id: restaurant.restaurant_id,
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
@@ -614,7 +614,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurant_id: restaurant[0],
+          restaurant_id: restaurant.restaurant_id,
           delivery_person_id: person.delivery_person_id || person[0],
         }),
       });
@@ -746,22 +746,22 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
           <CardContent>
             <div className="grid gap-4">
               <div>
-                <h3 className="text-lg font-semibold">{restaurant[8]}</h3>
-                <p className="text-sm text-muted-foreground">ID: {restaurant[0]}</p>
+                <h3 className="text-lg font-semibold">{restaurant.name}</h3>
+                <p className="text-sm text-muted-foreground">ID: {restaurant.restaurant_id}</p>
               </div>
               <div>
-                <p><strong>Address:</strong> {restaurant[1]}</p>
-                <p><strong>City:</strong> {restaurant[3]}</p>
-                <p><strong>Coordinates:</strong> {restaurant[6]}, {restaurant[7]}</p>
+                <p><strong>Address:</strong> {restaurant.address}</p>
+                <p><strong>City:</strong> {restaurant.city}</p>
+                <p><strong>Coordinates:</strong> {restaurant.latitude}, {restaurant.longitude}</p>
               </div>
               <div>
-                <p><strong>Glovo Address Book ID:</strong> {restaurant[2]}</p>
+                <p><strong>Glovo Address Book ID:</strong> {restaurant.glovo_address_book_id || 'N/A'}</p>
               </div>
-              {restaurant[9] && (
+              {restaurant.opening_hours && (
                 <div>
                   <p><strong>Opening Hours:</strong></p>
                   <ul className="list-disc list-inside text-sm">
-                    {Object.entries(restaurant[9]).map(([day, hours]) => (
+                    {Object.entries(restaurant.opening_hours).map(([day, hours]) => (
                       <li key={day}>{day}: {hours as string}</li>
                     ))}
                   </ul>
