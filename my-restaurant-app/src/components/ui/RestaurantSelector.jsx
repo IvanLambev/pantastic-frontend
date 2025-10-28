@@ -26,6 +26,8 @@ function GoogleMapsAutocomplete({ onLocationSelect }) {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
+    language: "bg", // Force Bulgarian language
+    region: "BG", // Prefer Bulgarian results
   });
 
   if (!isLoaded) return <div className="p-4 text-center">{t('common.loading')}</div>;
@@ -142,15 +144,15 @@ function GoogleMap_Component({ onLocationSelect }) {
           setInputValue={setInputValue}
         />
         {/* Pick Address Button with fade animation */}
-        <div className={`absolute right-2 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
+        <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
           showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
         }`}>
           <Button
             onClick={handlePickAddress}
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm font-medium shadow-lg whitespace-nowrap"
+            size="default"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-base font-medium shadow-lg whitespace-nowrap"
           >
-            {t('common.select')}
+            {t('common.select') || 'Избери'}
           </Button>
         </div>
       </div>
@@ -159,11 +161,11 @@ function GoogleMap_Component({ onLocationSelect }) {
         <GoogleMap
           zoom={12}
           center={selected || center}
-          mapContainerClassName="w-full h-96 touch-pan-y"
+          mapContainerClassName="w-full h-[500px] touch-pan-y"
           onClick={handleMapClick}
           options={{
-            gestureHandling: 'cooperative',
-            scrollwheel: false,
+            gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
+            scrollwheel: true, // Allow scrolling when Ctrl is held
             disableDefaultUI: true,
             zoomControl: true,
             mapTypeControl: false,
@@ -172,22 +174,29 @@ function GoogleMap_Component({ onLocationSelect }) {
             rotateControl: false,
             fullscreenControl: false,
             keyboardShortcuts: false,
+            language: "bg", // Bulgarian language for map labels
+            region: "BG", // Bulgarian region preference
             restriction: {
               latLngBounds: {
-                north: 90,
-                south: -90,
-                west: -180,
-                east: 180,
+                north: 44.5, // Northern Bulgaria border
+                south: 41.2, // Southern Bulgaria border  
+                west: 22.3, // Western Bulgaria border
+                east: 28.6, // Eastern Bulgaria border
               },
-              strictBounds: false,
+              strictBounds: false, // Allow some flexibility
             }
           }}
         >
           {selected && <GoogleMarker position={selected} />}
         </GoogleMap>
-        {/* Mobile scroll hint */}
-        <div className="absolute top-2 left-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md md:hidden pointer-events-none">
-          {t('restaurantSelector.mapHint') || 'Use two fingers to move the map'}
+        {/* Map usage hint */}
+        <div className="absolute top-2 left-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md pointer-events-none">
+          <div className="md:hidden">
+            {t('restaurantSelector.mapHint') || 'Използвайте два пръста за да местите картата'}
+          </div>
+          <div className="hidden md:block">
+            Задръжте Ctrl + скролване за увеличаване
+          </div>
         </div>
       </div>
     </div>
@@ -202,7 +211,11 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
     suggestions: { status, data },
     clearSuggestions,
   } = usePlacesAutocomplete({
-    defaultValue: ""
+    defaultValue: "",
+    requestOptions: {
+      componentRestrictions: { country: "bg" }, // Restrict to Bulgaria
+      language: "bg", // Request results in Bulgarian
+    },
   });
 
   // Sync internal value with external inputValue state
@@ -270,21 +283,31 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
         value={value}
         onChange={handleInputChange}
         disabled={!ready}
-        className="w-full p-3 border border-gray-300 rounded-lg 
+        className="w-full p-4 text-lg border border-gray-300 rounded-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
-                   focus:border-transparent"
-        placeholder={t('restaurantSelector.searchAddress')}
+                   focus:border-transparent bg-white shadow-sm"
+        placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
       />
-      <ComboboxPopover className="absolute z-50 w-full bg-white 
-                                   border border-gray-300 rounded-lg shadow-lg mt-1">
-        <ComboboxList className="max-h-60 overflow-auto">
+      <ComboboxPopover 
+        className="absolute z-50 w-full bg-white 
+                   border border-gray-300 rounded-lg shadow-lg mt-2"
+        portal={false}
+      >
+        <ComboboxList 
+          className="max-h-64 overflow-auto"
+          style={{
+            maxHeight: "200px",
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+          }}
+        >
           {status === "OK" &&
             data.map(({ place_id, description }) => (
               <ComboboxOption 
                 key={place_id} 
                 value={description}
-                className="p-3 cursor-pointer hover:bg-gray-100 
-                           border-b border-gray-100 last:border-b-0"
+                className="p-4 text-base cursor-pointer hover:bg-gray-100 
+                           border-b border-gray-100 last:border-b-0 transition-colors"
               />
             ))}
         </ComboboxList>
@@ -439,7 +462,7 @@ export default function RestaurantSelector({
           restaurant: closest,
           distance: minDist,
           isOpen: true,
-          message: `The closest working restaurant "${closest.name}" is ${minDist.toFixed(1)} km away from your location. Due to the distance, delivery fees may be higher than usual. Do you want to proceed with this restaurant?`
+          message: `Най-близкият работещ ресторант "${closest.name}" е на ${minDist.toFixed(1)} км от вашето местоположение. Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?`
         };
       }
       
@@ -645,11 +668,11 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] max-w-[1000px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
-            <DialogTitle className="text-xl sm:text-2xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
+            <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 sm:gap-6 py-4 sm:py-6">
+          <div className="grid gap-6 sm:gap-8 py-6 sm:py-8">
             <Card 
               className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-gray-300"
               onClick={() => handleDeliveryMethodSelect('pickup')}
@@ -689,17 +712,17 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-lg sm:text-2xl font-bold">
+        <DialogContent className="w-[95vw] max-w-[1200px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="text-xl sm:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 px-6 pb-6">
+          <div className="space-y-8 px-8 pb-8">
             {/* Google Maps Container - Always Visible */}
-            <div className="space-y-4 w-full overflow-hidden">
-              <p className="text-sm text-gray-600 text-center">
-                {t('restaurantSelector.searchAddress')}
+            <div className="space-y-6 w-full overflow-hidden">
+              <p className="text-base text-gray-600 text-center font-medium">
+                {t('restaurantSelector.searchAddress') || 'Търсете адрес или кликнете на картата'}
               </p>
               <div className="w-full overflow-hidden">
                 <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
@@ -712,10 +735,10 @@ export default function RestaurantSelector({
               variant="secondary" 
               onClick={handleDeviceLocation} 
               disabled={addressLoading}
-              className="w-full py-3 text-lg flex items-center justify-center gap-2"
+              className="w-full py-4 text-xl flex items-center justify-center gap-3 font-medium shadow-sm"
             >
-              <Navigation className="h-4 w-4" />
-              {t('restaurantSelector.useCurrentLocation')}
+              <Navigation className="h-5 w-5" />
+              {t('restaurantSelector.useCurrentLocation') || 'Използвай текущата ми локация'}
             </Button>
 
             {/* Error Message */}
@@ -725,16 +748,18 @@ export default function RestaurantSelector({
                   showDistanceWarning ? 'text-orange-700 bg-orange-50 border border-orange-200' : 'text-red-500 bg-red-50'
                 }`}>
                   {showDistanceWarning && pendingRestaurantSelection ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="font-semibold text-lg text-orange-800">
-                        {t('restaurantSelector.distanceWarning')}
+                        Предупреждение за разстояние
                       </div>
-                      <p className="text-sm">
-                        {t('restaurantSelector.distanceMessage', { distance: pendingDistance?.toFixed(1) })}
-                      </p>
-                      <p className="text-sm">
-                        {t('restaurantSelector.distanceQuestion')}
-                      </p>
+                      <div className="text-sm text-orange-700">
+                        <p className="mb-2">
+                          Най-близкият работещ ресторант <span className="font-semibold">"{pendingRestaurantSelection.name}"</span> е на <span className="font-semibold">{pendingDistance?.toFixed(1)} км</span> от вашето местоположение.
+                        </p>
+                        <p>
+                          Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     <p>{addressError}</p>
@@ -749,14 +774,14 @@ export default function RestaurantSelector({
                       onClick={handleCancelDistantRestaurant}
                       className="flex-1 sm:flex-none"
                     >
-                      {t('restaurantSelector.tryDifferent')}
+                      {t('restaurantSelector.tryDifferent') || 'Опитай друго място'}
                     </Button>
                     <Button 
                       variant="default"
                       onClick={handleConfirmDistantRestaurant}
                       className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700"
                     >
-                      {t('restaurantSelector.yesSelect')}
+                      {t('restaurantSelector.yesSelect') || 'Да, избери този ресторант'}
                     </Button>
                   </div>
                 )}
@@ -798,16 +823,16 @@ export default function RestaurantSelector({
 
             {/* Manual Restaurant Selection */}
             {deliveryMethod === 'pickup' && (
-              <div className="border-t pt-6">
-                <p className="text-center text-gray-600 mb-4">{t('restaurantSelector.or')}</p>
+              <div className="border-t pt-8">
+                <p className="text-center text-gray-600 mb-6 text-lg">{t('restaurantSelector.or') || 'или'}</p>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={handleManualRestaurantSelect}
-                  className="w-full py-3 text-lg flex items-center justify-center gap-2"
+                  className="w-full py-4 text-xl flex items-center justify-center gap-3 font-medium shadow-sm"
                 >
-                  <Store className="h-4 w-4" />
-                  {t('restaurantSelector.manuallySelect')}
+                  <Store className="h-5 w-5" />
+                  {t('restaurantSelector.manuallySelect') || 'Избери ресторант ръчно'}
                 </Button>
               </div>
             )}
@@ -817,9 +842,9 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] max-w-[1000px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <DialogTitle className="text-lg sm:text-2xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
+            <DialogTitle className="text-xl sm:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
               variant="outline" 
               size="sm"
@@ -854,9 +879,9 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[900px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] max-w-[1200px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <DialogTitle className="text-lg sm:text-2xl font-bold">
+            <DialogTitle className="text-xl sm:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
             <Button 

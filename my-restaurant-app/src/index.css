@@ -145,3 +145,10 @@
   margin: 0;
   width: 100%;
 }
+
+/* Prevent scroll bleed inside popovers/dialogs */
+[data-reach-combobox-popover] {
+  max-height: 80vh;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
