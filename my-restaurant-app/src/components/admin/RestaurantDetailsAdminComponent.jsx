@@ -57,6 +57,7 @@ import { t } from "@/utils/translations";
 export default function RestaurantDetailsAdminComponent() {
   const { restaurantId: paramRestaurantId } = useParams();
   const [restaurant, setRestaurant] = useState(null);
+  const [restaurants, setRestaurants] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [deliveryPeople, setDeliveryPeople] = useState([]);
   const [addonTemplates, setAddonTemplates] = useState([]);
@@ -174,6 +175,7 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('Addon Templates:', addonTemplates);
         console.log('Removable Templates:', removableTemplates);
         
+        setRestaurants(data); // Store all restaurants for selection
         setMenuItems(items);
         setDeliveryPeople(delivery);
         setAddonTemplates(addonTemplates || []);
@@ -731,6 +733,48 @@ export default function RestaurantDetailsAdminComponent() {
     });
   };
 
+  // Handle restaurant selection change
+  const handleRestaurantChange = async (selectedRestaurantId) => {
+    setLoading(true);
+    try {
+      const selectedRestaurant = restaurants.find(r => r.restaurant_id === selectedRestaurantId);
+      if (!selectedRestaurant) {
+        setError("Selected restaurant not found");
+        setLoading(false);
+        return;
+      }
+      
+      setRestaurant(selectedRestaurant);
+      setResolvedRestaurantId(selectedRestaurantId);
+      
+      // Fetch data for the selected restaurant
+      const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes] = await Promise.all([
+        fetchWithAdminAuth(`${API_URL}/restaurant/${selectedRestaurantId}/items`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${selectedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${selectedRestaurantId}`)
+      ]);
+      
+      const items = await itemsRes.json();
+      const delivery = await deliveryRes.json();
+      const addonTemplates = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
+      const removableTemplates = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+      
+      setMenuItems(items);
+      setDeliveryPeople(delivery);
+      setAddonTemplates(addonTemplates || []);
+      setAvailableTemplates(addonTemplates || []);
+      setAvailableAddonTemplates(addonTemplates || []);
+      setAvailableRemovableTemplates(removableTemplates || []);
+      
+    } catch (error) {
+      setError("Failed to load restaurant data");
+      console.error('Error loading restaurant data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Remove the extra useEffect that was causing duplicate API calls
   // All data is now fetched in the main useEffect above
 
@@ -770,7 +814,7 @@ export default function RestaurantDetailsAdminComponent() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="price">Цена (лв.)</Label>
+                    <Label htmlFor="price">Цена (лв./€)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -1178,11 +1222,38 @@ export default function RestaurantDetailsAdminComponent() {
         </DialogContent>
       </Dialog>
 
+      {/* Restaurant Selector */}
+      {restaurants.length > 1 && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Избери ресторант</CardTitle>
+            <CardDescription>Изберете ресторант за управление</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={resolvedRestaurantId || ""} onValueChange={handleRestaurantChange}>
+              <SelectTrigger className="w-full md:w-[400px]">
+                <SelectValue placeholder="Изберете ресторант..." />
+              </SelectTrigger>
+              <SelectContent>
+                {restaurants.map((rest) => (
+                  <SelectItem key={rest.restaurant_id} value={rest.restaurant_id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{rest.name}</span>
+                      <span className="text-sm text-gray-500">{rest.address}, {rest.city}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Restaurant Details */}
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="text-xl font-bold">{restaurant.name}</CardTitle>
-          <CardDescription>{restaurant.address}</CardDescription>
+          <CardDescription>{restaurant.address}, {restaurant.city}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -1215,7 +1286,7 @@ export default function RestaurantDetailsAdminComponent() {
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{item.name || item[6]}</h3>
                       <p className="text-sm text-gray-500 mt-1">{item.description || item[4]}</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-2">${item.price || item[7]}</p>
+                      <p className="text-lg font-semibold text-gray-900 mt-2">{item.price || item[7]} лв./€</p>
                     </div>
                   </div>
                   
@@ -1321,7 +1392,7 @@ export default function RestaurantDetailsAdminComponent() {
                       <div className="text-sm text-gray-500 max-w-xs truncate">{item.description || item[4]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">${item.price || item[7]}</div>
+                      <div className="text-sm text-gray-900">{item.price || item[7]} лв./€</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">
