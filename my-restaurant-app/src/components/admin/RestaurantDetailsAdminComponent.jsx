@@ -72,6 +72,7 @@ export default function RestaurantDetailsAdminComponent() {
     description: "",
     image: "",
     price: "",
+    item_type: "",
     addon_templates: []
   });
   const [deletingItem, setDeletingItem] = useState(null);
@@ -376,6 +377,7 @@ export default function RestaurantDetailsAdminComponent() {
       description: item.description || item[4],
       image: item.image_url || item[5],
       price: item.price || item[7],
+      item_type: item.item_type || "sweet_pancake",
       addon_templates: addonTemplates
     });
     setShowItemModal(true);
@@ -385,7 +387,7 @@ export default function RestaurantDetailsAdminComponent() {
   };
   const handleAddItem = () => {
     setModalMode("add");
-    setItemForm({ id: "", name: "", description: "", image: "", price: "", addon_templates: [] });
+    setItemForm({ id: "", name: "", description: "", image: "", price: "", item_type: "sweet_pancake", addon_templates: [] });
     setSelectedAddonTemplates([]);
     setSelectedRemovableTemplates([]);
     setShowItemModal(true);
@@ -403,7 +405,7 @@ export default function RestaurantDetailsAdminComponent() {
         item: {
           name: itemForm.name,
           description: itemForm.description,
-          item_type: "pancake", // Default type
+          item_type: itemForm.item_type,
           price: parseFloat(itemForm.price),
           addons: {}, // Custom addons can be added here if needed
           addon_template_ids: selectedAddonTemplates,
@@ -801,7 +803,7 @@ export default function RestaurantDetailsAdminComponent() {
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Основна информация</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="name">Име на продукта</Label>
                     <Input
@@ -812,6 +814,27 @@ export default function RestaurantDetailsAdminComponent() {
                       required
                       placeholder="Напр. Класическа палачинка"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="item_type">Тип продукт</Label>
+                    <Select
+                      value={itemForm.item_type}
+                      onValueChange={(value) => setItemForm({ ...itemForm, item_type: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Изберете тип..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sweet_pancake">Sweet Pancake</SelectItem>
+                        <SelectItem value="savory_pancake">Savory Pancake</SelectItem>
+                        <SelectItem value="drink">Drink</SelectItem>
+                        <SelectItem value="deluxe_box">Deluxe Box</SelectItem>
+                        <SelectItem value="dessert">Dessert</SelectItem>
+                        <SelectItem value="appetizer">Appetizer</SelectItem>
+                        <SelectItem value="side_dish">Side Dish</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="price">Цена (лв./€)</Label>
