@@ -161,7 +161,7 @@ function GoogleMap_Component({ onLocationSelect }) {
         <GoogleMap
           zoom={12}
           center={selected || center}
-          mapContainerClassName="w-full h-[350px] sm:h-[450px] md:h-[500px] lg:h-[550px] touch-pan-y"
+          mapContainerClassName="w-full h-[300px] touch-pan-y"
           onClick={handleMapClick}
           options={{
             gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
@@ -674,7 +674,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1400px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
@@ -718,7 +718,7 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1600px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
+        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain p-0">
           <DialogHeader className="p-6 sm:p-8 pb-4">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
@@ -848,7 +848,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1400px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
@@ -885,7 +885,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1600px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
