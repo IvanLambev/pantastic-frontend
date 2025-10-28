@@ -144,13 +144,13 @@ function GoogleMap_Component({ onLocationSelect }) {
           setInputValue={setInputValue}
         />
         {/* Pick Address Button with fade animation */}
-        <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
+        <div className={`absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
           showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
         }`}>
           <Button
             onClick={handlePickAddress}
             size="default"
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-base font-medium shadow-lg whitespace-nowrap"
+            className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 text-sm sm:text-base font-medium shadow-lg whitespace-nowrap"
           >
             {t('common.select') || 'Избери'}
           </Button>
@@ -161,7 +161,7 @@ function GoogleMap_Component({ onLocationSelect }) {
         <GoogleMap
           zoom={12}
           center={selected || center}
-          mapContainerClassName="w-full h-[500px] touch-pan-y"
+          mapContainerClassName="w-full h-[350px] sm:h-[450px] md:h-[500px] lg:h-[550px] touch-pan-y"
           onClick={handleMapClick}
           options={{
             gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
@@ -283,7 +283,7 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
         value={value}
         onChange={handleInputChange}
         disabled={!ready}
-        className="w-full p-4 text-lg border border-gray-300 rounded-lg 
+        className="w-full p-3 sm:p-4 text-base sm:text-lg border border-gray-300 rounded-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
                    focus:border-transparent bg-white shadow-sm"
         placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
@@ -416,17 +416,23 @@ export default function RestaurantSelector({
     if (!todayHours) return false;
     
     try {
-      // Format: "09:00-18:00"
+      // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
       const [open, close] = todayHours.split("-");
       const [openH, openM] = open.split(":").map(Number);
       const [closeH, closeM] = close.split(":").map(Number);
       
-      const openDate = new Date(gmt3);
-      openDate.setHours(openH, openM, 0, 0);
-      const closeDate = new Date(gmt3);
-      closeDate.setHours(closeH, closeM, 0, 0);
+      const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
+      const openTime = openH * 60 + openM; // Opening time in minutes
+      const closeTime = closeH * 60 + closeM; // Closing time in minutes
       
-      return gmt3 >= openDate && gmt3 <= closeDate;
+      // Check if the restaurant closes the next day (e.g., 10:00-03:00)
+      if (closeTime < openTime) {
+        // Restaurant is open if current time is after opening OR before closing (next day)
+        return currentTime >= openTime || currentTime <= closeTime;
+      } else {
+        // Normal case: restaurant opens and closes on the same day
+        return currentTime >= openTime && currentTime <= closeTime;
+      }
     } catch (error) {
       console.error("Error parsing restaurant hours:", error);
       return false;
@@ -668,7 +674,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[1000px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1400px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
@@ -712,16 +718,16 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[1200px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
-          <DialogHeader className="p-8 pb-4">
-            <DialogTitle className="text-xl sm:text-3xl font-bold">
+        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1600px] max-h-[90vh] overflow-y-auto overscroll-contain p-0">
+          <DialogHeader className="p-6 sm:p-8 pb-4">
+            <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-8 px-8 pb-8">
+          <div className="space-y-6 sm:space-y-8 px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
             {/* Google Maps Container - Always Visible */}
-            <div className="space-y-6 w-full overflow-hidden">
-              <p className="text-base text-gray-600 text-center font-medium">
+            <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
+              <p className="text-sm sm:text-base text-gray-600 text-center font-medium">
                 {t('restaurantSelector.searchAddress') || 'Търсете адрес или кликнете на картата'}
               </p>
               <div className="w-full overflow-hidden">
@@ -735,9 +741,9 @@ export default function RestaurantSelector({
               variant="secondary" 
               onClick={handleDeviceLocation} 
               disabled={addressLoading}
-              className="w-full py-4 text-xl flex items-center justify-center gap-3 font-medium shadow-sm"
+              className="w-full py-3 sm:py-4 text-lg sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm"
             >
-              <Navigation className="h-5 w-5" />
+              <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
               {t('restaurantSelector.useCurrentLocation') || 'Използвай текущата ми локация'}
             </Button>
 
@@ -829,9 +835,9 @@ export default function RestaurantSelector({
                   type="button" 
                   variant="outline" 
                   onClick={handleManualRestaurantSelect}
-                  className="w-full py-4 text-xl flex items-center justify-center gap-3 font-medium shadow-sm"
+                  className="w-full py-3 sm:py-4 text-lg sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm"
                 >
-                  <Store className="h-5 w-5" />
+                  <Store className="h-4 w-4 sm:h-5 sm:w-5" />
                   {t('restaurantSelector.manuallySelect') || 'Избери ресторант ръчно'}
                 </Button>
               </div>
@@ -842,9 +848,9 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[1000px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1400px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <DialogTitle className="text-xl sm:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
+            <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
               variant="outline" 
               size="sm"
@@ -879,9 +885,9 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[95vw] max-w-[1200px] max-h-[90vh] overflow-y-auto overscroll-contain">
+        <DialogContent className="w-[95vw] sm:w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw] 2xl:w-[40vw] max-w-[1600px] max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <DialogTitle className="text-xl sm:text-3xl font-bold">
+            <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
             <Button 
@@ -911,21 +917,28 @@ export default function RestaurantSelector({
                 let timeText = "Closed";
                 let stateBg = "bg-red-100/60 text-red-700";
                 if (todayHours) {
-                  // Format: "09:00-18:00"
+                  // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
                   const [open, close] = todayHours.split("-");
                   const [openH, openM] = open.split(":").map(Number);
                   const [closeH, closeM] = close.split(":").map(Number);
-                  const openDate = new Date(gmt3);
-                  openDate.setHours(openH, openM, 0, 0);
-                  const closeDate = new Date(gmt3);
-                  closeDate.setHours(closeH, closeM, 0, 0);
-                  if (gmt3 >= openDate && gmt3 <= closeDate) {
-                    isOpen = true;
-                    stateBg = "bg-green-100/60 text-green-700";
-                    timeText = `${open}-${close}`;
+                  
+                  const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
+                  const openTime = openH * 60 + openM; // Opening time in minutes
+                  const closeTime = closeH * 60 + closeM; // Closing time in minutes
+                  
+                  // Check if the restaurant closes the next day (e.g., 10:00-03:00)
+                  if (closeTime < openTime) {
+                    // Restaurant is open if current time is after opening OR before closing (next day)
+                    isOpen = currentTime >= openTime || currentTime <= closeTime;
                   } else {
-                    timeText = `${open}-${close}`;
+                    // Normal case: restaurant opens and closes on the same day
+                    isOpen = currentTime >= openTime && currentTime <= closeTime;
                   }
+                  
+                  if (isOpen) {
+                    stateBg = "bg-green-100/60 text-green-700";
+                  }
+                  timeText = `${open}-${close}`;
                 }
                 return (
                   <Button
