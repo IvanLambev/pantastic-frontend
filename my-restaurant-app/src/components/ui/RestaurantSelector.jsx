@@ -743,7 +743,7 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto overflow-x-hidden sm:overflow-visible">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto sm:overflow-visible">
           <DialogHeader className="p-4 sm:p-8 pb-2 sm:pb-4">
             <DialogTitle className="text-lg sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
@@ -873,7 +873,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
@@ -910,7 +910,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
