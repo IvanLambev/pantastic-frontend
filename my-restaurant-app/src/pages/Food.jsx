@@ -361,7 +361,7 @@ const Food = () => {
                     </div>
                     
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
-                      <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2.5rem] sm:min-h-[2.8rem]">{itemName}</h3>
+                      <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight">{itemName}</h3>
                       <span className="font-bold text-sm sm:text-base text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                       
                       <div className="flex flex-col gap-1.5 sm:gap-2 w-full mt-auto">
@@ -390,7 +390,7 @@ const Food = () => {
         </div>
       ) : (
         <>
-          <div className="container mx-auto px-4 py-8 mt-16 pb-32">
+          <div className="container mx-auto px-4 py-8 pb-32">
             <div className="flex flex-col lg:flex-row gap-8">
               <div className="w-full lg:w-64 space-y-8">
                 {/* Filters Section */}
@@ -465,9 +465,9 @@ const Food = () => {
                 </div>
               </div>
 
-              {/* Menu Items Grid */}
+              {/* Menu Items Grid - Auto-responsive based on available space */}
               <div className="flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-6">
                   {filteredItems.map((item) => {
                     const itemId = getItemId(item);
                     const itemName = getItemName(item);
@@ -504,27 +504,27 @@ const Food = () => {
                           </button>
 
                         </div>
-                        <CardContent className="flex flex-col flex-grow p-3 md:p-4">
-                          <h3 className="font-semibold mb-2 text-base md:text-lg line-clamp-1">{itemName}</h3>
-                          <p className="text-xs md:text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
+                        <CardContent className="flex flex-col flex-grow p-4">
+                          <h3 className="font-semibold mb-2 text-lg line-clamp-1">{itemName}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
                           
-                          <div className="flex flex-col gap-2 md:gap-3 mt-auto">
+                          <div className="flex flex-col gap-3 mt-auto">
                             <div className="flex justify-between items-center">
-                              <span className="font-bold text-lg md:text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                              <span className="font-bold text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                             </div>
-                            <div className="flex flex-col lg:flex-row gap-2 w-full">
+                            <div className="flex gap-2 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleItemNavigation(item)}
-                                className="flex-1 text-xs md:text-sm h-9 md:h-10"
+                                className="flex-1"
                               >
                                 {t('menu.options')}
                               </Button>
                               <Button 
                                 size="sm" 
                                 onClick={() => handleAddToCart(item)}
-                                className="flex-1 text-xs md:text-sm h-9 md:h-10"
+                                className="flex-1"
                               >
                                 {t('menu.addToCart')}
                               </Button>
