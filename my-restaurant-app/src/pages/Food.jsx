@@ -324,7 +324,7 @@ const Food = () => {
             </div>
 
             {/* Mobile Menu Items Grid */}
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {filteredItems.map((item) => {
                 const itemId = getItemId(item);
                 const itemName = getItemName(item);
@@ -332,8 +332,8 @@ const Food = () => {
                 const itemImage = getItemImage(item);
                 
                 return (
-                  <Card key={itemId} className="flex flex-col sm:flex-row overflow-hidden p-0">
-                    <div className="w-full sm:w-32 h-48 sm:h-32 relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
+                  <Card key={itemId} className="flex flex-col overflow-hidden p-0">
+                    <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
                         alt={itemName}
@@ -341,7 +341,7 @@ const Food = () => {
                       />
                       {/* Hover overlay with expand icon */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <LuExpand className="h-8 w-8 text-white" />
+                        <LuExpand className="h-6 w-6 text-white" />
                       </div>
                       
                       <button
@@ -354,32 +354,29 @@ const Food = () => {
                         aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
-                          className={`h-4 w-4 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                          className={`h-3.5 w-3.5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                           fill={isItemFavorite(itemId) ? 'red' : 'none'}
                         />
                       </button>
-
                     </div>
-                    <CardContent className="flex flex-1 flex-col p-3 sm:p-4 gap-2 sm:gap-3">
-                      <div className="flex flex-col justify-center flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm sm:text-base mb-1 line-clamp-2">{itemName}</h3>
-                        <div className="flex items-center justify-between sm:justify-start sm:gap-3">
-                          <span className="font-bold text-base sm:text-lg text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2 w-full">
+                    
+                    <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
+                      <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2.5rem] sm:min-h-[2.8rem]">{itemName}</h3>
+                      <span className="font-bold text-sm sm:text-base text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                      
+                      <div className="flex flex-col gap-1.5 sm:gap-2 w-full mt-auto">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleItemNavigation(item)}
-                          className="w-full sm:flex-1 text-xs sm:text-sm h-8 sm:h-9"
+                          className="w-full text-xs py-2 h-9"
                         >
                           {t('menu.options')}
                         </Button>
                         <Button 
                           size="sm" 
                           onClick={() => handleAddToCart(item)}
-                          className="w-full sm:flex-1 text-xs sm:text-sm h-8 sm:h-9"
+                          className="w-full text-xs py-2 h-9"
                         >
                           {t('menu.add')}
                         </Button>
@@ -470,7 +467,7 @@ const Food = () => {
 
               {/* Menu Items Grid */}
               <div className="flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                   {filteredItems.map((item) => {
                     const itemId = getItemId(item);
                     const itemName = getItemName(item);
@@ -507,27 +504,27 @@ const Food = () => {
                           </button>
 
                         </div>
-                        <CardContent className="flex flex-col flex-grow p-3 sm:p-4">
-                          <h3 className="font-semibold mb-2 text-base sm:text-lg line-clamp-1">{itemName}</h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
+                        <CardContent className="flex flex-col flex-grow p-3 md:p-4">
+                          <h3 className="font-semibold mb-2 text-base md:text-lg line-clamp-1">{itemName}</h3>
+                          <p className="text-xs md:text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
                           
-                          <div className="flex flex-col gap-2 sm:gap-3 mt-auto">
+                          <div className="flex flex-col gap-2 md:gap-3 mt-auto">
                             <div className="flex justify-between items-center">
-                              <span className="font-bold text-lg sm:text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                              <span className="font-bold text-lg md:text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                            <div className="flex flex-col lg:flex-row gap-2 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleItemNavigation(item)}
-                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
+                                className="flex-1 text-xs md:text-sm h-9 md:h-10"
                               >
                                 {t('menu.options')}
                               </Button>
                               <Button 
                                 size="sm" 
                                 onClick={() => handleAddToCart(item)}
-                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
+                                className="flex-1 text-xs md:text-sm h-9 md:h-10"
                               >
                                 {t('menu.addToCart')}
                               </Button>
