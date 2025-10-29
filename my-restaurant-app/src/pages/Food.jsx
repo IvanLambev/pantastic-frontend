@@ -332,7 +332,7 @@ const Food = () => {
                 const itemImage = getItemImage(item);
                 
                 return (
-                  <Card key={itemId} className="flex flex-col sm:flex-row overflow-hidden">
+                  <Card key={itemId} className="flex flex-col sm:flex-row overflow-hidden p-0">
                     <div className="w-full sm:w-32 h-48 sm:h-32 relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
@@ -360,26 +360,26 @@ const Food = () => {
                       </button>
 
                     </div>
-                    <CardContent className="flex flex-1 flex-col sm:flex-row sm:justify-between sm:items-center p-4 gap-3">
+                    <CardContent className="flex flex-1 flex-col p-3 sm:p-4 gap-2 sm:gap-3">
                       <div className="flex flex-col justify-center flex-1 min-w-0">
-                        <h3 className="font-semibold text-base mb-1 truncate">{itemName}</h3>
+                        <h3 className="font-semibold text-sm sm:text-base mb-1 line-clamp-2">{itemName}</h3>
                         <div className="flex items-center justify-between sm:justify-start sm:gap-3">
-                          <span className="font-bold text-lg text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                          <span className="font-bold text-base sm:text-lg text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0 justify-end">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleItemNavigation(item)}
-                          className="whitespace-nowrap"
+                          className="w-full sm:flex-1 text-xs sm:text-sm h-8 sm:h-9"
                         >
                           {t('menu.options')}
                         </Button>
                         <Button 
                           size="sm" 
                           onClick={() => handleAddToCart(item)}
-                          className="whitespace-nowrap"
+                          className="w-full sm:flex-1 text-xs sm:text-sm h-8 sm:h-9"
                         >
                           {t('menu.add')}
                         </Button>
@@ -479,7 +479,7 @@ const Food = () => {
                     const itemDescription = getItemDescription(item);
                     
                     return (
-                      <Card key={itemId} className="flex flex-col h-full overflow-hidden">
+                      <Card key={itemId} className="flex flex-col h-full overflow-hidden p-0">
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                           <img
                             src={itemImage || '/elementor-placeholder-image.webp'}
@@ -507,27 +507,27 @@ const Food = () => {
                           </button>
 
                         </div>
-                        <CardContent className="flex flex-col flex-grow p-4">
-                          <h3 className="font-semibold mb-2 text-lg">{itemName}</h3>
-                          <p className="text-sm text-muted-foreground mb-3 flex-grow overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{itemDescription}</p>
+                        <CardContent className="flex flex-col flex-grow p-3 sm:p-4">
+                          <h3 className="font-semibold mb-2 text-base sm:text-lg line-clamp-1">{itemName}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
                           
-                          <div className="flex flex-col gap-3 mt-auto">
+                          <div className="flex flex-col gap-2 sm:gap-3 mt-auto">
                             <div className="flex justify-between items-center">
-                              <span className="font-bold text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
+                              <span className="font-bold text-lg sm:text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
                             </div>
-                            <div className="flex gap-2 w-full">
+                            <div className="flex flex-col sm:flex-row gap-2 w-full">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleItemNavigation(item)}
-                                className="flex-1"
+                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                               >
                                 {t('menu.options')}
                               </Button>
                               <Button 
                                 size="sm" 
                                 onClick={() => handleAddToCart(item)}
-                                className="flex-1"
+                                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                               >
                                 {t('menu.addToCart')}
                               </Button>
