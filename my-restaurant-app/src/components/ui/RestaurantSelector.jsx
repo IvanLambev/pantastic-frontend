@@ -40,6 +40,15 @@ function GoogleMap_Component({ onLocationSelect }) {
   const [pendingLocation, setPendingLocation] = useState(null);
   const [showPickButton, setShowPickButton] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect if device is desktop (has mouse/keyboard)
+  useEffect(() => {
+    const hasHover = window.matchMedia('(hover: hover)').matches;
+    const hasPointer = window.matchMedia('(pointer: fine)').matches;
+    setIsDesktop(hasHover && hasPointer);
+  }, []);
 
   // Function to normalize address by removing special characters except commas
   const normalizeAddress = (address) => {
@@ -132,8 +141,24 @@ function GoogleMap_Component({ onLocationSelect }) {
     });
   };
 
+  // Handle scroll on map to show hint
+  const handleMapScroll = (e) => {
+    if (!isDesktop) return;
+    
+    // Check if Ctrl key is pressed
+    if (e.ctrlKey || e.metaKey) {
+      // User is zooming correctly, hide hint
+      setShowScrollHint(false);
+    } else {
+      // User is scrolling without Ctrl, show hint
+      setShowScrollHint(true);
+      // Auto-hide after 2 seconds
+      setTimeout(() => setShowScrollHint(false), 2000);
+    }
+  };
+
   return (
-    <div className="w-full space-y-4 overflow-hidden">
+    <div className="w-full overflow-hidden">
       <div className="places-container relative">
         <PlacesAutocomplete 
           setSelected={setSelected} 
@@ -157,11 +182,14 @@ function GoogleMap_Component({ onLocationSelect }) {
         </div>
       </div>
       
-      <div className="w-full overflow-hidden rounded-lg border relative">
+      <div 
+        className="w-full overflow-hidden border border-t-0 relative"
+        onWheel={handleMapScroll}
+      >
         <GoogleMap
           zoom={12}
           center={selected || center}
-          mapContainerClassName="w-full h-[300px] touch-pan-y"
+          mapContainerClassName="w-full h-[400px] touch-pan-y"
           onClick={handleMapClick}
           options={{
             gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
@@ -189,15 +217,12 @@ function GoogleMap_Component({ onLocationSelect }) {
         >
           {selected && <GoogleMarker position={selected} />}
         </GoogleMap>
-        {/* Map usage hint */}
-        <div className="absolute top-2 left-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md pointer-events-none">
-          <div className="md:hidden">
-            {t('restaurantSelector.mapHint') || 'Използвайте два пръста за да местите картата'}
-          </div>
-          <div className="hidden md:block">
+        {/* Map scroll hint - only on desktop when scrolling without Ctrl */}
+        {isDesktop && showScrollHint && (
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-sm px-4 py-2 rounded-md pointer-events-none animate-in fade-in duration-200 z-10">
             Задръжте Ctrl + скролване за увеличаване
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -283,7 +308,7 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
         value={value}
         onChange={handleInputChange}
         disabled={!ready}
-        className="w-full p-3 sm:p-4 text-base sm:text-lg border border-gray-300 rounded-lg 
+        className="w-full p-3 sm:p-4 text-base sm:text-lg border border-gray-300 rounded-t-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
                    focus:border-transparent bg-white shadow-sm"
         placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
@@ -674,7 +699,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
+        <DialogContent className="w-auto max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
@@ -718,16 +743,16 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain p-0">
+        <DialogContent className="w-auto max-w-4xl p-0">
           <DialogHeader className="p-6 sm:p-8 pb-4">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 sm:space-y-8 px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
+          <div className="space-y-6 px-4 sm:px-6 md:px-8 pb-6 sm:pb-8">
             {/* Google Maps Container - Always Visible */}
-            <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
-              <p className="text-sm sm:text-base text-gray-600 text-center font-medium">
+            <div className="w-full overflow-hidden">
+              <p className="text-sm sm:text-base text-gray-600 text-center font-medium mb-4">
                 {t('restaurantSelector.searchAddress') || 'Търсете адрес или кликнете на картата'}
               </p>
               <div className="w-full overflow-hidden">
@@ -848,7 +873,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
+        <DialogContent className="w-auto max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
@@ -885,7 +910,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[70vw] h-[60vh] max-w-none overflow-y-auto overscroll-contain">
+        <DialogContent className="w-auto max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
