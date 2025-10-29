@@ -699,7 +699,7 @@ export default function RestaurantSelector({
     <>
       {/* Delivery Method Selection Modal */}
       <Dialog open={open && currentStep === 'delivery-method'} onOpenChange={handleClose}>
-        <DialogContent className="w-auto max-w-2xl">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
@@ -743,7 +743,7 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-auto max-w-4xl p-0">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto sm:overflow-visible">
           <DialogHeader className="p-6 sm:p-8 pb-4">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
@@ -873,7 +873,7 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-auto max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button 
@@ -910,7 +910,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-auto max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
