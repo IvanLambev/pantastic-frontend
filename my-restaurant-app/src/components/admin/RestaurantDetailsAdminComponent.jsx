@@ -1010,7 +1010,7 @@ export default function RestaurantDetailsAdminComponent() {
                             variant="outline"
                             role="combobox"
                             aria-expanded={addonTemplateOpen}
-                            className="w-full justify-between"
+                            className="flex-1 justify-between"
                           >
                             {selectedAddonTemplates.length > 0
                               ? `Избрани ${selectedAddonTemplates.length} шаблона`
@@ -1054,11 +1054,21 @@ export default function RestaurantDetailsAdminComponent() {
                       </Popover>
                       <Drawer>
                         <DrawerTrigger asChild>
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => {
+                              setNewAddonTemplate({
+                                name: itemForm.name ? `${itemForm.name} - addon` : "",
+                                description: "",
+                                addons: [{ name: "", price: "" }]
+                              });
+                            }}
+                          >
                             <Plus className="h-4 w-4" />
                           </Button>
                         </DrawerTrigger>
-                        <DrawerContent>
+                        <DrawerContent className="max-h-[90vh]">
                           <DrawerHeader>
                             <DrawerTitle>Създаване на нов шаблон за добавки</DrawerTitle>
                             <DrawerDescription>
@@ -1068,7 +1078,7 @@ export default function RestaurantDetailsAdminComponent() {
                               </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
-                          <div className="px-4 pb-4 space-y-4">
+                          <div className="px-4 pb-4 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
                             <div>
                               <Label htmlFor="template-name">Име на шаблона</Label>
                               <Input
@@ -1188,7 +1198,7 @@ export default function RestaurantDetailsAdminComponent() {
                             variant="outline"
                             role="combobox"
                             aria-expanded={removableTemplateOpen}
-                            className="w-full justify-between"
+                            className="flex-1 justify-between"
                           >
                             {selectedRemovableTemplates.length > 0
                               ? `Избрани ${selectedRemovableTemplates.length} шаблона`
@@ -1232,11 +1242,21 @@ export default function RestaurantDetailsAdminComponent() {
                       </Popover>
                       <Drawer>
                         <DrawerTrigger asChild>
-                          <Button variant="outline" size="icon">
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => {
+                              setNewRemovableTemplate({
+                                name: itemForm.name ? `${itemForm.name} - removable` : "",
+                                description: "",
+                                removables: [""]
+                              });
+                            }}
+                          >
                             <Plus className="h-4 w-4" />
                           </Button>
                         </DrawerTrigger>
-                        <DrawerContent>
+                        <DrawerContent className="max-h-[90vh]">
                           <DrawerHeader>
                             <DrawerTitle>Създаване на нов шаблон за премахвания</DrawerTitle>
                             <DrawerDescription>
@@ -1246,7 +1266,7 @@ export default function RestaurantDetailsAdminComponent() {
                               </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
-                          <div className="px-4 pb-4 space-y-4">
+                          <div className="px-4 pb-4 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
                             <div>
                               <Label htmlFor="removable-template-name">Име на шаблона</Label>
                               <Input
