@@ -113,6 +113,11 @@ export default function RestaurantDetailsAdminComponent() {
   // Combobox states
   const [addonTemplateOpen, setAddonTemplateOpen] = useState(false);
   const [removableTemplateOpen, setRemovableTemplateOpen] = useState(false);
+  
+  // Import dialog states
+  const [showImportAddonDialog, setShowImportAddonDialog] = useState(false);
+  const [showImportRemovableDialog, setShowImportRemovableDialog] = useState(false);
+  const [importText, setImportText] = useState("");
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -353,6 +358,119 @@ export default function RestaurantDetailsAdminComponent() {
       removables: prev.removables.filter((_, i) => i !== index)
     }));
   };
+  
+  // Function to parse and import addon text
+  const handleImportAddons = () => {
+    if (!importText.trim()) {
+      toast.error("Моля въведете текст за импорт");
+      return;
+    }
+    
+    try {
+      // Split by lines and filter empty lines
+      let lines = importText.split(/\r?\n/).filter(line => line.trim());
+      
+      // Remove header if it starts with "Избери добавки:"
+      if (lines.length > 0 && lines[0].trim().startsWith("Избери добавки:")) {
+        lines = lines.slice(1);
+      }
+      
+      // Parse each line
+      const parsedAddons = [];
+      const regex = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*лв\.([\d,]+)\s*€\)$/;
+      
+      for (const line of lines) {
+        const match = line.trim().match(regex);
+        if (match) {
+          const name = match[1].trim();
+          const weight = match[2].trim();
+          const priceBGN = match[3].replace(',', '.');
+          
+          // Combine name and weight
+          const fullName = `${name} (${weight})`;
+          
+          parsedAddons.push({
+            name: fullName,
+            price: priceBGN
+          });
+        }
+      }
+      
+      if (parsedAddons.length === 0) {
+        toast.error("Не са открити валидни добавки в текста");
+        return;
+      }
+      
+      // Append to existing addons
+      setNewAddonTemplate(prev => ({
+        ...prev,
+        addons: [...prev.addons.filter(a => a.name || a.price), ...parsedAddons]
+      }));
+      
+      toast.success(`Импортирани ${parsedAddons.length} добавки`);
+      setShowImportAddonDialog(false);
+      setImportText("");
+      
+    } catch (error) {
+      console.error('Error importing addons:', error);
+      toast.error("Грешка при импортиране на добавки");
+    }
+  };
+  
+  // Function to parse and import removable text
+  const handleImportRemovables = () => {
+    if (!importText.trim()) {
+      toast.error("Моля въведете текст за импорт");
+      return;
+    }
+    
+    try {
+      // Split by lines and filter empty lines
+      let lines = importText.split(/\r?\n/).filter(line => line.trim());
+      
+      // Remove header if it starts with "Без:"
+      if (lines.length > 0 && lines[0].trim().startsWith("Без:")) {
+        lines = lines.slice(1);
+      }
+      
+      if (lines.length === 0) {
+        toast.error("Не са открити валидни елементи в текста");
+        return;
+      }
+      
+      // Append to existing removables
+      setNewRemovableTemplate(prev => ({
+        ...prev,
+        removables: [...prev.removables.filter(r => r.trim()), ...lines.map(l => l.trim())]
+      }));
+      
+      toast.success(`Импортирани ${lines.length} премахваеми елемента`);
+      setShowImportRemovableDialog(false);
+      setImportText("");
+      
+    } catch (error) {
+      console.error('Error importing removables:', error);
+      toast.error("Грешка при импортиране на премахваеми елементи");
+    }
+  };
+  
+  // Keyboard shortcut for import dialogs
+  useEffect(() => {
+    const down = (e) => {
+      // Ctrl+Shift+I or Cmd+Shift+I to open import dialog
+      if (e.key === "i" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        if (showCreateAddonTemplate) {
+          setShowImportAddonDialog(true);
+        } else if (showCreateRemovableTemplate) {
+          setShowImportRemovableDialog(true);
+        }
+      }
+    };
+    
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [showCreateAddonTemplate, showCreateRemovableTemplate]);
   
   // Remove unused functions since all data is fetched in main useEffect
   // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
@@ -945,6 +1063,9 @@ export default function RestaurantDetailsAdminComponent() {
                             <DrawerTitle>Създаване на нов шаблон за добавки</DrawerTitle>
                             <DrawerDescription>
                               Създайте нов шаблон който може да бъде приложен към продукти.
+                              <kbd className="ml-2 bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
+                                <span className="text-xs">⌘</span>⇧I
+                              </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4 pb-4 space-y-4">
@@ -967,7 +1088,18 @@ export default function RestaurantDetailsAdminComponent() {
                               />
                             </div>
                             <div>
-                              <Label>Добавки</Label>
+                              <div className="flex justify-between items-center mb-2">
+                                <Label>Добавки</Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowImportAddonDialog(true)}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Импорт от текст
+                                </Button>
+                              </div>
                               {newAddonTemplate.addons.map((addon, index) => (
                                 <div key={index} className="flex gap-2 mt-2">
                                   <Input
@@ -1109,6 +1241,9 @@ export default function RestaurantDetailsAdminComponent() {
                             <DrawerTitle>Създаване на нов шаблон за премахвания</DrawerTitle>
                             <DrawerDescription>
                               Създайте нов шаблон за елементи които могат да бъдат премахнати от продукти.
+                              <kbd className="ml-2 bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
+                                <span className="text-xs">⌘</span>⇧I
+                              </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4 pb-4 space-y-4">
@@ -1131,7 +1266,18 @@ export default function RestaurantDetailsAdminComponent() {
                               />
                             </div>
                             <div>
-                              <Label>Премахваеми елементи</Label>
+                              <div className="flex justify-between items-center mb-2">
+                                <Label>Премахваеми елементи</Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowImportRemovableDialog(true)}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Импорт от текст
+                                </Button>
+                              </div>
                               {newRemovableTemplate.removables.map((removable, index) => (
                                 <div key={index} className="flex gap-2 mt-2">
                                   <Input
@@ -1501,6 +1647,105 @@ export default function RestaurantDetailsAdminComponent() {
           <AddonTemplatesAdminComponent restaurantId={resolvedRestaurantId} />
         </TabsContent>
       </Tabs>
+
+      {/* Import Addon Dialog */}
+      <Dialog open={showImportAddonDialog} onOpenChange={setShowImportAddonDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Импорт на добавки от текст</DialogTitle>
+            <DialogDescription>
+              Поставете текст във формат: "Име (грамаж) (цена лв.цена €)" на всеки ред
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="import-text">Текст за импорт</Label>
+              <Textarea
+                id="import-text"
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Избери добавки:&#10;Кафяв шоколад (70г) (1,80 лв.0,92 €)&#10;Бял шоколад (70г) (1,80 лв.0,92 €)&#10;..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-2">Пример за формат:</p>
+              <pre className="text-xs">
+{`Избери добавки:
+Кафяв шоколад (70г) (1,80 лв.0,92 €)
+Бял шоколад (70г) (1,80 лв.0,92 €)
+Банан (80г) (2,00 лв.1,02 €)`}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowImportAddonDialog(false);
+                setImportText("");
+              }}
+            >
+              Отказ
+            </Button>
+            <Button onClick={handleImportAddons}>
+              Импортирай
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Removable Dialog */}
+      <Dialog open={showImportRemovableDialog} onOpenChange={setShowImportRemovableDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Импорт на премахваеми елементи от текст</DialogTitle>
+            <DialogDescription>
+              Поставете име на всеки премахваем елемент на нов ред
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="import-removable-text">Текст за импорт</Label>
+              <Textarea
+                id="import-removable-text"
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Без:&#10;Кокосово мляко&#10;Ананас&#10;Филиран бадем&#10;..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-2">Пример за формат:</p>
+              <pre className="text-xs">
+{`Без:
+Кокосово мляко
+Ананас
+Филиран бадем
+Кокосови стърготини`}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowImportRemovableDialog(false);
+                setImportText("");
+              }}
+            >
+              Отказ
+            </Button>
+            <Button onClick={handleImportRemovables}>
+              Импортирай
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manage Templates Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
