@@ -574,14 +574,34 @@ export default function RestaurantSelector({
   async function handleDeviceLocation() {
     setAddressError("");
     setAddressLoading(true);
+    
+    // Check if geolocation is supported
     if (!navigator.geolocation) {
-      setAddressError("Geolocation is not supported.");
+      setAddressError("Геолокацията не се поддържа от вашия браузър.");
       setAddressLoading(false);
       return;
     }
+
+    // Check if we're on HTTPS or localhost (required for iOS)
+    const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    if (!isSecureContext) {
+      setAddressError("Геолокацията изисква сигурна връзка (HTTPS).");
+      setAddressLoading(false);
+      return;
+    }
+
+    // Options for better iOS compatibility
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000, // 10 seconds
+      maximumAge: 0 // Don't use cached position
+    };
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
+        console.log("Got device location:", { latitude, longitude });
+        
         // Save location in sessionStorage if delivery
         if (deliveryMethod === 'delivery') {
           // Try to reverse geocode if possible, else save as 'Device Location'
@@ -626,10 +646,26 @@ export default function RestaurantSelector({
         }
         setAddressLoading(false);
       },
-      () => {
-        setAddressError("Failed to get device location.");
+      (error) => {
+        console.error("Geolocation error:", error);
+        let errorMessage = "Не успяхме да получим локацията ви.";
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Моля, разрешете достъп до локацията във вашите настройки на браузъра.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Информацията за локацията не е налична.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Заявката за локация изтече. Моля, опитайте отново.";
+            break;
+        }
+        
+        setAddressError(errorMessage);
         setAddressLoading(false);
-      }
+      },
+      options
     );
   }
 
@@ -766,10 +802,10 @@ export default function RestaurantSelector({
               variant="secondary" 
               onClick={handleDeviceLocation} 
               disabled={addressLoading}
-              className="w-full py-2 sm:py-4 text-sm sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm"
+              className="w-full py-2 sm:py-4 px-3 sm:px-4 text-xs sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm whitespace-normal sm:whitespace-nowrap text-center"
             >
-              <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
-              {t('restaurantSelector.useCurrentLocation') || 'Використай текущата ми локация'}
+              <Navigation className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="break-words">{t('restaurantSelector.useCurrentLocation') || 'Използай текущата ми локация'}</span>
             </Button>
 
             {/* Error Message */}
