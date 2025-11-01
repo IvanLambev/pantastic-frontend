@@ -457,8 +457,8 @@ export default function RestaurantDetailsAdminComponent() {
   // Keyboard shortcut for import dialogs
   useEffect(() => {
     const down = (e) => {
-      // Ctrl+Shift+I or Cmd+Shift+I to open import dialog
-      if (e.key === "i" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+      // Ctrl+I or Cmd+I to open import dialog
+      if (e.key === "i" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
         e.preventDefault();
         if (showCreateAddonTemplate) {
           setShowImportAddonDialog(true);
@@ -997,7 +997,7 @@ export default function RestaurantDetailsAdminComponent() {
 
               {/* Template Selection Section */}
               {modalMode === "add" && (
-                <div className="grid lg:grid-cols-2 gap-8">
+                <div className="space-y-8">
                   {/* Addon Templates */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Шаблони за добавки</h3>
@@ -1018,10 +1018,10 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto min-w-[200px] max-w-[400px] p-0 max-h-[300px]">
+                        <PopoverContent className="w-[400px] p-0">
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
-                            <CommandList className="max-h-[200px] overflow-y-auto">
+                            <CommandList>
                               <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
                               <CommandGroup>
                                 {availableAddonTemplates.map((template) => (
@@ -1064,7 +1064,7 @@ export default function RestaurantDetailsAdminComponent() {
                             <DrawerDescription>
                               Създайте нов шаблон който може да бъде приложен към продукти.
                               <kbd className="ml-2 bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
-                                <span className="text-xs">⌘</span>⇧I
+                                <span className="text-xs">⌘</span>I
                               </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
@@ -1196,10 +1196,10 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto min-w-[200px] max-w-[400px] p-0 max-h-[300px]">
+                        <PopoverContent className="w-[400px] p-0">
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
-                            <CommandList className="max-h-[200px] overflow-y-auto">
+                            <CommandList>
                               <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
                               <CommandGroup>
                                 {availableRemovableTemplates.map((template) => (
@@ -1242,7 +1242,7 @@ export default function RestaurantDetailsAdminComponent() {
                             <DrawerDescription>
                               Създайте нов шаблон за елементи които могат да бъдат премахнати от продукти.
                               <kbd className="ml-2 bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
-                                <span className="text-xs">⌘</span>⇧I
+                                <span className="text-xs">⌘</span>I
                               </kbd> за импорт
                             </DrawerDescription>
                           </DrawerHeader>
