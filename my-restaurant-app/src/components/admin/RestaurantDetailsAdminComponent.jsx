@@ -1107,7 +1107,8 @@ export default function RestaurantDetailsAdminComponent() {
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</span>
-              {modalMode === "add" && (
+              {/* Temporarily hidden - will be implemented later */}
+              {/* {modalMode === "add" && (
                 <Button
                   type="button"
                   variant="outline"
@@ -1118,7 +1119,7 @@ export default function RestaurantDetailsAdminComponent() {
                   <Plus className="h-4 w-4 mr-2" />
                   Импорт от текст
                 </Button>
-              )}
+              )} */}
             </DialogTitle>
             <DialogDescription>
               {modalMode === "add"
