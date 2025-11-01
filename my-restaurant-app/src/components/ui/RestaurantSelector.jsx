@@ -158,8 +158,8 @@ function GoogleMap_Component({ onLocationSelect }) {
   };
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className="places-container relative">
+    <div className="w-full max-w-full overflow-hidden">
+      <div className="places-container relative w-full max-w-full">
         <PlacesAutocomplete 
           setSelected={setSelected} 
           setPendingLocation={setPendingLocation}
@@ -183,13 +183,13 @@ function GoogleMap_Component({ onLocationSelect }) {
       </div>
       
       <div 
-        className="w-full overflow-hidden border border-t-0 relative"
+        className="w-full max-w-full overflow-hidden border border-t-0 relative"
         onWheel={handleMapScroll}
       >
         <GoogleMap
           zoom={12}
           center={selected || center}
-          mapContainerClassName="w-full h-[250px] sm:h-[400px] touch-pan-y"
+          mapContainerClassName="w-full max-w-full h-[250px] sm:h-[400px] touch-pan-y"
           onClick={handleMapClick}
           options={{
             gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
@@ -303,18 +303,18 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
   };
 
   return (
-    <Combobox onSelect={handleSelect} className="relative">
+    <Combobox onSelect={handleSelect} className="relative w-full max-w-full">
       <ComboboxInput
         value={value}
         onChange={handleInputChange}
         disabled={!ready}
-        className="w-full p-2 sm:p-4 pr-16 sm:pr-24 text-sm sm:text-lg border border-gray-300 rounded-t-lg 
+        className="w-full max-w-full p-2 sm:p-4 pr-16 sm:pr-24 text-sm sm:text-lg border border-gray-300 rounded-t-lg 
                    focus:outline-none focus:ring-2 focus:ring-blue-500 
-                   focus:border-transparent bg-white shadow-sm overflow-x-auto whitespace-nowrap"
+                   focus:border-transparent bg-white shadow-sm overflow-x-auto whitespace-nowrap box-border"
         placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
       />
       <ComboboxPopover 
-        className="absolute z-50 w-full bg-white 
+        className="absolute z-50 w-full max-w-full bg-white 
                    border border-gray-300 rounded-lg shadow-lg mt-2"
         portal={false}
       >
@@ -743,19 +743,19 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto sm:overflow-visible">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto sm:overflow-visible overflow-x-hidden">
           <DialogHeader className="p-4 sm:p-8 pb-2 sm:pb-4">
             <DialogTitle className="text-lg sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 sm:space-y-6 px-4 sm:px-6 md:px-8 pb-4 sm:pb-8">
+          <div className="space-y-3 sm:space-y-6 px-4 sm:px-6 md:px-8 pb-4 sm:pb-8 w-full max-w-full overflow-x-hidden">
             {/* Google Maps Container - Always Visible */}
-            <div className="w-full overflow-hidden">
+            <div className="w-full max-w-full overflow-hidden">
               <p className="text-xs sm:text-base text-gray-600 text-center font-medium mb-2 sm:mb-4">
                 {t('restaurantSelector.searchAddress') || 'Търсете адрес или кликнете на картата'}
               </p>
-              <div className="w-full overflow-hidden">
+              <div className="w-full max-w-full overflow-hidden">
                 <GoogleMapsAutocomplete onLocationSelect={handleGoogleMapLocationSelect} />
               </div>
             </div>
