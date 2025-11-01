@@ -53,6 +53,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { t } from "@/utils/translations";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function RestaurantDetailsAdminComponent() {
   const { restaurantId: paramRestaurantId } = useParams();
@@ -118,6 +123,12 @@ export default function RestaurantDetailsAdminComponent() {
   const [showImportAddonDialog, setShowImportAddonDialog] = useState(false);
   const [showImportRemovableDialog, setShowImportRemovableDialog] = useState(false);
   const [importText, setImportText] = useState("");
+  
+  // Import full item dialog states
+  const [showImportItemDialog, setShowImportItemDialog] = useState(false);
+  const [importItemText, setImportItemText] = useState("");
+  const [parsedItemData, setParsedItemData] = useState(null);
+  const [showConfirmNoDescription, setShowConfirmNoDescription] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -471,6 +482,239 @@ export default function RestaurantDetailsAdminComponent() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [showCreateAddonTemplate, showCreateRemovableTemplate]);
+  
+  // Category translation helper
+  const translateCategory = (categoryBulgarian) => {
+    const categoryMap = {
+      "Американски палачинки": "sweet_pancake",
+      "Солени палачинки": "savory_pancake",
+      "Напитки": "drink",
+      "Deluxe Box": "deluxe_box",
+      "Десерт": "dessert",
+      "Предястие": "appetizer",
+      "Гарнитура": "side_dish"
+    };
+    
+    return categoryMap[categoryBulgarian] || null;
+  };
+  
+  // Function to parse full item from text
+  const handleImportFullItem = async () => {
+    if (!importItemText.trim()) {
+      toast.error("Моля въведете текст за импорт");
+      return;
+    }
+    
+    try {
+      const lines = importItemText.split(/\r?\n/).filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error("Невалиден формат. Моля въведете пълна информация за продукта.");
+        return;
+      }
+      
+      // Parse item name (first line)
+      const itemName = lines[0].trim();
+      
+      // Parse category
+      let itemType = "sweet_pancake"; // default
+      let categoryLine = lines.find(line => line.startsWith("Категория:"));
+      if (categoryLine) {
+        const categoryText = categoryLine.replace("Категория:", "").trim();
+        const translatedType = translateCategory(categoryText);
+        if (translatedType) {
+          itemType = translatedType;
+        } else {
+          toast.warning(`Категорията "${categoryText}" не е разпозната. Използва се тип по подразбиране.`);
+        }
+      }
+      
+      // Parse price (look for лв. or €)
+      let price = "";
+      const priceLineIndex = lines.findIndex(line => line.includes("лв.") && !line.includes("("));
+      if (priceLineIndex !== -1) {
+        const priceLine = lines[priceLineIndex];
+        const priceMatch = priceLine.match(/([\d,]+)\s*лв\./);
+        if (priceMatch) {
+          price = priceMatch[1].replace(",", ".");
+        }
+      }
+      
+      if (!price) {
+        toast.error("Не може да се намери цената на продукта.");
+        return;
+      }
+      
+      // Parse removables
+      const removables = [];
+      const removablesStartIndex = lines.findIndex(line => line.trim().startsWith("Без:"));
+      if (removablesStartIndex !== -1) {
+        let i = removablesStartIndex + 1;
+        while (i < lines.length && !lines[i].includes("Избери добавки:") && !lines[i].includes("Категория:")) {
+          const line = lines[i].trim();
+          if (line && !line.includes("лв.") && !line.includes("€") && !line.includes("В наличност")) {
+            removables.push(line);
+          }
+          i++;
+        }
+      }
+      
+      // Parse addons
+      const addons = [];
+      const addonsStartIndex = lines.findIndex(line => line.trim().startsWith("Избери добавки:"));
+      if (addonsStartIndex !== -1) {
+        const addonRegex = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*лв\.([\d,]+)\s*€\)$/;
+        for (let i = addonsStartIndex + 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          const match = line.match(addonRegex);
+          if (match) {
+            const [, name, , priceBGN] = match;
+            addons.push({
+              name: `${name.trim()} (${match[2]})`,
+              price: priceBGN.replace(",", ".")
+            });
+          }
+        }
+      }
+      
+      // Store parsed data
+      const parsedData = {
+        name: itemName,
+        item_type: itemType,
+        price: price,
+        addons: addons,
+        removables: removables
+      };
+      
+      setParsedItemData(parsedData);
+      
+      // Check if description is missing
+      if (!itemForm.description || itemForm.description.trim() === "") {
+        setShowConfirmNoDescription(true);
+        return;
+      }
+      
+      // If description exists, proceed to create item
+      await createItemFromParsedData(parsedData);
+      
+    } catch (error) {
+      console.error('Error importing full item:', error);
+      toast.error("Грешка при импортиране на продукт");
+    }
+  };
+  
+  // Function to create item from parsed data
+  const createItemFromParsedData = async (data, skipDescription = false) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Create addon template if addons exist
+      let addonTemplateId = null;
+      if (data.addons && data.addons.length > 0) {
+        const addonsObject = {};
+        data.addons.forEach(addon => {
+          if (addon.name && addon.price) {
+            addonsObject[addon.name] = parseFloat(addon.price);
+          }
+        });
+        
+        const addonResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            restaurant_id: resolvedRestaurantId,
+            template: {
+              name: `${data.name} - addon`,
+              description: "",
+              addons: addonsObject,
+              is_predefined: false
+            }
+          })
+        });
+        
+        if (addonResponse.ok) {
+          const addonResult = await addonResponse.json();
+          addonTemplateId = addonResult.template_id || addonResult.id;
+          toast.success("Шаблон за добавки създаден успешно");
+        }
+      }
+      
+      // Create removable template if removables exist
+      let removableTemplateId = null;
+      if (data.removables && data.removables.length > 0) {
+        const removableResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            restaurant_id: resolvedRestaurantId,
+            template: {
+              name: `${data.name} - removable`,
+              description: "",
+              removables: data.removables,
+              is_predefined: false
+            }
+          })
+        });
+        
+        if (removableResponse.ok) {
+          const removableResult = await removableResponse.json();
+          removableTemplateId = removableResult.template_id || removableResult.id;
+          toast.success("Шаблон за премахвания създаден успешно");
+        }
+      }
+      
+      // Create the menu item
+      const formData = new FormData();
+      const itemData = {
+        restaurant_id: restaurant.restaurant_id,
+        item: {
+          name: data.name,
+          description: skipDescription ? "" : (itemForm.description || ""),
+          item_type: data.item_type,
+          price: parseFloat(data.price),
+          addons: {},
+          addon_template_ids: addonTemplateId ? [addonTemplateId] : [],
+          removables: [],
+          removable_template_ids: removableTemplateId ? [removableTemplateId] : []
+        }
+      };
+      
+      formData.append("data", JSON.stringify(itemData));
+      
+      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
+        method: "POST",
+        body: formData
+      });
+      
+      if (response.ok) {
+        toast.success("Продукт създаден успешно!");
+        if (!skipDescription) {
+          toast.info("Моля добавете описание на продукта.");
+        }
+        setShowImportItemDialog(false);
+        setImportItemText("");
+        setParsedItemData(null);
+        setShowConfirmNoDescription(false);
+        await refreshData();
+      } else {
+        const errorData = await response.json();
+        toast.error(`Грешка: ${errorData.message || 'Неуспешно създаване на продукт'}`);
+      }
+      
+    } catch (error) {
+      console.error('Error creating item from parsed data:', error);
+      toast.error("Грешка при създаване на продукт");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Handle confirm create without description
+  const handleConfirmCreateWithoutDescription = async () => {
+    if (parsedItemData) {
+      await createItemFromParsedData(parsedItemData, true);
+    }
+  };
   
   // Remove unused functions since all data is fetched in main useEffect
   // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
@@ -909,7 +1153,21 @@ export default function RestaurantDetailsAdminComponent() {
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
         <DialogContent className="w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</span>
+              {modalMode === "add" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowImportItemDialog(true)}
+                  className="ml-4"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Импорт от текст
+                </Button>
+              )}
+            </DialogTitle>
             <DialogDescription>
               {modalMode === "add"
                 ? "Попълнете детайлите за да добавите нов продукт в менюто."
@@ -1550,23 +1808,23 @@ export default function RestaurantDetailsAdminComponent() {
           </div>
           
           {/* Desktop Table Layout (hidden on mobile) */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="hidden md:block">
+            <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                     Item
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">
                     Description
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">
                     Price
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[200px]">
                     Templates
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[150px]">
                     Actions
                   </th>
                 </tr>
@@ -1574,16 +1832,34 @@ export default function RestaurantDetailsAdminComponent() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {menuItems.map((item) => (
                   <tr key={item.item_id || item[0]}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item.name || item[6]}</div>
+                    <td className="px-4 py-4">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">
+                            {item.name || item[6]}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">{item.name || item[6]}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 max-w-xs truncate">{item.description || item[4]}</div>
+                    <td className="px-4 py-4">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="text-sm text-gray-500 truncate max-w-[300px]">
+                            {item.description || item[4]}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">{item.description || item[4]}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{item.price || item[7]} лв./€</div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       <div className="text-sm text-gray-500">
                         {((item.addon_template_ids && item.addon_template_ids.length > 0) || (item.removable_template_ids && item.removable_template_ids.length > 0) || (item[1] && Array.isArray(item[1]) && item[1].length > 0)) ? (
                           <div className="flex flex-wrap gap-1">
@@ -1591,25 +1867,32 @@ export default function RestaurantDetailsAdminComponent() {
                               const templateIds = item.addon_template_ids || item.removable_template_ids || item[1] || [];
                               const templateId = templateIds[idx];
                               return (
-                                <Badge key={templateId} variant="outline" className="text-xs">
-                                  {templateName}
-                                  <button 
-                                    onClick={() => removeTemplateFromItem(item.item_id || item[0], templateId)}
-                                    className="ml-1 text-red-500 hover:text-red-700"
-                                    title="Remove template"
-                                  >
-                                    ×
-                                  </button>
-                                </Badge>
+                                <Tooltip key={templateId}>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="outline" className="text-xs max-w-[100px] truncate">
+                                      <span className="truncate">{templateName}</span>
+                                      <button 
+                                        onClick={() => removeTemplateFromItem(item.item_id || item[0], templateId)}
+                                        className="ml-1 text-red-500 hover:text-red-700 flex-shrink-0"
+                                        title="Remove template"
+                                      >
+                                        ×
+                                      </button>
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{templateName}</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               );
                             })}
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleManageTemplates(item)}
-                              className="h-6 px-2 text-xs"
+                              className="h-6 px-2 text-xs whitespace-nowrap"
                             >
-                              + Add Template
+                              + Add
                             </Button>
                           </div>
                         ) : (
@@ -1617,14 +1900,14 @@ export default function RestaurantDetailsAdminComponent() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleManageTemplates(item)}
-                            className="h-6 px-2 text-xs"
+                            className="h-6 px-2 text-xs whitespace-nowrap"
                           >
-                            + Add Template
+                            + Add
                           </Button>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex gap-2 justify-end">
                         <Button
                           onClick={() => handleEditItem(item)}
@@ -1762,6 +2045,106 @@ export default function RestaurantDetailsAdminComponent() {
             </Button>
             <Button onClick={handleImportRemovables}>
               Импортирай
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Full Item Dialog */}
+      <Dialog open={showImportItemDialog} onOpenChange={setShowImportItemDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Импорт на цял продукт от текст</DialogTitle>
+            <DialogDescription>
+              Поставете пълната информация за продукта включително име, категория, цена, добавки и премахвания
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="import-item-text">Текст за импорт</Label>
+              <Textarea
+                id="import-item-text"
+                value={importItemText}
+                onChange={(e) => setImportItemText(e.target.value)}
+                placeholder="Американска палачинка Тропикана (320г)&#10;Категория: Американски палачинки&#10;13,40 лв.&#10;..."
+                rows={15}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-2">Пример за формат:</p>
+              <pre className="text-xs overflow-x-auto">
+{`Американска палачинка Тропикана (320г)
+Категория: Американски палачинки
+13,40 лв.
+6,85 € 
+В наличност
+Без:
+Кокосово мляко
+Ананас
+Филиран бадем
+Избери добавки:
+Кафяв шоколад (70г) (1,80 лв.0,92 €)
+Бял шоколад (70г) (1,80 лв.0,92 €)
+Банан (80г) (2,00 лв.1,02 €)`}
+              </pre>
+              <p className="mt-2 text-xs text-muted-foreground">
+                <strong>Забележка:</strong> Описанието на продукта ще трябва да бъде добавено ръчно след импортирането.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowImportItemDialog(false);
+                setImportItemText("");
+                setParsedItemData(null);
+              }}
+            >
+              Отказ
+            </Button>
+            <Button 
+              onClick={handleImportFullItem}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Импортиране..." : "Импортирай"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm No Description Dialog */}
+      <Dialog open={showConfirmNoDescription} onOpenChange={setShowConfirmNoDescription}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Продуктът няма описание</DialogTitle>
+            <DialogDescription>
+              Продуктът, който импортирате, няма описание. Искате ли да създадете продукта без описание?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Можете да добавите описание по-късно чрез редактиране на продукта.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowConfirmNoDescription(false);
+                toast.info("Моля добавете описание в полето по-горе и опитайте отново.");
+              }}
+            >
+              Отказ - Ще добавя описание
+            </Button>
+            <Button 
+              onClick={handleConfirmCreateWithoutDescription}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Създаване..." : "Създай без описание"}
             </Button>
           </DialogFooter>
         </DialogContent>
