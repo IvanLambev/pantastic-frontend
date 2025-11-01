@@ -57,6 +57,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 
 export default function RestaurantDetailsAdminComponent() {
@@ -128,7 +129,6 @@ export default function RestaurantDetailsAdminComponent() {
   const [showImportItemDialog, setShowImportItemDialog] = useState(false);
   const [importItemText, setImportItemText] = useState("");
   const [parsedItemData, setParsedItemData] = useState(null);
-  const [showConfirmNoDescription, setShowConfirmNoDescription] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -506,215 +506,166 @@ export default function RestaurantDetailsAdminComponent() {
     }
     
     try {
-      const lines = importItemText.split(/\r?\n/).filter(line => line.trim());
-      
-      if (lines.length < 2) {
-        toast.error("Невалиден формат. Моля въведете пълна информация за продукта.");
-        return;
-      }
+      const lines = importItemText.trim().split('\n').map(line => line.trim()).filter(line => line);
       
       // Parse item name (first line)
-      const itemName = lines[0].trim();
-      
-      // Parse category
-      let itemType = "sweet_pancake"; // default
-      let categoryLine = lines.find(line => line.startsWith("Категория:"));
-      if (categoryLine) {
-        const categoryText = categoryLine.replace("Категория:", "").trim();
-        const translatedType = translateCategory(categoryText);
-        if (translatedType) {
-          itemType = translatedType;
-        } else {
-          toast.warning(`Категорията "${categoryText}" не е разпозната. Използва се тип по подразбиране.`);
-        }
-      }
-      
-      // Parse price (look for лв. or €)
-      let price = "";
-      const priceLineIndex = lines.findIndex(line => line.includes("лв.") && !line.includes("("));
-      if (priceLineIndex !== -1) {
-        const priceLine = lines[priceLineIndex];
-        const priceMatch = priceLine.match(/([\d,]+)\s*лв\./);
-        if (priceMatch) {
-          price = priceMatch[1].replace(",", ".");
-        }
-      }
-      
-      if (!price) {
-        toast.error("Не може да се намери цената на продукта.");
+      const itemNameMatch = lines[0].match(/^(.+?)\s*\((\d+)г\)$/);
+      if (!itemNameMatch) {
+        toast.error("Невалиден формат на името. Очакван формат: 'Име (грамаж)'");
         return;
       }
+      const itemName = itemNameMatch[1].trim();
       
-      // Parse removables
-      const removables = [];
-      const removablesStartIndex = lines.findIndex(line => line.trim().startsWith("Без:"));
-      if (removablesStartIndex !== -1) {
-        let i = removablesStartIndex + 1;
-        while (i < lines.length && !lines[i].includes("Избери добавки:") && !lines[i].includes("Категория:")) {
-          const line = lines[i].trim();
-          if (line && !line.includes("лв.") && !line.includes("€") && !line.includes("В наличност")) {
-            removables.push(line);
-          }
-          i++;
-        }
+      // Parse category (second line)
+      const categoryLine = lines.find(line => line.startsWith("Категория:"));
+      if (!categoryLine) {
+        toast.error("Липсва категория. Моля добавете ред 'Категория: ...'");
+        return;
+      }
+      const categoryBulgarian = categoryLine.replace("Категория:", "").trim();
+      const itemType = translateCategory(categoryBulgarian);
+      
+      if (!itemType) {
+        toast.warning(`Непозната категория: ${categoryBulgarian}. Ще се използва 'sweet_pancake' по подразбиране.`);
       }
       
-      // Parse addons
-      const addons = [];
-      const addonsStartIndex = lines.findIndex(line => line.trim().startsWith("Избери добавки:"));
-      if (addonsStartIndex !== -1) {
-        const addonRegex = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*лв\.([\d,]+)\s*€\)$/;
-        for (let i = addonsStartIndex + 1; i < lines.length; i++) {
-          const line = lines[i].trim();
-          const match = line.match(addonRegex);
+      // Parse price (third line - BGN price)
+      const priceLineIndex = lines.findIndex(line => line.match(/^\d+[,.]?\d*\s*лв\.?$/));
+      if (priceLineIndex === -1) {
+        toast.error("Липсва цена. Моля добавете цена във формат '13,40 лв.'");
+        return;
+      }
+      const priceText = lines[priceLineIndex].replace(/лв\.?/, "").trim().replace(",", ".");
+      const price = parseFloat(priceText);
+      
+      // Parse removables (lines after "Без:")
+      let removables = [];
+      const bezIndex = lines.findIndex(line => line === "Без:");
+      if (bezIndex !== -1) {
+        const nextSectionIndex = lines.findIndex((line, idx) => idx > bezIndex && (line.includes("Избери") || line.includes("Категория")));
+        const endIndex = nextSectionIndex !== -1 ? nextSectionIndex : lines.length;
+        removables = lines.slice(bezIndex + 1, endIndex).filter(line => line && !line.includes("В наличност"));
+      }
+      
+      // Parse addons (lines after "Избери добавки:")
+      let addons = [];
+      const addonsIndex = lines.findIndex(line => line.includes("Избери добавки"));
+      if (addonsIndex !== -1) {
+        const addonLines = lines.slice(addonsIndex + 1);
+        addons = addonLines.map(line => {
+          const match = line.match(/^(.+?)\s*\((\d+)г\)\s*\((\d+[,.]?\d*)\s*лв\.(\d+[,.]?\d*)\s*€\)$/);
           if (match) {
-            const [, name, , priceBGN] = match;
-            addons.push({
-              name: `${name.trim()} (${match[2]})`,
-              price: priceBGN.replace(",", ".")
-            });
+            return {
+              name: match[1].trim(),
+              price: parseFloat(match[3].replace(",", "."))
+            };
           }
-        }
+          return null;
+        }).filter(addon => addon !== null);
       }
       
-      // Store parsed data
       const parsedData = {
         name: itemName,
-        item_type: itemType,
+        item_type: itemType || "sweet_pancake",
         price: price,
         addons: addons,
         removables: removables
       };
       
-      setParsedItemData(parsedData);
-      
-      // Check if description is missing
-      if (!itemForm.description || itemForm.description.trim() === "") {
-        setShowConfirmNoDescription(true);
-        return;
-      }
-      
-      // If description exists, proceed to create item
+      // Create item directly (templates will be created as part of the process)
       await createItemFromParsedData(parsedData);
       
     } catch (error) {
-      console.error('Error importing full item:', error);
-      toast.error("Грешка при импортиране на продукт");
+      console.error("Error parsing item:", error);
+      toast.error("Грешка при парсиране на текста");
     }
   };
   
   // Function to create item from parsed data
-  const createItemFromParsedData = async (data, skipDescription = false) => {
+  const createItemFromParsedData = async (data) => {
     try {
       setIsSubmitting(true);
       
-      // Create addon template if addons exist
       let addonTemplateId = null;
+      let removableTemplateId = null;
+      
+      // Create addon template if addons exist
       if (data.addons && data.addons.length > 0) {
         const addonsObject = {};
         data.addons.forEach(addon => {
-          if (addon.name && addon.price) {
-            addonsObject[addon.name] = parseFloat(addon.price);
-          }
+          addonsObject[addon.name] = addon.price;
         });
         
-        const addonResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+        const addonTemplateResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             restaurant_id: resolvedRestaurantId,
-            template: {
-              name: `${data.name} - addon`,
-              description: "",
-              addons: addonsObject,
-              is_predefined: false
-            }
+            name: `${data.name} - addon`,
+            description: "Auto-created from import",
+            addons: addonsObject
           })
         });
         
-        if (addonResponse.ok) {
-          const addonResult = await addonResponse.json();
-          addonTemplateId = addonResult.template_id || addonResult.id;
-          toast.success("Шаблон за добавки създаден успешно");
-        }
+        const addonTemplateData = await addonTemplateResponse.json();
+        addonTemplateId = addonTemplateData.template_id;
+        toast.success(`Шаблон за добавки създаден: ${data.name} - addon`);
       }
       
       // Create removable template if removables exist
-      let removableTemplateId = null;
       if (data.removables && data.removables.length > 0) {
-        const removableResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
+        const removableTemplateResponse = await fetchWithAdminAuth(`${API_URL}/restaurant/removable-templates`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             restaurant_id: resolvedRestaurantId,
-            template: {
-              name: `${data.name} - removable`,
-              description: "",
-              removables: data.removables,
-              is_predefined: false
-            }
+            name: `${data.name} - removable`,
+            description: "Auto-created from import",
+            removables: data.removables
           })
         });
         
-        if (removableResponse.ok) {
-          const removableResult = await removableResponse.json();
-          removableTemplateId = removableResult.template_id || removableResult.id;
-          toast.success("Шаблон за премахвания създаден успешно");
-        }
+        const removableTemplateData = await removableTemplateResponse.json();
+        removableTemplateId = removableTemplateData.template_id;
+        toast.success(`Шаблон за премахвания създаден: ${data.name} - removable`);
       }
       
-      // Create the menu item
+      // Create the item
       const formData = new FormData();
-      const itemData = {
-        restaurant_id: restaurant.restaurant_id,
-        item: {
-          name: data.name,
-          description: skipDescription ? "" : (itemForm.description || ""),
-          item_type: data.item_type,
-          price: parseFloat(data.price),
-          addons: {},
-          addon_template_ids: addonTemplateId ? [addonTemplateId] : [],
-          removables: [],
-          removable_template_ids: removableTemplateId ? [removableTemplateId] : []
-        }
-      };
+      formData.append("name", data.name);
+      formData.append("price", data.price);
+      formData.append("item_type", data.item_type);
+      formData.append("restaurant_id", resolvedRestaurantId);
+      formData.append("description", ""); // Empty description
       
-      formData.append("data", JSON.stringify(itemData));
+      // Add template IDs if they were created
+      if (addonTemplateId) {
+        formData.append("addon_template_ids", JSON.stringify([addonTemplateId]));
+      }
+      if (removableTemplateId) {
+        formData.append("removable_template_ids", JSON.stringify([removableTemplateId]));
+      }
       
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
+      await fetchWithAdminAuth(`${API_URL}/restaurant/menu-items`, {
         method: "POST",
         body: formData
       });
       
-      if (response.ok) {
-        toast.success("Продукт създаден успешно!");
-        if (!skipDescription) {
-          toast.info("Моля добавете описание на продукта.");
-        }
-        setShowImportItemDialog(false);
-        setImportItemText("");
-        setParsedItemData(null);
-        setShowConfirmNoDescription(false);
-        await refreshData();
-      } else {
-        const errorData = await response.json();
-        toast.error(`Грешка: ${errorData.message || 'Неуспешно създаване на продукт'}`);
-      }
+      toast.success(`Продуктът "${data.name}" беше създаден успешно!`);
+      setShowImportItemDialog(false);
+      setImportItemText("");
+      setParsedItemData(null);
+      await refreshData();
       
     } catch (error) {
-      console.error('Error creating item from parsed data:', error);
-      toast.error("Грешка при създаване на продукт");
+      console.error("Error creating item:", error);
+      toast.error("Грешка при създаване на продукта");
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Handle confirm create without description
-  const handleConfirmCreateWithoutDescription = async () => {
-    if (parsedItemData) {
-      await createItemFromParsedData(parsedItemData, true);
-    }
-  };
+
   
   // Remove unused functions since all data is fetched in main useEffect
   // const fetchAddonTemplates and fetchAvailableAddonTemplates removed to avoid unused function warnings
@@ -1148,6 +1099,7 @@ export default function RestaurantDetailsAdminComponent() {
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
   return (
+    <TooltipProvider>
     <div className="w-full px-4 py-4 md:py-8">
       {/* Add/Edit Item Dialog */}
       <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
@@ -2115,41 +2067,6 @@ export default function RestaurantDetailsAdminComponent() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm No Description Dialog */}
-      <Dialog open={showConfirmNoDescription} onOpenChange={setShowConfirmNoDescription}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Продуктът няма описание</DialogTitle>
-            <DialogDescription>
-              Продуктът, който импортирате, няма описание. Искате ли да създадете продукта без описание?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Можете да добавите описание по-късно чрез редактиране на продукта.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setShowConfirmNoDescription(false);
-                toast.info("Моля добавете описание в полето по-горе и опитайте отново.");
-              }}
-            >
-              Отказ - Ще добавя описание
-            </Button>
-            <Button 
-              onClick={handleConfirmCreateWithoutDescription}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Създаване..." : "Създай без описание"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Manage Templates Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
         <DialogContent>
@@ -2203,6 +2120,7 @@ export default function RestaurantDetailsAdminComponent() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
 
