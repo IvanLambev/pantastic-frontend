@@ -37,6 +37,9 @@ export function LoginForm({ className }) {
         credentials: 'include', // IMPORTANT: Send and receive cookies
         body: JSON.stringify({ email, password }),
       });
+
+      console.log('📡 Login response status:', response.status)
+      console.log('📡 Login response headers:', Object.fromEntries(response.headers.entries()))
   
       const contentType = response.headers.get("Content-Type");
   
@@ -52,11 +55,13 @@ export function LoginForm({ className }) {
   
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
-        console.log("Login successful:", data);
-        // Store user data (but NOT the tokens - those are in HttpOnly cookies)
+        console.log("✅ Login successful:", data);
+        console.log("🍪 Backend set HttpOnly cookies - storing customer_id only");
+        
+        // Store only customer_id and message, cookies handle authentication
         sessionStorage.setItem("user", JSON.stringify(data));
+        
         await updateLoginState(); // Trigger login state update and admin check
-        // alert("Login successful!");
         navigate("/food");
       } else {
         throw new Error(t('login.errors.serverError'));

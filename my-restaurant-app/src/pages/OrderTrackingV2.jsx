@@ -118,11 +118,11 @@ export default function OrderTrackingV2() {
   const fetchOrder = useCallback(async () => {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      console.log('Fetching orders with user token:', user.access_token ? '[PRESENT]' : '[MISSING]')
+      console.log('🔍 Fetching orders for customer:', user.customer_id ? user.customer_id : '[MISSING]')
       
       const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         }
       })
@@ -171,11 +171,10 @@ export default function OrderTrackingV2() {
   // Handle order cancellation
   const handleCancelOrder = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       const response = await fetchWithAuth(`${API_URL}/order/orders`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ order_id: orderId }),

@@ -31,6 +31,7 @@ function clearUserAndRedirect() {
 // Refresh access token using HttpOnly refresh cookie
 async function refreshAccessToken() {
   try {
+    console.log('🔄 Attempting token refresh...')
     const response = await fetch(`${API_URL}/user/refresh-token`, {
       method: 'POST',
       credentials: 'include', // Send HttpOnly refresh_token cookie
@@ -39,10 +40,17 @@ async function refreshAccessToken() {
       }
     })
 
+    console.log('📡 Refresh response status:', response.status)
+    console.log('📡 Refresh response headers:', Object.fromEntries(response.headers.entries()))
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Refresh failed:', response.status, errorText)
       throw new Error('Token refresh failed')
     }
 
+    const data = await response.json()
+    console.log('📦 Refresh response data:', data)
     console.log('✅ Token refreshed successfully')
     
     // Backend sets new HttpOnly cookies, we just need to verify success
@@ -64,33 +72,35 @@ export async function makeAuthenticatedRequest(url, options = {}) {
   
   console.log('🔍 makeAuthenticatedRequest - user:', user)
   
-  // Check for either customer_id (new cookie auth) or access_token (old token auth)
-  if (!user?.customer_id && !user?.access_token) {
-    console.error('❌ No customer_id or access_token found in sessionStorage')
+  // Check for customer_id to verify user is logged in (cookies handle actual auth)
+  if (!user?.customer_id) {
+    console.error('❌ No customer_id found in sessionStorage')
     throw new Error('No authentication found')
   }
 
-  if (user?.customer_id) {
-    console.log('✅ customer_id found:', user.customer_id)
-  } else {
-    console.log('⚠️ Using access_token (legacy mode):', user.access_token?.substring(0, 20) + '...')
-  }
+  console.log('✅ customer_id found:', user.customer_id)
 
   // Build full URL if relative path provided
   const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`
   
-  // Prepare headers with credentials
+  console.log('🌐 Making request to:', fullUrl)
+  console.log('🍪 Document cookies:', document.cookie)
+  
+  // Prepare headers - NO Authorization header, cookies handle auth
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers
   }
 
-  // Make the request with cookies
+  // Make the request with cookies - cookies contain the auth token
   let response = await fetch(fullUrl, {
     ...options,
-    credentials: 'include',
+    credentials: 'include', // This sends HttpOnly cookies automatically
     headers
   })
+
+  console.log('📡 Response status:', response.status)
+  console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()))
 
   // Handle 401 Unauthorized - token expired
   if (response.status === 401) {
