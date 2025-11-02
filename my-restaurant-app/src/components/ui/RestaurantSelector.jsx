@@ -346,6 +346,7 @@ export default function RestaurantSelector({
   open,
   onClose,
   onSelect,
+  requireSelection = false, // New prop: if true, can't close without selecting
 }) {
   // Restaurant data state
   const [restaurants, setRestaurants] = useState([]);
@@ -405,6 +406,10 @@ export default function RestaurantSelector({
 
   // Reset states when modal closes
   const handleClose = () => {
+    // If requireSelection is true, don't allow closing without a selection
+    if (requireSelection) {
+      return;
+    }
     setCurrentStep('delivery-method');
     setDeliveryMethod('');
     setAddressError('');

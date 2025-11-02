@@ -43,7 +43,7 @@ const Food = () => {
   const [priceRange, setPriceRange] = useState([0, 100])
   const [category, setCategory] = useState("all")
   const [sortBy, setSortBy] = useState("default")
-  const { addToCart } = useCart()
+  const { addToCart, clearCart } = useCart()
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
 
@@ -81,6 +81,8 @@ const Food = () => {
   }, []);
 
   const handleChangeSelection = async () => {
+    // Clear the cart when changing restaurants
+    clearCart()
     setSelectedRestaurant(null)
     sessionStorage.removeItem('selectedRestaurant')
     setShowRestaurantModal(true)
@@ -194,14 +196,27 @@ const Food = () => {
 
   // Unified restaurant selection handler
   function selectRestaurant(restaurant) {
+    // Get the current restaurant ID if exists
+    const currentRestaurantId = selectedRestaurant 
+      ? (Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id)
+      : null;
+    
+    // Get the new restaurant ID
+    const newRestaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+    
+    // If switching to a different restaurant, clear the cart
+    if (currentRestaurantId && currentRestaurantId !== newRestaurantId) {
+      clearCart();
+      toast.info(t('cart.clearedForNewRestaurant') || 'Количката беше изчистена за новия ресторант');
+    }
+    
     setSelectedRestaurant(restaurant);
     sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowRestaurantModal(false);
     toast.dismiss();
     const restaurantName = Array.isArray(restaurant) ? restaurant[8] : restaurant.name;
-    const restaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
     toast.success(t('home.restaurantSelected', { name: restaurantName }));
-    fetchItems(restaurantId);
+    fetchItems(newRestaurantId);
     // LOG: Food selectRestaurant called
     console.log('[SONNER] Food selectRestaurant called for', restaurantName);
   }
@@ -256,6 +271,7 @@ const Food = () => {
         open={showRestaurantModal}
         onClose={() => setShowRestaurantModal(false)}
         onSelect={selectRestaurant}
+        requireSelection={true} // Food page requires restaurant selection
       />
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (

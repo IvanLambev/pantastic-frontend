@@ -89,6 +89,7 @@ export const translations = {
     specialInstructions: "Специални инструкции",
     editInstructions: "Редактирай инструкции",
     removedFromCart: "Премахнато {name} от количката",
+    clearedForNewRestaurant: "Количката беше изчистена за новия ресторант",
     orderCancelledSuccess: "Поръчката е отказана успешно",
     failedToCancelOrder: "Неуспешно отказване на поръчката",
     deliveryInformation: "Информация за доставка",

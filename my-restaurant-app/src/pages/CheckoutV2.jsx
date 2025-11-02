@@ -39,17 +39,23 @@ function isRestaurantOpen(restaurant) {
   if (!todayHours) return false;
   
   try {
-    // Format: "09:00-18:00"
+    // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
     const [open, close] = todayHours.split("-");
     const [openH, openM] = open.split(":").map(Number);
     const [closeH, closeM] = close.split(":").map(Number);
     
-    const openDate = new Date(gmt3);
-    openDate.setHours(openH, openM, 0, 0);
-    const closeDate = new Date(gmt3);
-    closeDate.setHours(closeH, closeM, 0, 0);
+    const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
+    const openTime = openH * 60 + openM; // Opening time in minutes
+    const closeTime = closeH * 60 + closeM; // Closing time in minutes
     
-    return gmt3 >= openDate && gmt3 <= closeDate;
+    // Check if the restaurant closes the next day (e.g., 10:00-03:00)
+    if (closeTime < openTime) {
+      // Restaurant is open if current time is after opening OR before closing (next day)
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      // Normal case: restaurant opens and closes on the same day
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
   } catch (error) {
     console.error("Error parsing restaurant hours:", error);
     return false;
@@ -85,11 +91,11 @@ function getNextOpenTime(restaurant) {
         if (dayOffset === 0 && openTime <= gmt3) continue;
         
         if (dayOffset === 0) {
-          return `Today at ${open}`;
+          return `${t('time.today')} ${t('time.at')} ${open}`;
         } else if (dayOffset === 1) {
-          return `Tomorrow at ${open}`;
+          return `${t('time.tomorrow')} ${t('time.at')} ${open}`;
         } else {
-          return `${dayName} at ${open}`;
+          return `${dayName} ${t('time.at')} ${open}`;
         }
       } catch {
         continue;
