@@ -243,12 +243,12 @@ export default function ItemDetails() {
     
     addToCart(cartItem);
     
-    const addonText = selectedAddonList.length > 0 ? ` with ${selectedAddonList.length} add-ons` : '';
-    const removableText = selectedRemovableList.length > 0 ? ` and ${selectedRemovableList.length} items removed` : '';
+    const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
+    const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
     
     toast.success(
       <div className="flex flex-col">
-        <span>Added {item.name} to cart</span>
+        <span>Добавихте {item.name} в количката</span>
         {(selectedAddonList.length > 0 || selectedRemovableList.length > 0) && (
           <span className="text-xs">{addonText}{removableText}</span>
         )}
@@ -294,7 +294,7 @@ export default function ItemDetails() {
   }
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>
+    return <div className="container mx-auto px-4 py-8">Зареждане...</div>
   }
 
   if (error) {
@@ -302,7 +302,7 @@ export default function ItemDetails() {
   }
 
   if (!item) {
-    return <div className="container mx-auto px-4 py-8">Item not found</div>
+    return <div className="container mx-auto px-4 py-8">Продуктът не е намерен</div>
   }
 
   return (
@@ -313,7 +313,7 @@ export default function ItemDetails() {
         onClick={() => navigate(-1)}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
+        Назад
       </Button>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -345,7 +345,7 @@ export default function ItemDetails() {
               </p>
               {totalPrice !== Number(item.price) && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Base: {formatDualCurrencyCompact(item.price)}
+                  Основна: {formatDualCurrencyCompact(item.price)}
                 </Badge>
               )}
             </div>
@@ -357,17 +357,17 @@ export default function ItemDetails() {
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Add Extra Items</h2>
+              <h2 className="text-xl font-semibold">Добави екстри</h2>
               
               {addonTemplates.map((template) => (
                 <Card key={template.template_id} className="overflow-hidden">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <Badge variant="outline">{Object.keys(template.addons || {}).length} options</Badge>
+                      <Badge variant="outline">{Object.keys(template.addons || {}).length} опции</Badge>
                     </div>
                     <CardDescription>
-                      Select the options you'd like to add
+                      Изберете опциите, които искате да добавите
                     </CardDescription>
                   </CardHeader>
                   
@@ -404,8 +404,8 @@ export default function ItemDetails() {
           {/* Removables selection section */}
           {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Remove Items</h2>
-              <p className="text-sm text-muted-foreground">Select ingredients you'd like to remove (no extra charge)</p>
+              <h2 className="text-xl font-semibold">Премахни съставки</h2>
+              <p className="text-sm text-muted-foreground">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
               
               {removableData.applied_templates.map((template) => (
                 <Card key={template.template_id} className="overflow-hidden">
@@ -416,11 +416,11 @@ export default function ItemDetails() {
                         {Array.isArray(template.removables) 
                           ? template.removables.length 
                           : Object.keys(template.removables || {}).length
-                        } options
+                        } опции
                       </Badge>
                     </div>
                     <CardDescription>
-                      Select ingredients you'd like to remove
+                      Изберете съставки, които искате да премахнете
                     </CardDescription>
                   </CardHeader>
                   
@@ -446,7 +446,7 @@ export default function ItemDetails() {
                               />
                               <span className="font-medium">{removableItem}</span>
                             </div>
-                            <span className="text-sm text-muted-foreground">Remove</span>
+                            <span className="text-sm text-muted-foreground">Премахни</span>
                           </div>
                         ))
                       ) : (
@@ -469,7 +469,7 @@ export default function ItemDetails() {
                               />
                               <span className="font-medium capitalize">{removableValue}</span>
                             </div>
-                            <span className="text-sm text-muted-foreground">Remove</span>
+                            <span className="text-sm text-muted-foreground">Премахни</span>
                           </div>
                         ))
                       )}
@@ -482,7 +482,7 @@ export default function ItemDetails() {
 
           <div className="pt-4 border-t">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold">Total Price:</span>
+              <span className="text-lg font-semibold">Обща цена:</span>
               <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice)}</span>
             </div>
             <Button
@@ -490,17 +490,17 @@ export default function ItemDetails() {
               className="w-full"
               onClick={handleAddToCart}
             >
-              Add to Cart
+              Добави в количката
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
               {getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0 ? (
                 <>
-                  {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} add-ons selected`}
+                  {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} добавки избрани`}
                   {getAllSelectedAddons().length > 0 && getAllSelectedRemovables().length > 0 && ', '}
-                  {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} items removed`}
+                  {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} съставки премахнати`}
                 </>
               ) : (
-                "No customizations selected"
+                "Няма избрани персонализации"
               )}
             </p>
           </div>
