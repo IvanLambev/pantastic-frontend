@@ -8,21 +8,12 @@ import { SpeedInsights } from "@vercel/speed-insights/react"
 import SonnerToasterRoot from './components/ui/SonnerToasterRoot'
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+// Use a placeholder if not configured to prevent errors
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'placeholder-client-id'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {googleClientId ? (
-      <GoogleOAuthProvider clientId={googleClientId}>
-        <BrowserRouter>
-          <AuthProvider>
-            <App />
-            <SonnerToasterRoot />
-            <SpeedInsights/>
-          </AuthProvider>
-        </BrowserRouter>
-      </GoogleOAuthProvider>
-    ) : (
+    <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter>
         <AuthProvider>
           <App />
@@ -30,6 +21,6 @@ createRoot(document.getElementById('root')).render(
           <SpeedInsights/>
         </AuthProvider>
       </BrowserRouter>
-    )}
+    </GoogleOAuthProvider>
   </StrictMode>,
 )
