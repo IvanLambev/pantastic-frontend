@@ -274,7 +274,7 @@ export default function CheckoutV2() {
 
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      if (!user.access_token) {
+      if (!user.customer_id) {
         setDiscountError(t('checkout.loginToApplyDiscount'))
         setDiscountValidating(false)
         return
@@ -482,7 +482,8 @@ export default function CheckoutV2() {
     try {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
 
-      if (!user?.access_token || selectedRestaurant.length === 0) {
+      // With cookie-based auth, check for customer_id instead of access_token
+      if (!user?.customer_id || selectedRestaurant.length === 0) {
         throw new Error('User not logged in or no restaurant selected')
       }
 

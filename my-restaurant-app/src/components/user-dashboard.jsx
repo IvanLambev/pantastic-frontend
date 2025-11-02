@@ -31,8 +31,8 @@ export default function UserDashboard() {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && typeof parsedUser === "object" && parsedUser.access_token) {
-          setToken(parsedUser.access_token);
+        if (parsedUser && typeof parsedUser === "object" && (parsedUser.customer_id || parsedUser.access_token)) {
+          setToken(parsedUser.access_token || parsedUser.customer_id);
         }
       } catch (err) {
         console.error("Error parsing user data from session storage:", err);

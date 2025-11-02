@@ -31,7 +31,7 @@ export default function PaymentSuccess() {
         const pendingOrderId = sessionStorage.getItem('pending_order_id')
         const pendingPaymentId = sessionStorage.getItem('pending_payment_id')
 
-        if (!user?.access_token) {
+        if (!user?.customer_id) {
           throw new Error('User not logged in')
         }
 
@@ -42,8 +42,8 @@ export default function PaymentSuccess() {
         // Verify payment with backend
         const response = await fetchWithAuth(`${API_URL}/order/payment/verify`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${user.access_token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({

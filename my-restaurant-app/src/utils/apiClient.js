@@ -79,23 +79,23 @@ async function refreshAccessToken() {
 export async function makeAuthenticatedRequest(url, options = {}) {
   const user = getCurrentUser()
   
-  if (!user?.access_token) {
-    throw new Error('No authentication token found')
+  if (!user?.customer_id) {
+    throw new Error('No authentication found')
   }
 
   // Build full URL if relative path provided
   const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`
   
-  // Prepare headers with authentication
+  // Prepare headers with credentials
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${user.access_token}`,
     ...options.headers
   }
 
-  // Make the request
+  // Make the request with cookies
   let response = await fetch(fullUrl, {
     ...options,
+    credentials: 'include',
     headers
   })
 
@@ -229,15 +229,15 @@ export async function authenticateWithGoogle(googleAccessToken) {
  */
 export function isAuthenticated() {
   const user = getCurrentUser()
-  return !!(user?.access_token)
+  return !!(user?.customer_id)
 }
 
 /**
- * Get current access token
+ * Get current customer ID
  */
-export function getAccessToken() {
+export function getCustomerId() {
   const user = getCurrentUser()
-  return user?.access_token || null
+  return user?.customer_id || null
 }
 
 /**
