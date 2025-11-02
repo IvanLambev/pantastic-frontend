@@ -28,45 +28,28 @@ function clearUserAndRedirect() {
   window.location.href = '/login'
 }
 
-// Refresh access token using refresh token
+// Refresh access token using HttpOnly refresh cookie
 async function refreshAccessToken() {
   try {
-    const user = getCurrentUser()
-    if (!user?.refresh_token) {
-      throw new Error('No refresh token available')
-    }
-
     const response = await fetch(`${API_URL}/user/refresh-token`, {
       method: 'POST',
+      credentials: 'include', // Send HttpOnly refresh_token cookie
       headers: {
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        refresh_token: user.refresh_token 
-      })
+      }
     })
 
     if (!response.ok) {
       throw new Error('Token refresh failed')
     }
 
-    const tokenData = await response.json()
+    console.log('✅ Token refreshed successfully')
     
-    if (tokenData.access_token && tokenData.token_type === 'bearer') {
-      // Update stored tokens
-      const updatedUser = {
-        ...user,
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token || user.refresh_token
-      }
-      
-      storeUserData(updatedUser)
-      return tokenData.access_token
-    } else {
-      throw new Error('Invalid token refresh response')
-    }
+    // Backend sets new HttpOnly cookies, we just need to verify success
+    // No need to store tokens in sessionStorage anymore
+    return true
   } catch (error) {
-    console.error('Token refresh failed:', error)
+    console.error('❌ Token refresh failed:', error)
     clearUserAndRedirect()
     throw error
   }
@@ -79,8 +62,18 @@ async function refreshAccessToken() {
 export async function makeAuthenticatedRequest(url, options = {}) {
   const user = getCurrentUser()
   
-  if (!user?.customer_id) {
+  console.log('🔍 makeAuthenticatedRequest - user:', user)
+  
+  // Check for either customer_id (new cookie auth) or access_token (old token auth)
+  if (!user?.customer_id && !user?.access_token) {
+    console.error('❌ No customer_id or access_token found in sessionStorage')
     throw new Error('No authentication found')
+  }
+
+  if (user?.customer_id) {
+    console.log('✅ customer_id found:', user.customer_id)
+  } else {
+    console.log('⚠️ Using access_token (legacy mode):', user.access_token?.substring(0, 20) + '...')
   }
 
   // Build full URL if relative path provided
@@ -102,13 +95,13 @@ export async function makeAuthenticatedRequest(url, options = {}) {
   // Handle 401 Unauthorized - token expired
   if (response.status === 401) {
     try {
-      console.log('Access token expired, attempting refresh...')
-      const newToken = await refreshAccessToken()
+      console.log('🔄 Access token expired, attempting refresh...')
+      await refreshAccessToken()
       
-      // Retry the request with new token
-      headers['Authorization'] = `Bearer ${newToken}`
+      // Retry the request with new cookie
       response = await fetch(fullUrl, {
         ...options,
+        credentials: 'include',
         headers
       })
     } catch (refreshError) {
