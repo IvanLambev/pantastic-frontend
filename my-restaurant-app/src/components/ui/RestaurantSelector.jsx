@@ -364,6 +364,9 @@ export default function RestaurantSelector({
   const [showDistanceWarning, setShowDistanceWarning] = useState(false);
   const [pendingRestaurantSelection, setPendingRestaurantSelection] = useState(null);
   const [pendingDistance, setPendingDistance] = useState(null);
+  
+  // Location permission pre-prompt
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
   // Fetch restaurants when component mounts
   useEffect(() => {
@@ -572,6 +575,12 @@ export default function RestaurantSelector({
 
 
   async function handleDeviceLocation() {
+    // Show the pre-prompt first
+    setShowLocationPrompt(true);
+  }
+  
+  async function requestDeviceLocation() {
+    setShowLocationPrompt(false);
     setAddressError("");
     setAddressLoading(true);
     
@@ -649,11 +658,26 @@ export default function RestaurantSelector({
       (error) => {
         console.error("Geolocation error:", error);
         let errorMessage = "Не успяхме да получим локацията ви.";
+        let detailedInstructions = "";
         
         switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "Моля, разрешете достъп до локацията във вашите настройки на браузъра.";
+          case error.PERMISSION_DENIED: {
+            // Detect iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            if (isIOS) {
+              errorMessage = "Достъпът до локацията е отказан.";
+              detailedInstructions = `
+За да активирате локацията на iPhone/iPad:
+1. Отворете Настройки → Safari (или Chrome)
+2. Натиснете "Местоположение"
+3. Изберете "Питай следващия път" или "При използване на приложението"
+4. Опреснете страницата и опитайте отново
+              `.trim();
+            } else {
+              errorMessage = "Моля, разрешете достъп до локацията във вашите настройки на браузъра.";
+            }
             break;
+          }
           case error.POSITION_UNAVAILABLE:
             errorMessage = "Информацията за локацията не е налична.";
             break;
@@ -662,7 +686,7 @@ export default function RestaurantSelector({
             break;
         }
         
-        setAddressError(errorMessage);
+        setAddressError(errorMessage + (detailedInstructions ? '\n\n' + detailedInstructions : ''));
         setAddressLoading(false);
       },
       options
@@ -1042,6 +1066,45 @@ export default function RestaurantSelector({
                 );
               })
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Location Permission Pre-Prompt Dialog */}
+      <Dialog open={showLocationPrompt} onOpenChange={setShowLocationPrompt}>
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
+              Използвай текущата локация
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center">
+              <div className="p-4 bg-blue-100 rounded-full">
+                <Navigation className="h-8 w-8 text-blue-600" />
+              </div>
+            </div>
+            <p className="text-center text-gray-700">
+              Ще използваме вашата локация, за да намерим най-близките ресторанти до вас.
+            </p>
+            <p className="text-sm text-center text-gray-600">
+              Натиснете <span className="font-semibold">"Разреши"</span> на следващия екран, за да продължите.
+            </p>
+            <div className="flex flex-col gap-3 pt-4">
+              <Button 
+                onClick={requestDeviceLocation}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Продължи
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowLocationPrompt(false)}
+                className="w-full"
+              >
+                Отказ
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
