@@ -270,7 +270,10 @@ export default function ItemDetails() {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ item_id: itemId }),
+        body: JSON.stringify({ 
+          item_id: itemId,
+          restaurant_id: restaurantId  // Include restaurant_id
+        }),
       })
       if (res.ok) {
         setIsFavorite(true)

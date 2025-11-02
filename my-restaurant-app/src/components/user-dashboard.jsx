@@ -23,6 +23,7 @@ export default function UserDashboard() {
   const [favoriteItems, setFavoriteItems] = useState([]);
   const [itemMap, setItemMap] = useState({});
   const [isItemMapLoading, setIsItemMapLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState([]);
 
   // Fetch token from sessionStorage and set it, then fetch orders when token is set
   useEffect(() => {
@@ -81,8 +82,8 @@ export default function UserDashboard() {
         }
         const data = await response.json();
         setUserInfo(data);
-      } catch {
-        console.error("Error fetching user information:", err);
+      } catch (error) {
+        console.error("Error fetching user information:", error);
       }
     };
     fetchUserInfo();
@@ -106,10 +107,12 @@ export default function UserDashboard() {
       });
       let allItems = [];
       if (restaurantsRes.ok) {
-        const restaurants = await restaurantsRes.json();
+        const restaurantsData = await restaurantsRes.json();
+        // Store restaurants for later use
+        setRestaurants(restaurantsData);
         // Fetch all items for all restaurants
         const itemsArrays = await Promise.all(
-          restaurants.map(async (r) => {
+          restaurantsData.map(async (r) => {
             const restaurantId = r[0] || r.restaurant_id || r.id;
             const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
               headers: {
@@ -190,6 +193,35 @@ export default function UserDashboard() {
     }
   };
 
+  // Helper function to get restaurant by ID
+  const getRestaurantById = (restaurantId) => {
+    const restaurant = restaurants.find(r => 
+      (r.restaurant_id || r[0]) === restaurantId
+    );
+    if (!restaurant) return null;
+    
+    // Normalize restaurant data (handle both array and object formats)
+    if (Array.isArray(restaurant)) {
+      return {
+        restaurant_id: restaurant[0],
+        address: restaurant[1],
+        city: restaurant[3],
+        name: restaurant[7] || restaurant[8],
+      };
+    }
+    return restaurant;
+  };
+
+  // Helper function to translate order status
+  const translateStatus = (status) => {
+    if (!status) return status;
+    const statusKey = status.toLowerCase().replace(/\s+/g, '');
+    const translationKey = `dashboard.status.${statusKey}`;
+    const translated = t(translationKey);
+    // If translation not found, return original status
+    return translated === translationKey ? status : translated;
+  };
+
   const handleDeleteAccount = async () => {
     console.log("handleDeleteAccount function triggered.");
     if (!userInfo?.email) {
@@ -197,7 +229,7 @@ export default function UserDashboard() {
       return;
     }
 
-    const confirmDelete = window.confirm("Are you sure you want to delete your account? This action cannot be undone.");
+    const confirmDelete = window.confirm(t('dashboard.deleteAccountConfirm'));
     if (!confirmDelete) return;
 
     try {
@@ -218,7 +250,7 @@ export default function UserDashboard() {
 
       const data = await response.json();
       console.log("Delete account result:", data);
-      alert(data.message);
+      alert(data.message || t('dashboard.deleteAccountSuccess'));
       sessionStorage.removeItem("user");
       sessionStorage.removeItem("selectedRestaurant");
       setToken(null);
@@ -226,7 +258,7 @@ export default function UserDashboard() {
       // Optionally, log the user out or redirect them
     } catch (err) {
       console.error("Error deleting account:", err);
-      alert("An error occurred while trying to delete your account.");
+      alert(t('dashboard.deleteAccountError'));
     }
   };
 
@@ -269,7 +301,7 @@ export default function UserDashboard() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.name')}</p>
                   <p className="font-medium">{userInfo ? `${userInfo.first_name} ${userInfo.last_name}` : "Loading..."}</p>
                 </div>
               </div>
@@ -278,7 +310,7 @@ export default function UserDashboard() {
 
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.email')}</p>
                   <p className="font-medium">{userInfo ? userInfo.email : "Loading..."}</p>
                 </div>
               </div>
@@ -287,7 +319,7 @@ export default function UserDashboard() {
 
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-muted-foreground">Phone Number</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.phoneNumber')}</p>
                   <p className="font-medium">{userInfo ? userInfo.phone : "Loading..."}</p>
                 </div>
               </div>
@@ -315,8 +347,8 @@ export default function UserDashboard() {
               ) : orders.length === 0 ? (
                 <div className="py-12 text-center">
                   <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No orders yet</h3>
-                  <p className="text-muted-foreground">When you place orders, they will appear here.</p>
+                  <h3 className="text-lg font-medium mb-2">{t('dashboard.noOrdersYet')}</h3>
+                  <p className="text-muted-foreground">{t('dashboard.noOrdersYetDesc')}</p>
                 </div>
               ) : (
                 <Accordion type="single" collapsible className="w-full">
@@ -335,7 +367,7 @@ export default function UserDashboard() {
                                   : "outline"
                               }
                             >
-                              {order.status}
+                              {translateStatus(order.status)}
                             </Badge>
                           </div>
                           <span className="text-sm text-muted-foreground mt-1 sm:mt-0">
@@ -376,18 +408,41 @@ export default function UserDashboard() {
                                 </div>
                               </div>
 
-                              <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium">{t('dashboard.deliveryAddress')}</p>
-                                  <p 
-                                    className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
-                                    onClick={() => openInMaps(order.address)}
-                                  >
-                                    {order.address}
-                                  </p>
+                              {order.delivery_method === 'delivery' && order.address ? (
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                  <div>
+                                    <p className="font-medium">{t('dashboard.deliveryAddress')}</p>
+                                    <p 
+                                      className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
+                                      onClick={() => openInMaps(order.address)}
+                                    >
+                                      {order.address}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
+                              ) : order.delivery_method === 'pickup' && order.restaurant_id ? (
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                  <div>
+                                    <p className="font-medium">{t('dashboard.pickupLocation')}</p>
+                                    {(() => {
+                                      const restaurant = getRestaurantById(order.restaurant_id);
+                                      return restaurant ? (
+                                        <p 
+                                          className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
+                                          onClick={() => openInMaps(restaurant.address, restaurant.city)}
+                                        >
+                                          {restaurant.name}<br />
+                                          {restaurant.address}, {restaurant.city}
+                                        </p>
+                                      ) : (
+                                        <p className="text-sm">{t('dashboard.pending')}</p>
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
+                              ) : null}
                             </div>
 
                             <div className="space-y-2">
@@ -480,7 +535,7 @@ export default function UserDashboard() {
                         <div className="font-bold mt-2">{fav.price !== undefined ? formatDualCurrencyCompact(fav.price) : ''}</div>
                         <div className="mt-3 flex gap-2">
                           <a
-                            href={`/food?restaurant=${fav.restaurant_id || ''}&item=${fav.item_id || fav._id}`}
+                            href={`/restaurants/${fav.restaurant_id}/items/${fav.item_id}`}
                             className="inline-block bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
                           >
                             {t('dashboard.seeDetails')}
@@ -501,7 +556,7 @@ export default function UserDashboard() {
           onClick={handleDeleteAccount}
           className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
         >
-          Delete Account
+          {t('dashboard.deleteAccount')}
         </button>
       </div>
     </div>

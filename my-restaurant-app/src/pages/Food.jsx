@@ -155,6 +155,11 @@ const Food = () => {
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
     if (!user.access_token) return;
     if (!isItemFavorite(itemId)) {
+      // Get restaurant_id from selectedRestaurant
+      const restaurantId = Array.isArray(selectedRestaurant) 
+        ? selectedRestaurant[0] 
+        : selectedRestaurant?.restaurant_id;
+      
       // Add to favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         method: 'POST',
@@ -162,7 +167,10 @@ const Food = () => {
           'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ item_id: itemId }),
+        body: JSON.stringify({ 
+          item_id: itemId,
+          restaurant_id: restaurantId  // Include restaurant_id
+        }),
       });
       if (res.ok) {
         const data = await res.json();

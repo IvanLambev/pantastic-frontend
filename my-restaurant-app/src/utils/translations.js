@@ -11,7 +11,7 @@ export const translations = {
     logout: "Изход",
     signup: "Регистрация",
     admin: "Админ",
-    dashboard: "Табло",
+    dashboard: "Профил",
     orders: "Поръчки",
     profile: "Профил"
   },
@@ -447,6 +447,7 @@ export const translations = {
     orderNumber: "Поръчка",
     items: "Артикули",
     deliveryAddress: "Адрес за доставка",
+    pickupLocation: "Място за вземане",
     deliveryTime: "Време за доставка",
     deliveryPerson: "Куриер",
     pending: "В изчакване",
@@ -454,7 +455,27 @@ export const translations = {
     favouriteItemsDesc: "Вашите запазени любими артикули от менюто",
     loadingFavourites: "Зареждане на любимите...",
     noFavouriteItems: "Все още няма любими артикули.",
-    seeDetails: "Виж детайли"
+    seeDetails: "Виж детайли",
+    deleteAccount: "Изтрий акаунт",
+    deleteAccountConfirm: "Сигурни ли сте, че искате да изтриете акаунта си? Това действие не може да бъде отменено.",
+    deleteAccountSuccess: "Акаунтът беше изтрит успешно",
+    deleteAccountError: "Възникна грешка при изтриването на акаунта",
+    name: "Име",
+    email: "Имейл",
+    phoneNumber: "Телефонен номер",
+    noOrdersYet: "Все още няма поръчки",
+    noOrdersYetDesc: "Когато направите поръчки, те ще се появят тук.",
+    // Status translations
+    status: {
+      ready: "Готова",
+      processing: "В процес",
+      delivered: "Доставена",
+      pending: "В изчакване",
+      cancelled: "Отменена",
+      preparing: "Подготвя се",
+      ontheway: "В движение",
+      completed: "Завършена"
+    }
   },
 
   // Common
