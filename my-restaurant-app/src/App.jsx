@@ -125,7 +125,7 @@ function MainLayout() {
                 {isLoggedIn && isAdmin && isAdminEnabled && (
                   <NavigationMenuItem>
                     <NavigationMenuLink asChild>
-                      <Link to="/admin">Admin</Link>
+                      <Link to="/admin">Админ</Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 )}
@@ -163,19 +163,19 @@ function MainLayout() {
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          <span>Dashboard</span>
+                          <span>Табло</span>
                         </Link>
                       </DropdownMenuItem>
                       {isAdmin && isAdminEnabled && (
                         <DropdownMenuItem asChild>
                           <Link to="/admin" className="flex items-center gap-2">
-                            <span>Admin</span>
+                            <span>Админ</span>
                           </Link>
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
                         <LogOut className="h-4 w-4" />
-                        <span>Log out</span>
+                        <span>Изход</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -185,13 +185,13 @@ function MainLayout() {
                       to="/login"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input"
                     >
-                      Login
+                      Вход
                     </Link>
                     <Link 
                       to="/signup"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4"
                     >
-                      Sign Up
+                      Регистрация
                     </Link>
                   </>
                 )}
@@ -213,17 +213,17 @@ function MainLayout() {
                   <div className="flex flex-col items-center gap-6 mt-8">
                     <div className="flex flex-col items-center gap-4">
                       <Link to="/" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        Home
+                        Начало
                       </Link>
                       <Link to="/about" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        About
+                        За нас
                       </Link>
                       <Link to="/food" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                        Food
+                        Меню
                       </Link>
                       {isLoggedIn && isAdmin && isAdminEnabled && (
                         <Link to="/admin" onClick={() => setOpen(false)} className="text-foreground hover:text-primary">
-                          Admin
+                          Админ
                         </Link>
                       )}
                     </div>
@@ -236,7 +236,7 @@ function MainLayout() {
                             className="flex items-center gap-2 text-foreground hover:text-primary"
                           >
                             <User className="h-4 w-4" />
-                            <span>Dashboard</span>
+                            <span>Табло</span>
                           </Link>
                           <button 
                             onClick={() => {
@@ -246,7 +246,7 @@ function MainLayout() {
                             className="flex items-center gap-2 text-red-600 hover:text-red-700"
                           >
                             <LogOut className="h-4 w-4" />
-                            <span>Log out</span>
+                            <span>Изход</span>
                           </button>
                         </div>
                       ) : (
@@ -256,14 +256,14 @@ function MainLayout() {
                             onClick={() => setOpen(false)}
                             className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 border border-input w-full"
                           >
-                            Login
+                            Вход
                           </Link>
                           <Link 
                             to="/signup" 
                             onClick={() => setOpen(false)}
                             className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 w-full"
                           >
-                            Sign Up
+                            Регистрация
                           </Link>
                         </div>
                       )}
