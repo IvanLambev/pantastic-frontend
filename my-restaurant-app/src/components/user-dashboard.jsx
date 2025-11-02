@@ -12,6 +12,7 @@ import { API_URL } from "@/config/api";
 import { fetchWithAuth } from "@/context/AuthContext";
 import { t } from "@/utils/translations";
 import { formatDualCurrencyCompact } from "@/utils/currency";
+import { openInMaps } from "@/utils/mapsHelper";
 
 export default function UserDashboard() {
   const { user, token, setToken } = useAuth();
@@ -379,7 +380,12 @@ export default function UserDashboard() {
                                 <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                 <div>
                                   <p className="font-medium">{t('dashboard.deliveryAddress')}</p>
-                                  <p className="text-sm">{order.address}</p>
+                                  <p 
+                                    className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
+                                    onClick={() => openInMaps(order.address)}
+                                  >
+                                    {order.address}
+                                  </p>
                                 </div>
                               </div>
                             </div>

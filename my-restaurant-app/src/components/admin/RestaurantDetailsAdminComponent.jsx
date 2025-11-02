@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { openInMaps } from "@/utils/mapsHelper";
 
 export default function RestaurantDetailsAdminComponent() {
   const { restaurantId: paramRestaurantId } = useParams();
@@ -1639,7 +1640,15 @@ export default function RestaurantDetailsAdminComponent() {
                   <SelectItem key={rest.restaurant_id} value={rest.restaurant_id}>
                     <div className="flex flex-col">
                       <span className="font-medium">{rest.name}</span>
-                      <span className="text-sm text-gray-500">{rest.address}, {rest.city}</span>
+                      <span 
+                        className="text-sm text-gray-500 hover:text-blue-600 hover:underline cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openInMaps(rest.address, rest.city);
+                        }}
+                      >
+                        {rest.address}, {rest.city}
+                      </span>
                     </div>
                   </SelectItem>
                 ))}
@@ -1653,7 +1662,12 @@ export default function RestaurantDetailsAdminComponent() {
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="text-xl font-bold">{restaurant.name}</CardTitle>
-          <CardDescription>{restaurant.address}, {restaurant.city}</CardDescription>
+          <CardDescription 
+            className="hover:text-blue-600 hover:underline cursor-pointer"
+            onClick={() => openInMaps(restaurant.address, restaurant.city)}
+          >
+            {restaurant.address}, {restaurant.city}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">

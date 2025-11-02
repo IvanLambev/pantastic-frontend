@@ -14,6 +14,7 @@ import {
 import { API_URL } from "@/config/api"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
+import { openInMaps } from "@/utils/mapsHelper"
 
 const Cart = () => {
   const { 
@@ -114,12 +115,22 @@ const Cart = () => {
                     {isDelivery ? (
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('cart.deliveryAddressLabel')}:</p>
-                        <p className="font-medium">{deliveryAddress}</p>
+                        <p 
+                          className="font-medium hover:text-blue-600 hover:underline cursor-pointer"
+                          onClick={() => openInMaps(deliveryAddress)}
+                        >
+                          {deliveryAddress}
+                        </p>
                       </div>
                     ) : (
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('cart.pickupFrom')}:</p>
-                        <p className="font-medium">{selectedRestaurant[1]}</p>
+                        <p 
+                          className="font-medium hover:text-blue-600 hover:underline cursor-pointer"
+                          onClick={() => openInMaps(selectedRestaurant[1], selectedRestaurant[3])}
+                        >
+                          {selectedRestaurant[1]}
+                        </p>
                       </div>
                     )}
                   </div>

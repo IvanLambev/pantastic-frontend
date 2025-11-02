@@ -19,6 +19,7 @@ import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
+import { openInMaps } from "@/utils/mapsHelper"
 import { api } from "@/utils/apiClient"
 
 // Utility functions for restaurant status
@@ -897,7 +898,12 @@ export default function CheckoutV2() {
                   <CardContent>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex-1">
-                        <p className="font-medium">{deliveryAddress}</p>
+                        <p 
+                          className="font-medium hover:text-blue-600 hover:underline cursor-pointer"
+                          onClick={() => openInMaps(deliveryAddress)}
+                        >
+                          {deliveryAddress}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {t('checkout.deliveryToAddress')}
                         </p>
@@ -928,7 +934,14 @@ export default function CheckoutV2() {
                   <CardContent>
                     <div className="p-3 bg-muted rounded-lg">
                       <p className="font-medium">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p 
+                        className="text-sm text-muted-foreground hover:text-blue-600 hover:underline cursor-pointer"
+                        onClick={() => {
+                          const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
+                          const city = Array.isArray(selectedRestaurant) ? selectedRestaurant[3] : selectedRestaurant.city;
+                          openInMaps(address, city);
+                        }}
+                      >
                         {Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address}
                       </p>
                     </div>

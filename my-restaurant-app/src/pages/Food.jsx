@@ -30,6 +30,7 @@ import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
+import { openInMaps } from "@/utils/mapsHelper"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -259,7 +260,17 @@ const Food = () => {
             >
               <div className="flex flex-col items-start min-w-0">
                 <span className="font-bold text-lg truncate w-full">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</span>
-                <span className="text-sm text-muted-foreground truncate w-full">{Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}</span>
+                <span 
+                  className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
+                    const city = Array.isArray(selectedRestaurant) ? selectedRestaurant[3] : selectedRestaurant.city;
+                    openInMaps(address, city);
+                  }}
+                >
+                  {Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}
+                </span>
               </div>
               <span className="text-sm text-primary whitespace-nowrap shrink-0">{t('menu.changeRestaurant')}</span>
             </Button>

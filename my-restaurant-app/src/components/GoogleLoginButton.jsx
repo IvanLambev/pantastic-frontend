@@ -16,6 +16,10 @@ export function GoogleLoginButton({ className = "" }) {
   const isGoogleConfigured = !!import.meta.env.VITE_GOOGLE_CLIENT_ID && 
                              import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'your_google_client_id_here'
 
+  if (!isGoogleConfigured) {
+    console.warn('Google OAuth is not configured. Please set VITE_GOOGLE_CLIENT_ID in your environment variables.')
+  }
+
   const googleLogin = useGoogleLogin({
     scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read",
     onSuccess: async (tokenResponse) => {

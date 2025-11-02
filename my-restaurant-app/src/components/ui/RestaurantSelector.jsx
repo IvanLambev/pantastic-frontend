@@ -20,6 +20,7 @@ import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { t } from "@/utils/translations";
+import { openInMaps } from "@/utils/mapsHelper";
 
 // Google Maps Autocomplete Component
 function GoogleMapsAutocomplete({ onLocationSelect }) {
@@ -1046,7 +1047,13 @@ export default function RestaurantSelector({
                             {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
                           </span>
                         </span>
-                        <span className="text-sm text-gray-500 text-left">
+                        <span 
+                          className="text-sm text-gray-500 text-left hover:text-blue-600 hover:underline cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openInMaps(restaurant.address, restaurant.city);
+                          }}
+                        >
                           {restaurant.address.split(',')[0]}, {restaurant.city}
                         </span>
                       </div>
