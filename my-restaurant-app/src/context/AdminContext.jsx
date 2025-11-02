@@ -18,15 +18,15 @@ export const AdminProvider = ({ children }) => {
   const [adminToken, setAdminToken] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const verifyAdminToken = useCallback(async (token) => {
+  const verifyAdminToken = useCallback(async () => {
     try {
       console.log('🔍 AdminContext: Verifying admin token...')
-      console.log('🔍 AdminContext: Token (first 20 chars):', token?.substring(0, 20))
+      console.log('🔍 AdminContext: Using cookie-based auth')
       
       const response = await fetch(`${API_URL}/restaurant/admin/verify`, {
         method: "GET",
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       })

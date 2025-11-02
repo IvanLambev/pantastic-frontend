@@ -39,10 +39,10 @@ export default function RestaurantDetails() {
 
     const fetchFavorites = async () => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user.access_token) return;
+      if (!user.customer_id) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -66,13 +66,13 @@ export default function RestaurantDetails() {
 
   const handleToggleFavorite = async (itemId) => {
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-    if (!user.access_token) return;
+    if (!user.customer_id) return;
     if (!isItemFavorite(itemId)) {
       // Add to favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         method: 'POST',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ item_id: itemId }),
@@ -86,8 +86,8 @@ export default function RestaurantDetails() {
       const favId = getFavoriteId(itemId);
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favId || itemId}`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });

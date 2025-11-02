@@ -11,6 +11,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### 📁 Core Utility Files
 
 1. **`src/utils/cookieAuth.js`**
+
    - Cookie-based authentication utilities
    - Functions: `login()`, `logout()`, `validateSession()`, `validateAdmin()`, `authenticateWithGoogle()`
    - `fetchWithCookies()` - Authenticated fetch wrapper
@@ -25,6 +26,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### 📁 Updated Context Files (New Versions)
 
 3. **`src/context/AuthContext.NEW.jsx`**
+
    - Updated AuthContext using cookie authentication
    - No token state, uses `validateSession()` instead
    - Periodic session validation
@@ -39,6 +41,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### 📁 Documentation
 
 5. **`COOKIE_AUTH_MIGRATION.md`**
+
    - Comprehensive migration documentation
    - Before/after comparisons
    - Security considerations
@@ -47,6 +50,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
    - Rollback procedures
 
 6. **`IMPLEMENTATION_GUIDE.md`**
+
    - Step-by-step implementation instructions
    - File-by-file update guide
    - Find & replace patterns
@@ -55,6 +59,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
    - Common issues & solutions
 
 7. **`QUICK_REFERENCE.md`**
+
    - Quick lookup guide
    - Before/after code comparisons
    - Common patterns
@@ -63,6 +68,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
    - Error handling examples
 
 8. **`BACKEND_REQUIREMENTS.md`**
+
    - Requirements for backend team
    - Cookie configuration examples
    - CORS setup
@@ -78,6 +84,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### 📁 Examples
 
 10. **`EXAMPLES/login-form-example.jsx`**
+
     - Example login form using cookie auth
     - Shows migration from old to new approach
 
@@ -90,18 +97,22 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ## Key Changes Summary
 
 ### Authentication
+
 - ✅ **Before:** Tokens in sessionStorage
 - ✅ **After:** Tokens in HttpOnly cookies (secure, XSS-protected)
 
 ### Session Data
+
 - ✅ **Before:** Everything in sessionStorage (lost on tab close)
 - ✅ **After:** Non-sensitive data in localStorage (persistent)
 
 ### Cart Storage
+
 - ✅ **Before:** Full items with images & descriptions
 - ✅ **After:** Minimal data (id, name, price, quantity only)
 
 ### API Requests
+
 - ✅ **Before:** Manual token attachment via Authorization header
 - ✅ **After:** Automatic via cookies (`credentials: 'include'`)
 
@@ -112,18 +123,22 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### High Priority (Core Functionality)
 
 1. **`src/context/AuthContext.jsx`**
+
    - Replace with `AuthContext.NEW.jsx`
    - Or manually update using implementation guide
 
 2. **`src/context/CartContext.jsx`**
+
    - Replace with `CartContext.NEW.jsx`
    - Or manually update using implementation guide
 
 3. **`src/components/login-form.jsx`**
+
    - Update to use `login()` from cookieAuth
    - Remove sessionStorage.setItem('user')
 
 4. **`src/components/GoogleLoginButton.jsx`**
+
    - Update to use `authenticateWithGoogle()`
    - Remove sessionStorage token storage
 
@@ -135,15 +150,19 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### Medium Priority (Feature Pages)
 
 6. **`src/pages/Login.jsx`**
+
    - Update login logic
 
 7. **`src/pages/SignUp.jsx`**
+
    - Update signup logic if it sets tokens
 
 8. **`src/pages/UserDashboard.jsx`**
+
    - Update to use useAuth hook
 
 9. **`src/pages/OrderTrackingV2.jsx`**
+
    - Update API calls to cookieApi
 
 10. **`src/pages/RestaurantDetails.jsx`**
@@ -152,9 +171,11 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ### Lower Priority (Admin & Utilities)
 
 11. **`src/context/AdminContext.jsx`**
+
     - Update admin auth to use cookies
 
 12. **`src/utils/apiClient.js`**
+
     - Can be deprecated after migration
     - Replace all usage with cookieApi
 
@@ -169,6 +190,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ## Implementation Workflow
 
 ### Week 1: Preparation
+
 - [x] Create utility files (cookieAuth.js, sessionStorage.js)
 - [x] Create new context files
 - [x] Write documentation
@@ -176,29 +198,34 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 - [ ] Backend updates CORS configuration
 
 ### Week 2: Core Updates
+
 - [ ] Update AuthContext.jsx
 - [ ] Update CartContext.jsx
 - [ ] Test auth flow
 - [ ] Test cart functionality
 
 ### Week 3: Component Updates
+
 - [ ] Update login-form.jsx
 - [ ] Update GoogleLoginButton.jsx
 - [ ] Update all pages using auth
 - [ ] Update CheckoutV2.jsx
 
 ### Week 4: API Migration
+
 - [ ] Replace all fetch calls with cookieApi
 - [ ] Replace all sessionStorage with utils
 - [ ] Remove old apiClient.js usage
 
 ### Week 5: Testing
+
 - [ ] End-to-end testing
 - [ ] Cross-browser testing
 - [ ] Security audit
 - [ ] Performance testing
 
 ### Week 6: Deployment
+
 - [ ] Deploy to staging
 - [ ] Monitor for issues
 - [ ] Deploy to production
@@ -209,15 +236,18 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ## Quick Start
 
 1. **Read Documentation:**
+
    - Start with `QUICK_REFERENCE.md` for overview
    - Read `IMPLEMENTATION_GUIDE.md` for step-by-step
    - Reference `COOKIE_AUTH_MIGRATION.md` for details
 
 2. **Backend Coordination:**
+
    - Share `BACKEND_REQUIREMENTS.md` with backend team
    - Ensure backend implements cookie auth first
 
 3. **Start Implementation:**
+
    - Begin with `AuthContext.jsx` and `CartContext.jsx`
    - Then update login/logout components
    - Finally update all other files
@@ -233,6 +263,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 ## Testing Checklist
 
 ### Authentication
+
 - [ ] Login sets HttpOnly cookies
 - [ ] Cookies have Secure, SameSite flags
 - [ ] Logout clears cookies
@@ -241,6 +272,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 - [ ] Admin validation works
 
 ### Session Persistence
+
 - [ ] Cart persists across tabs
 - [ ] Cart persists across refreshes
 - [ ] Delivery info persists
@@ -248,6 +280,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 - [ ] Scheduled order info persists
 
 ### Security
+
 - [ ] No tokens in localStorage/sessionStorage
 - [ ] No tokens visible in DevTools > Application
 - [ ] Cookies marked HttpOnly
@@ -255,6 +288,7 @@ This migration replaces sessionStorage-based JWT authentication with secure Http
 - [ ] XSS protection working
 
 ### Functionality
+
 - [ ] All API calls work
 - [ ] Order creation works
 - [ ] Cart operations work
@@ -303,6 +337,7 @@ Legend:
 ## Important Notes
 
 ### DO:
+
 - ✅ Use `cookieApi` for all authenticated requests
 - ✅ Use sessionStorage utils for session data
 - ✅ Call `updateLoginState()` after login
@@ -310,6 +345,7 @@ Legend:
 - ✅ Test in browser with DevTools
 
 ### DON'T:
+
 - ❌ Access tokens in frontend code
 - ❌ Store tokens in localStorage/sessionStorage
 - ❌ Manually set Authorization headers
@@ -321,12 +357,14 @@ Legend:
 ## Support Resources
 
 1. **Documentation Files:**
+
    - `QUICK_REFERENCE.md` - Quick answers
    - `IMPLEMENTATION_GUIDE.md` - How to implement
    - `COOKIE_AUTH_MIGRATION.md` - Why & what changed
    - `BACKEND_REQUIREMENTS.md` - Backend specs
 
 2. **Example Files:**
+
    - `EXAMPLES/login-form-example.jsx`
    - `EXAMPLES/session-storage-examples.jsx`
 
@@ -339,16 +377,19 @@ Legend:
 ## Next Steps
 
 1. **Coordinate with Backend Team:**
+
    - Share `BACKEND_REQUIREMENTS.md`
    - Ensure cookie auth is implemented
    - Test backend endpoints
 
 2. **Start Frontend Migration:**
+
    - Follow `IMPLEMENTATION_GUIDE.md`
    - Update core files first
    - Test incrementally
 
 3. **Test Thoroughly:**
+
    - Use testing checklist above
    - Check security measures
    - Verify functionality

@@ -89,16 +89,15 @@ export async function fetchWithAdminAuth(url, options = {}) {
     console.log('⚠️ No admin user in sessionStorage');
   }
   
-  // Set Authorization header if access_token exists
-  if (access_token) {
-    options.headers = {
-      ...(options.headers || {}),
-      "Authorization": `Bearer ${access_token}`,
-    };
-    console.log('✅ Authorization header set');
-  } else {
-    console.log('❌ No access token available');
-  }
+  // Ensure options has headers
+  options.headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+  
+  // Always use credentials: 'include' for cookie-based auth
+  options.credentials = 'include';
+  console.log('✅ Using cookie-based authentication');
   
   let response = await fetch(url, options);
   console.log(`📡 Response status: ${response.status} for ${url}`);
@@ -108,15 +107,10 @@ export async function fetchWithAdminAuth(url, options = {}) {
     console.log('🔄 Admin token expired, attempting to refresh...');
     
     try {
-      const newTokens = await refreshAdminTokens();
+      await refreshAdminTokens();
       
-      // Retry original request with new token
-      options.headers = {
-        ...(options.headers || {}),
-        "Authorization": `Bearer ${newTokens.access_token}`,
-      };
-      
-      console.log('🔄 Retrying admin request with new token');
+      // Retry original request with new cookie
+      console.log('🔄 Retrying admin request with refreshed cookies');
       response = await fetch(url, options);
       
       return response;

@@ -46,10 +46,9 @@ export default function UserDashboard() {
     setIsLoading(true);
     const fetchOrders = async () => {
       try {
-        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         const response = await fetchWithAuth(`${API_URL}/order/orders/user`, {
+          credentials: 'include', // Send HttpOnly cookies
           headers: {
-            'Authorization': `Bearer ${user.access_token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -72,8 +71,8 @@ export default function UserDashboard() {
       try {
         const response = await fetch(`${API_URL}/user/user-info`, {
           method: "GET",
+          credentials: 'include', // Send HttpOnly cookies
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
@@ -94,14 +93,14 @@ export default function UserDashboard() {
     const fetchFavorites = async () => {
       setIsItemMapLoading(true);
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user.access_token) {
+      if (!user.customer_id) {
         setIsItemMapLoading(false);
         return;
       }
       // Fetch all restaurants
       const restaurantsRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -115,8 +114,8 @@ export default function UserDashboard() {
           restaurantsData.map(async (r) => {
             const restaurantId = r[0] || r.restaurant_id || r.id;
             const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
+              credentials: 'include', // Send HttpOnly cookies
               headers: {
-                'Authorization': `Bearer ${user.access_token}`,
                 'Content-Type': 'application/json',
               },
             });
@@ -156,8 +155,8 @@ export default function UserDashboard() {
       setItemMap(itemMapObj);
       // Fetch favourites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -268,9 +267,9 @@ export default function UserDashboard() {
     try {
       const res = await fetch(`${API_URL}/user/favouriteItems/${favouriteId}`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
           'accept': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
       });
       if (res.ok) {

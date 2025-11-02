@@ -3,6 +3,7 @@
 ## The Problem
 
 The backend is using **HttpOnly cookies** correctly, but the frontend is trying to:
+
 1. Read HttpOnly cookies from JavaScript (impossible - they're HttpOnly!)
 2. Send `Authorization: Bearer undefined` headers (because cookies can't be read)
 
@@ -24,6 +25,7 @@ The backend is using **HttpOnly cookies** correctly, but the frontend is trying 
 These files still have `Authorization: Bearer` headers that need to be removed:
 
 ### User-Facing Pages
+
 - `src/components/user-dashboard.jsx` (4 occurrences)
 - `src/pages/RestaurantDetails.jsx` (3 occurrences)
 - `src/pages/ItemDetails.jsx` (3 occurrences)
@@ -31,6 +33,7 @@ These files still have `Authorization: Bearer` headers that need to be removed:
 - `src/components/restaurant-manager.jsx` (4 occurrences)
 
 ### Admin/Context Files
+
 - `src/context/AuthContext.jsx` (3 occurrences)
 - `src/context/AdminContext.jsx` (1 occurrence)
 - `src/utils/adminAuth.js` (2 occurrences)
@@ -40,29 +43,31 @@ These files still have `Authorization: Bearer` headers that need to be removed:
 For each file, replace this pattern:
 
 ### ❌ BEFORE (Wrong):
+
 ```javascript
-const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 const response = await fetch(url, {
-  method: 'POST',
+  method: "POST",
   headers: {
-    'Authorization': `Bearer ${user.access_token}`, // ❌ REMOVE THIS
-    'Content-Type': 'application/json',
+    Authorization: `Bearer ${user.access_token}`, // ❌ REMOVE THIS
+    "Content-Type": "application/json",
   },
-  body: JSON.stringify(data)
-})
+  body: JSON.stringify(data),
+});
 ```
 
 ### ✅ AFTER (Correct):
+
 ```javascript
 const response = await fetch(url, {
-  method: 'POST',
-  credentials: 'include', // ✅ This sends HttpOnly cookies automatically
+  method: "POST",
+  credentials: "include", // ✅ This sends HttpOnly cookies automatically
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     // NO Authorization header!
   },
-  body: JSON.stringify(data)
-})
+  body: JSON.stringify(data),
+});
 ```
 
 ## 🎯 Key Principles

@@ -187,18 +187,18 @@ Component wants to fetch orders:
 1. Component:
    const user = JSON.parse(sessionStorage.getItem('user'))
    const token = user.access_token
-   
+
 2. Component:
    fetch('/orders', {
      headers: {
        'Authorization': `Bearer ${token}`
      }
    })
-   
+
 3. Browser → Backend:
    GET /orders
    Authorization: Bearer eyJ...
-   
+
 4. Backend:
    Extract: request.headers['Authorization']
    Validate token
@@ -218,16 +218,16 @@ Component wants to fetch orders:
 1. Component:
    import { cookieApi } from '@/utils/cookieAuth'
    const orders = await cookieApi.get('/orders')
-   
+
 2. cookieApi internally:
    fetch('/orders', {
      credentials: 'include'  ← Include cookies
    })
-   
+
 3. Browser → Backend:
    GET /orders
    Cookie: access_token=eyJ...; refresh_token=eyJ...
-   
+
 4. Backend:
    Extract: request.cookies['access_token']
    Validate token
@@ -342,13 +342,12 @@ Benefit: Fast, efficient, within quota
 ```
 
 When displaying cart, fetch full product details if needed:
+
 ```jsx
-const cart = getCart()
+const cart = getCart();
 const fullCartItems = await Promise.all(
-  cart.map(item => 
-    cookieApi.get(`/products/${item.id}`)
-  )
-)
+  cart.map((item) => cookieApi.get(`/products/${item.id}`))
+);
 ```
 
 ---
@@ -371,7 +370,7 @@ BEFORE (SessionStorage):
        body: token
      })
    </script>
-   
+
 2. Token is stolen ❌
 3. Attacker can impersonate user ❌
 
@@ -381,7 +380,7 @@ AFTER (HttpOnly Cookies):
      const token = document.cookie  // ← Returns empty
      // HttpOnly cookies NOT accessible via JavaScript
    </script>
-   
+
 2. Token is NOT stolen ✅
 3. User remains secure ✅
 ```

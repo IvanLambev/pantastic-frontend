@@ -153,12 +153,11 @@ export function RestaurantManager() {
   const handleEditRestaurant = async (e) => {
     e.preventDefault()
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
       const response = await fetch(`${API_URL}/restaurant/restaurants`, {
         method: 'PUT',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           restaurant_id: selectedRestaurant[0],
@@ -178,12 +177,11 @@ export function RestaurantManager() {
 
   const handleDeleteRestaurant = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
       const response = await fetch(`${API_URL}/restaurant/restaurants`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           restaurant_id: selectedRestaurant[0]
@@ -220,12 +218,9 @@ export function RestaurantManager() {
     formData.append('file', newItem.file)
 
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
       const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`
-        },
+        credentials: 'include', // Send HttpOnly cookies
         body: formData
       })
 
@@ -285,12 +280,9 @@ export function RestaurantManager() {
         }
       }
 
-      const user = JSON.parse(sessionStorage.getItem('user'));
       const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${user.access_token}`
-        },
+        credentials: 'include', // Send HttpOnly cookies
         body: formData
       });
 
@@ -324,12 +316,11 @@ export function RestaurantManager() {
     setIsSubmitting(true)
     
     try {
-      const user = JSON.parse(sessionStorage.getItem('user'))
       const response = await fetch(`${API_URL}/restaurant/items`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token}`
         },
         body: JSON.stringify({
           item_id: editingItem.item_id // Using the correct property from the object
@@ -374,7 +365,6 @@ export function RestaurantManager() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const user = JSON.parse(sessionStorage.getItem("user") || "{}");
       // Convert opening hours to string format
       const opening_hours = Object.fromEntries(
         Object.entries(addRestaurantForm.openingHours).map(([day, [start, end]]) => [
@@ -384,8 +374,8 @@ export function RestaurantManager() {
       );
       const response = await fetch(`${API_URL}/restaurant/restaurants`, {
         method: "POST",
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          "Authorization": `Bearer ${user.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

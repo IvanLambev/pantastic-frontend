@@ -9,11 +9,13 @@ This document outlines the migration from sessionStorage-based JWT authenticatio
 ### 1. Authentication Storage
 
 **Before:**
+
 - `access_token` and `refresh_token` stored in `sessionStorage`
 - Tokens manually attached to API requests via `Authorization` header
 - Vulnerable to XSS attacks
 
 **After:**
+
 - `access_token` and `refresh_token` stored in **HttpOnly, Secure cookies** by backend
 - Frontend **CANNOT** access tokens directly (enhanced security)
 - Cookies automatically sent with requests (`credentials: 'include'`)
@@ -22,10 +24,12 @@ This document outlines the migration from sessionStorage-based JWT authenticatio
 ### 2. Session Data Storage
 
 **Before:**
+
 - All data (including tokens) in `sessionStorage`
 - Data lost when tab is closed
 
 **After:**
+
 - Non-sensitive data in `localStorage` (persists across tabs/sessions)
 - Minimal cart data (no images/descriptions)
 - Delivery information persisted
@@ -33,6 +37,7 @@ This document outlines the migration from sessionStorage-based JWT authenticatio
 ### 3. Cart Optimization
 
 **Before:**
+
 ```json
 {
   "id": "...",
@@ -45,6 +50,7 @@ This document outlines the migration from sessionStorage-based JWT authenticatio
 ```
 
 **After:**
+
 ```json
 {
   "id": "fcf3385e-fb47-44ba-a967-4f2be5cf434d",
@@ -57,7 +63,9 @@ This document outlines the migration from sessionStorage-based JWT authenticatio
 ## New Utility Files
 
 ### 1. `src/utils/cookieAuth.js`
+
 Handles all authentication operations:
+
 - `login(email, password)` - Login and set HttpOnly cookies
 - `logout()` - Clear cookies and local session
 - `validateSession()` - Check if user is authenticated
@@ -67,7 +75,9 @@ Handles all authentication operations:
 - `cookieApi.get/post/put/delete/patch()` - Convenience API methods
 
 ### 2. `src/utils/sessionStorage.js`
+
 Manages non-sensitive session data in localStorage:
+
 - Delivery address, coordinates, method
 - Selected restaurant (minimal data)
 - Cart (optimized, no images)
@@ -81,19 +91,19 @@ Replace token-based auth with cookie-based validation:
 
 ```jsx
 // OLD
-const [token, setToken] = useState(null)
-const user = JSON.parse(sessionStorage.getItem("user"))
+const [token, setToken] = useState(null);
+const user = JSON.parse(sessionStorage.getItem("user"));
 
 // NEW
-const [isAuthenticated, setIsAuthenticated] = useState(false)
-const [user, setUser] = useState(null)
+const [isAuthenticated, setIsAuthenticated] = useState(false);
+const [user, setUser] = useState(null);
 
 useEffect(() => {
   validateSession().then(({ isValid, user }) => {
-    setIsAuthenticated(isValid)
-    setUser(user)
-  })
-}, [])
+    setIsAuthenticated(isValid);
+    setUser(user);
+  });
+}, []);
 ```
 
 ### Step 2: Update Login Flow
@@ -114,12 +124,12 @@ await login(email, password)
 
 ```jsx
 // OLD
-sessionStorage.removeItem('user')
-sessionStorage.removeItem('selectedRestaurant')
+sessionStorage.removeItem("user");
+sessionStorage.removeItem("selectedRestaurant");
 
 // NEW
-import { logout } from '@/utils/cookieAuth'
-await logout()
+import { logout } from "@/utils/cookieAuth";
+await logout();
 // Backend clears cookies, we clear localStorage
 ```
 
@@ -127,16 +137,16 @@ await logout()
 
 ```jsx
 // OLD
-const user = JSON.parse(sessionStorage.getItem('user'))
+const user = JSON.parse(sessionStorage.getItem("user"));
 const response = await fetch(url, {
   headers: {
-    'Authorization': `Bearer ${user.access_token}`
-  }
-})
+    Authorization: `Bearer ${user.access_token}`,
+  },
+});
 
 // NEW
-import { cookieApi } from '@/utils/cookieAuth'
-const data = await cookieApi.get('/endpoint')
+import { cookieApi } from "@/utils/cookieAuth";
+const data = await cookieApi.get("/endpoint");
 // Cookies sent automatically
 ```
 
@@ -144,24 +154,24 @@ const data = await cookieApi.get('/endpoint')
 
 ```jsx
 // OLD
-sessionStorage.setItem('delivery_address', address)
-const address = sessionStorage.getItem('delivery_address')
+sessionStorage.setItem("delivery_address", address);
+const address = sessionStorage.getItem("delivery_address");
 
 // NEW
-import { setDeliveryAddress, getDeliveryAddress } from '@/utils/sessionStorage'
-setDeliveryAddress(address)
-const address = getDeliveryAddress()
+import { setDeliveryAddress, getDeliveryAddress } from "@/utils/sessionStorage";
+setDeliveryAddress(address);
+const address = getDeliveryAddress();
 ```
 
 ### Step 6: Update Cart Storage
 
 ```jsx
 // OLD
-sessionStorage.setItem('cart', JSON.stringify(cartItems))
+sessionStorage.setItem("cart", JSON.stringify(cartItems));
 
 // NEW
-import { setCart, getCart } from '@/utils/sessionStorage'
-setCart(cartItems) // Automatically strips images/descriptions
+import { setCart, getCart } from "@/utils/sessionStorage";
+setCart(cartItems); // Automatically strips images/descriptions
 ```
 
 ## Backend Requirements
@@ -169,6 +179,7 @@ setCart(cartItems) // Automatically strips images/descriptions
 The backend must implement the following:
 
 ### 1. Cookie Configuration
+
 ```python
 # Set cookies with proper security flags
 response.set_cookie(
@@ -182,6 +193,7 @@ response.set_cookie(
 ```
 
 ### 2. CORS Configuration
+
 ```python
 # Allow credentials (cookies) from frontend origin
 CORS(
@@ -195,14 +207,17 @@ CORS(
 ### 3. New Endpoints
 
 #### POST `/user/logout`
+
 Clears authentication cookies
 
 #### GET `/user/validate-session`
+
 Returns user info if session valid, 401 if not
 
 ### 4. Updated Endpoints
 
 All protected endpoints must:
+
 - Read tokens from cookies (not Authorization header)
 - Validate token
 - Return 401 if invalid/expired
@@ -210,20 +225,24 @@ All protected endpoints must:
 ## Security Considerations
 
 ### XSS Protection
+
 - HttpOnly cookies prevent JavaScript access
 - Implement Content Security Policy (CSP) headers
 - Sanitize all user inputs
 - Validate and escape data before rendering
 
 ### CSRF Protection
+
 - Use `SameSite=Lax` or `SameSite=Strict` on cookies
 - Consider CSRF tokens for state-changing operations
 
 ### HTTPS Only
+
 - `Secure` flag ensures cookies only sent over HTTPS
 - Never use in development without HTTPS (or use separate config)
 
 ### Cookie Expiration
+
 - Short-lived access tokens (15-30 minutes)
 - Longer refresh tokens (7-30 days)
 - Automatic refresh before expiration
@@ -246,6 +265,7 @@ All protected endpoints must:
 ## Rollback Plan
 
 If issues arise:
+
 1. Keep old sessionStorage code in comments
 2. Feature flag to switch between old/new auth
 3. Gradual rollout to subset of users
@@ -254,28 +274,35 @@ If issues arise:
 ## Common Issues & Solutions
 
 ### Issue: Cookies not being sent
+
 **Solution:** Ensure `credentials: 'include'` in all fetch calls
 
 ### Issue: CORS errors
+
 **Solution:** Backend must set `Access-Control-Allow-Credentials: true`
 
 ### Issue: Cookies not set in development
+
 **Solution:** Use HTTPS in dev or configure `Secure: false` for dev environment
 
 ### Issue: Session lost on page refresh
+
 **Solution:** Call `validateSession()` on app initialization
 
 ## Files to Update
 
 1. **Context:**
+
    - `src/context/AuthContext.jsx` - Use cookie auth
    - `src/context/CartContext.jsx` - Use localStorage utils
 
 2. **Components:**
+
    - `src/components/login-form.jsx` - Use `login()` from cookieAuth
    - `src/components/GoogleLoginButton.jsx` - Use `authenticateWithGoogle()`
 
 3. **Pages:**
+
    - `src/pages/CheckoutV2.jsx` - Use sessionStorage utils
    - `src/pages/Login.jsx` - Use cookie auth
    - All pages using auth
@@ -287,45 +314,47 @@ If issues arise:
 ## Example Usage
 
 ### Complete Login Flow
+
 ```jsx
-import { login } from '@/utils/cookieAuth'
-import { setSelectedRestaurant } from '@/utils/sessionStorage'
+import { login } from "@/utils/cookieAuth";
+import { setSelectedRestaurant } from "@/utils/sessionStorage";
 
 async function handleLogin(email, password) {
   try {
-    const userData = await login(email, password)
-    
+    const userData = await login(email, password);
+
     // Store non-sensitive session data
     if (restaurant) {
-      setSelectedRestaurant(restaurant)
+      setSelectedRestaurant(restaurant);
     }
-    
+
     // Redirect to dashboard
-    navigate('/dashboard')
+    navigate("/dashboard");
   } catch (error) {
-    console.error('Login failed:', error)
+    console.error("Login failed:", error);
   }
 }
 ```
 
 ### Complete API Request
+
 ```jsx
-import { cookieApi } from '@/utils/cookieAuth'
-import { getSelectedRestaurant, getCart } from '@/utils/sessionStorage'
+import { cookieApi } from "@/utils/cookieAuth";
+import { getSelectedRestaurant, getCart } from "@/utils/sessionStorage";
 
 async function createOrder() {
-  const restaurant = getSelectedRestaurant()
-  const cart = getCart()
-  
-  const order = await cookieApi.post('/order/orders', {
+  const restaurant = getSelectedRestaurant();
+  const cart = getCart();
+
+  const order = await cookieApi.post("/order/orders", {
     restaurant_id: restaurant.restaurant_id,
     products: cart.reduce((acc, item) => {
-      acc[item.id] = item.quantity
-      return acc
-    }, {})
-  })
-  
-  return order
+      acc[item.id] = item.quantity;
+      return acc;
+    }, {}),
+  });
+
+  return order;
 }
 ```
 

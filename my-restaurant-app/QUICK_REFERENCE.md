@@ -4,22 +4,38 @@
 
 ```jsx
 // Authentication
-import { login, logout, validateSession, validateAdmin, authenticateWithGoogle, cookieApi } from '@/utils/cookieAuth'
+import {
+  login,
+  logout,
+  validateSession,
+  validateAdmin,
+  authenticateWithGoogle,
+  cookieApi,
+} from "@/utils/cookieAuth";
 
 // Session Storage
 import {
-  getDeliveryAddress, setDeliveryAddress,
-  getDeliveryCoordinates, setDeliveryCoordinates,
-  getDeliveryMethod, setDeliveryMethod,
-  getSelectedRestaurant, setSelectedRestaurant,
-  getCart, setCart,
-  getOrderId, setOrderId,
-  getScheduledOrder, setScheduledOrder,
-  clearCartData, clearDeliveryData, clearAllSessionData
-} from '@/utils/sessionStorage'
+  getDeliveryAddress,
+  setDeliveryAddress,
+  getDeliveryCoordinates,
+  setDeliveryCoordinates,
+  getDeliveryMethod,
+  setDeliveryMethod,
+  getSelectedRestaurant,
+  setSelectedRestaurant,
+  getCart,
+  setCart,
+  getOrderId,
+  setOrderId,
+  getScheduledOrder,
+  setScheduledOrder,
+  clearCartData,
+  clearDeliveryData,
+  clearAllSessionData,
+} from "@/utils/sessionStorage";
 
 // Auth Context
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from "@/context/AuthContext";
 ```
 
 ---
@@ -27,98 +43,110 @@ import { useAuth } from '@/context/AuthContext'
 ## Before & After Comparison
 
 ### Login
+
 ```jsx
 // ❌ BEFORE
 const response = await fetch(`${API_URL}/user/login`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, password })
-})
-const data = await response.json()
-sessionStorage.setItem('user', JSON.stringify(data))
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password }),
+});
+const data = await response.json();
+sessionStorage.setItem("user", JSON.stringify(data));
 
 // ✅ AFTER
-import { login } from '@/utils/cookieAuth'
-await login(email, password)
+import { login } from "@/utils/cookieAuth";
+await login(email, password);
 ```
 
 ### Logout
+
 ```jsx
 // ❌ BEFORE
-sessionStorage.removeItem('user')
-sessionStorage.removeItem('selectedRestaurant')
+sessionStorage.removeItem("user");
+sessionStorage.removeItem("selectedRestaurant");
 
 // ✅ AFTER
-import { logout } from '@/utils/cookieAuth'
-await logout()
+import { logout } from "@/utils/cookieAuth";
+await logout();
 ```
 
 ### Check Auth Status
+
 ```jsx
 // ❌ BEFORE
-const user = sessionStorage.getItem('user')
-const isLoggedIn = !!user
+const user = sessionStorage.getItem("user");
+const isLoggedIn = !!user;
 
 // ✅ AFTER
-import { validateSession } from '@/utils/cookieAuth'
-const { isValid, user } = await validateSession()
+import { validateSession } from "@/utils/cookieAuth";
+const { isValid, user } = await validateSession();
 ```
 
 ### API Requests
+
 ```jsx
 // ❌ BEFORE
-const user = JSON.parse(sessionStorage.getItem('user'))
+const user = JSON.parse(sessionStorage.getItem("user"));
 const response = await fetch(`${API_URL}/orders`, {
-  method: 'POST',
+  method: "POST",
   headers: {
-    'Authorization': `Bearer ${user.access_token}`,
-    'Content-Type': 'application/json'
+    Authorization: `Bearer ${user.access_token}`,
+    "Content-Type": "application/json",
   },
-  body: JSON.stringify(orderData)
-})
-const data = await response.json()
+  body: JSON.stringify(orderData),
+});
+const data = await response.json();
 
 // ✅ AFTER
-import { cookieApi } from '@/utils/cookieAuth'
-const data = await cookieApi.post('/orders', orderData)
+import { cookieApi } from "@/utils/cookieAuth";
+const data = await cookieApi.post("/orders", orderData);
 ```
 
 ### Delivery Address
+
 ```jsx
 // ❌ BEFORE
-sessionStorage.setItem('delivery_address', address)
-const address = sessionStorage.getItem('delivery_address')
+sessionStorage.setItem("delivery_address", address);
+const address = sessionStorage.getItem("delivery_address");
 
 // ✅ AFTER
-import { setDeliveryAddress, getDeliveryAddress } from '@/utils/sessionStorage'
-setDeliveryAddress(address)
-const address = getDeliveryAddress()
+import { setDeliveryAddress, getDeliveryAddress } from "@/utils/sessionStorage";
+setDeliveryAddress(address);
+const address = getDeliveryAddress();
 ```
 
 ### Selected Restaurant
+
 ```jsx
 // ❌ BEFORE
-sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant))
-const restaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+sessionStorage.setItem("selectedRestaurant", JSON.stringify(restaurant));
+const restaurant = JSON.parse(
+  sessionStorage.getItem("selectedRestaurant") || "[]"
+);
 
 // ✅ AFTER
-import { setSelectedRestaurant, getSelectedRestaurant } from '@/utils/sessionStorage'
-setSelectedRestaurant(restaurant)
-const restaurant = getSelectedRestaurant()
+import {
+  setSelectedRestaurant,
+  getSelectedRestaurant,
+} from "@/utils/sessionStorage";
+setSelectedRestaurant(restaurant);
+const restaurant = getSelectedRestaurant();
 ```
 
 ### Cart
+
 ```jsx
 // ❌ BEFORE
-sessionStorage.setItem('cart', JSON.stringify(cartItems))
-const cart = JSON.parse(sessionStorage.getItem('cart') || '[]')
-sessionStorage.removeItem('cart')
+sessionStorage.setItem("cart", JSON.stringify(cartItems));
+const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
+sessionStorage.removeItem("cart");
 
 // ✅ AFTER
-import { setCart, getCart, clearCartData } from '@/utils/sessionStorage'
-setCart(cartItems) // Automatically strips images/descriptions
-const cart = getCart()
-clearCartData()
+import { setCart, getCart, clearCartData } from "@/utils/sessionStorage";
+setCart(cartItems); // Automatically strips images/descriptions
+const cart = getCart();
+clearCartData();
 ```
 
 ---
@@ -126,71 +154,74 @@ clearCartData()
 ## Common Patterns
 
 ### Component with Auth
+
 ```jsx
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from "@/context/AuthContext";
 
 function MyComponent() {
-  const { isLoggedIn, user, isAdmin, handleLogout } = useAuth()
-  
+  const { isLoggedIn, user, isAdmin, handleLogout } = useAuth();
+
   if (!isLoggedIn) {
-    return <Navigate to="/login" />
+    return <Navigate to="/login" />;
   }
-  
+
   return (
     <div>
       <p>Welcome, {user?.name}</p>
       {isAdmin && <AdminPanel />}
       <button onClick={handleLogout}>Logout</button>
     </div>
-  )
+  );
 }
 ```
 
 ### Making API Calls
+
 ```jsx
-import { cookieApi } from '@/utils/cookieAuth'
+import { cookieApi } from "@/utils/cookieAuth";
 
 async function fetchOrders() {
   try {
-    const orders = await cookieApi.get('/orders')
-    return orders
+    const orders = await cookieApi.get("/orders");
+    return orders;
   } catch (error) {
-    console.error('Failed to fetch orders:', error)
-    throw error
+    console.error("Failed to fetch orders:", error);
+    throw error;
   }
 }
 
 async function createOrder(orderData) {
   try {
-    const order = await cookieApi.post('/orders', orderData)
-    return order
+    const order = await cookieApi.post("/orders", orderData);
+    return order;
   } catch (error) {
-    console.error('Failed to create order:', error)
-    throw error
+    console.error("Failed to create order:", error);
+    throw error;
   }
 }
 ```
 
 ### Using Session Storage
+
 ```jsx
-import { 
-  getSelectedRestaurant, 
-  getCart, 
-  getDeliveryMethod 
-} from '@/utils/sessionStorage'
+import {
+  getSelectedRestaurant,
+  getCart,
+  getDeliveryMethod,
+} from "@/utils/sessionStorage";
 
 function CheckoutComponent() {
-  const restaurant = getSelectedRestaurant()
-  const cart = getCart()
-  const method = getDeliveryMethod()
-  
+  const restaurant = getSelectedRestaurant();
+  const cart = getCart();
+  const method = getDeliveryMethod();
+
   return (
     <div>
       <h2>{restaurant?.name}</h2>
       <p>Items: {cart.length}</p>
       <p>Method: {method}</p>
     </div>
-  )
+  );
 }
 ```
 
@@ -199,22 +230,22 @@ function CheckoutComponent() {
 ## cookieApi Methods
 
 ```jsx
-import { cookieApi } from '@/utils/cookieAuth'
+import { cookieApi } from "@/utils/cookieAuth";
 
 // GET request
-const data = await cookieApi.get('/endpoint')
+const data = await cookieApi.get("/endpoint");
 
 // POST request
-const result = await cookieApi.post('/endpoint', { key: 'value' })
+const result = await cookieApi.post("/endpoint", { key: "value" });
 
 // PUT request
-const updated = await cookieApi.put('/endpoint', { key: 'value' })
+const updated = await cookieApi.put("/endpoint", { key: "value" });
 
 // DELETE request
-const deleted = await cookieApi.delete('/endpoint')
+const deleted = await cookieApi.delete("/endpoint");
 
 // PATCH request
-const patched = await cookieApi.patch('/endpoint', { key: 'value' })
+const patched = await cookieApi.patch("/endpoint", { key: "value" });
 
 // All methods automatically:
 // - Include cookies (credentials: 'include')
@@ -230,39 +261,39 @@ const patched = await cookieApi.patch('/endpoint', { key: 'value' })
 ```jsx
 import {
   // Delivery
-  getDeliveryAddress,      // Returns string or ''
-  setDeliveryAddress,      // (address: string) => void
-  getDeliveryCoordinates,  // Returns {latitude, longitude} or null
-  setDeliveryCoordinates,  // (coords: {latitude, longitude}) => void
-  getDeliveryMethod,       // Returns 'pickup' | 'delivery'
-  setDeliveryMethod,       // (method: string) => void
-  
+  getDeliveryAddress, // Returns string or ''
+  setDeliveryAddress, // (address: string) => void
+  getDeliveryCoordinates, // Returns {latitude, longitude} or null
+  setDeliveryCoordinates, // (coords: {latitude, longitude}) => void
+  getDeliveryMethod, // Returns 'pickup' | 'delivery'
+  setDeliveryMethod, // (method: string) => void
+
   // Restaurant
-  getSelectedRestaurant,   // Returns restaurant object or null
-  setSelectedRestaurant,   // (restaurant: object) => void
-  
+  getSelectedRestaurant, // Returns restaurant object or null
+  setSelectedRestaurant, // (restaurant: object) => void
+
   // Cart
-  getCart,                 // Returns array of items
-  setCart,                 // (items: array) => void (strips images/descriptions)
-  
+  getCart, // Returns array of items
+  setCart, // (items: array) => void (strips images/descriptions)
+
   // Order
-  getOrderId,              // Returns string or null
-  setOrderId,              // (id: string) => void
-  
+  getOrderId, // Returns string or null
+  setOrderId, // (id: string) => void
+
   // Scheduling
-  getScheduledOrder,       // Returns boolean
-  setScheduledOrder,       // (isScheduled: boolean) => void
+  getScheduledOrder, // Returns boolean
+  setScheduledOrder, // (isScheduled: boolean) => void
   getOrderSchedulingReason, // Returns string
   setOrderSchedulingReason, // (reason: string) => void
   getOrderScheduledDelivery, // Returns string or null
   setOrderScheduledDelivery, // (time: string) => void
-  
+
   // Cleanup
-  clearCartData,           // Clears cart & orderId
-  clearDeliveryData,       // Clears delivery info
+  clearCartData, // Clears cart & orderId
+  clearDeliveryData, // Clears delivery info
   clearScheduledOrderData, // Clears scheduling info
-  clearAllSessionData      // Clears ALL localStorage
-} from '@/utils/sessionStorage'
+  clearAllSessionData, // Clears ALL localStorage
+} from "@/utils/sessionStorage";
 ```
 
 ---
@@ -270,18 +301,18 @@ import {
 ## Error Handling
 
 ```jsx
-import { login, cookieApi } from '@/utils/cookieAuth'
+import { login, cookieApi } from "@/utils/cookieAuth";
 
 // Login with error handling
 async function handleLogin(email, password) {
   try {
-    await login(email, password)
-    navigate('/dashboard')
+    await login(email, password);
+    navigate("/dashboard");
   } catch (error) {
-    if (error.message.includes('Invalid credentials')) {
-      setError('Wrong email or password')
+    if (error.message.includes("Invalid credentials")) {
+      setError("Wrong email or password");
     } else {
-      setError('Login failed. Please try again.')
+      setError("Login failed. Please try again.");
     }
   }
 }
@@ -289,16 +320,16 @@ async function handleLogin(email, password) {
 // API call with error handling
 async function fetchData() {
   try {
-    const data = await cookieApi.get('/endpoint')
-    return data
+    const data = await cookieApi.get("/endpoint");
+    return data;
   } catch (error) {
-    if (error.message.includes('401')) {
+    if (error.message.includes("401")) {
       // User not authenticated - redirect handled automatically
-      console.log('Session expired')
+      console.log("Session expired");
     } else {
-      console.error('API error:', error)
+      console.error("API error:", error);
     }
-    throw error
+    throw error;
   }
 }
 ```
@@ -315,12 +346,12 @@ async function fetchData() {
 
 // Check localStorage (DevTools > Application > Local Storage)
 // Should see:
-localStorage.getItem('cart')
-localStorage.getItem('selectedRestaurant')
-localStorage.getItem('delivery_address')
+localStorage.getItem("cart");
+localStorage.getItem("selectedRestaurant");
+localStorage.getItem("delivery_address");
 // Should NOT see:
-localStorage.getItem('user') // ❌ Should be null
-sessionStorage.getItem('user') // ❌ Should be null
+localStorage.getItem("user"); // ❌ Should be null
+sessionStorage.getItem("user"); // ❌ Should be null
 ```
 
 ---

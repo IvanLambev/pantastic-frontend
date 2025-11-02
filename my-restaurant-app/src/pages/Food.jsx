@@ -65,10 +65,10 @@ const Food = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-      if (!user.access_token) return;
+      if (!user.customer_id) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -165,8 +165,8 @@ const Food = () => {
       // Add to favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         method: 'POST',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
@@ -183,8 +183,8 @@ const Food = () => {
       const favId = getFavoriteId(itemId);
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favId || itemId}`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       });

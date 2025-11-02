@@ -115,10 +115,10 @@ export default function ItemDetails() {
   useEffect(() => {
     const checkFavorite = async () => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      if (!user.access_token) return
+      if (!user.customer_id) return
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       })
@@ -261,13 +261,13 @@ export default function ItemDetails() {
 
   const handleToggleFavorite = async () => {
     const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-    if (!user.access_token) return
+    if (!user.customer_id) return
     if (!isFavorite) {
       // Add to favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         method: 'POST',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
@@ -284,8 +284,8 @@ export default function ItemDetails() {
       // Remove from favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favoriteId || itemId}`, {
         method: 'DELETE',
+        credentials: 'include', // Send HttpOnly cookies
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
       })

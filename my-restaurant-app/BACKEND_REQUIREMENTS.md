@@ -11,6 +11,7 @@ Frontend is migrating from sessionStorage-based JWT to HttpOnly cookie authentic
 ### 1. Cookie-Based Token Storage
 
 **Current:** Backend returns tokens in response body
+
 ```json
 {
   "access_token": "eyJ...",
@@ -28,11 +29,11 @@ from fastapi import Response
 def login(credentials: LoginCredentials, response: Response):
     # Validate credentials
     user = authenticate_user(credentials.email, credentials.password)
-    
+
     # Generate tokens
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     # Set HttpOnly cookies
     response.set_cookie(
         key="access_token",
@@ -43,7 +44,7 @@ def login(credentials: LoginCredentials, response: Response):
         max_age=1800,       # 30 minutes (in seconds)
         path="/",           # Available on all paths
     )
-    
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -53,7 +54,7 @@ def login(credentials: LoginCredentials, response: Response):
         max_age=2592000,    # 30 days
         path="/",
     )
-    
+
     # Also return in body (for compatibility during migration)
     return {
         "access_token": access_token,
@@ -94,6 +95,7 @@ app.add_middleware(
 ### 3. Token Extraction from Cookies
 
 **Current:** Extract from Authorization header
+
 ```python
 token = request.headers.get("Authorization").replace("Bearer ", "")
 ```
@@ -110,14 +112,14 @@ def get_current_user(
 ):
     # Try cookie first
     token = access_token
-    
+
     # Fallback to Authorization header (for backward compatibility)
     if not token and authorization:
         token = authorization.replace("Bearer ", "")
-    
+
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     try:
         payload = verify_token(token)
         user_id = payload.get("sub")
@@ -148,7 +150,7 @@ def logout(response: Response):
         max_age=0,  # Expires immediately
         path="/",
     )
-    
+
     response.set_cookie(
         key="refresh_token",
         value="",
@@ -158,7 +160,7 @@ def logout(response: Response):
         max_age=0,
         path="/",
     )
-    
+
     return {"message": "Logged out successfully"}
 ```
 
@@ -214,14 +216,14 @@ Must set cookies after successful OAuth:
 def google_auth(google_token: GoogleToken, response: Response):
     # Validate Google token
     google_user = verify_google_token(google_token.access_token)
-    
+
     # Get or create user
     user = get_or_create_user_from_google(google_user)
-    
+
     # Generate our backend tokens
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     # Set HttpOnly cookies
     response.set_cookie(
         key="access_token",
@@ -232,7 +234,7 @@ def google_auth(google_token: GoogleToken, response: Response):
         max_age=1800,
         path="/",
     )
-    
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -242,7 +244,7 @@ def google_auth(google_token: GoogleToken, response: Response):
         max_age=2592000,
         path="/",
     )
-    
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -270,23 +272,23 @@ def refresh_token(
 ):
     # Try cookie first
     token = refresh_token
-    
+
     # Fallback to request body (for backward compatibility)
     if not token and token_data:
         token = token_data.get("refresh_token")
-    
+
     if not token:
         raise HTTPException(status_code=401, detail="No refresh token provided")
-    
+
     try:
         # Validate refresh token
         payload = verify_refresh_token(token)
         user_id = payload.get("sub")
-        
+
         # Generate new access token
         new_access_token = create_access_token(user_id)
         new_refresh_token = create_refresh_token(user_id)
-        
+
         # Set new cookies
         response.set_cookie(
             key="access_token",
@@ -297,7 +299,7 @@ def refresh_token(
             max_age=1800,
             path="/",
         )
-        
+
         response.set_cookie(
             key="refresh_token",
             value=new_refresh_token,
@@ -307,13 +309,13 @@ def refresh_token(
             max_age=2592000,
             path="/",
         )
-        
+
         return {
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
             "token_type": "bearer"
         }
-        
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 ```
@@ -323,6 +325,7 @@ def refresh_token(
 ## Environment-Specific Settings
 
 ### Production
+
 ```python
 COOKIE_SECURE = True   # Only HTTPS
 COOKIE_SAMESITE = "lax"  # or "strict"
@@ -330,6 +333,7 @@ ALLOWED_ORIGINS = ["https://www.palachinki.store"]
 ```
 
 ### Development
+
 ```python
 COOKIE_SECURE = False  # Allow HTTP
 COOKIE_SAMESITE = "lax"
@@ -389,6 +393,7 @@ curl -X POST https://api2.palachinki.store/user/login \
 ```
 
 Check response headers for `Set-Cookie`:
+
 ```
 Set-Cookie: access_token=eyJ...; HttpOnly; Secure; SameSite=Lax; Max-Age=1800; Path=/
 Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000; Path=/
@@ -425,6 +430,7 @@ curl -X OPTIONS https://api2.palachinki.store/user/validate-session \
 ```
 
 Should return:
+
 ```
 Access-Control-Allow-Origin: https://www.palachinki.store
 Access-Control-Allow-Credentials: true
@@ -457,25 +463,33 @@ Access-Control-Allow-Credentials: true
 ## Common Issues
 
 ### Issue: "CORS error - credentials not allowed"
-**Solution:** 
+
+**Solution:**
+
 ```python
 allow_credentials=True  # In CORS config
 ```
 
 ### Issue: "Cookies not being set"
+
 **Solution:**
+
 - Check `Secure` flag (must be `False` in dev without HTTPS)
 - Check domain matches
 - Check `SameSite` setting
 
 ### Issue: "Cookie too large"
+
 **Solution:**
+
 - JWT tokens can be large
 - Consider shorter token expiration
 - Use token ID reference instead of full payload
 
 ### Issue: "Token not found in cookies"
+
 **Solution:**
+
 - Frontend must send `credentials: 'include'`
 - Check cookie name matches exactly
 - Check cookie path is '/'
@@ -522,11 +536,11 @@ def get_current_user(
     token = access_token or (authorization.replace("Bearer ", "") if authorization else None)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     user = verify_and_get_user(token)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     return user
 
 # Login
@@ -535,13 +549,13 @@ def login(credentials: LoginCredentials, response: Response):
     user = authenticate_user(credentials.email, credentials.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    
+
     response.set_cookie(key="access_token", value=access_token, max_age=1800, **COOKIE_SETTINGS)
     response.set_cookie(key="refresh_token", value=refresh_token, max_age=2592000, **COOKIE_SETTINGS)
-    
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
