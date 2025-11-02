@@ -34,6 +34,7 @@ export function LoginForm({ className }) {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // IMPORTANT: Send and receive cookies
         body: JSON.stringify({ email, password }),
       });
   
@@ -52,6 +53,7 @@ export function LoginForm({ className }) {
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("Login successful:", data);
+        // Store user data (but NOT the tokens - those are in HttpOnly cookies)
         sessionStorage.setItem("user", JSON.stringify(data));
         await updateLoginState(); // Trigger login state update and admin check
         // alert("Login successful!");

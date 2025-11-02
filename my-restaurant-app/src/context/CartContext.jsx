@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { API_URL } from '@/config/api'
 import { CartContext } from './cart'
-import { fetchWithAuth } from "@/context/AuthContext";
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
@@ -78,7 +77,9 @@ export const CartProvider = ({ children }) => {
       const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       const restaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
 
-      if (!user?.access_token || !restaurant?.[0]) {
+      // With cookie-based auth, we just need to check if user exists (has customer_id)
+      // The backend will validate the HttpOnly cookie
+      if (!user?.customer_id || !restaurant?.[0]) {
         throw new Error('User not logged in or no restaurant selected')
       }
       const products = {}
@@ -100,12 +101,12 @@ export const CartProvider = ({ children }) => {
         }
       });
 
-      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
+      const response = await fetch(`${API_URL}/order/orders`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Send HttpOnly cookies
         body: JSON.stringify({
           restaurant_id: restaurant[0],
           products,
@@ -134,7 +135,6 @@ export const CartProvider = ({ children }) => {
     if (!orderId) return
 
     try {      
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
       const products = {}
       const instructions = {}
       const order_addons = {}
@@ -153,12 +153,12 @@ export const CartProvider = ({ children }) => {
         }
       })
 
-      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
+      const response = await fetch(`${API_URL}/order/orders`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Send HttpOnly cookies
         body: JSON.stringify({
           order_id: orderId,
           products,
@@ -180,13 +180,12 @@ export const CartProvider = ({ children }) => {
     if (!orderId) return
 
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const response = await fetchWithAuth(`${API_URL}/order/orders`, {
+      const response = await fetch(`${API_URL}/order/orders`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.access_token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Send HttpOnly cookies
         body: JSON.stringify({
           order_id: orderId
         })
