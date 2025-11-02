@@ -181,7 +181,8 @@ export default function CheckoutV2() {
   
   // Check if user is logged in
   const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-  const isLoggedIn = !!user?.access_token
+  // User is logged in if they have either access_token OR customer_id
+  const isLoggedIn = !!(user?.access_token || user?.customer_id)
   
   // Check if restaurant is currently open
   const isOpen = isRestaurantOpen(selectedRestaurant)

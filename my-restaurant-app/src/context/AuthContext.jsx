@@ -25,15 +25,16 @@ const AuthProvider = ({ children }) => {
       if (user) {
         try {
           const parsedUser = JSON.parse(user)
-          if (parsedUser.access_token) {
-            setToken(parsedUser.access_token)
+          // Check if user has either access_token OR customer_id (logged in)
+          if (parsedUser.access_token || parsedUser.customer_id) {
+            setToken(parsedUser.access_token || null)
             setIsLoggedIn(true)
             // Check admin status
             const admin = sessionStorage.getItem("isAdmin")
             if (admin !== null) {
               setIsAdmin(admin === "true")
-            } else {
-              // Optionally, validate admin on load
+            } else if (parsedUser.access_token) {
+              // Only validate admin if we have an access token
               await validateAdmin(parsedUser.access_token)
             }
           } else {
@@ -87,17 +88,26 @@ const AuthProvider = ({ children }) => {
   }
 
   const updateLoginState = async () => {
+    console.log("🔄 updateLoginState called")
     const user = sessionStorage.getItem("user")
+    console.log("📦 User data from sessionStorage:", user)
     if (user) {
       try {
         const parsedUser = JSON.parse(user)
-        if (parsedUser.access_token) {
-          setToken(parsedUser.access_token)
+        console.log("✅ Parsed user:", parsedUser)
+        // Check if user has either access_token OR customer_id (logged in)
+        if (parsedUser.access_token || parsedUser.customer_id) {
+          setToken(parsedUser.access_token || null)
           setIsLoggedIn(true)
-          await validateAdmin(parsedUser.access_token)
+          console.log("✅ User is logged in, isLoggedIn set to true")
+          if (parsedUser.access_token) {
+            // Only validate admin if we have an access token
+            await validateAdmin(parsedUser.access_token)
+          }
         } else {
           setIsLoggedIn(false)
           setIsAdmin(false)
+          console.log("❌ No access_token or customer_id, user not logged in")
         }
       } catch (error) {
         console.error("Error parsing user data:", error)
@@ -107,6 +117,7 @@ const AuthProvider = ({ children }) => {
     } else {
       setIsLoggedIn(false)
       setIsAdmin(false)
+      console.log("❌ No user in sessionStorage")
     }
   }
 
