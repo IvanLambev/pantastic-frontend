@@ -13,15 +13,16 @@ export default function PaymentSuccess() {
   const [orderData, setOrderData] = useState(null)
 
   useEffect(() => {
-    // Handle redirect from dev domain to production domain
-    const currentUrl = window.location.href
-    if (currentUrl.includes('dev.palachinki.store')) {
-      // Redirect to production domain with same search parameters
-      const newUrl = `https://www.palachinki.store/payment-success${window.location.search}`
-      console.log('Redirecting from dev domain to production:', newUrl)
-      window.location.replace(newUrl)
-      return
-    }
+    // COMMENTED OUT: Handle redirect from dev domain to production domain
+    // This was preventing dev.palachinki.store from working
+    // const currentUrl = window.location.href
+    // if (currentUrl.includes('dev.palachinki.store')) {
+    //   // Redirect to production domain with same search parameters
+    //   const newUrl = `https://www.palachinki.store/payment-success${window.location.search}`
+    //   console.log('Redirecting from dev domain to production:', newUrl)
+    //   window.location.replace(newUrl)
+    //   return
+    // }
 
     const verifyPayment = async () => {
       try {

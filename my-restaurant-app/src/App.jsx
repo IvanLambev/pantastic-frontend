@@ -73,15 +73,16 @@ function MainLayout() {
   const { isLoggedIn, handleLogout, isAdmin } = useAuth()
   const { cartItems } = useCart()
 
-  // Global redirect from dev domain to production domain
-  useEffect(() => {
-    const currentUrl = window.location.href
-    if (currentUrl.includes('dev.palachinki.store')) {
-      const newUrl = currentUrl.replace('dev.palachinki.store', 'www.palachinki.store')
-      console.log('Redirecting from dev domain to production:', newUrl)
-      window.location.replace(newUrl)
-    }
-  }, [])
+  // COMMENTED OUT: Global redirect from dev domain to production domain
+  // This was preventing dev.palachinki.store from working
+  // useEffect(() => {
+  //   const currentUrl = window.location.href
+  //   if (currentUrl.includes('dev.palachinki.store')) {
+  //     const newUrl = currentUrl.replace('dev.palachinki.store', 'www.palachinki.store')
+  //     console.log('Redirecting from dev domain to production:', newUrl)
+  //     window.location.replace(newUrl)
+  //   }
+  // }, [])
   const [open, setOpen] = useState(false)
   const location = useLocation()
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0)
