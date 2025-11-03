@@ -487,13 +487,16 @@ export default function RestaurantDetailsAdminComponent() {
   // Category translation helper
   const translateCategory = (categoryBulgarian) => {
     const categoryMap = {
-      "Американски палачинки": "sweet_pancake",
-      "Солени палачинки": "savory_pancake",
-      "Напитки": "drink",
+      "Американски палачинки": "sweet-american",
+      "Американски мини палачинки": "sweet-american-mini",
+      "Класически палачинки": "sweet-classic",
+      "Класически палачинки солени": "sour-classic",
+      "Американски палачинки солени": "sour-american",
+      "Специални": "special",
       "Deluxe Box": "deluxe_box",
-      "Десерт": "dessert",
-      "Предястие": "appetizer",
-      "Гарнитура": "side_dish"
+      "Десерти": "desserts",
+      "Напитки": "drinks",
+      "Промоция": "promo"
     };
     
     return categoryMap[categoryBulgarian] || null;
@@ -701,7 +704,7 @@ export default function RestaurantDetailsAdminComponent() {
   };
   const handleAddItem = () => {
     setModalMode("add");
-    setItemForm({ id: "", name: "", description: "", image: "", price: "", item_type: "sweet_pancake", addon_templates: [] });
+    setItemForm({ id: "", name: "", description: "", image: "", price: "", item_type: "sweet-american", addon_templates: [] });
     setSelectedAddonTemplates([]);
     setSelectedRemovableTemplates([]);
     setShowItemModal(true);
@@ -1156,13 +1159,16 @@ export default function RestaurantDetailsAdminComponent() {
                         <SelectValue placeholder="Изберете тип..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sweet_pancake">Sweet Pancake</SelectItem>
-                        <SelectItem value="savory_pancake">Savory Pancake</SelectItem>
-                        <SelectItem value="drink">Drink</SelectItem>
+                        <SelectItem value="sweet-american">Sweet American Pancake</SelectItem>
+                        <SelectItem value="sweet-american-mini">Sweet American Mini Pancake</SelectItem>
+                        <SelectItem value="sweet-classic">Sweet Classic Pancake</SelectItem>
+                        <SelectItem value="sour-classic">Sour Classic Pancake</SelectItem>
+                        <SelectItem value="sour-american">Sour American Pancake</SelectItem>
+                        <SelectItem value="special">Special</SelectItem>
                         <SelectItem value="deluxe_box">Deluxe Box</SelectItem>
-                        <SelectItem value="dessert">Dessert</SelectItem>
-                        <SelectItem value="appetizer">Appetizer</SelectItem>
-                        <SelectItem value="side_dish">Side Dish</SelectItem>
+                        <SelectItem value="desserts">Desserts</SelectItem>
+                        <SelectItem value="drinks">Drinks</SelectItem>
+                        <SelectItem value="promo">Promo</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
