@@ -120,13 +120,13 @@ export default function OrderTrackingV2() {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       console.log('🔍 Fetching orders for customer:', user.customer_id ? user.customer_id : '[MISSING]')
       
-      const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {
+      const response = await fetchWithAuth(`${API_URL}/order/orders/user`, {
         credentials: 'include', // Send HttpOnly cookies
         headers: {
           'Content-Type': 'application/json',
         }
       })
-        if (!response.ok) throw new Error('Failed to fetch orders')
+      if (!response.ok) throw new Error('Failed to fetch orders')
       const orders = await response.json()
       
       console.log('Searching for order ID:', orderId, 'Type:', typeof orderId)
