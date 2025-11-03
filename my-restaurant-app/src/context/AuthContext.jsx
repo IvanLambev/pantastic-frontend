@@ -21,34 +21,65 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
-      const user = sessionStorage.getItem("user")
+      console.log("🔍 Checking login status on app load...")
+      
+      // First check localStorage for existing user data
+      const user = localStorage.getItem("user")
+      
       if (user) {
+        // User data exists in localStorage, restore session
         try {
           const parsedUser = JSON.parse(user)
-          // Check if user has either access_token OR customer_id (logged in)
-          if (parsedUser.access_token || parsedUser.customer_id) {
+          console.log("📦 Found user in localStorage:", parsedUser)
+          
+          if (parsedUser.customer_id) {
             setToken(parsedUser.access_token || null)
             setIsLoggedIn(true)
-            // Check admin status
-            const admin = sessionStorage.getItem("isAdmin")
-            if (admin !== null) {
-              setIsAdmin(admin === "true")
-            } else if (parsedUser.access_token) {
-              // Only validate admin if we have an access token
-              await validateAdmin(parsedUser.access_token)
+            const admin = localStorage.getItem("isAdmin")
+            if (admin === "true") {
+              setIsAdmin(true)
+            }
+            console.log("✅ Session restored from localStorage")
+          }
+        } catch (error) {
+          console.error("❌ Error parsing user data:", error)
+          localStorage.removeItem("user")
+        }
+      } else {
+        // No user in localStorage, check if cookies exist by calling backend
+        console.log("📡 No user in localStorage, checking cookies with backend...")
+        try {
+          const response = await fetch(`${API_URL}/user/me`, {
+            method: "GET",
+            credentials: 'include', // Send HttpOnly cookies
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+          
+          if (response.ok) {
+            const userData = await response.json()
+            console.log("✅ User session restored from cookies:", userData)
+            
+            // Store user data in localStorage for next time
+            localStorage.setItem("user", JSON.stringify(userData))
+            setIsLoggedIn(true)
+            
+            // Check if user is admin
+            if (userData.is_admin) {
+              setIsAdmin(true)
+              localStorage.setItem("isAdmin", "true")
             }
           } else {
+            console.log("❌ No valid cookie session found")
             setIsLoggedIn(false)
             setIsAdmin(false)
           }
         } catch (error) {
-          console.error("Error parsing user data:", error)
+          console.error("❌ Error verifying cookie session:", error)
           setIsLoggedIn(false)
           setIsAdmin(false)
         }
-      } else {
-        setIsLoggedIn(false)
-        setIsAdmin(false)
       }
     }
 
@@ -89,25 +120,27 @@ const AuthProvider = ({ children }) => {
 
   const updateLoginState = async () => {
     console.log("🔄 updateLoginState called")
-    const user = sessionStorage.getItem("user")
-    console.log("📦 User data from sessionStorage:", user)
+    const user = localStorage.getItem("user")
+    console.log("📦 User data from localStorage:", user)
     if (user) {
       try {
         const parsedUser = JSON.parse(user)
         console.log("✅ Parsed user:", parsedUser)
-        // Check if user has either access_token OR customer_id (logged in)
-        if (parsedUser.access_token || parsedUser.customer_id) {
+        // Check if user has customer_id (logged in with cookies)
+        if (parsedUser.customer_id) {
           setToken(parsedUser.access_token || null)
           setIsLoggedIn(true)
           console.log("✅ User is logged in, isLoggedIn set to true")
-          if (parsedUser.access_token) {
-            // Only validate admin if we have an access token
-            await validateAdmin(parsedUser.access_token)
+          
+          // Check if user is admin
+          if (parsedUser.is_admin) {
+            setIsAdmin(true)
+            localStorage.setItem("isAdmin", "true")
           }
         } else {
           setIsLoggedIn(false)
           setIsAdmin(false)
-          console.log("❌ No access_token or customer_id, user not logged in")
+          console.log("❌ No customer_id, user not logged in")
         }
       } catch (error) {
         console.error("Error parsing user data:", error)
@@ -117,14 +150,15 @@ const AuthProvider = ({ children }) => {
     } else {
       setIsLoggedIn(false)
       setIsAdmin(false)
-      console.log("❌ No user in sessionStorage")
+      console.log("❌ No user in localStorage")
     }
   }
 
   const handleLogout = () => {
-    sessionStorage.removeItem("user")
-    sessionStorage.removeItem("selectedRestaurant")
-    sessionStorage.removeItem("isAdmin")
+    localStorage.removeItem("user")
+    localStorage.removeItem("selectedRestaurant")
+    localStorage.removeItem("isAdmin")
+    localStorage.removeItem("cart") // Also clear cart on logout
     setIsLoggedIn(false)
     setToken(null)
     setIsAdmin(false)
@@ -160,7 +194,7 @@ const AuthProvider = ({ children }) => {
 
 // Helper function to refresh tokens proactively
 export async function refreshTokens() {
-  const user = sessionStorage.getItem("user");
+  const user = localStorage.getItem("user");
   if (!user) {
     throw new Error("No user session found");
   }
@@ -203,13 +237,13 @@ export async function refreshTokens() {
     const data = await response.json();
     
     if (data.access_token && data.token_type === 'bearer') {
-      // Update tokens in sessionStorage
+      // Update tokens in localStorage
       parsedUser.access_token = data.access_token;
       if (data.refresh_token) {
         parsedUser.refresh_token = data.refresh_token;
       }
       
-      sessionStorage.setItem("user", JSON.stringify(parsedUser));
+      localStorage.setItem("user", JSON.stringify(parsedUser));
       console.log('Tokens refreshed successfully');
       
       return {
@@ -244,7 +278,7 @@ export function isTokenExpiringSoon(token) {
 
 // Global fetch wrapper
 export async function fetchWithAuth(url, options = {}) {
-  let user = sessionStorage.getItem("user");
+  let user = localStorage.getItem("user");
   let access_token = null;
   let refresh_token = null;
   
@@ -302,8 +336,8 @@ export async function fetchWithAuth(url, options = {}) {
         
         // Validate response structure
         if (refreshData.access_token && refreshData.token_type === 'bearer') {
-          // Update sessionStorage with new tokens
-          const userObj = JSON.parse(sessionStorage.getItem("user"));
+          // Update localStorage with new tokens
+          const userObj = JSON.parse(localStorage.getItem("user"));
           userObj.access_token = refreshData.access_token;
           
           // Update refresh token if provided
@@ -311,8 +345,8 @@ export async function fetchWithAuth(url, options = {}) {
             userObj.refresh_token = refreshData.refresh_token;
           }
           
-          sessionStorage.setItem("user", JSON.stringify(userObj));
-          console.log('Tokens updated in sessionStorage');
+          localStorage.setItem("user", JSON.stringify(userObj));
+          console.log('Tokens updated in localStorage');
           
           // Retry original request with new access token
           options.headers = {

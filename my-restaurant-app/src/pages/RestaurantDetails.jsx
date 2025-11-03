@@ -38,7 +38,7 @@ export default function RestaurantDetails() {
     };
 
     const fetchFavorites = async () => {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.customer_id) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         credentials: 'include', // Send HttpOnly cookies
@@ -65,7 +65,7 @@ export default function RestaurantDetails() {
   };
 
   const handleToggleFavorite = async (itemId) => {
-    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user.customer_id) return;
     if (!isItemFavorite(itemId)) {
       // Add to favorites

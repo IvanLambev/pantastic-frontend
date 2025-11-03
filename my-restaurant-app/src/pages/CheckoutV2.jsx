@@ -176,11 +176,11 @@ export default function CheckoutV2() {
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
-  const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+  const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
   const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
   
   // Check if user is logged in
-  const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
   // User is logged in if they have either access_token OR customer_id
   const isLoggedIn = !!(user?.access_token || user?.customer_id)
   
@@ -273,7 +273,7 @@ export default function CheckoutV2() {
     setDiscountError("")
 
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.customer_id) {
         setDiscountError(t('checkout.loginToApplyDiscount'))
         setDiscountValidating(false)
@@ -395,7 +395,7 @@ export default function CheckoutV2() {
       }
 
       // Save the access token to sessionStorage
-      sessionStorage.setItem('user', JSON.stringify({
+      localStorage.setItem('user', JSON.stringify({
         access_token: data.access_token,
         token_type: data.token_type || 'bearer'
       }))
@@ -480,7 +480,7 @@ export default function CheckoutV2() {
   const handleOrderConfirm = async () => {
     setIsProcessing(true)
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
 
       // With cookie-based auth, check for customer_id instead of access_token
       if (!user?.customer_id || selectedRestaurant.length === 0) {

@@ -389,7 +389,7 @@ export default function RestaurantSelector({
     }
 
     // Check if restaurant is already selected
-    const selectedRestaurant = sessionStorage.getItem('selectedRestaurant')
+    const selectedRestaurant = localStorage.getItem('selectedRestaurant')
     if (!selectedRestaurant && open) {
       fetchRestaurants()
     } else if (selectedRestaurant) {

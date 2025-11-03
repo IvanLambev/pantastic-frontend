@@ -38,7 +38,7 @@ export default function OrderConfirmation({
       const deliveryAddress = sessionStorage.getItem('delivery_address');
       const deliveryCoords = sessionStorage.getItem('delivery_coords');
       const deliveryMethod = sessionStorage.getItem('delivery_method');
-      const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '{}');
+      const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '{}');
       
       let coords = null;
       if (deliveryCoords) {

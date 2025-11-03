@@ -27,7 +27,7 @@ export default function UserDashboard() {
 
   // Fetch token from sessionStorage and set it, then fetch orders when token is set
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -92,7 +92,7 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchFavorites = async () => {
       setIsItemMapLoading(true);
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.customer_id) {
         setIsItemMapLoading(false);
         return;
@@ -250,8 +250,8 @@ export default function UserDashboard() {
       const data = await response.json();
       console.log("Delete account result:", data);
       alert(data.message || t('dashboard.deleteAccountSuccess'));
-      sessionStorage.removeItem("user");
-      sessionStorage.removeItem("selectedRestaurant");
+      localStorage.removeItem("user");
+      localStorage.removeItem("selectedRestaurant");
       setToken(null);
       setOrders([]);
       // Optionally, log the user out or redirect them

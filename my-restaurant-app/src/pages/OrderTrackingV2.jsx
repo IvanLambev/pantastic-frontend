@@ -117,7 +117,7 @@ export default function OrderTrackingV2() {
   }  // Fetch order details
   const fetchOrder = useCallback(async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
       console.log('🔍 Fetching orders for customer:', user.customer_id ? user.customer_id : '[MISSING]')
       
       const response = await fetchWithAuth(`${API_URL}/order/orders/status`, {

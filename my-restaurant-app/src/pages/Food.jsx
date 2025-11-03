@@ -49,7 +49,7 @@ const Food = () => {
 
   useEffect(() => {
     // Check if restaurant is already selected
-    const savedRestaurant = sessionStorage.getItem('selectedRestaurant')
+    const savedRestaurant = localStorage.getItem('selectedRestaurant')
     if (savedRestaurant) {
       const restaurant = JSON.parse(savedRestaurant);
       setSelectedRestaurant(restaurant);
@@ -64,7 +64,7 @@ const Food = () => {
   // Fetch favorite items on mount
   useEffect(() => {
     const fetchFavorites = async () => {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.customer_id) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         credentials: 'include', // Send HttpOnly cookies
@@ -84,7 +84,7 @@ const Food = () => {
     // Clear the cart when changing restaurants
     clearCart()
     setSelectedRestaurant(null)
-    sessionStorage.removeItem('selectedRestaurant')
+    localStorage.removeItem('selectedRestaurant')
     setShowRestaurantModal(true)
     setItems([]) // Clear menu items when changing restaurant
   }
@@ -154,7 +154,7 @@ const Food = () => {
 
   const handleToggleFavorite = async (item) => {
     const itemId = getItemId(item);
-    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user.access_token) return;
     if (!isItemFavorite(itemId)) {
       // Get restaurant_id from selectedRestaurant
@@ -211,7 +211,7 @@ const Food = () => {
     }
     
     setSelectedRestaurant(restaurant);
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    localStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowRestaurantModal(false);
     toast.dismiss();
     const restaurantName = Array.isArray(restaurant) ? restaurant[8] : restaurant.name;

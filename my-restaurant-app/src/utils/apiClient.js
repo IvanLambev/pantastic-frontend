@@ -8,7 +8,7 @@ import { API_URL } from '@/config/api'
 // Get current user and tokens from sessionStorage
 function getCurrentUser() {
   try {
-    const user = sessionStorage.getItem('user')
+    const user = localStorage.getItem('user')
     return user ? JSON.parse(user) : null
   } catch (error) {
     console.error('Error parsing user data:', error)
@@ -18,12 +18,12 @@ function getCurrentUser() {
 
 // Store updated user data in sessionStorage
 function storeUserData(userData) {
-  sessionStorage.setItem('user', JSON.stringify(userData))
+  localStorage.setItem('user', JSON.stringify(userData))
 }
 
 // Clear user data and redirect to login
 function clearUserAndRedirect() {
-  sessionStorage.removeItem('user')
+  localStorage.removeItem('user')
   sessionStorage.removeItem('isAdmin')
   window.location.href = '/login'
 }

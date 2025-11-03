@@ -27,7 +27,7 @@ const Home = () => {
 
   useEffect(() => {
     // Check if restaurant is already selected
-    const selectedRestaurant = sessionStorage.getItem('selectedRestaurant')
+    const selectedRestaurant = localStorage.getItem('selectedRestaurant')
     if (!selectedRestaurant) {
       setShowModal(true)
     }
@@ -35,7 +35,7 @@ const Home = () => {
 
   // Unified restaurant selection handler
   function selectRestaurant(restaurant) {
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
+    localStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowModal(false);
     toast.dismiss();
     // Handle both array format and object format

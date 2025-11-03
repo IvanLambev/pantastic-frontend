@@ -32,7 +32,7 @@ const Cart = () => {
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryCoords = sessionStorage.getItem('delivery_coords')
-  const selectedRestaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '{}')
+  const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '{}')
   const isDelivery = deliveryAddress && deliveryCoords
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)

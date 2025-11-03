@@ -26,7 +26,7 @@ export default function PaymentSuccess() {
 
     const verifyPayment = async () => {
       try {
-        const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
         
         const pendingOrderId = sessionStorage.getItem('pending_order_id')
         const pendingPaymentId = sessionStorage.getItem('pending_payment_id')

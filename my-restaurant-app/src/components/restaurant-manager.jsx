@@ -81,7 +81,7 @@ export function RestaurantManager() {
 
   useEffect(() => {
     const validateUserToken = async () => {
-      const user = JSON.parse(sessionStorage.getItem('user'))
+      const user = JSON.parse(localStorage.getItem('user'))
       if (!user?.access_token) {
         navigate('/login')
         return
@@ -89,7 +89,7 @@ export function RestaurantManager() {
       
       const isValid = await validateToken(user.access_token)
       if (!isValid) {
-        sessionStorage.removeItem('user')
+        localStorage.removeItem('user')
         navigate('/login')
       }
     }

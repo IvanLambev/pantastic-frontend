@@ -114,7 +114,7 @@ export default function ItemDetails() {
   // Check if item is favorite on mount
   useEffect(() => {
     const checkFavorite = async () => {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
       if (!user.customer_id) return
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         credentials: 'include', // Send HttpOnly cookies
@@ -260,7 +260,7 @@ export default function ItemDetails() {
   // Removed manual instructions field
 
   const handleToggleFavorite = async () => {
-    const user = JSON.parse(sessionStorage.getItem('user') || '{}')
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
     if (!user.customer_id) return
     if (!isFavorite) {
       // Add to favorites

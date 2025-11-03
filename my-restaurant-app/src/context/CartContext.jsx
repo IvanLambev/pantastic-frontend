@@ -7,12 +7,12 @@ export const CartProvider = ({ children }) => {
   const [orderId, setOrderId] = useState(null)
 
   useEffect(() => {
-    const savedCart = sessionStorage.getItem('cart')
+    const savedCart = localStorage.getItem('cart')
     if (savedCart) {
       setCartItems(JSON.parse(savedCart))
     }
 
-    const savedOrderId = sessionStorage.getItem('orderId')
+    const savedOrderId = localStorage.getItem('orderId')
     if (savedOrderId) {
       setOrderId(savedOrderId)
     }
@@ -41,7 +41,7 @@ export const CartProvider = ({ children }) => {
         }
         newItems = [...prevItems, cartItem]
       }
-      sessionStorage.setItem('cart', JSON.stringify(newItems))
+      localStorage.setItem('cart', JSON.stringify(newItems))
       return newItems
     })
   }
@@ -49,7 +49,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = (itemId) => {
     setCartItems(prevItems => {
       const newItems = prevItems.filter(item => item.id !== itemId)
-      sessionStorage.setItem('cart', JSON.stringify(newItems))
+      localStorage.setItem('cart', JSON.stringify(newItems))
       return newItems
     })
   }
@@ -60,22 +60,22 @@ export const CartProvider = ({ children }) => {
       const newItems = prevItems.map(item =>
         item.id === itemId ? { ...item, quantity } : item
       )
-      sessionStorage.setItem('cart', JSON.stringify(newItems))
+      localStorage.setItem('cart', JSON.stringify(newItems))
       return newItems
     })
   }
 
   const clearCart = () => {
     setCartItems([])
-    sessionStorage.removeItem('cart')
-    sessionStorage.removeItem('orderId')
+    localStorage.removeItem('cart')
+    localStorage.removeItem('orderId')
     setOrderId(null)
   }
 
   const checkout = async () => {
     try {
-      const user = JSON.parse(sessionStorage.getItem('user') || '{}')
-      const restaurant = JSON.parse(sessionStorage.getItem('selectedRestaurant') || '[]')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const restaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
 
       // With cookie-based auth, we just need to check if user exists (has customer_id)
       // The backend will validate the HttpOnly cookie
@@ -122,7 +122,7 @@ export const CartProvider = ({ children }) => {
 
       const data = await response.json();
       setOrderId(data.order_id);
-      sessionStorage.setItem('orderId', data.order_id);
+      localStorage.setItem('orderId', data.order_id);
       clearCart();
       return data;
     } catch (error) {

@@ -121,7 +121,7 @@ export default function OrderManagementComponent() {
       if (orderWithRestaurantId) {
         await fetchItems(orderWithRestaurantId.restaurant_id);
       } else {
-        const restaurantId = sessionStorage.getItem('selectedRestaurantId');
+        const restaurantId = localStorage.getItem('selectedRestaurantId');
         if (restaurantId) {
           await fetchItems(restaurantId);
         }

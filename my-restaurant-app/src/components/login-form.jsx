@@ -56,10 +56,10 @@ export function LoginForm({ className }) {
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("✅ Login successful:", data);
-        console.log("🍪 Backend set HttpOnly cookies - storing customer_id only");
+        console.log("🍪 Backend set HttpOnly cookies - storing customer_id in localStorage");
         
-        // Store only customer_id and message, cookies handle authentication
-        sessionStorage.setItem("user", JSON.stringify(data));
+        // Store only customer_id and message in localStorage (persists across tabs)
+        localStorage.setItem("user", JSON.stringify(data));
         
         await updateLoginState(); // Trigger login state update and admin check
         navigate("/food");
