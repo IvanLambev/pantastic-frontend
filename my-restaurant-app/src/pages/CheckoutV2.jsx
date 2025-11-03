@@ -488,59 +488,31 @@ export default function CheckoutV2() {
       }
 
       // Format order items according to new API structure
-      const orderItems = []
-      
-      // Group items by their original item ID to combine quantities and addons/removables
-      const groupedItems = {}
-      
-      cartItems.forEach(item => {
+      // Do NOT group items with different customizations
+      // Each unique cart item (with its specific addons/removables) should be sent separately
+      const orderItems = cartItems.map(item => {
         const itemId = item.originalItemId || item.id
         
-        if (!groupedItems[itemId]) {
-          groupedItems[itemId] = {
-            item_id: itemId,
-            quantity: 0,
-            addons: {},
-            removables: [],
-            special_instructions: null
-          }
-        }
-        
-        // Add quantity
-        groupedItems[itemId].quantity += item.quantity
-        
-        // Add addons (count occurrences)
+        // Build addons object
+        const addons = {}
         if (item.selectedAddons && item.selectedAddons.length > 0) {
           item.selectedAddons.forEach(addon => {
-            groupedItems[itemId].addons[addon.name] = (groupedItems[itemId].addons[addon.name] || 0) + item.quantity
+            addons[addon.name] = (addons[addon.name] || 0) + 1
           })
         }
         
-        // Add removables (unique list)
-        if (item.selectedRemovables && item.selectedRemovables.length > 0) {
-          item.selectedRemovables.forEach(removable => {
-            if (!groupedItems[itemId].removables.includes(removable)) {
-              groupedItems[itemId].removables.push(removable)
-            }
-          })
-        }
+        // Build removables array
+        const removables = item.selectedRemovables && item.selectedRemovables.length > 0 
+          ? item.selectedRemovables 
+          : []
         
-        // Add special instructions
-        if (item.specialInstructions) {
-          groupedItems[itemId].special_instructions = item.specialInstructions
+        return {
+          item_id: itemId,
+          quantity: item.quantity || 1, // Use the cart item's quantity
+          addons: Object.keys(addons).length > 0 ? addons : null,
+          removables: removables.length > 0 ? removables : null,
+          special_instructions: item.specialInstructions || null
         }
-      })
-      
-      // Convert grouped items to order items format
-      Object.values(groupedItems).forEach(groupedItem => {
-        const orderItem = {
-          item_id: groupedItem.item_id,
-          quantity: groupedItem.quantity,
-          addons: Object.keys(groupedItem.addons).length > 0 ? groupedItem.addons : null,
-          removables: groupedItem.removables.length > 0 ? groupedItem.removables : null,
-          special_instructions: groupedItem.special_instructions
-        }
-        orderItems.push(orderItem)
       })
 
       // Get delivery coordinates if delivery method is delivery
