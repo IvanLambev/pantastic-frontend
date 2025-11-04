@@ -1236,7 +1236,16 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[400px] p-0">
+                        <PopoverContent 
+                          className="w-[400px] p-0"
+                          onPointerDownOutside={(e) => {
+                            // Prevent closing when clicking inside the popover content
+                            const target = e.target;
+                            if (target.closest('[role="option"]')) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
                             <CommandList>
@@ -1253,10 +1262,6 @@ export default function RestaurantDetailsAdminComponent() {
                                           ? prev.filter(id => id !== templateId)
                                           : [...prev, templateId]
                                       );
-                                    }}
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
                                     }}
                                   >
                                     <CheckIcon
@@ -1428,7 +1433,16 @@ export default function RestaurantDetailsAdminComponent() {
                             <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[400px] p-0">
+                        <PopoverContent 
+                          className="w-[400px] p-0"
+                          onPointerDownOutside={(e) => {
+                            // Prevent closing when clicking inside the popover content
+                            const target = e.target;
+                            if (target.closest('[role="option"]')) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
                           <Command>
                             <CommandInput placeholder="Търсете шаблон..." />
                             <CommandList>
@@ -1445,10 +1459,6 @@ export default function RestaurantDetailsAdminComponent() {
                                           ? prev.filter(id => id !== templateId)
                                           : [...prev, templateId]
                                       );
-                                    }}
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
                                     }}
                                   >
                                     <CheckIcon
