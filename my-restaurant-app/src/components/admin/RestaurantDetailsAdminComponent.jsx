@@ -1254,6 +1254,10 @@ export default function RestaurantDetailsAdminComponent() {
                                           : [...prev, templateId]
                                       );
                                     }}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                    }}
                                   >
                                     <CheckIcon
                                       className={cn(
@@ -1441,6 +1445,10 @@ export default function RestaurantDetailsAdminComponent() {
                                           ? prev.filter(id => id !== templateId)
                                           : [...prev, templateId]
                                       );
+                                    }}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
                                     }}
                                   >
                                     <CheckIcon
