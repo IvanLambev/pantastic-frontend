@@ -955,6 +955,14 @@ export default function RestaurantDetailsAdminComponent() {
       toast.error('No restaurant ID available');
       return;
     }
+    
+    // Validate that itemId is defined
+    if (!itemId) {
+      console.error('Item ID is required but was undefined');
+      toast.error('Item ID is missing. Please try again.');
+      return;
+    }
+    
     try {
       const response = await fetchWithAdminAuth(
         `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/apply-template/${templateId}`,
@@ -986,6 +994,14 @@ export default function RestaurantDetailsAdminComponent() {
       toast.error('No restaurant ID available');
       return;
     }
+    
+    // Validate that itemId is defined
+    if (!itemId) {
+      console.error('Item ID is required but was undefined');
+      toast.error('Item ID is missing. Please try again.');
+      return;
+    }
+    
     try {
       const response = await fetchWithAdminAuth(
         `${API_URL}/restaurant/${resolvedRestaurantId}/items/${itemId}/remove-template/${templateId}`,
@@ -2096,7 +2112,7 @@ export default function RestaurantDetailsAdminComponent() {
             <DialogDescription>
               {selectedItem && (
                 <div>
-                  <span className="font-semibold">{selectedItem[6]}</span> - Manage addon templates
+                  <span className="font-semibold">{selectedItem.name || selectedItem[6]}</span> - Manage addon templates
                 </div>
               )}
             </DialogDescription>
@@ -2110,7 +2126,7 @@ export default function RestaurantDetailsAdminComponent() {
                     {template.name}
                   </Badge>
                   <Button
-                    onClick={() => applyTemplateToItem(selectedItem[0], template.template_id)}
+                    onClick={() => applyTemplateToItem(selectedItem.item_id || selectedItem[0], template.template_id)}
                     variant="outline"
                     size="sm"
                     className="mr-2"
@@ -2118,7 +2134,7 @@ export default function RestaurantDetailsAdminComponent() {
                     Apply
                   </Button>
                   <Button
-                    onClick={() => removeTemplateFromItem(selectedItem[0], template.template_id)}
+                    onClick={() => removeTemplateFromItem(selectedItem.item_id || selectedItem[0], template.template_id)}
                     variant="destructive"
                     size="sm"
                   >
