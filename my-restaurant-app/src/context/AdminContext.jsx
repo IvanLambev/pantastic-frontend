@@ -22,6 +22,7 @@ export const AdminProvider = ({ children }) => {
     try {
       console.log('🔍 AdminContext: Verifying admin token...')
       console.log('🔍 AdminContext: Using cookie-based auth')
+      console.log('🔍 AdminContext: All cookies:', document.cookie)
       
       const response = await fetch(`${API_URL}/restaurant/admin/verify`, {
         method: "GET",
@@ -32,6 +33,10 @@ export const AdminProvider = ({ children }) => {
       })
 
       console.log('🔍 AdminContext: Token verification response status:', response.status)
+      console.log('🔍 AdminContext: Response headers:', {
+        'content-type': response.headers.get('content-type'),
+        'set-cookie': response.headers.get('set-cookie')
+      })
 
       if (!response.ok) {
         console.log('🔍 AdminContext: Token verification failed with status:', response.status)
@@ -107,12 +112,20 @@ export const AdminProvider = ({ children }) => {
 
   const adminLogin = async (email, password) => {
     try {
+      console.log('🔐 AdminContext: Attempting admin login for:', email)
       const response = await fetch(`${API_URL}/restaurant/admin/login`, {
         method: "POST",
+        credentials: 'include', // ✅ CRITICAL - Save HttpOnly cookies from backend
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+      })
+
+      console.log('🔐 AdminContext: Login response status:', response.status)
+      console.log('🔐 AdminContext: Response headers:', {
+        'set-cookie': response.headers.get('set-cookie'),
+        'content-type': response.headers.get('content-type')
       })
 
       if (!response.ok) {
@@ -121,6 +134,10 @@ export const AdminProvider = ({ children }) => {
       }
 
       const data = await response.json()
+      console.log('🔐 AdminContext: Login successful, received data:', { 
+        hasAccessToken: !!data.access_token,
+        hasRefreshToken: !!data.refresh_token 
+      })
       
       // Verify the token immediately after login
       const verification = await verifyAdminToken(data.access_token)
