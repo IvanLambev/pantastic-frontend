@@ -90,14 +90,28 @@ export async function fetchWithAdminAuth(url, options = {}) {
   }
   
   // Ensure options has headers
-  options.headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
+  // Don't set Content-Type for FormData - browser will set it with boundary
+  const isFormData = options.body instanceof FormData;
+  
+  if (!isFormData) {
+    options.headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    };
+  } else {
+    // For FormData, only include custom headers (not Content-Type)
+    options.headers = {
+      ...(options.headers || {}),
+    };
+    // Remove Content-Type if it was set
+    if (options.headers['Content-Type']) {
+      delete options.headers['Content-Type'];
+    }
+  }
   
   // Always use credentials: 'include' for cookie-based auth
   options.credentials = 'include';
-  console.log('✅ Using cookie-based authentication');
+  console.log(`✅ Using cookie-based authentication${isFormData ? ' (FormData)' : ' (JSON)'}`);
   
   let response = await fetch(url, options);
   console.log(`📡 Response status: ${response.status} for ${url}`);
