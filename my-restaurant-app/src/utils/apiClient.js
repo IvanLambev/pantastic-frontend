@@ -203,23 +203,40 @@ export async function authenticateWithGoogle(googleAccessToken) {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // IMPORTANT: Send and receive cookies
       body: JSON.stringify({
         access_token: googleAccessToken
       })
     })
 
+    console.log('📡 Google auth response status:', response.status)
+    console.log('📡 Google auth response headers:', Object.fromEntries(response.headers.entries()))
+
+    const contentType = response.headers.get("Content-Type")
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || 'Google authentication failed')
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Google authentication failed')
+      } else {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Google authentication failed')
+      }
     }
 
-    const authData = await response.json()
-    
-    // Store backend JWT tokens (NOT Google tokens)
-    storeUserData(authData)
-    
-    console.log('✅ Successfully authenticated with Google and stored backend JWT tokens')
-    return authData
+    if (contentType && contentType.includes("application/json")) {
+      const authData = await response.json()
+      
+      console.log('✅ Google auth successful:', authData)
+      console.log('🍪 Backend set HttpOnly cookies - storing customer_id in localStorage')
+      
+      // Store only customer_id and message in localStorage (persists across tabs)
+      storeUserData(authData)
+      
+      return authData
+    } else {
+      throw new Error('Invalid response from server')
+    }
     
   } catch (error) {
     console.error('Google authentication failed:', error)

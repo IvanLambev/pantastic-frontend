@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { GoogleLoginButton } from "@/components/GoogleLoginButton"
+import { useAuth } from "@/context/AuthContext"
 import { t } from "@/utils/translations"
 
 export default function CheckoutLogin() {
   const navigate = useNavigate()
+  const { updateLoginState } = useAuth()
   
   // Login states
   const [loginData, setLoginData] = useState({
@@ -55,50 +57,48 @@ export default function CheckoutLogin() {
     setLoginError("")
 
     try {
-      const formData = new URLSearchParams()
-      formData.append('username', loginData.email)
-      formData.append('password', loginData.password)
-
-      const response = await fetch(`${API_URL}/user/token`, {
+      // Use the same endpoint as login-form.jsx
+      const response = await fetch(`${API_URL}/user/login`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formData,
-        credentials: 'include'
+        credentials: 'include', // IMPORTANT: Send and receive cookies
+        body: JSON.stringify({ 
+          email: loginData.email, 
+          password: loginData.password 
+        }),
       })
+
+      console.log('📡 Login response status:', response.status)
+      console.log('📡 Login response headers:', Object.fromEntries(response.headers.entries()))
+
+      const contentType = response.headers.get("Content-Type")
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || t('login.invalidCredentials'))
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || t('login.errors.invalidCredentials'))
+        } else {
+          const errorText = await response.text()
+          throw new Error(errorText || t('login.errors.invalidCredentials'))
+        }
       }
 
-      const data = await response.json()
-      
-      if (!data.access_token) {
-        throw new Error(t('login.loginFailed'))
-      }
-
-      // Get user profile
-      const profileResponse = await fetch(`${API_URL}/user/profile`, {
-        headers: {
-          'Authorization': `Bearer ${data.access_token}`
-        },
-        credentials: 'include'
-      })
-
-      if (profileResponse.ok) {
-        const profileData = await profileResponse.json()
-        localStorage.setItem('user', JSON.stringify({
-          ...data,
-          ...profileData
-        }))
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json()
+        console.log("✅ Login successful:", data)
+        console.log("🍪 Backend set HttpOnly cookies - storing customer_id in localStorage")
+        
+        // Store only customer_id and message in localStorage (persists across tabs)
+        localStorage.setItem("user", JSON.stringify(data))
+        
+        await updateLoginState() // Trigger login state update and admin check
+        toast.success(t('login.loginSuccess'))
+        navigate('/checkout-v2')
       } else {
-        localStorage.setItem('user', JSON.stringify(data))
+        throw new Error(t('login.errors.serverError'))
       }
-
-      toast.success(t('login.loginSuccess'))
-      navigate('/checkout-v2')
     } catch (error) {
       console.error('Login error:', error)
       setLoginError(error.message || t('login.loginFailed'))

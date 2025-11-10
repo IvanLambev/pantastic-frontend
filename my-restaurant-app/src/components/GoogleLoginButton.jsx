@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { t } from "@/utils/translations"
 import { authenticateWithGoogle } from "@/utils/apiClient"
 
-export function GoogleLoginButton({ className = "" }) {
+export function GoogleLoginButton({ className = "", onSuccess }) {
   const [isLoading, setIsLoading] = useState(false)
   const { updateLoginState } = useAuth()
   const navigate = useNavigate()
@@ -35,8 +35,12 @@ export function GoogleLoginButton({ className = "" }) {
         // Show success message
         toast.success(t('login.googleLoginSuccess') || 'Successfully logged in with Google!')
         
-        // Redirect to dashboard/food page
-        navigate('/food')
+        // Call custom onSuccess callback if provided, otherwise redirect to /food
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          navigate('/food')
+        }
         
       } catch (error) {
         console.error('Google login error:', error)
