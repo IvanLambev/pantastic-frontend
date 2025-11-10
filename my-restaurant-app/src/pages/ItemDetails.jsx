@@ -515,7 +515,8 @@ export default function ItemDetails() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                disabled={quantity >= 10}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -574,21 +575,21 @@ export default function ItemDetails() {
         {/* Price and Quantity Selector */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Цена</p>
-                <p className="text-2xl font-bold text-primary">
+            <div className="flex items-center justify-between mb-4 gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground mb-1">Цена</p>
+                <p className="text-xl font-bold text-primary truncate">
                   {formatDualCurrencyCompact(totalPrice * quantity)}
                 </p>
                 {totalPrice !== Number(item.price) && (
-                  <Badge variant="outline" className="text-xs text-muted-foreground mt-1">
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground mt-1">
                     Основна: {formatDualCurrencyCompact(item.price)}
                   </Badge>
                 )}
               </div>
               
               {/* Quantity selector */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
                   variant="outline"
                   size="icon"
@@ -598,12 +599,13 @@ export default function ItemDetails() {
                 >
                   <Minus className="h-3 w-3" />
                 </Button>
-                <span className="text-lg font-semibold w-8 text-center">{quantity}</span>
+                <span className="text-base font-semibold w-6 text-center">{quantity}</span>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                  disabled={quantity >= 10}
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
