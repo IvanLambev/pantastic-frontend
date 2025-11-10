@@ -43,6 +43,7 @@ export default function ItemDetails() {
   // Add state for favorite
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteId, setFavoriteId] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // Add state for collapsible sections on mobile
   const [isAddonsOpen, setIsAddonsOpen] = useState(false)
@@ -52,6 +53,11 @@ export default function ItemDetails() {
     const fetchItemAndAddons = async () => {
       try {
         setLoading(true);
+        
+        // Check if user is logged in
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        setIsLoggedIn(!!user.customer_id)
+        
         // Fetch item details
         const itemRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
         if (!itemRes.ok) throw new Error('Failed to fetch item details');
@@ -340,17 +346,19 @@ export default function ItemDetails() {
             alt={item.name}
             className="w-full h-full object-cover rounded-lg"
           />
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart
-              className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-              fill={isFavorite ? 'red' : 'none'}
-            />
-          </button>
+          {isLoggedIn && (
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart
+                className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                fill={isFavorite ? 'red' : 'none'}
+              />
+            </button>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -550,17 +558,19 @@ export default function ItemDetails() {
         {/* Item Name with Favorite */}
         <div className="flex items-start justify-between">
           <h1 className="text-2xl font-bold flex-1">{item.name}</h1>
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow"
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Heart
-              className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-              fill={isFavorite ? 'red' : 'none'}
-            />
-          </button>
+          {isLoggedIn && (
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart
+                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                fill={isFavorite ? 'red' : 'none'}
+              />
+            </button>
+          )}
         </div>
 
         {/* Item Image */}
