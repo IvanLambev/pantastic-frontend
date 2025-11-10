@@ -28,6 +28,7 @@ const Cart = () => {
   const [{ error }, setState] = useState({
     error: null,
   })
+  const [expandedItems, setExpandedItems] = useState(new Set())
 
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
@@ -51,6 +52,18 @@ const Cart = () => {
   const handleRemoveFromCart = (itemId, itemName) => {
     removeFromCart(itemId)
     toast.info(t('cart.removedFromCart', { name: itemName }))
+  }
+
+  const toggleItemExpanded = (itemId) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
   }
 
   const handleCancelOrder = async () => {
@@ -154,81 +167,210 @@ const Cart = () => {
         
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="space-y-4 flex-grow">
-            {cartItems.map((item) => (
-              <Card key={item.id} className="flex flex-col sm:flex-row">
-                <div className="w-full sm:w-32 h-32">
-                  <img
-                    src={item.image || '/elementor-placeholder-image.webp'}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
-                    <h3 className="font-semibold mb-2 sm:mb-0">{item.name}</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive self-end sm:self-start"
-                      onClick={() => handleRemoveFromCart(item.id, item.name)}
+            {cartItems.map((item) => {
+              const isExpanded = expandedItems.has(item.id)
+              
+              return (
+                <Card key={item.id} className="overflow-hidden">
+                  {/* Mobile Compact View */}
+                  <div className="block lg:hidden">
+                    <div 
+                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => toggleItemExpanded(item.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>                  <p className="text-muted-foreground text-sm mb-2">{item.description}</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate mb-1">{item.name}</h3>
+                          
+                          {/* Addons/Removables indicator */}
+                          {((item.selectedAddons && item.selectedAddons.length > 0) || 
+                            (item.selectedRemovables && item.selectedRemovables.length > 0)) && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {item.selectedAddons && item.selectedAddons.length > 0 && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                  +{item.selectedAddons.length} {t('cart.addons')}
+                                </span>
+                              )}
+                              {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                                  -{item.selectedRemovables.length} {t('cart.removables')}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-3 mt-2">
+                            {/* Quantity controls */}
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateQuantity(item.id, item.quantity - 1)
+                                }}
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  updateQuantity(item.id, item.quantity + 1)
+                                }}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            {/* Price */}
+                            <div className="font-semibold">
+                              {formatDualCurrencyCompact(item.price * item.quantity)}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive h-8 w-8 flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveFromCart(item.id, item.name)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Expanded view on mobile */}
+                    {isExpanded && (
+                      <div className="border-t px-4 py-3 bg-muted/30">
+                        <div className="flex gap-3 mb-3">
+                          <img
+                            src={item.image || '/elementor-placeholder-image.webp'}
+                            alt={item.name}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <p className="text-sm text-muted-foreground flex-1">{item.description}</p>
+                        </div>
+                        
+                        {/* Display selected addons if any */}
+                        {item.selectedAddons && item.selectedAddons.length > 0 && (
+                          <div className="text-sm mb-2 bg-background p-2 rounded-md">
+                            <p className="font-semibold mb-1">{t('cart.addons')}:</p>
+                            <ul className="space-y-1 pl-2">
+                              {item.selectedAddons.map((addon, index) => (
+                                <li key={index} className="flex justify-between">
+                                  <span>{addon.name}</span>
+                                  <span>+{formatDualCurrencyCompact(addon.price)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {item.basePrice && (
+                              <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
+                                <span>{t('cart.basePrice')}:</span>
+                                <span>{formatDualCurrencyCompact(item.basePrice)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {item.specialInstructions && (
+                          <div className="text-sm">
+                            <span className="font-semibold">{t('menu.instructions')}: </span>
+                            <span className="text-muted-foreground">{item.specialInstructions}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   
-                  {/* Display selected addons if any */}
-                  {item.selectedAddons && item.selectedAddons.length > 0 && (
-                    <div className="text-sm mb-2 bg-muted p-2 rounded-md">
-                      <p className="font-semibold mb-1">{t('cart.addons')}:</p>
-                      <ul className="space-y-1 pl-2">
-                        {item.selectedAddons.map((addon, index) => (
-                          <li key={index} className="flex justify-between">
-                            <span>{addon.name}</span>
-                            <span>+{formatDualCurrencyCompact(addon.price)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {item.basePrice && (
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
-                          <span>{t('cart.basePrice')}:</span>
-                          <span>{formatDualCurrencyCompact(item.basePrice)}</span>
+                  {/* Desktop View (unchanged) */}
+                  <div className="hidden lg:flex lg:flex-row">
+                    <div className="w-full sm:w-32 h-32">
+                      <img
+                        src={item.image || '/elementor-placeholder-image.webp'}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:justify-between mb-4">
+                        <h3 className="font-semibold mb-2 sm:mb-0">{item.name}</h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive self-end sm:self-start"
+                          onClick={() => handleRemoveFromCart(item.id, item.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-muted-foreground text-sm mb-2">{item.description}</p>
+                      
+                      {/* Display selected addons if any */}
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <div className="text-sm mb-2 bg-muted p-2 rounded-md">
+                          <p className="font-semibold mb-1">{t('cart.addons')}:</p>
+                          <ul className="space-y-1 pl-2">
+                            {item.selectedAddons.map((addon, index) => (
+                              <li key={index} className="flex justify-between">
+                                <span>{addon.name}</span>
+                                <span>+{formatDualCurrencyCompact(addon.price)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {item.basePrice && (
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1 pt-1 border-t border-border">
+                              <span>{t('cart.basePrice')}:</span>
+                              <span>{formatDualCurrencyCompact(item.basePrice)}</span>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                  
-                  {item.specialInstructions && (
-                    <div className="text-sm mb-4">
-                      <span className="font-semibold">{t('menu.instructions')}: </span>
-                      <span className="text-muted-foreground">{item.specialInstructions}</span>
-                    </div>
-                  )}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="font-semibold text-right">
-                      {formatDualCurrencyCompact(item.price * item.quantity)}
+                      
+                      {item.specialInstructions && (
+                        <div className="text-sm mb-4">
+                          <span className="font-semibold">{t('menu.instructions')}: </span>
+                          <span className="text-muted-foreground">{item.specialInstructions}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="font-semibold text-right">
+                          {formatDualCurrencyCompact(item.price * item.quantity)}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              )
+            })}
           </div>
 
           <div className="w-full lg:w-96 space-y-6">

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { API_URL } from "@/config/api"
 import { toast } from "sonner"
@@ -33,15 +33,15 @@ export default function CheckoutLogin() {
   const [guestLoading, setGuestLoading] = useState(false)
   const [guestError, setGuestError] = useState("")
 
-  // Check if user is already logged in
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const isLoggedIn = !!(user?.access_token || user?.customer_id)
-
-  // If already logged in, redirect to checkout
-  if (isLoggedIn) {
-    navigate('/checkout-v2')
-    return null
-  }
+  // Check if user is already logged in and redirect
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const isLoggedIn = !!(user?.access_token || user?.customer_id)
+    
+    if (isLoggedIn) {
+      navigate('/checkout-v2', { replace: true })
+    }
+  }, [navigate])
 
   const handleLogin = async (e) => {
     e.preventDefault()

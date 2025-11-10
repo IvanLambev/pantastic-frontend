@@ -242,6 +242,8 @@ export const translations = {
     backToCart: "Обратно към количката",
     placingOrder: "Обработваме поръчката...",
     pickupInformation: "Информация за вземане",
+    orderPlacedSuccess: "Поръчката е направена успешно!",
+    failedToPlaceOrder: "Неуспешно поръчване",
     
     // Errors
     pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите"
