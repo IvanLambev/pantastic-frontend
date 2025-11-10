@@ -13,13 +13,18 @@ import {
 } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Heart, Plus, Minus } from "lucide-react"
+import { ArrowLeft, Heart, Plus, Minus, ChevronDown, ShoppingCart } from "lucide-react"
 import { fetchWithAuth } from "@/context/AuthContext"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
@@ -33,10 +38,15 @@ export default function ItemDetails() {
   const [selectedRemovables, setSelectedRemovables] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
   const { addToCart } = useCart()
+  const [quantity, setQuantity] = useState(1)
 
   // Add state for favorite
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteId, setFavoriteId] = useState(null)
+
+  // Add state for collapsible sections on mobile
+  const [isAddonsOpen, setIsAddonsOpen] = useState(false)
+  const [isRemovablesOpen, setIsRemovablesOpen] = useState(false)
 
   useEffect(() => {
     const fetchItemAndAddons = async () => {
@@ -238,17 +248,20 @@ export default function ItemDetails() {
       selectedRemovables: selectedRemovableList,
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
-      quantity: 1
+      quantity: quantity
     };
     
-    addToCart(cartItem);
+    // Add to cart multiple times based on quantity
+    for (let i = 0; i < quantity; i++) {
+      addToCart(cartItem);
+    }
     
     const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
     const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
     
     toast.success(
       <div className="flex flex-col">
-        <span>Добавихте {item.name} в количката</span>
+        <span>Добавихте {quantity}x {item.name} в количката</span>
         {(selectedAddonList.length > 0 || selectedRemovableList.length > 0) && (
           <span className="text-xs">{addonText}{removableText}</span>
         )}
@@ -319,7 +332,8 @@ export default function ItemDetails() {
         Назад
       </Button>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      {/* Desktop Layout */}
+      <div className="hidden md:grid md:grid-cols-2 gap-8">
         <div className="relative aspect-video md:aspect-square">
           <img
             src={item.image_url || '/elementor-placeholder-image.webp'}
@@ -355,18 +369,16 @@ export default function ItemDetails() {
             <p className="text-muted-foreground">{item.description}</p>
           </div>
 
-          {/* Special Instructions field removed */}
-
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Добави екстри</h2>
+              <h2 className="text-xl font-semibold">Добавки</h2>
               
               {addonTemplates.map((template) => (
                 <Card key={template.template_id} className="overflow-hidden">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{template.name}</CardTitle>
+                      <CardTitle className="text-lg">Добавки</CardTitle>
                       <Badge variant="outline">{Object.keys(template.addons || {}).length} опции</Badge>
                     </div>
                     <CardDescription>
@@ -407,14 +419,14 @@ export default function ItemDetails() {
           {/* Removables selection section */}
           {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Премахни съставки</h2>
+              <h2 className="text-xl font-semibold">Опции "Без"</h2>
               <p className="text-sm text-muted-foreground">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
               
               {removableData.applied_templates.map((template) => (
                 <Card key={template.template_id} className="overflow-hidden">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{template.name}</CardTitle>
+                      <CardTitle className="text-lg">Опции "Без"</CardTitle>
                       <Badge variant="outline">
                         {Array.isArray(template.removables) 
                           ? template.removables.length 
@@ -486,13 +498,35 @@ export default function ItemDetails() {
           <div className="pt-4 border-t">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Обща цена:</span>
-              <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice)}</span>
+              <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice * quantity)}</span>
             </div>
+            
+            {/* Quantity selector */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setQuantity(quantity + 1)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
             <Button
               size="lg"
               className="w-full"
               onClick={handleAddToCart}
             >
+              <ShoppingCart className="mr-2 h-5 w-5" />
               Добави в количката
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
@@ -508,6 +542,255 @@ export default function ItemDetails() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden space-y-4">
+        {/* Item Name with Favorite */}
+        <div className="flex items-start justify-between">
+          <h1 className="text-2xl font-bold flex-1">{item.name}</h1>
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Heart
+              className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+              fill={isFavorite ? 'red' : 'none'}
+            />
+          </button>
+        </div>
+
+        {/* Item Image */}
+        <div className="relative aspect-video rounded-lg overflow-hidden">
+          <img
+            src={item.image_url || '/elementor-placeholder-image.webp'}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Price and Quantity Selector */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Цена</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatDualCurrencyCompact(totalPrice * quantity)}
+                </p>
+                {totalPrice !== Number(item.price) && (
+                  <Badge variant="outline" className="text-xs text-muted-foreground mt-1">
+                    Основна: {formatDualCurrencyCompact(item.price)}
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Quantity selector */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <span className="text-lg font-semibold w-8 text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setQuantity(quantity + 1)}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Добави в количката
+            </Button>
+            
+            {(getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0) && (
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} добавки`}
+                {getAllSelectedAddons().length > 0 && getAllSelectedRemovables().length > 0 && ', '}
+                {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} без`}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Description */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Описание</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{item.description}</p>
+          </CardContent>
+        </Card>
+
+        {/* Addons - Collapsible */}
+        {addonTemplates.length > 0 && (
+          <Collapsible open={isAddonsOpen} onOpenChange={setIsAddonsOpen}>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">Добавки</CardTitle>
+                      {getAllSelectedAddons().length > 0 && (
+                        <Badge variant="secondary">{getAllSelectedAddons().length} избрани</Badge>
+                      )}
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isAddonsOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardDescription className="text-left">
+                    Изберете добавки
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <CardContent className="pt-2 space-y-4">
+                  {addonTemplates.map((template) => (
+                    <div key={template.template_id} className="space-y-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {Object.keys(template.addons || {}).length} опции
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {Object.entries(template.addons || {}).map(([addonName, price]) => (
+                          <div
+                            key={`${template.template_id}-${addonName}`}
+                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                              isAddonSelected(template.template_id, addonName)
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border bg-background hover:bg-muted/50'
+                            }`}
+                            onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
+                          >
+                            <div className="flex items-center flex-1">
+                              <Checkbox
+                                checked={isAddonSelected(template.template_id, addonName)}
+                                onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
+                                className="mr-3"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="font-medium">{addonName}</span>
+                            </div>
+                            <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
+
+        {/* Removables - Collapsible */}
+        {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
+          <Collapsible open={isRemovablesOpen} onOpenChange={setIsRemovablesOpen}>
+            <Card>
+              <CollapsibleTrigger className="w-full">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">Опции "Без"</CardTitle>
+                      {getAllSelectedRemovables().length > 0 && (
+                        <Badge variant="secondary">{getAllSelectedRemovables().length} избрани</Badge>
+                      )}
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isRemovablesOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardDescription className="text-left">
+                    Премахнете съставки (без допълнителна такса)
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <CardContent className="pt-2 space-y-4">
+                  {removableData.applied_templates.map((template) => (
+                    <div key={template.template_id} className="space-y-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {Array.isArray(template.removables) 
+                            ? template.removables.length 
+                            : Object.keys(template.removables || {}).length
+                          } опции
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {Array.isArray(template.removables) ? (
+                          // New format: array of removables
+                          template.removables.map((removableItem, index) => (
+                            <div
+                              key={`${template.template_id}-${index}`}
+                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                                isRemovableSelected(template.template_id, removableItem)
+                                  ? 'border-red-500 bg-red-50'
+                                  : 'border-border bg-background hover:bg-muted/50'
+                              }`}
+                              onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
+                            >
+                              <div className="flex items-center flex-1">
+                                <Checkbox
+                                  checked={isRemovableSelected(template.template_id, removableItem)}
+                                  onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableItem, checked)}
+                                  className="mr-3"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="font-medium">{removableItem}</span>
+                              </div>
+                              <span className="text-sm text-muted-foreground">Премахни</span>
+                            </div>
+                          ))
+                        ) : (
+                          // Old format: object with key-value pairs
+                          Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
+                            <div
+                              key={`${template.template_id}-${removableKey}`}
+                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
+                                isRemovableSelected(template.template_id, removableKey)
+                                  ? 'border-red-500 bg-red-50'
+                                  : 'border-border bg-background hover:bg-muted/50'
+                              }`}
+                              onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
+                            >
+                              <div className="flex items-center flex-1">
+                                <Checkbox
+                                  checked={isRemovableSelected(template.template_id, removableKey)}
+                                  onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
+                                  className="mr-3"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="font-medium capitalize">{removableValue}</span>
+                              </div>
+                              <span className="text-sm text-muted-foreground">Премахни</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        )}
       </div>
     </div>
   )
