@@ -45,7 +45,7 @@ const Cart = () => {
   }
 
   const handleCheckout = () => {
-    navigate('/checkout')
+    navigate('/checkout-login')
   }
 
   const handleRemoveFromCart = (itemId, itemName) => {

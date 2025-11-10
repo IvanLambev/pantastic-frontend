@@ -112,12 +112,24 @@ export const translations = {
     accountRequired: "Изисква се акаунт",
     accountRequiredDesc: "Влезте или създайте акаунт, за да завършите поръчката си",
     signIn: "Вход",
+    signInOrContinue: "Вход или продължете като гост",
+    signInForFasterCheckout: "Влезте за по-бърза поръчка",
+    signInDesc: "Използвайте вашия акаунт за по-бърза поръчка и проследяване на поръчките",
     signUp: "Регистрация",
     or: "Или",
+    guestCheckout: "Поръчка като гост",
+    guestCheckoutDesc: "Продължете без акаунт",
+    continueAsGuest: "Продължи като гост",
+    proceedingAsGuest: "Продължаване като гост...",
+    processing: "Обработка...",
     createAccountCheckout: "Създай акаунт и поръчай",
     createAccountAndCheckout: "Създай акаунт и поръчай",
+    createAccountAndContinue: "Създай акаунт и продължи",
+    accountCreatedSuccess: "Акаунтът е създаден успешно",
+    accountCreationError: "Грешка при създаване на акаунт",
+    failedToCreateAccount: "Неуспешно създаване на акаунт",
+    networkError: "Грешка в мрежата. Моля, проверете връзката си",
     back: "Назад",
-    createAccountContinue: "Създай акаунт и продължи",
     creatingAccount: "Създаване на акаунт...",
     
     // Guest form
@@ -131,8 +143,13 @@ export const translations = {
     passwordMin: "Минимум 8 символа",
     allFieldsRequired: "Всички полета са задължителни",
     
-    // Guest form placeholders
+    // Guest form placeholders and validation
     guest: {
+      firstName: "Име",
+      lastName: "Фамилия",
+      email: "Имейл",
+      phone: "Телефон",
+      city: "Град",
       firstNamePlaceholder: "Иван",
       lastNamePlaceholder: "Иванов", 
       emailPlaceholder: "name@example.com",
@@ -140,7 +157,11 @@ export const translations = {
       phoneFormat: "Формат: +359888000000",
       cityPlaceholder: "София",
       passwordPlaceholder: "Създайте силна парола",
-      passwordHint: "Минимум 8 символа"
+      passwordHint: "Минимум 8 символа",
+      allFieldsRequired: "Всички полета са задължителни",
+      invalidEmail: "Моля, въведете валиден имейл адрес",
+      invalidPhone: "Телефонът трябва да е във формат: +359888000000",
+      guestCheckoutFailed: "Неуспешна поръчка като гост"
     },
     
     // Discount
@@ -152,6 +173,15 @@ export const translations = {
     apply: "Приложи",
     checking: "Проверка...",
     remove: "Премахни",
+    loginToApplyDiscount: "Моля, влезте, за да приложите отстъпка",
+    invalidDiscountCode: "Невалиден код за отстъпка",
+    discountValidationError: "Грешка при проверка на кода за отстъпка",
+    
+    // Delivery/Pickup address editing
+    editDeliveryAddress: "Редактирай адрес за доставка",
+    updateDeliveryAddress: "Актуализирайте вашия адрес за доставка",
+    enterNewAddress: "Въведете нов адрес",
+    saveAddress: "Запази адрес",
     
     // Payment
     paymentMethod: "Начин на плащане",
@@ -337,16 +367,23 @@ export const translations = {
   login: {
     title: "Вход в Pantastic",
     subtitle: "Въведете вашите данни за достъп до вашия акаунт",
+    email: "Имейл",
     emailLabel: "Имейл",
     emailPlaceholder: "name@example.com",
+    password: "Парола",
     passwordLabel: "Парола",
     passwordPlaceholder: "Въведете вашата парола",
     forgotPassword: "Забравена парола?",
     loginButton: "Вход",
     loggingIn: "Влизане...",
+    signingIn: "Влизане...",
     noAccount: "Нямате акаунт?",
     signUpLink: "Регистрирайте се",
     googleLoginSuccess: "Успешно влизане с Google!",
+    fillAllFields: "Моля, попълнете всички полета",
+    invalidCredentials: "Невалидни данни за вход",
+    loginFailed: "Неуспешен вход. Моля, опитайте отново",
+    loginSuccess: "Успешно влизане!",
     errors: {
       emailRequired: "Имейлът е задължителен",
       passwordRequired: "Паролата е задължителна",

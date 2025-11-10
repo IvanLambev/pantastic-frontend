@@ -114,19 +114,6 @@ export default function CheckoutV2() {
   const [newAddress, setNewAddress] = useState("")
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
   
-  // Guest checkout states
-  const [isGuest, setIsGuest] = useState(false)
-  const [guestData, setGuestData] = useState({
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    city: "",
-    password: ""
-  })
-  const [guestRegistering, setGuestRegistering] = useState(false)
-  const [guestError, setGuestError] = useState("")
-  
   // Discount states
   const [discountCode, setDiscountCode] = useState("")
   const [discountInfo, setDiscountInfo] = useState(null)
@@ -183,6 +170,16 @@ export default function CheckoutV2() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   // User is logged in if they have either access_token OR customer_id
   const isLoggedIn = !!(user?.access_token || user?.customer_id)
+  
+  // Check if it's a guest checkout
+  const guestCheckoutData = sessionStorage.getItem('guest_checkout_data')
+  const isGuestCheckout = !!guestCheckoutData
+  
+  // If not logged in and not guest checkout, redirect to checkout login
+  if (!isLoggedIn && !isGuestCheckout) {
+    navigate('/checkout-login')
+    return null
+  }
   
   // Check if restaurant is currently open
   const isOpen = isRestaurantOpen(selectedRestaurant)
@@ -306,132 +303,6 @@ export default function CheckoutV2() {
     setDiscountCode("")
     setDiscountInfo(null)
     setDiscountError("")
-  }
-
-  // Guest registration function
-  const handleGuestRegister = async () => {
-    // Validate guest data
-    if (!guestData.email || !guestData.first_name || !guestData.last_name || 
-        !guestData.phone || !guestData.city || !guestData.password) {
-      setGuestError("All fields are required")
-      return
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(guestData.email)) {
-      setGuestError("Please enter a valid email address")
-      return
-    }
-
-    // Phone validation (Bulgarian format)
-    const phoneRegex = /^\+359\d{9}$/
-    if (!phoneRegex.test(guestData.phone)) {
-      setGuestError("Phone must be in format: +359888000000")
-      return
-    }
-
-    // Password validation
-    if (guestData.password.length < 8) {
-      setGuestError("Password must be at least 8 characters long")
-      return
-    }
-
-    setGuestRegistering(true)
-    setGuestError("")
-
-    try {
-      const response = await fetch(`${API_URL}/user/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(guestData)
-      })
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type')
-      const isJson = contentType && contentType.includes('application/json')
-
-      if (!response.ok) {
-        // Handle non-JSON responses (like 404 HTML pages)
-        if (!isJson) {
-          if (response.status === 404) {
-            throw new Error("Quick registration is currently unavailable. Please use the Sign Up button above to create an account.")
-          }
-          if (response.status === 500) {
-            throw new Error("Server error occurred. Please try again in a few moments.")
-          }
-          throw new Error(`Registration failed (Error ${response.status}). Please try the Sign Up option above.`)
-        }
-
-        // Parse JSON error response
-        const errorData = await response.json()
-        
-        // Handle specific error messages from API
-        if (errorData.detail) {
-          if (typeof errorData.detail === 'string') {
-            throw new Error(errorData.detail)
-          } else if (Array.isArray(errorData.detail)) {
-            // FastAPI validation errors
-            const errorMessages = errorData.detail.map(err => err.msg || err.message).join(', ')
-            throw new Error(errorMessages)
-          }
-        }
-        
-        throw new Error("Registration failed. Please check your information and try again.")
-      }
-
-      // Parse successful response
-      if (!isJson) {
-        throw new Error("Unexpected response from server")
-      }
-
-      const data = await response.json()
-      
-      // Validate response data
-      if (!data.access_token) {
-        throw new Error("Registration completed but login failed. Please sign in manually.")
-      }
-
-      // Save the access token to sessionStorage
-      localStorage.setItem('user', JSON.stringify({
-        access_token: data.access_token,
-        token_type: data.token_type || 'bearer'
-      }))
-
-      // Reset guest state
-      setIsGuest(false)
-      setGuestData({
-        email: "",
-        first_name: "",
-        last_name: "",
-        phone: "",
-        city: "",
-        password: ""
-      })
-
-      toast.success(t('checkout.accountCreatedSuccess'))
-      
-      // Proceed with order confirmation
-      setShowOrderConfirmation(true)
-    } catch (error) {
-      console.error('Guest registration error:', error)
-      
-      // Display user-friendly error messages
-      let errorMessage = t('checkout.accountCreationError')
-      
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        errorMessage = t('checkout.networkError')
-      } else if (error.message) {
-        errorMessage = error.message
-      }
-      
-      setGuestError(errorMessage)
-      toast.error(t('checkout.failedToCreateAccount'))
-    } finally {
-      setGuestRegistering(false)
-    }
   }
 
   const getScheduledDeliveryTime = () => {
@@ -618,217 +489,6 @@ export default function CheckoutV2() {
           
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              {/* Discount Code */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('checkout.discountCode')}</CardTitle>
-                  <CardDescription>{t('checkout.discountCodeDesc')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!discountInfo ? (
-                    <div className="space-y-4">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder={t('checkout.enterDiscountCode')}
-                          value={discountCode}
-                          onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-                          onKeyPress={(e) => e.key === 'Enter' && validateDiscountCode()}
-                          disabled={discountValidating}
-                        />
-                        <Button 
-                          onClick={validateDiscountCode}
-                          disabled={!discountCode.trim() || discountValidating}
-                          size="default"
-                        >
-                          {discountValidating ? t('checkout.checking') : t('checkout.apply')}
-                        </Button>
-                      </div>
-                      {discountError && (
-                        <p className="text-sm text-red-600">{discountError}</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-800">
-                            {discountCode} - {discountInfo.discount_percentage}% off
-                          </span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={removeDiscount}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          {t('checkout.remove')}
-                        </Button>
-                      </div>
-                      <p className="text-sm text-green-600">{discountInfo.message}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Guest Checkout Section - Only show if not logged in */}
-              {!isLoggedIn && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('checkout.accountRequired')}</CardTitle>
-                    <CardDescription>{t('checkout.accountRequiredDesc')}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {!isGuest ? (
-                      <div className="space-y-4">
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="default"
-                            className="flex-1"
-                            onClick={() => navigate('/login', { state: { from: '/checkout-v2' } })}
-                          >
-                            {t('nav.login')}
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => navigate('/signup', { state: { from: '/checkout-v2' } })}
-                          >
-                            {t('nav.signup')}
-                          </Button>
-                        </div>
-                        
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                          </div>
-                          <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">{t('common.or')}</span>
-                          </div>
-                        </div>
-                        
-                        <Button 
-                          variant="secondary"
-                          className="w-full"
-                          onClick={() => setIsGuest(true)}
-                        >
-                          {t('checkout.createAccountAndCheckout')}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="first_name">{t('checkout.guest.firstName')} *</Label>
-                            <Input
-                              id="first_name"
-                              placeholder={t('checkout.guest.firstNamePlaceholder')}
-                              value={guestData.first_name}
-                              onChange={(e) => setGuestData({ ...guestData, first_name: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="last_name">{t('checkout.guest.lastName')} *</Label>
-                            <Input
-                              id="last_name"
-                              placeholder={t('checkout.guest.lastNamePlaceholder')}
-                              value={guestData.last_name}
-                              onChange={(e) => setGuestData({ ...guestData, last_name: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="email">{t('checkout.guest.email')} *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder={t('checkout.guest.emailPlaceholder')}
-                            value={guestData.email}
-                            onChange={(e) => setGuestData({ ...guestData, email: e.target.value })}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="phone">{t('checkout.guest.phone')} *</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder={t('checkout.guest.phonePlaceholder')}
-                            value={guestData.phone}
-                            onChange={(e) => setGuestData({ ...guestData, phone: e.target.value })}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">{t('checkout.guest.phoneFormat')}</p>
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="city">{t('checkout.guest.city')} *</Label>
-                          <Input
-                            id="city"
-                            placeholder={t('checkout.guest.cityPlaceholder')}
-                            value={guestData.city}
-                            onChange={(e) => setGuestData({ ...guestData, city: e.target.value })}
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label htmlFor="password">{t('checkout.guest.password')} *</Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            placeholder={t('checkout.guest.passwordPlaceholder')}
-                            value={guestData.password}
-                            onChange={(e) => setGuestData({ ...guestData, password: e.target.value })}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">{t('checkout.guest.passwordHint')}</p>
-                        </div>
-                        
-                        {guestError && (
-                          <p className="text-sm text-red-600">{guestError}</p>
-                        )}
-                        
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => {
-                              setIsGuest(false)
-                              setGuestData({
-                                email: "",
-                                first_name: "",
-                                last_name: "",
-                                phone: "",
-                                city: "",
-                                password: ""
-                              })
-                              setGuestError("")
-                            }}
-                            disabled={guestRegistering}
-                          >
-                            {t('common.back')}
-                          </Button>
-                          <Button
-                            variant="default"
-                            className="flex-1"
-                            onClick={handleGuestRegister}
-                            disabled={guestRegistering}
-                          >
-                            {guestRegistering ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                {t('checkout.creatingAccount')}
-                              </div>
-                            ) : (
-                              t('checkout.createAccountAndContinue')
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Payment Method */}
               <Card>
                 <CardHeader>
@@ -1109,6 +769,52 @@ export default function CheckoutV2() {
                   <Separator />
 
                   <div className="space-y-2">
+                    {/* Inline Discount Code Input */}
+                    <div className="space-y-2">
+                      {!discountInfo ? (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder={t('checkout.enterDiscountCode')}
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                            onKeyPress={(e) => e.key === 'Enter' && validateDiscountCode()}
+                            disabled={discountValidating}
+                            className="h-9 text-sm"
+                          />
+                          <Button 
+                            onClick={validateDiscountCode}
+                            disabled={!discountCode.trim() || discountValidating}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {discountValidating ? t('checkout.checking') : t('checkout.apply')}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded text-xs">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-3 w-3 text-green-600" />
+                            <span className="font-medium text-green-800">
+                              {discountCode} - {discountInfo.discount_percentage}% off
+                            </span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={removeDiscount}
+                            className="h-6 text-green-600 hover:text-green-800 p-1"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      {discountError && (
+                        <p className="text-xs text-red-600">{discountError}</p>
+                      )}
+                    </div>
+                    
+                    <Separator />
+                    
                     <div className="flex justify-between">
                       <span>{t('cart.subtotal')}</span>
                       <span>{formatDualCurrencyCompact(calculateSubtotalBGN())}</span>
@@ -1133,11 +839,6 @@ export default function CheckoutV2() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
-                  {!isLoggedIn && (
-                    <div className="text-center p-2 bg-blue-50 border border-blue-200 rounded-lg w-full">
-                      <p className="text-sm text-blue-800 font-medium">{t('checkout.pleaseSignIn')}</p>
-                    </div>
-                  )}
                   {!isOpen && nextOpenTime && (
                     <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
                       <p className="text-sm text-orange-800 font-medium">{t('checkout.restaurantClosed')}</p>
@@ -1145,20 +846,15 @@ export default function CheckoutV2() {
                     </div>
                   )}
                   <Button 
-                    className={`w-full ${(!isOpen || !isLoggedIn) ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
+                    className={`w-full ${!isOpen ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
                     size="lg"
                     onClick={handleCheckout} 
-                    disabled={isProcessing || !isOpen || !isLoggedIn}
+                    disabled={isProcessing || !isOpen}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         {t('checkout.processingPayment')}
-                      </div>
-                    ) : !isLoggedIn ? (
-                      <div className="flex items-center gap-2">
-                        <X className="h-4 w-4" />
-                        {t('checkout.accountRequired')}
                       </div>
                     ) : !isOpen ? (
                       <div className="flex items-center gap-2">

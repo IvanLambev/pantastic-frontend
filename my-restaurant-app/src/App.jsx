@@ -34,6 +34,7 @@ import About from '@/pages/About'
 import Food from '@/pages/Food'
 import Admin from '@/pages/Admin'
 import Checkout from '@/pages/CheckoutV2'
+import CheckoutLogin from '@/pages/CheckoutLogin'
 import RestaurantDetails from '@/pages/RestaurantDetails'
 import RestaurantDetailsAdmin from '@/pages/admin/RestaurantDetailsAdmin'
 import OrderTrackingV2 from '@/pages/OrderTrackingV2'
@@ -296,7 +297,9 @@ export default function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/about" element={<About />} />
           <Route path="/food" element={<Food />} />
+          <Route path="/checkout-login" element={<CheckoutLogin />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout-v2" element={<Checkout />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/restaurant/:id" element={<RestaurantDetails />} />
           <Route path="/restaurants/:restaurantId/items/:itemId" element={<ItemDetails />} />
