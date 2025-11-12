@@ -70,19 +70,19 @@ function GoogleMap_Component({ onLocationSelect }) {
       latitude: locationData.lat,
       longitude: locationData.lng
     };
-    
+
     console.log("Saving normalized location:", normalizedLocation);
-    
+
     // Save to session storage
     sessionStorage.setItem('delivery_address', normalizedLocation.address);
     sessionStorage.setItem('delivery_coordinates', JSON.stringify({
       latitude: normalizedLocation.latitude,
       longitude: normalizedLocation.longitude
     }));
-    
+
     // Trigger parent callback with coordinates for restaurant finding
     onLocationSelect([normalizedLocation.latitude, normalizedLocation.longitude]);
-    
+
     return normalizedLocation;
   };
 
@@ -99,13 +99,13 @@ function GoogleMap_Component({ onLocationSelect }) {
           if (status === "OK" && results[0]) {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
-            
+
             const locationData = {
               lat,
               lng,
               address: inputValue
             };
-            
+
             saveLocationToSession(locationData);
             setSelected({ lat, lng, address: inputValue });
             setShowPickButton(false);
@@ -121,7 +121,7 @@ function GoogleMap_Component({ onLocationSelect }) {
   const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-    
+
     console.log("Dropped pin at:", { lat, lng });
 
     // Reverse geocode to get address
@@ -151,7 +151,7 @@ function GoogleMap_Component({ onLocationSelect }) {
   // Handle scroll on map to show hint
   const handleMapScroll = (e) => {
     if (!isDesktop) return;
-    
+
     // Check if Ctrl key is pressed
     if (e.ctrlKey || e.metaKey) {
       // User is zooming correctly, hide hint
@@ -167,8 +167,8 @@ function GoogleMap_Component({ onLocationSelect }) {
   return (
     <div className="w-full max-w-full overflow-hidden">
       <div className="places-container relative w-full max-w-full">
-        <PlacesAutocomplete 
-          setSelected={setSelected} 
+        <PlacesAutocomplete
+          setSelected={setSelected}
           setPendingLocation={setPendingLocation}
           setShowPickButton={setShowPickButton}
           pendingLocation={pendingLocation}
@@ -176,9 +176,8 @@ function GoogleMap_Component({ onLocationSelect }) {
           setInputValue={setInputValue}
         />
         {/* Pick Address Button with fade animation */}
-        <div className={`absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${
-          showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
-        }`}>
+        <div className={`absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
+          }`}>
           <Button
             onClick={handlePickAddress}
             size="default"
@@ -188,8 +187,8 @@ function GoogleMap_Component({ onLocationSelect }) {
           </Button>
         </div>
       </div>
-      
-      <div 
+
+      <div
         className="w-full max-w-full overflow-hidden border border-t-0 relative"
         onWheel={handleMapScroll}
       >
@@ -272,9 +271,9 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      
+
       console.log("Raw selected address:", address);
-      
+
       const locationData = {
         lat,
         lng,
@@ -295,7 +294,7 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
     const newValue = e.target.value;
     setValue(newValue);
     setInputValue(newValue);
-    
+
     // Show pick button if there's text
     if (newValue.trim()) {
       setShowPickButton(true);
@@ -320,12 +319,12 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
                    focus:border-transparent bg-white shadow-sm overflow-x-auto whitespace-nowrap box-border"
         placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
       />
-      <ComboboxPopover 
+      <ComboboxPopover
         className="absolute z-50 w-full max-w-full bg-white 
                    border border-gray-300 rounded-lg shadow-lg mt-2"
         portal={false}
       >
-        <ComboboxList 
+        <ComboboxList
           className="max-h-64 overflow-auto"
           style={{
             maxHeight: "200px",
@@ -335,8 +334,8 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
         >
           {status === "OK" &&
             data.map(({ place_id, description }) => (
-              <ComboboxOption 
-                key={place_id} 
+              <ComboboxOption
+                key={place_id}
                 value={description}
                 className="p-4 text-base cursor-pointer hover:bg-gray-100 
                            border-b border-gray-100 last:border-b-0 transition-colors"
@@ -352,27 +351,26 @@ export default function RestaurantSelector({
   open,
   onClose,
   onSelect,
-  requireSelection = false, // New prop: if true, can't close without selecting
 }) {
   // Restaurant data state
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Main flow states
   const [currentStep, setCurrentStep] = useState('delivery-method'); // 'delivery-method', 'address-input', 'city-selection', 'restaurant-selection'
   const [deliveryMethod, setDeliveryMethod] = useState(''); // 'pickup' or 'delivery'
   const [selectedCity, setSelectedCity] = useState(null);
-  
+
   // Address and location states
   const [addressError, setAddressError] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
-  
+
   // Confirmation dialog state for distance warning
   const [showDistanceWarning, setShowDistanceWarning] = useState(false);
   const [pendingRestaurantSelection, setPendingRestaurantSelection] = useState(null);
   const [pendingDistance, setPendingDistance] = useState(null);
-  
+
   // Location permission pre-prompt
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
@@ -406,16 +404,13 @@ export default function RestaurantSelector({
   // Get unique cities from restaurants
   const cities = [...new Set(restaurants.map(restaurant => restaurant.city))].sort();
   // Filter restaurants by selected city
-  const filteredRestaurants = selectedCity 
+  const filteredRestaurants = selectedCity
     ? restaurants.filter(restaurant => restaurant.city === selectedCity)
     : restaurants;
 
   // Reset states when modal closes
   const handleClose = () => {
-    // If requireSelection is true, don't allow closing without a selection
-    if (requireSelection) {
-      return;
-    }
+    // Allow closing without selection now
     setCurrentStep('delivery-method');
     setDeliveryMethod('');
     setAddressError('');
@@ -435,9 +430,9 @@ export default function RestaurantSelector({
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -452,19 +447,19 @@ export default function RestaurantSelector({
     const currentDay = days[gmt3.getDay()];
     const hours = restaurant.opening_hours || {};  // Working hours object
     const todayHours = hours[currentDay];
-    
+
     if (!todayHours) return false;
-    
+
     try {
       // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
       const [open, close] = todayHours.split("-");
       const [openH, openM] = open.split(":").map(Number);
       const [closeH, closeM] = close.split(":").map(Number);
-      
+
       const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
       const openTime = openH * 60 + openM; // Opening time in minutes
       const closeTime = closeH * 60 + closeM; // Closing time in minutes
-      
+
       // Check if the restaurant closes the next day (e.g., 10:00-03:00)
       if (closeTime < openTime) {
         // Restaurant is open if current time is after opening OR before closing (next day)
@@ -482,7 +477,7 @@ export default function RestaurantSelector({
   // Find closest restaurant (open or closed) by coordinates
   function findClosestRestaurant(lat, lng) {
     if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
-    
+
     // First, try to find open restaurants
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
 
@@ -501,7 +496,7 @@ export default function RestaurantSelector({
           }
         }
       }
-      
+
       // Check if the closest open restaurant is more than 10km away
       if (minDist > 10) {
         return {
@@ -511,10 +506,10 @@ export default function RestaurantSelector({
           message: `Най-близкият работещ ресторант "${closest.name}" е на ${minDist.toFixed(1)} км от вашето местоположение. Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?`
         };
       }
-      
+
       return { restaurant: closest, distance: minDist, message: null, isOpen: true };
     }
-    
+
     // No open restaurants found - Always find the closest restaurant for menu browsing
     let minDist = Infinity;
     let closest = null;
@@ -529,7 +524,7 @@ export default function RestaurantSelector({
         }
       }
     }
-    
+
     // Return the closest restaurant even though it's closed (for menu browsing)
     const nextOpenTime = getNextOpenTime();
     return {
@@ -547,27 +542,27 @@ export default function RestaurantSelector({
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const gmt3 = new Date(utc + 3 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    
+
     // Check today and next few days
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
       const checkDate = new Date(gmt3);
       checkDate.setDate(checkDate.getDate() + dayOffset);
       const dayName = days[checkDate.getDay()];
-      
+
       for (const restaurant of restaurants) {
         const hours = restaurant.opening_hours || {};
         const dayHours = hours[dayName];
-        
+
         if (dayHours) {
           try {
             const [open] = dayHours.split("-");
             const [openH, openM] = open.split(":").map(Number);
             const openTime = new Date(checkDate);
             openTime.setHours(openH, openM, 0, 0);
-            
+
             // If it's today, make sure the opening time is in the future
             if (dayOffset === 0 && openTime <= gmt3) continue;
-            
+
             if (dayOffset === 0) {
               return `Today at ${open}`;
             } else if (dayOffset === 1) {
@@ -590,12 +585,12 @@ export default function RestaurantSelector({
     // Show the pre-prompt first
     setShowLocationPrompt(true);
   }
-  
+
   async function requestDeviceLocation() {
     setShowLocationPrompt(false);
     setAddressError("");
     setAddressLoading(true);
-    
+
     // Check if geolocation is supported
     if (!navigator.geolocation) {
       setAddressError("Геолокацията не се поддържа от вашия браузър.");
@@ -622,7 +617,7 @@ export default function RestaurantSelector({
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         console.log("Got device location:", { latitude, longitude });
-        
+
         // Save location in sessionStorage if delivery
         if (deliveryMethod === 'delivery') {
           // Try to reverse geocode if possible, else save as 'Device Location'
@@ -647,7 +642,7 @@ export default function RestaurantSelector({
           if (result.message) {
             setPendingRestaurantSelection(result.restaurant);
             setPendingDistance(result.distance);
-            
+
             // Differentiate between open-but-far vs closed restaurants
             if (result.isOpen) {
               // Open but far away - show distance warning
@@ -671,8 +666,8 @@ export default function RestaurantSelector({
         console.error("Geolocation error:", error);
         let errorMessage = "Не успяхме да получим локацията ви.";
         let detailedInstructions = "";
-        
-        switch(error.code) {
+
+        switch (error.code) {
           case error.PERMISSION_DENIED: {
             // Detect iOS
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -697,7 +692,7 @@ export default function RestaurantSelector({
             errorMessage = "Заявката за локация изтече. Моля, опитайте отново.";
             break;
         }
-        
+
         setAddressError(errorMessage + (detailedInstructions ? '\n\n' + detailedInstructions : ''));
         setAddressLoading(false);
       },
@@ -713,14 +708,14 @@ export default function RestaurantSelector({
     } else {
       sessionStorage.setItem('delivery_method', 'pickup');
     }
-    
+
     setAddressError(""); // Clear any previous errors
     const result = findClosestRestaurant(coords[0], coords[1]);
     if (result.restaurant) {
       if (result.message) {
         setPendingRestaurantSelection(result.restaurant);
         setPendingDistance(result.distance);
-        
+
         // Differentiate between open-but-far vs closed restaurants
         if (result.isOpen) {
           // Open but far away - show distance warning
@@ -776,7 +771,7 @@ export default function RestaurantSelector({
             <DialogTitle className="text-2xl sm:text-3xl font-bold text-center">{t('restaurantSelector.howToGetFood')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-6 sm:gap-8 py-6 sm:py-8">
-            <Card 
+            <Card
               className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-gray-300"
               onClick={() => handleDeliveryMethodSelect('pickup')}
             >
@@ -793,7 +788,7 @@ export default function RestaurantSelector({
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-gray-300"
               onClick={() => handleDeliveryMethodSelect('delivery')}
             >
@@ -833,10 +828,10 @@ export default function RestaurantSelector({
             </div>
 
             {/* Device Location Button */}
-            <Button 
-              type="button" 
-              variant="secondary" 
-              onClick={handleDeviceLocation} 
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDeviceLocation}
               disabled={addressLoading}
               className="w-full py-2 sm:py-4 px-3 sm:px-4 text-xs sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm whitespace-normal sm:whitespace-nowrap text-center"
             >
@@ -847,9 +842,8 @@ export default function RestaurantSelector({
             {/* Error Message */}
             {addressError && (
               <div className="text-center">
-                <div className={`p-2 sm:p-4 rounded-lg mb-2 sm:mb-4 ${
-                  showDistanceWarning ? 'text-orange-700 bg-orange-50 border border-orange-200' : 'text-red-500 bg-red-50'
-                }`}>
+                <div className={`p-2 sm:p-4 rounded-lg mb-2 sm:mb-4 ${showDistanceWarning ? 'text-orange-700 bg-orange-50 border border-orange-200' : 'text-red-500 bg-red-50'
+                  }`}>
                   {showDistanceWarning && pendingRestaurantSelection ? (
                     <div className="space-y-2 sm:space-y-3">
                       <div className="font-semibold text-base sm:text-lg text-orange-800">
@@ -868,18 +862,18 @@ export default function RestaurantSelector({
                     <p>{addressError}</p>
                   )}
                 </div>
-                
+
                 {/* Distance Warning Confirmation */}
                 {showDistanceWarning && (
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button 
+                    <Button
                       variant="outline"
                       onClick={handleCancelDistantRestaurant}
                       className="flex-1 sm:flex-none"
                     >
                       {t('restaurantSelector.tryDifferent') || 'Опитай друго място'}
                     </Button>
-                    <Button 
+                    <Button
                       variant="default"
                       onClick={handleConfirmDistantRestaurant}
                       className="flex-1 sm:flex-none bg-orange-600 hover:bg-orange-700"
@@ -888,7 +882,7 @@ export default function RestaurantSelector({
                     </Button>
                   </div>
                 )}
-                
+
                 {/* No Open Restaurants - Show nearest restaurant for menu browsing */}
                 {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
                   <div className="text-center space-y-4">
@@ -906,7 +900,7 @@ export default function RestaurantSelector({
                           {pendingRestaurantSelection.address || 'Address not available'}
                           {pendingDistance && ` - ${pendingDistance.toFixed(1)} km ${t('restaurantSelector.away')}`}
                         </p>
-                        <Button 
+                        <Button
                           variant="default"
                           onClick={() => {
                             onSelect(pendingRestaurantSelection);
@@ -928,9 +922,9 @@ export default function RestaurantSelector({
             {deliveryMethod === 'pickup' && (
               <div className="border-t pt-4 sm:pt-8">
                 <p className="text-center text-gray-600 mb-3 sm:mb-6 text-sm sm:text-lg">{t('restaurantSelector.or') || 'или'}</p>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={handleManualRestaurantSelect}
                   className="w-full py-2 sm:py-4 text-sm sm:text-xl flex items-center justify-center gap-2 sm:gap-3 font-medium shadow-sm"
                 >
@@ -948,8 +942,8 @@ export default function RestaurantSelector({
         <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentStep('address-input')}
             >
@@ -987,8 +981,8 @@ export default function RestaurantSelector({
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentStep('city-selection')}
             >
@@ -1018,11 +1012,11 @@ export default function RestaurantSelector({
                   const [open, close] = todayHours.split("-");
                   const [openH, openM] = open.split(":").map(Number);
                   const [closeH, closeM] = close.split(":").map(Number);
-                  
+
                   const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
                   const openTime = openH * 60 + openM; // Opening time in minutes
                   const closeTime = closeH * 60 + closeM; // Closing time in minutes
-                  
+
                   // Check if the restaurant closes the next day (e.g., 10:00-03:00)
                   if (closeTime < openTime) {
                     // Restaurant is open if current time is after opening OR before closing (next day)
@@ -1031,7 +1025,7 @@ export default function RestaurantSelector({
                     // Normal case: restaurant opens and closes on the same day
                     isOpen = currentTime >= openTime && currentTime <= closeTime;
                   }
-                  
+
                   if (isOpen) {
                     stateBg = "bg-green-100/60 text-green-700";
                   }
@@ -1058,7 +1052,7 @@ export default function RestaurantSelector({
                             {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
                           </span>
                         </span>
-                        <span 
+                        <span
                           className="text-sm text-gray-500 text-left hover:text-blue-600 hover:underline cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1087,7 +1081,7 @@ export default function RestaurantSelector({
           </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Location Permission Pre-Prompt Dialog */}
       <Dialog open={showLocationPrompt} onOpenChange={setShowLocationPrompt}>
         <DialogContent className="w-[85vw] sm:w-auto sm:max-w-md">
@@ -1109,13 +1103,13 @@ export default function RestaurantSelector({
               Натиснете <span className="font-semibold">"Разреши"</span> на следващия екран, за да продължите.
             </p>
             <div className="flex flex-col gap-3 pt-4">
-              <Button 
+              <Button
                 onClick={requestDeviceLocation}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
                 Продължи
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setShowLocationPrompt(false)}
                 className="w-full"

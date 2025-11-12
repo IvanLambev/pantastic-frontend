@@ -31,11 +31,13 @@ import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
+import { selectRestaurantWithFallback } from "@/utils/ipGeolocation"
 
 const Food = () => {
   const navigate = useNavigate()
   const [showRestaurantModal, setShowRestaurantModal] = useState(false)
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
+  const [restaurants, setRestaurants] = useState([]) // All available restaurants
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -47,18 +49,45 @@ const Food = () => {
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
 
+  // Fetch all restaurants and auto-select with fallback logic
   useEffect(() => {
-    // Check if restaurant is already selected
-    const savedRestaurant = localStorage.getItem('selectedRestaurant')
-    if (savedRestaurant) {
-      const restaurant = JSON.parse(savedRestaurant);
-      setSelectedRestaurant(restaurant);
-      setShowRestaurantModal(false);
-      const restaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
-      fetchItems(restaurantId);
-    } else {
-      setShowRestaurantModal(true);
-    }
+    const initializeRestaurant = async () => {
+      try {
+        // Fetch all restaurants first
+        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurants');
+        }
+        const restaurantsData = await response.json();
+        setRestaurants(restaurantsData);
+
+        // Use fallback logic to select restaurant
+        const autoSelectedRestaurant = await selectRestaurantWithFallback(restaurantsData);
+        
+        if (autoSelectedRestaurant) {
+          setSelectedRestaurant(autoSelectedRestaurant);
+          localStorage.setItem('selectedRestaurant', JSON.stringify(autoSelectedRestaurant));
+          setShowRestaurantModal(false);
+          
+          const restaurantId = Array.isArray(autoSelectedRestaurant) 
+            ? autoSelectedRestaurant[0] 
+            : autoSelectedRestaurant.restaurant_id;
+          
+          await fetchItems(restaurantId);
+        } else {
+          // No restaurant could be auto-selected, show modal
+          setShowRestaurantModal(true);
+        }
+      } catch (err) {
+        console.error('Error initializing restaurant:', err);
+        setError(err.message);
+        setShowRestaurantModal(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeRestaurant();
   }, [])
 
   // Fetch favorite items on mount
@@ -87,6 +116,32 @@ const Food = () => {
     localStorage.removeItem('selectedRestaurant')
     setShowRestaurantModal(true)
     setItems([]) // Clear menu items when changing restaurant
+  }
+
+  const handleModalClose = async () => {
+    setShowRestaurantModal(false);
+    
+    // If no restaurant is selected when closing modal, apply fallback logic
+    if (!selectedRestaurant) {
+      const autoSelectedRestaurant = await selectRestaurantWithFallback(restaurants);
+      
+      if (autoSelectedRestaurant) {
+        setSelectedRestaurant(autoSelectedRestaurant);
+        localStorage.setItem('selectedRestaurant', JSON.stringify(autoSelectedRestaurant));
+        
+        const restaurantId = Array.isArray(autoSelectedRestaurant) 
+          ? autoSelectedRestaurant[0] 
+          : autoSelectedRestaurant.restaurant_id;
+        
+        await fetchItems(restaurantId);
+        
+        const restaurantName = Array.isArray(autoSelectedRestaurant) 
+          ? autoSelectedRestaurant[8] 
+          : autoSelectedRestaurant.name;
+        
+        toast.info(`Auto-selected restaurant: ${restaurantName}`);
+      }
+    }
   }
 
   const fetchItems = async (restaurantId) => {
@@ -269,9 +324,8 @@ const Food = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-background w-full overflow-x-hidden">
       <RestaurantSelector
         open={showRestaurantModal}
-        onClose={() => setShowRestaurantModal(false)}
+        onClose={handleModalClose}
         onSelect={selectRestaurant}
-        requireSelection={true} // Food page requires restaurant selection
       />
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (

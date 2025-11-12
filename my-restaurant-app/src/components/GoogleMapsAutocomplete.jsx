@@ -46,16 +46,16 @@ function Map() {
       latitude: locationData.lat,
       longitude: locationData.lng
     };
-    
+
     console.log("Saving normalized location:", normalizedLocation);
-    
+
     // Save to session storage
     sessionStorage.setItem('delivery_address', normalizedLocation.address);
     sessionStorage.setItem('delivery_coordinates', JSON.stringify({
       latitude: normalizedLocation.latitude,
       longitude: normalizedLocation.longitude
     }));
-    
+
     return normalizedLocation;
   };
 
@@ -63,7 +63,7 @@ function Map() {
   const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-    
+
     console.log("Dropped pin at:", { lat, lng });
 
     // Reverse geocode to get address
@@ -82,10 +82,10 @@ function Map() {
         const normalizedLocation = saveLocationToSession(locationData);
         console.log("Normalized dropped pin location:", normalizedLocation);
 
-        setSelected({ 
-          lat: normalizedLocation.latitude, 
-          lng: normalizedLocation.longitude, 
-          address: normalizedLocation.address 
+        setSelected({
+          lat: normalizedLocation.latitude,
+          lng: normalizedLocation.longitude,
+          address: normalizedLocation.address
         });
       } else {
         console.error("Geocoder failed due to:", status);
@@ -99,7 +99,7 @@ function Map() {
         {/* pass setSelected and saveLocationToSession down */}
         <PlacesAutocomplete setSelected={setSelected} saveLocation={saveLocationToSession} />
       </div>
-      
+
       <GoogleMap
         zoom={12}
         center={selected || center}
@@ -128,9 +128,9 @@ const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      
+
       console.log("Raw selected address:", address);
-      
+
       const locationData = {
         lat,
         lng,
@@ -166,8 +166,8 @@ const PlacesAutocomplete = ({ setSelected, saveLocation }) => {
         <ComboboxList className="max-h-60 overflow-auto">
           {status === "OK" &&
             data.map(({ place_id, description }) => (
-              <ComboboxOption 
-                key={place_id} 
+              <ComboboxOption
+                key={place_id}
                 value={description}
                 className="p-3 cursor-pointer hover:bg-gray-100 
                            border-b border-gray-100 last:border-b-0"
