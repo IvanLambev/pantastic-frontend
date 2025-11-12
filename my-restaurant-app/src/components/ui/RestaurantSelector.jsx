@@ -54,7 +54,13 @@ function GoogleMap_Component({ onLocationSelect }) {
   // Function to normalize address by removing special characters except commas
   const normalizeAddress = (address) => {
     if (!address) return "";
-    return address.replace(/['"„"«»]/g, '').replace(/[^\w\s,.-]/g, '').trim();
+    // Remove quotes and special brackets, but preserve Unicode letters (including Cyrillic), numbers, spaces, commas, dots, hyphens
+    // Note: \p{L} matches any Unicode letter, \p{N} matches any Unicode number
+    return address
+      .replace(/['"„"«»]/g, '')  // Remove various types of quotes
+      .replace(/[^\p{L}\p{N}\s,.\-–—/]/gu, '')  // Keep Unicode letters, numbers, spaces, commas, dots, hyphens, slashes
+      .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
+      .trim();
   };
 
   // Function to save location to session storage and trigger parent callback

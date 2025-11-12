@@ -226,7 +226,12 @@ export default function CheckoutV2() {
   const handleAddressSave = () => {
     if (newAddress.trim()) {
       // Normalize the address by removing special characters except commas
-      const normalizedAddress = newAddress.trim().replace(/['"„"«»]/g, '').replace(/[^\w\s,.-]/g, '').trim()
+      // \p{L} matches any Unicode letter (including Cyrillic), \p{N} matches any Unicode number
+      const normalizedAddress = newAddress.trim()
+        .replace(/['"„"«»]/g, '')  // Remove various types of quotes
+        .replace(/[^\p{L}\p{N}\s,.\-–—/]/gu, '')  // Keep Unicode letters, numbers, spaces, commas, dots, hyphens, slashes
+        .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
+        .trim()
       
       sessionStorage.setItem('delivery_address', normalizedAddress)
       
