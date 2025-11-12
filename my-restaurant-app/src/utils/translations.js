@@ -161,7 +161,9 @@ export const translations = {
       allFieldsRequired: "Всички полета са задължителни",
       invalidEmail: "Моля, въведете валиден имейл адрес",
       invalidPhone: "Телефонът трябва да е във формат: +359888000000",
-      guestCheckoutFailed: "Неуспешна поръчка като гост"
+      guestCheckoutFailed: "Неуспешна поръчка като гост",
+      accountAlreadyExists: "Акаунт с този имейл вече съществува. Моля, влезте, за да продължите.",
+      proceedingAsGuest: "Продължаване като гост..."
     },
     
     // Discount
