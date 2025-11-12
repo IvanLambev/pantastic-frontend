@@ -135,14 +135,48 @@ export default function CheckoutLogin() {
     setGuestError("")
 
     try {
-      // Create a temporary guest session
-      // Store guest data in sessionStorage for the checkout process
+      console.log('🔐 Authenticating guest user...')
+      
+      // Authenticate guest with backend
+      const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
+        method: 'POST',
+        credentials: 'include', // IMPORTANT: Enable cookie handling
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: guestData.first_name,
+          last_name: guestData.last_name,
+          email: guestData.email,
+          phone: guestData.phone
+        })
+      })
+
+      if (!guestAuthResponse.ok) {
+        const errorData = await guestAuthResponse.json().catch(() => ({}))
+        throw new Error(errorData.message || errorData.detail || 'Failed to authenticate guest user')
+      }
+
+      const guestAuthData = await guestAuthResponse.json()
+      console.log('✅ Guest authentication successful:', guestAuthData)
+      
+      // Store guest session info (including customer_id from backend response)
+      // This allows the guest to proceed through checkout like a logged-in user
+      if (guestAuthData.customer_id) {
+        localStorage.setItem('user', JSON.stringify({
+          customer_id: guestAuthData.customer_id,
+          is_guest: true, // Mark as guest user
+          email: guestData.email,
+          first_name: guestData.first_name,
+          last_name: guestData.last_name
+        }))
+      }
+      
+      // Also store in sessionStorage for reference
       sessionStorage.setItem('guest_checkout_data', JSON.stringify(guestData))
       
       toast.success(t('checkout.guest.proceedingAsGuest'))
       navigate('/checkout-v2')
     } catch (error) {
-      console.error('Guest checkout error:', error)
+      console.error('❌ Guest authentication failed:', error)
       setGuestError(error.message || t('checkout.guest.guestCheckoutFailed'))
     } finally {
       setGuestLoading(false)

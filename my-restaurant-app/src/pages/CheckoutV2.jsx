@@ -357,48 +357,14 @@ export default function CheckoutV2() {
     setIsProcessing(true)
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const guestCheckoutData = sessionStorage.getItem('guest_checkout_data')
-      const isGuest = !!guestCheckoutData && !user?.customer_id
 
-      // If this is a guest checkout, authenticate with the backend first
-      if (isGuest) {
-        try {
-          const guestData = JSON.parse(guestCheckoutData)
-          
-          console.log('🔐 Authenticating guest user before order creation...')
-          const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
-            method: 'POST',
-            credentials: 'include', // IMPORTANT: Enable cookie handling
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              first_name: guestData.first_name,
-              last_name: guestData.last_name,
-              email: guestData.email,
-              phone: guestData.phone
-            })
-          })
-
-          if (!guestAuthResponse.ok) {
-            const errorData = await guestAuthResponse.json().catch(() => ({}))
-            throw new Error(errorData.message || 'Failed to authenticate guest user')
-          }
-
-          const guestAuthData = await guestAuthResponse.json()
-          console.log('✅ Guest authentication successful:', guestAuthData)
-          
-          // Guest is now authenticated via cookies, proceed with order
-        } catch (guestAuthError) {
-          console.error('❌ Guest authentication failed:', guestAuthError)
-          throw new Error('Failed to authenticate guest user: ' + guestAuthError.message)
-        }
-      } else {
-        // Regular user authentication check
-        if (!user?.customer_id) {
-          throw new Error('User not logged in')
-        }
+      // Check authentication (works for both regular users and guest users)
+      // Guest users have customer_id set during CheckoutLogin authentication
+      if (!user?.customer_id) {
+        throw new Error('User not logged in. Please restart checkout process.')
       }
 
-      // Check if restaurant is selected (for both guest and registered users)
+      // Check if restaurant is selected
       if (!selectedRestaurant || selectedRestaurant.length === 0) {
         throw new Error('No restaurant selected')
       }
@@ -463,6 +429,13 @@ export default function CheckoutV2() {
       setDiscountCode("");
       setDiscountInfo(null);
       setDiscountError("");
+
+      // Clean up guest checkout data if this was a guest order
+      if (user.is_guest) {
+        sessionStorage.removeItem('guest_checkout_data')
+        // Note: Keep the customer_id in localStorage for order tracking
+        // It will be cleared when the user closes the browser or navigates away
+      }
 
       // Handle different payment methods
       if (selectedPayment === 'cash') {
