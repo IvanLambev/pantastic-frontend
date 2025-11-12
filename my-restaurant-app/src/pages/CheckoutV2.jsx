@@ -357,10 +357,50 @@ export default function CheckoutV2() {
     setIsProcessing(true)
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const guestCheckoutData = sessionStorage.getItem('guest_checkout_data')
+      const isGuest = !!guestCheckoutData && !user?.customer_id
 
-      // With cookie-based auth, check for customer_id instead of access_token
-      if (!user?.customer_id || selectedRestaurant.length === 0) {
-        throw new Error('User not logged in or no restaurant selected')
+      // If this is a guest checkout, authenticate with the backend first
+      if (isGuest) {
+        try {
+          const guestData = JSON.parse(guestCheckoutData)
+          
+          console.log('🔐 Authenticating guest user before order creation...')
+          const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
+            method: 'POST',
+            credentials: 'include', // IMPORTANT: Enable cookie handling
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              first_name: guestData.first_name,
+              last_name: guestData.last_name,
+              email: guestData.email,
+              phone: guestData.phone
+            })
+          })
+
+          if (!guestAuthResponse.ok) {
+            const errorData = await guestAuthResponse.json().catch(() => ({}))
+            throw new Error(errorData.message || 'Failed to authenticate guest user')
+          }
+
+          const guestAuthData = await guestAuthResponse.json()
+          console.log('✅ Guest authentication successful:', guestAuthData)
+          
+          // Guest is now authenticated via cookies, proceed with order
+        } catch (guestAuthError) {
+          console.error('❌ Guest authentication failed:', guestAuthError)
+          throw new Error('Failed to authenticate guest user: ' + guestAuthError.message)
+        }
+      } else {
+        // Regular user authentication check
+        if (!user?.customer_id) {
+          throw new Error('User not logged in')
+        }
+      }
+
+      // Check if restaurant is selected (for both guest and registered users)
+      if (!selectedRestaurant || selectedRestaurant.length === 0) {
+        throw new Error('No restaurant selected')
       }
 
       // Format order items according to new API structure
