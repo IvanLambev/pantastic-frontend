@@ -29,6 +29,7 @@ POST https://api2.palachinki.store/order/auth/guest
 ### Key Points
 
 1. **`credentials: "include"`** is **REQUIRED** - This ensures that:
+
    - The browser sends any existing cookies with the request
    - The browser stores the HTTP-only authentication cookies returned by the server
 
@@ -44,61 +45,67 @@ When a user chooses guest checkout and clicks "Continue as Guest":
 
 ```javascript
 const handleGuestCheckout = async (e) => {
-  e.preventDefault()
-  
+  e.preventDefault();
+
   // Validate guest data (email, phone, etc.)
   // ...
-  
-  setGuestLoading(true)
-  
+
+  setGuestLoading(true);
+
   try {
-    console.log('🔐 Authenticating guest user...')
-    
+    console.log("🔐 Authenticating guest user...");
+
     // STEP 1: Authenticate with backend IMMEDIATELY
     const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
-      method: 'POST',
-      credentials: 'include', // IMPORTANT!
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      credentials: "include", // IMPORTANT!
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         first_name: guestData.first_name,
         last_name: guestData.last_name,
         email: guestData.email,
-        phone: guestData.phone
-      })
-    })
+        phone: guestData.phone,
+      }),
+    });
 
     if (!guestAuthResponse.ok) {
-      const errorData = await guestAuthResponse.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.detail || 'Failed to authenticate')
+      const errorData = await guestAuthResponse.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || errorData.detail || "Failed to authenticate"
+      );
     }
 
-    const guestAuthData = await guestAuthResponse.json()
-    console.log('✅ Guest authentication successful:', guestAuthData)
-    
+    const guestAuthData = await guestAuthResponse.json();
+    console.log("✅ Guest authentication successful:", guestAuthData);
+
     // STEP 2: Store customer_id in localStorage (like a regular user)
     if (guestAuthData.customer_id) {
-      localStorage.setItem('user', JSON.stringify({
-        customer_id: guestAuthData.customer_id,
-        is_guest: true, // Mark as guest user
-        email: guestData.email,
-        first_name: guestData.first_name,
-        last_name: guestData.last_name
-      }))
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          customer_id: guestAuthData.customer_id,
+          is_guest: true, // Mark as guest user
+          email: guestData.email,
+          first_name: guestData.first_name,
+          last_name: guestData.last_name,
+        })
+      );
     }
-    
+
     // Also store in sessionStorage for reference
-    sessionStorage.setItem('guest_checkout_data', JSON.stringify(guestData))
-    
+    sessionStorage.setItem("guest_checkout_data", JSON.stringify(guestData));
+
     // STEP 3: Navigate to checkout
-    navigate('/checkout-v2')
+    navigate("/checkout-v2");
   } catch (error) {
-    console.error('❌ Guest authentication failed:', error)
-    setGuestError(error.message)
+    console.error("❌ Guest authentication failed:", error);
+    setGuestError(error.message);
   }
-}
+};
 ```
 
 **Key Changes from Original Implementation:**
+
 - ✅ Guest authentication happens **during login**, not during order placement
 - ✅ Backend response includes `customer_id` which is stored in localStorage
 - ✅ Guest user now has same structure as regular user (with `is_guest: true` flag)
@@ -110,31 +117,32 @@ The order placement is now **simplified** - no guest-specific logic needed:
 
 ```javascript
 const handleOrderConfirm = async () => {
-  setIsProcessing(true)
+  setIsProcessing(true);
   try {
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     // Check authentication (works for both regular AND guest users)
     if (!user?.customer_id) {
-      throw new Error('User not logged in. Please restart checkout process.')
+      throw new Error("User not logged in. Please restart checkout process.");
     }
 
     // ... rest of order creation logic
-    const data = await api.post('/order/orders', orderData)
-    
+    const data = await api.post("/order/orders", orderData);
+
     // Clean up guest data after successful order
     if (user.is_guest) {
-      sessionStorage.removeItem('guest_checkout_data')
+      sessionStorage.removeItem("guest_checkout_data");
     }
-    
+
     // ... navigate to order tracking
   } catch (error) {
     // ... error handling
   }
-}
+};
 ```
 
 **Why This Works:**
+
 - Guest users now have `customer_id` in localStorage (set during CheckoutLogin)
 - HTTP-only cookies are already set (from guest auth in CheckoutLogin)
 - API client's `makeAuthenticatedRequest()` checks for `customer_id` ✓
@@ -147,6 +155,7 @@ const handleOrderConfirm = async () => {
 **Location**: `src/pages/CheckoutLogin.jsx`
 
 **Changes**:
+
 - Added **immediate** guest authentication when user clicks "Continue as Guest"
 - Calls `/order/auth/guest` endpoint with `credentials: 'include'`
 - Stores `customer_id` from backend response in localStorage
@@ -158,10 +167,10 @@ const handleOrderConfirm = async () => {
 ```javascript
 const handleGuestCheckout = async (e) => {
   // ... validation
-  
+
   try {
     console.log('🔐 Authenticating guest user...')
-    
+
     // Authenticate guest with backend
     const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
       method: 'POST',
@@ -176,7 +185,7 @@ const handleGuestCheckout = async (e) => {
     })
 
     const guestAuthData = await guestAuthResponse.json()
-    
+
     // Store customer_id (backend provides this)
     if (guestAuthData.customer_id) {
       localStorage.setItem('user', JSON.stringify({
@@ -187,7 +196,7 @@ const handleGuestCheckout = async (e) => {
         last_name: guestData.last_name
       }))
     }
-    
+
     navigate('/checkout-v2')
   }
 }
@@ -198,6 +207,7 @@ const handleGuestCheckout = async (e) => {
 **Location**: `src/pages/CheckoutV2.jsx`
 
 **Changes**:
+
 - **Simplified** order confirmation logic
 - Removed duplicate guest authentication (now handled in CheckoutLogin)
 - Same authentication check works for both guest and registered users
@@ -223,12 +233,12 @@ const handleOrderConfirm = async () => {
 
     // ... format order data and create order
     const data = await api.post('/order/orders', orderData)
-    
+
     // Clean up guest data after successful order
     if (user.is_guest) {
       sessionStorage.removeItem('guest_checkout_data')
     }
-    
+
     // ... navigate to tracking
   }
 }
@@ -290,9 +300,11 @@ const handleOrderConfirm = async () => {
 ### Guest Checkout Flow
 
 1. **Navigate to checkout without logging in**
+
    - [ ] Should redirect to `/checkout-login`
 
 2. **Fill in guest checkout form**
+
    - [ ] First Name: John
    - [ ] Last Name: Doe
    - [ ] Email: john@example.com
@@ -300,16 +312,19 @@ const handleOrderConfirm = async () => {
    - [ ] Click "Continue as Guest"
 
 3. **In Checkout Page**
+
    - [ ] Review order details
    - [ ] Select payment method
    - [ ] Click "Place Order"
 
 4. **Check Browser Console**
+
    - [ ] Should see: "🔐 Authenticating guest user before order creation..."
    - [ ] Should see: "✅ Guest authentication successful"
    - [ ] No authentication errors
 
 5. **Check Browser DevTools → Application → Cookies**
+
    - [ ] Should see HTTP-only cookies set by the backend
    - [ ] Cookies should be for domain: `api2.palachinki.store`
 
@@ -339,8 +354,8 @@ The implementation includes comprehensive error handling:
 
 ```javascript
 if (!guestAuthResponse.ok) {
-  const errorData = await guestAuthResponse.json().catch(() => ({}))
-  throw new Error(errorData.message || 'Failed to authenticate guest user')
+  const errorData = await guestAuthResponse.json().catch(() => ({}));
+  throw new Error(errorData.message || "Failed to authenticate guest user");
 }
 ```
 
@@ -355,6 +370,7 @@ if (!guestAuthResponse.ok) {
 ### Issue: "Failed to authenticate guest user"
 
 **Possible Causes**:
+
 1. Missing `credentials: 'include'` in fetch request
 2. Invalid phone format (must be `+359XXXXXXXXX`)
 3. Invalid email format
@@ -362,17 +378,20 @@ if (!guestAuthResponse.ok) {
 5. Backend returns 400 error with validation details
 
 **Solution**:
+
 - Check browser console for detailed error messages
 - Verify phone format matches `+359` followed by 9 digits
 - Ensure backend API is accessible
 - Check Network tab for the actual error response body
 
 **Example Console Error:**
+
 ```
 ❌ Guest authentication failed: Error: Failed to authenticate guest user
 ```
 
 **How to Debug:**
+
 1. Open DevTools → Network tab
 2. Look for the `/order/auth/guest` request
 3. Click on it → Preview/Response tab
@@ -381,14 +400,16 @@ if (!guestAuthResponse.ok) {
 ### Issue: "No authentication found" or "No customer_id found in sessionStorage"
 
 **Root Cause:**
+
 - Guest authentication succeeded but `customer_id` was not stored in localStorage
 - Backend did not return `customer_id` in the response
 
 **Solution:**
+
 ```javascript
 // In browser console, check:
-const user = JSON.parse(localStorage.getItem('user') || '{}')
-console.log('User data:', user)
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+console.log("User data:", user);
 // Should show: { customer_id: "...", is_guest: true, email: "...", ... }
 
 // If missing customer_id, check backend response
@@ -396,17 +417,20 @@ console.log('User data:', user)
 ```
 
 **Fix:**
+
 - Ensure backend `/order/auth/guest` returns `customer_id` in response
 - Verify CheckoutLogin.jsx stores the customer_id correctly
 
 ### Issue: Order creation fails after guest auth succeeds
 
 **Possible Causes**:
+
 1. Cookies not being sent with order request
 2. `credentials: 'include'` missing in apiClient
 3. Customer_id not in localStorage
 
 **Solution:**
+
 - Check that `api.post()` uses `credentials: 'include'` ✓ (already configured)
 - Verify cookies are present in DevTools before order creation
 - Check localStorage has user with customer_id
@@ -414,10 +438,12 @@ console.log('User data:', user)
 ### Issue: Guest user sees "Please restart checkout process"
 
 **Root Cause:**
+
 - User navigated to `/checkout-v2` directly without going through `/checkout-login`
 - `customer_id` not in localStorage
 
 **Solution:**
+
 - This is the expected behavior for security
 - User must complete the guest authentication flow in CheckoutLogin
 - Redirect user back to `/checkout-login` to restart the process
@@ -425,10 +451,12 @@ console.log('User data:', user)
 ### Issue: CORS errors
 
 **Possible Causes**:
+
 1. Backend not allowing credentials from frontend domain
 2. Backend not setting proper CORS headers
 
 **Solution**:
+
 - Backend must include:
   ```
   Access-Control-Allow-Credentials: true
@@ -443,21 +471,21 @@ Ensure your API client (`src/utils/apiClient.js`) includes credentials:
 export const api = {
   post: async (endpoint, data) => {
     const response = await fetch(`${API_URL}${endpoint}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include', // REQUIRED for cookie authentication
-      body: JSON.stringify(data)
-    })
-    
+      credentials: "include", // REQUIRED for cookie authentication
+      body: JSON.stringify(data),
+    });
+
     if (!response.ok) {
-      throw new Error('Request failed')
+      throw new Error("Request failed");
     }
-    
-    return response.json()
-  }
-}
+
+    return response.json();
+  },
+};
 ```
 
 ## Summary

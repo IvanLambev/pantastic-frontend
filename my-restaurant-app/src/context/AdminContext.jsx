@@ -161,9 +161,35 @@ export const AdminProvider = ({ children }) => {
     }
   }
 
-  const adminLogout = () => {
+  const adminLogout = async () => {
     console.log('🚪 AdminContext: Admin logout requested')
+    
+    try {
+      // Call backend to clear HttpOnly cookies
+      const response = await fetch(`${API_URL}/user/logout`, {
+        method: 'POST',
+        credentials: 'include', // CRITICAL: Include cookies in request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        console.error('Admin logout request failed, but clearing local data anyway')
+      }
+      
+      console.log('✅ Admin backend logout successful - cookies cleared')
+    } catch (error) {
+      console.error('Admin logout error:', error)
+      // Continue to clear local data even if backend call fails
+    }
+    
+    // Clear admin session data
     sessionStorage.removeItem("adminUser")
+    localStorage.removeItem("adminUser")
+    localStorage.removeItem("isAdmin")
+    
+    // Clear state
     setIsAdminLoggedIn(false)
     setAdminToken(null)
   }

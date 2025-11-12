@@ -154,14 +154,38 @@ const AuthProvider = ({ children }) => {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Call backend to clear HttpOnly cookies
+      const response = await fetch(`${API_URL}/user/logout`, {
+        method: 'POST',
+        credentials: 'include', // CRITICAL: Include cookies in request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        console.error('Logout request failed, but clearing local data anyway')
+      }
+      
+      console.log('✅ Backend logout successful - cookies cleared')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Continue to clear local data even if backend call fails
+    }
+
+    // Clear all local storage data
     localStorage.removeItem("user")
     localStorage.removeItem("selectedRestaurant")
     localStorage.removeItem("isAdmin")
     localStorage.removeItem("cart") // Also clear cart on logout
+    
+    // Clear state
     setIsLoggedIn(false)
     setToken(null)
     setIsAdmin(false)
+    
     alert("You have been logged out!")
   }
 

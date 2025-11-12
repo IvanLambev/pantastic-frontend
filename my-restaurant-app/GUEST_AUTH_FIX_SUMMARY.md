@@ -5,18 +5,23 @@
 From the console logs, there were **two major issues**:
 
 ### Issue 1: Guest Auth Called During Order Creation
+
 ```
 ❌ No customer_id found in sessionStorage
 ```
+
 **Problem**: Guest authentication was happening in `CheckoutV2.jsx` during order confirmation, but the API client (`apiClient.js`) was checking for `customer_id` in localStorage **before** the guest auth completed. This caused the order creation to fail even after successful guest authentication.
 
 ### Issue 2: API Client Validation Failure
+
 The API client's `makeAuthenticatedRequest()` function checks for `customer_id`:
+
 ```javascript
 if (!user?.customer_id) {
-  throw new Error('No authentication found')
+  throw new Error("No authentication found");
 }
 ```
+
 This check happened **before** guest authentication could set the cookies, causing immediate failure.
 
 ## Solution Implemented
@@ -30,50 +35,56 @@ Instead of authenticating during order creation, we now authenticate **immediate
 ### 1. CheckoutLogin.jsx - Guest Authentication on Login
 
 **Before:**
+
 ```javascript
 // Just store data and navigate
-sessionStorage.setItem('guest_checkout_data', JSON.stringify(guestData))
-navigate('/checkout-v2')
+sessionStorage.setItem("guest_checkout_data", JSON.stringify(guestData));
+navigate("/checkout-v2");
 ```
 
 **After:**
+
 ```javascript
 // Authenticate with backend FIRST
 const guestAuthResponse = await fetch(`${API_URL}/order/auth/guest`, {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
+  method: "POST",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     first_name: guestData.first_name,
     last_name: guestData.last_name,
     email: guestData.email,
-    phone: guestData.phone
-  })
-})
+    phone: guestData.phone,
+  }),
+});
 
-const guestAuthData = await guestAuthResponse.json()
+const guestAuthData = await guestAuthResponse.json();
 
 // Store customer_id from backend (just like regular users)
 if (guestAuthData.customer_id) {
-  localStorage.setItem('user', JSON.stringify({
-    customer_id: guestAuthData.customer_id,
-    is_guest: true, // Mark as guest
-    email: guestData.email,
-    first_name: guestData.first_name,
-    last_name: guestData.last_name
-  }))
+  localStorage.setItem(
+    "user",
+    JSON.stringify({
+      customer_id: guestAuthData.customer_id,
+      is_guest: true, // Mark as guest
+      email: guestData.email,
+      first_name: guestData.first_name,
+      last_name: guestData.last_name,
+    })
+  );
 }
 
 // NOW navigate to checkout (already authenticated!)
-navigate('/checkout-v2')
+navigate("/checkout-v2");
 ```
 
 ### 2. CheckoutV2.jsx - Simplified Order Creation
 
 **Before:**
+
 ```javascript
 // Complex logic to detect guest and authenticate
-const isGuest = !!guestCheckoutData && !user?.customer_id
+const isGuest = !!guestCheckoutData && !user?.customer_id;
 if (isGuest) {
   // Call guest auth endpoint...
   // Then create order...
@@ -81,16 +92,17 @@ if (isGuest) {
 ```
 
 **After:**
+
 ```javascript
 // Simple check that works for BOTH guest and regular users
-const user = JSON.parse(localStorage.getItem('user') || '{}')
+const user = JSON.parse(localStorage.getItem("user") || "{}");
 
 if (!user?.customer_id) {
-  throw new Error('User not logged in. Please restart checkout process.')
+  throw new Error("User not logged in. Please restart checkout process.");
 }
 
 // Create order directly (guest is already authenticated!)
-const data = await api.post('/order/orders', orderData)
+const data = await api.post("/order/orders", orderData);
 ```
 
 ## Why This Works
@@ -122,21 +134,25 @@ const data = await api.post('/order/orders', orderData)
 ## Key Benefits
 
 ### ✅ **Unified User Model**
+
 - Guest users now have the same structure as registered users
 - Both have `customer_id` in localStorage
 - Difference: Guest has `is_guest: true` flag
 
 ### ✅ **Early Validation**
+
 - Guest authentication errors are caught **before** they enter checkout
 - Better user experience - fail fast at login, not at order creation
 - Clear error messages during guest login
 
 ### ✅ **Simplified Checkout Logic**
+
 - No need to check "is this guest or registered?"
 - Same code path for both user types
 - Reduced complexity and bugs
 
 ### ✅ **API Client Compatibility**
+
 - `makeAuthenticatedRequest()` now works for guests
 - No special cases needed
 - Cookies are already set before any API calls
@@ -146,14 +162,18 @@ const data = await api.post('/order/orders', orderData)
 ### Better Error Messages
 
 **Before:**
+
 ```
 Failed to authenticate guest user
 ```
 
 **After:**
+
 ```javascript
-const errorData = await guestAuthResponse.json().catch(() => ({}))
-throw new Error(errorData.message || errorData.detail || 'Failed to authenticate guest user')
+const errorData = await guestAuthResponse.json().catch(() => ({}));
+throw new Error(
+  errorData.message || errorData.detail || "Failed to authenticate guest user"
+);
 ```
 
 This shows the **actual backend error** (e.g., "Invalid phone format", "Email already exists", etc.)
@@ -163,6 +183,7 @@ This shows the **actual backend error** (e.g., "Invalid phone format", "Email al
 ### What to Check:
 
 1. **Guest Login Flow:**
+
    ```
    - Fill guest form
    - Click "Continue as Guest"
@@ -172,6 +193,7 @@ This shows the **actual backend error** (e.g., "Invalid phone format", "Email al
    ```
 
 2. **Checkout Process:**
+
    ```
    - Review order
    - Click "Place Order"
@@ -180,11 +202,12 @@ This shows the **actual backend error** (e.g., "Invalid phone format", "Email al
    ```
 
 3. **LocalStorage Check:**
+
    ```javascript
    // After guest login, check:
    const user = JSON.parse(localStorage.getItem('user'))
    console.log(user)
-   
+
    // Should show:
    {
      customer_id: "some-uuid",
@@ -219,18 +242,22 @@ The `customer_id` is **critical** - without it, the flow won't work.
 ## Common Errors Fixed
 
 ### Error 1: "No authentication found"
+
 **Cause**: API client checked before guest auth completed  
 **Fixed**: ✅ Guest auth now happens during login, before any API calls
 
 ### Error 2: "No customer_id found in sessionStorage"
+
 **Cause**: Guest users didn't have customer_id stored  
 **Fixed**: ✅ Backend response includes customer_id, which we now store
 
 ### Error 3: Multiple authentication attempts
+
 **Cause**: Guest auth called multiple times (login + order creation)  
 **Fixed**: ✅ Guest auth only happens once during login
 
 ### Error 4: 400 Bad Request on guest auth
+
 **Cause**: Invalid data or backend validation error  
 **Fixed**: ✅ Better error messages show actual backend error details
 
@@ -244,6 +271,7 @@ The `customer_id` is **critical** - without it, the flow won't work.
 ## Deployment Checklist
 
 Before deploying:
+
 - [ ] Test guest checkout flow end-to-end
 - [ ] Verify cookies are set after guest login
 - [ ] Verify customer_id is in localStorage after guest login
@@ -260,7 +288,7 @@ Before deploying:
 ✅ Order creation uses existing authentication  
 ✅ No "No authentication found" errors  
 ✅ Clear error messages for validation failures  
-✅ Registered users completely unaffected  
+✅ Registered users completely unaffected
 
 ## Next Steps
 

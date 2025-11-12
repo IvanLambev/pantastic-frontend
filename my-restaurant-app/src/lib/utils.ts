@@ -5,10 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function handle401Logout() {
+export async function handle401Logout() {
+  // Call backend to clear HttpOnly cookies
+  try {
+    await fetch(`${process.env.VITE_API_URL || 'https://api2.palachinki.store'}/user/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('Error calling logout endpoint:', error);
+  }
+  
+  // Clear all storage
   sessionStorage.clear();
-  // Optionally, you can also clear localStorage if used
-  // localStorage.clear();
+  localStorage.clear();
+  
+  // Redirect to login
   window.location.href = "/login";
 }
 

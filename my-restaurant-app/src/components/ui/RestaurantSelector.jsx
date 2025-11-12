@@ -478,13 +478,14 @@ export default function RestaurantSelector({
   function findClosestRestaurant(lat, lng) {
     if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
 
-    // First, try to find open restaurants
+    // First, try to find CLOSEST open restaurant
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
 
-    // If we have open restaurants, find the closest one
+    // If we have open restaurants, find the CLOSEST one by distance
     if (openRestaurants.length > 0) {
       let minDist = Infinity;
       let closest = null;
+      
       for (const r of openRestaurants) {
         const rLat = r.latitude;
         const rLng = r.longitude;
@@ -498,7 +499,7 @@ export default function RestaurantSelector({
       }
 
       // Check if the closest open restaurant is more than 10km away
-      if (minDist > 10) {
+      if (closest && minDist > 10) {
         return {
           restaurant: closest,
           distance: minDist,
@@ -507,12 +508,14 @@ export default function RestaurantSelector({
         };
       }
 
+      console.log(`[Restaurant Selection] Selected CLOSEST open restaurant: ${closest?.name} at ${minDist.toFixed(2)} km`);
       return { restaurant: closest, distance: minDist, message: null, isOpen: true };
     }
 
-    // No open restaurants found - Always find the closest restaurant for menu browsing
+    // No open restaurants found - Find the CLOSEST restaurant (regardless of status) for menu browsing
     let minDist = Infinity;
     let closest = null;
+    
     for (const r of restaurants) {
       const rLat = r.latitude;
       const rLng = r.longitude;
@@ -527,6 +530,7 @@ export default function RestaurantSelector({
 
     // Return the closest restaurant even though it's closed (for menu browsing)
     const nextOpenTime = getNextOpenTime();
+    console.log(`[Restaurant Selection] All restaurants closed. Selected CLOSEST: ${closest?.name} at ${minDist.toFixed(2)} km`);
     return {
       restaurant: closest,
       distance: minDist,

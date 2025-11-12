@@ -197,12 +197,14 @@ export function findRestaurantInCity(restaurants, userCity) {
 }
 
 /**
- * Get the default fallback restaurant by ID
+ * Get the default fallback restaurant by ID (LAST RESORT ONLY)
+ * This should rarely be used - only when all other methods fail
  * @param {Array} restaurants - Array of restaurant objects
  * @returns {Object | null} - Default restaurant or null
  */
 export function getDefaultRestaurant(restaurants) {
   if (!restaurants || !restaurants.length) {
+    console.error('[IP Geolocation] ❌ No restaurants available at all!');
     return null;
   }
 
@@ -212,9 +214,10 @@ export function getDefaultRestaurant(restaurants) {
   });
 
   if (defaultRestaurant) {
-    console.log('[IP Geolocation] Using default fallback restaurant:', defaultRestaurant.name || defaultRestaurant[8]);
+    console.warn('[IP Geolocation] ⚠️ Using UUID fallback (LAST RESORT):', defaultRestaurant.name || defaultRestaurant[8]);
+    console.warn('[IP Geolocation] This should only happen if IP detection completely failed');
   } else {
-    console.warn('[IP Geolocation] Default restaurant ID not found, using first restaurant');
+    console.error('[IP Geolocation] ❌ UUID fallback restaurant not found! Using first restaurant');
   }
 
   return defaultRestaurant || restaurants[0]; // Return first restaurant if default not found
@@ -223,8 +226,8 @@ export function getDefaultRestaurant(restaurants) {
 /**
  * Select restaurant with fallback logic:
  * 1. Check if user already selected a restaurant
- * 2. Try to get user's city from IP and find matching restaurant
- * 3. Fall back to default restaurant ID
+ * 2. Try to get user's city from IP and find closest restaurant in that city
+ * 3. Fall back to default restaurant ID (LAST RESORT - should rarely be used)
  * 
  * @param {Array} restaurants - Array of available restaurants
  * @returns {Promise<Object | null>} - Selected restaurant or null
@@ -234,7 +237,9 @@ export async function selectRestaurantWithFallback(restaurants) {
   const savedRestaurant = localStorage.getItem('selectedRestaurant');
   if (savedRestaurant) {
     try {
-      return JSON.parse(savedRestaurant);
+      const parsed = JSON.parse(savedRestaurant);
+      console.log('[IP Geolocation] Using saved restaurant:', parsed.name || parsed[8]);
+      return parsed;
     } catch (error) {
       console.error('[IP Geolocation] Error parsing saved restaurant:', error);
       localStorage.removeItem('selectedRestaurant');
@@ -246,18 +251,64 @@ export async function selectRestaurantWithFallback(restaurants) {
     return null;
   }
 
-  // 2. Try IP-based city detection
+  // 2. Try IP-based city detection - find CLOSEST restaurant in user's city
   const userLocation = await getUserCityFromIP();
-  if (userLocation && userLocation.city) {
-    const cityRestaurant = findRestaurantInCity(restaurants, userLocation.city);
-    if (cityRestaurant) {
-      console.log('[IP Geolocation] Auto-selected restaurant from user city');
-      return cityRestaurant;
+  if (userLocation && userLocation.city && userLocation.latitude && userLocation.longitude) {
+    const cityRestaurants = restaurants.filter(r => {
+      const restaurantCity = r.city || r[3];
+      const normalizedRestCity = normalizeCityName(restaurantCity);
+      const normalizedUserCity = normalizeCityName(userLocation.city);
+      return normalizedRestCity === normalizedUserCity;
+    });
+
+    if (cityRestaurants.length > 0) {
+      // Find the CLOSEST restaurant in the city based on coordinates
+      let closestRestaurant = cityRestaurants[0];
+      let minDistance = Infinity;
+
+      cityRestaurants.forEach(restaurant => {
+        const restLat = restaurant.latitude || restaurant[4];
+        const restLng = restaurant.longitude || restaurant[5];
+        
+        if (typeof restLat === 'number' && typeof restLng === 'number') {
+          const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestRestaurant = restaurant;
+          }
+        }
+      });
+
+      console.log('[IP Geolocation] Auto-selected CLOSEST restaurant from user city:', closestRestaurant.name || closestRestaurant[8], `(${minDistance.toFixed(2)} km away)`);
+      return closestRestaurant;
     }
   }
 
-  // 3. Fall back to default restaurant
+  // 3. Fall back to default restaurant UUID (LAST RESORT - only when IP detection fails completely)
+  console.warn('[IP Geolocation] ⚠️ Using UUID fallback (last resort) - IP detection failed or no city match');
   const defaultRestaurant = getDefaultRestaurant(restaurants);
-  console.log('[IP Geolocation] Using fallback restaurant selection');
   return defaultRestaurant;
+}
+
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ * @param {number} lat1 - Latitude of point 1
+ * @param {number} lon1 - Longitude of point 1
+ * @param {number} lat2 - Latitude of point 2
+ * @param {number} lon2 - Longitude of point 2
+ * @returns {number} - Distance in kilometers
+ */
+function getDistance(lat1, lon1, lat2, lon2) {
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371; // Earth's radius in km
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
