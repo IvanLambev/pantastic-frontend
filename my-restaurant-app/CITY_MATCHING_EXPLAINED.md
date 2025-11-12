@@ -3,6 +3,7 @@
 ## The Problem We Solved
 
 **Before:**
+
 ```
 IP API returns: "София" (Bulgarian Cyrillic)
 Restaurant DB has: "Sofia" (English)
@@ -11,6 +12,7 @@ Result: No match, falls back to default restaurant
 ```
 
 **After:**
+
 ```
 IP API returns: "София" (Bulgarian Cyrillic)
   ↓ normalizeCityName("София")
@@ -65,7 +67,7 @@ Output: "sofia"
    ├─ Normalize user city: "София" → "sofia"
    │
    ├─ Loop through restaurants:
-   │   ├─ Restaurant A: "Sofia" → "sofia" 
+   │   ├─ Restaurant A: "Sofia" → "sofia"
    │   │   └─ "sofia" === "sofia" ✅ MATCH!
    │   │       └─ Return Restaurant A
    │   │
@@ -83,27 +85,31 @@ Output: "sofia"
 The system now handles ALL these variations:
 
 ### Sofia Variations
+
 - София (BG Cyrillic)
 - Sofia (EN)
 - СОФИЯ (BG Uppercase)
 - sofia (EN lowercase)
 - софиа (BG alternative spelling)
 - SOFIA (EN Uppercase)
-- "  Sofia  " (with spaces)
+- " Sofia " (with spaces)
 
 ### Plovdiv Variations
+
 - Пловдив (BG Cyrillic)
 - Plovdiv (EN)
 - ПЛОВДИВ (BG Uppercase)
 - plovdiv (EN lowercase)
 
 ### Varna Variations
+
 - Варна (BG Cyrillic)
 - Varna (EN)
 - ВАРНА (BG Uppercase)
 - varna (EN lowercase)
 
 ### Burgas Variations
+
 - Бургас (BG Cyrillic)
 - Burgas (EN)
 - Bourgas (EN alternative)
@@ -149,15 +155,19 @@ Or if no match:
 ## Testing the Fix
 
 ### Browser Console Test
+
 ```javascript
 // Simulate София from IP
-localStorage.setItem('ip_geolocation', JSON.stringify({
-  location: { city: 'София', country: 'Bulgaria' },
-  timestamp: Date.now()
-}));
+localStorage.setItem(
+  "ip_geolocation",
+  JSON.stringify({
+    location: { city: "София", country: "Bulgaria" },
+    timestamp: Date.now(),
+  })
+);
 
 // Clear saved restaurant
-localStorage.removeItem('selectedRestaurant');
+localStorage.removeItem("selectedRestaurant");
 
 // Reload
 location.reload();
@@ -167,6 +177,7 @@ location.reload();
 ```
 
 ### Expected Behavior
+
 - ✅ User in Sofia (IP returns "София") → Matches restaurant with city "Sofia"
 - ✅ User in Plovdiv (IP returns "Пловдив") → Matches restaurant with city "Plovdiv"
 - ✅ Works regardless of case or language

@@ -104,7 +104,9 @@ function MainLayout() {
         <div className="container">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <img src="/logo.webp" alt="Logo" className="h-8 w-auto" />
+              <Link to="/">
+                <img src="/logo.webp" alt="Logo" className="h-8 w-auto cursor-pointer" />
+              </Link>
             </div>
 
             <NavigationMenu className="hidden md:flex">
@@ -209,7 +211,9 @@ function MainLayout() {
                 <SheetContent side="right" className="w-full flex flex-col">
                   <SheetHeader className="text-center border-b pb-4">
                     <div className="flex justify-center">
-                      <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain" />
+                      <Link to="/" onClick={() => setOpen(false)}>
+                        <img src="/logo.webp" alt="Logo" className="h-8 w-auto object-contain cursor-pointer" />
+                      </Link>
                     </div>
                   </SheetHeader>
                   <div className="flex flex-col items-center gap-6 mt-8">
