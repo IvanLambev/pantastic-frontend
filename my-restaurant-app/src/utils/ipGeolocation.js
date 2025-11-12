@@ -69,28 +69,36 @@ export function normalizeCityName(city) {
   normalized = normalized
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s]/g, '');
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
+    .trim();
   
   // Common Bulgarian to English city mappings
+  // Maps both Bulgarian (Cyrillic) and English names to a common normalized form
   const cityMappings = {
     'sofia': 'sofia',
     'софия': 'sofia',
+    'софиа': 'sofia',
     'plovdiv': 'plovdiv',
     'пловдив': 'plovdiv',
     'varna': 'varna',
     'варна': 'varna',
     'burgas': 'burgas',
     'бургас': 'burgas',
+    'bourgas': 'burgas',  // Alternative spelling
     'ruse': 'ruse',
     'русе': 'ruse',
-    'stara zagora': 'stara zagora',
-    'стара загора': 'stara zagora',
+    'rousse': 'ruse',  // Alternative spelling
+    'stara zagora': 'starazagora',
+    'стара загора': 'starazagora',
+    'starazagora': 'starazagora',
     'pleven': 'pleven',
     'плевен': 'pleven',
     'sliven': 'sliven',
     'сливен': 'sliven',
     'dobrich': 'dobrich',
     'добрич': 'dobrich',
+    'dobric': 'dobrich',  // Alternative spelling
     'shumen': 'shumen',
     'шумен': 'shumen',
     'pernik': 'pernik',
@@ -101,23 +109,51 @@ export function normalizeCityName(city) {
     'ямбол': 'yambol',
     'pazardzhik': 'pazardzhik',
     'пазарджик': 'pazardzhik',
+    'pazardjik': 'pazardzhik',  // Alternative spelling
     'blagoevgrad': 'blagoevgrad',
     'благоевград': 'blagoevgrad',
-    'veliko tarnovo': 'veliko tarnovo',
-    'велико търново': 'veliko tarnovo',
+    'veliko tarnovo': 'velikotarnovo',
+    'велико търново': 'velikotarnovo',
+    'veliko turnovo': 'velikotarnovo',  // Alternative spelling
+    'velikotarnovo': 'velikotarnovo',
     'vratsa': 'vratsa',
     'враца': 'vratsa',
+    'vraca': 'vratsa',  // Alternative spelling
     'gabrovo': 'gabrovo',
     'габрово': 'gabrovo',
     'vidin': 'vidin',
     'видин': 'vidin',
     'kazanlak': 'kazanlak',
     'казанлък': 'kazanlak',
+    'kazanluk': 'kazanlak',  // Alternative spelling
     'asenovgrad': 'asenovgrad',
     'асеновград': 'asenovgrad',
+    'kyustendil': 'kyustendil',
+    'кюстендил': 'kyustendil',
+    'montana': 'montana',
+    'монтана': 'montana',
+    'lovech': 'lovech',
+    'ловеч': 'lovech',
+    'kardzhali': 'kardzhali',
+    'кърджали': 'kardzhali',
+    'kardshali': 'kardzhali',  // Alternative spelling
+    'smolyan': 'smolyan',
+    'смолян': 'smolyan',
+    'targovishte': 'targovishte',
+    'търговище': 'targovishte',
+    'razgrad': 'razgrad',
+    'разград': 'razgrad',
+    'silistra': 'silistra',
+    'силистра': 'silistra',
   };
   
-  return cityMappings[normalized] || normalized;
+  // Check if we have a direct mapping
+  if (cityMappings[normalized]) {
+    return cityMappings[normalized];
+  }
+  
+  // If no direct mapping, return the normalized value (lowercase, no special chars)
+  return normalized;
 }
 
 /**
@@ -132,20 +168,30 @@ export function findRestaurantInCity(restaurants, userCity) {
   }
 
   const normalizedUserCity = normalizeCityName(userCity);
-  console.log('[IP Geolocation] Looking for restaurants in:', normalizedUserCity);
+  console.log('[IP Geolocation] Looking for restaurants in user city:', userCity, '→ normalized:', normalizedUserCity);
 
   // Find first restaurant matching the city
   const matchingRestaurant = restaurants.find(restaurant => {
     const restaurantCity = restaurant.city || restaurant[3]; // Handle both object and array formats
     const normalizedRestCity = normalizeCityName(restaurantCity);
+    
+    console.log('[IP Geolocation] Comparing:', restaurantCity, '→', normalizedRestCity, 'with', normalizedUserCity);
+    
     const matches = normalizedRestCity === normalizedUserCity;
     
     if (matches) {
-      console.log('[IP Geolocation] Found matching restaurant:', restaurant.name || restaurant[8]);
+      console.log('[IP Geolocation] ✓ MATCH! Found restaurant:', restaurant.name || restaurant[8], 'in', restaurantCity);
     }
     
     return matches;
   });
+
+  if (!matchingRestaurant) {
+    console.log('[IP Geolocation] ✗ No restaurant found for city:', userCity);
+    console.log('[IP Geolocation] Available cities in restaurants:', 
+      [...new Set(restaurants.map(r => r.city || r[3]))].join(', ')
+    );
+  }
 
   return matchingRestaurant || null;
 }
