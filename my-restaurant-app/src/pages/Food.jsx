@@ -43,7 +43,7 @@ const Food = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [items, setItems] = useState([])
   const [priceRange, setPriceRange] = useState([0, 100])
-  const [category, setCategory] = useState("all")
+  const [category, setCategory] = useState("sweet")
   const [sortBy, setSortBy] = useState("default")
   const { addToCart, clearCart } = useCart()
   const isMobile = window.innerWidth <= 768
@@ -63,16 +63,16 @@ const Food = () => {
 
         // Use fallback logic to select restaurant
         const autoSelectedRestaurant = await selectRestaurantWithFallback(restaurantsData);
-        
+
         if (autoSelectedRestaurant) {
           setSelectedRestaurant(autoSelectedRestaurant);
           localStorage.setItem('selectedRestaurant', JSON.stringify(autoSelectedRestaurant));
           setShowRestaurantModal(false);
-          
-          const restaurantId = Array.isArray(autoSelectedRestaurant) 
-            ? autoSelectedRestaurant[0] 
+
+          const restaurantId = Array.isArray(autoSelectedRestaurant)
+            ? autoSelectedRestaurant[0]
             : autoSelectedRestaurant.restaurant_id;
-          
+
           await fetchItems(restaurantId);
         } else {
           // No restaurant could be auto-selected, show modal
@@ -120,25 +120,25 @@ const Food = () => {
 
   const handleModalClose = async () => {
     setShowRestaurantModal(false);
-    
+
     // If no restaurant is selected when closing modal, apply fallback logic
     if (!selectedRestaurant) {
       const autoSelectedRestaurant = await selectRestaurantWithFallback(restaurants);
-      
+
       if (autoSelectedRestaurant) {
         setSelectedRestaurant(autoSelectedRestaurant);
         localStorage.setItem('selectedRestaurant', JSON.stringify(autoSelectedRestaurant));
-        
-        const restaurantId = Array.isArray(autoSelectedRestaurant) 
-          ? autoSelectedRestaurant[0] 
+
+        const restaurantId = Array.isArray(autoSelectedRestaurant)
+          ? autoSelectedRestaurant[0]
           : autoSelectedRestaurant.restaurant_id;
-        
+
         await fetchItems(restaurantId);
-        
-        const restaurantName = Array.isArray(autoSelectedRestaurant) 
-          ? autoSelectedRestaurant[8] 
+
+        const restaurantName = Array.isArray(autoSelectedRestaurant)
+          ? autoSelectedRestaurant[8]
           : autoSelectedRestaurant.name;
-        
+
         toast.info(`Auto-selected restaurant: ${restaurantName}`);
       }
     }
@@ -178,7 +178,7 @@ const Food = () => {
       image: item.image_url,
       description: item.description
     };
-    
+
     addToCart({
       ...itemData,
       quantity: 1
@@ -198,9 +198,9 @@ const Food = () => {
   const getItemImage = (item) => Array.isArray(item) ? item[5] : item.image_url;
   const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
   const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
-  
 
-  
+
+
   const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
   const getFavoriteId = (itemId) => {
     const fav = favoriteItems.find(f => f.item_id === itemId);
@@ -213,10 +213,10 @@ const Food = () => {
     if (!user.access_token) return;
     if (!isItemFavorite(itemId)) {
       // Get restaurant_id from selectedRestaurant
-      const restaurantId = Array.isArray(selectedRestaurant) 
-        ? selectedRestaurant[0] 
+      const restaurantId = Array.isArray(selectedRestaurant)
+        ? selectedRestaurant[0]
         : selectedRestaurant?.restaurant_id;
-      
+
       // Add to favorites
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         method: 'POST',
@@ -224,7 +224,7 @@ const Food = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           item_id: itemId,
           restaurant_id: restaurantId  // Include restaurant_id
         }),
@@ -252,19 +252,19 @@ const Food = () => {
   // Unified restaurant selection handler
   function selectRestaurant(restaurant) {
     // Get the current restaurant ID if exists
-    const currentRestaurantId = selectedRestaurant 
+    const currentRestaurantId = selectedRestaurant
       ? (Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id)
       : null;
-    
+
     // Get the new restaurant ID
     const newRestaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
-    
+
     // If switching to a different restaurant, clear the cart
     if (currentRestaurantId && currentRestaurantId !== newRestaurantId) {
       clearCart();
       toast.info(t('cart.clearedForNewRestaurant') || 'Количката беше изчистена за новия ресторант');
     }
-    
+
     setSelectedRestaurant(restaurant);
     localStorage.setItem('selectedRestaurant', JSON.stringify(restaurant));
     setShowRestaurantModal(false);
@@ -280,25 +280,46 @@ const Food = () => {
   const filteredItems = items.filter(item => {
     // Make sure the item exists
     if (!item) return false;
-    
+
     const name = getItemName(item) || '';
     const description = getItemDescription(item) || '';
     const price = getItemPrice(item);
     const itemType = getItemType(item) || '';
-    
+
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());
     const priceInEur = convertBgnToEur(price);
     const matchesPrice = priceInEur >= priceRange[0] && priceInEur <= priceRange[1];
-    
+
     // Category filtering based on item_type
-    const matchesCategory = category === "all" || 
-      (category === "sweet" && itemType.includes('sweet')) ||
-      (category === "savory" && itemType.includes('savory')) ||
-      (category === "promo" && itemType.includes('promo'));
-    
+    const isDeluxe = item.item_id === "5de9bf5b-cf0a-4a8c-b6c7-fc87e957acfd" || name === "Deluxe Pancake";
+
+    // Deluxe items should ONLY appear in the deluxe category
+    if (isDeluxe && category !== "deluxe") return false;
+
+    let matchesCategory = false;
+    if (category === "deluxe") {
+      matchesCategory = isDeluxe;
+    } else if (category === "all") {
+      matchesCategory = !isDeluxe;
+    } else if (category === "sweet") {
+      matchesCategory = itemType.includes('sweet') && !isDeluxe;
+    } else if (category === "savory") {
+      // Strict filtering for savory/sour
+      matchesCategory = (itemType.includes('sour') || itemType.includes('savory')) &&
+        !itemType.includes('sweet');
+    } else if (category === "promo") {
+      matchesCategory = itemType.includes('promo');
+    }
+
     return matchesSearch && matchesPrice && matchesCategory;
   }).sort((a, b) => {
+    // Sort favorites first
+    const aFav = isItemFavorite(getItemId(a));
+    const bFav = isItemFavorite(getItemId(b));
+    if (aFav && !bFav) return -1;
+    if (!aFav && bFav) return 1;
+
     switch (sortBy) {
       case "price-low":
         return getItemPrice(a) - getItemPrice(b);
@@ -338,7 +359,7 @@ const Food = () => {
             >
               <div className="flex flex-col items-start min-w-0">
                 <span className="font-bold text-lg truncate w-full">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</span>
-                <span 
+                <span
                   className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -386,7 +407,7 @@ const Food = () => {
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
               style={{ letterSpacing: 1 }}
-              onClick={() => navigate("/deluxe-box")}
+              onClick={() => setCategory("deluxe")}
             >
               <span className="hidden lg:inline">PANTASTIC DELUXE BOX</span>
               <span className="lg:hidden">DELUXE BOX</span>
@@ -419,7 +440,7 @@ const Food = () => {
                 const itemName = getItemName(item);
                 const itemPrice = getItemPrice(item);
                 const itemImage = getItemImage(item);
-                
+
                 return (
                   <Card key={itemId} className="flex flex-col overflow-hidden p-0">
                     <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
@@ -432,14 +453,14 @@ const Food = () => {
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                         <LuExpand className="h-6 w-6 text-white" />
                       </div>
-                      
+
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleFavorite(item);
                         }}
-                        className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors"
+                        className="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors"
                         aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
@@ -448,22 +469,22 @@ const Food = () => {
                         />
                       </button>
                     </div>
-                    
+
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
                       <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight">{itemName}</h3>
                       <span className="font-bold text-sm sm:text-base text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
-                      
+
                       <div className="flex flex-col gap-1.5 sm:gap-2 w-full mt-auto">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleItemNavigation(item)}
                           className="w-full text-xs py-2 h-9"
                         >
                           {t('menu.options')}
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => handleAddToCart(item)}
                           className="w-full text-xs py-2 h-9"
                         >
@@ -563,7 +584,7 @@ const Food = () => {
                     const itemPrice = getItemPrice(item);
                     const itemImage = getItemImage(item);
                     const itemDescription = getItemDescription(item);
-                    
+
                     return (
                       <Card key={itemId} className="flex flex-col h-full overflow-hidden p-0">
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
@@ -576,14 +597,14 @@ const Food = () => {
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                             <LuExpand className="h-10 w-10 text-white" />
                           </div>
-                          
+
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleFavorite(item);
                             }}
-                            className="absolute top-3 right-3 z-10 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors"
+                            className="absolute top-3 right-3 z-20 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors"
                             aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                           >
                             <Heart
@@ -596,7 +617,7 @@ const Food = () => {
                         <CardContent className="flex flex-col flex-grow p-4">
                           <h3 className="font-semibold mb-2 text-lg line-clamp-1">{itemName}</h3>
                           <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
-                          
+
                           <div className="flex flex-col gap-3 mt-auto">
                             <div className="flex justify-between items-center">
                               <span className="font-bold text-xl text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
@@ -610,8 +631,8 @@ const Food = () => {
                               >
                                 {t('menu.options')}
                               </Button>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => handleAddToCart(item)}
                                 className="flex-1"
                               >
