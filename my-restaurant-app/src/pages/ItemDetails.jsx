@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Heart, Plus, Minus, ChevronDown, ShoppingCart } from "lucide-react"
+import { ArrowLeft, Heart, Plus, Minus, ChevronDown, ShoppingCart, PlusCircle, MinusCircle } from "lucide-react"
 import { fetchWithAuth } from "@/context/AuthContext"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -364,17 +364,68 @@ export default function ItemDetails() {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
-            {/* Price removed from here as requested */}
             <p className="text-muted-foreground">{item.description}</p>
+          </div>
+
+          {/* Price and Cart Section - Moved Here */}
+          <div className="pb-6 border-b">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-semibold">Обща цена:</span>
+              <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice * quantity)}</span>
+            </div>
+
+            {/* Quantity selector */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                disabled={quantity >= 10}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Добави в количката
+            </Button>
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              {getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0 ? (
+                <>
+                  {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} добавки избрани`}
+                  {getAllSelectedAddons().length > 0 && getAllSelectedRemovables().length > 0 && ', '}
+                  {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} съставки премахнати`}
+                </>
+              ) : (
+                "Няма избрани персонализации"
+              )}
+            </p>
           </div>
 
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
             <Collapsible open={isAddonsOpen} onOpenChange={setIsAddonsOpen}>
               <Card className="border-none shadow-none">
-                <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold">Добавки</h2>
+                <CollapsibleTrigger className="w-full group">
+                  <div className="flex items-center justify-between mb-4 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <PlusCircle className="h-5 w-5 text-primary" />
+                      <h2 className="text-xl font-semibold">Добавки</h2>
+                    </div>
                     <ChevronDown className={`h-5 w-5 transition-transform ${isAddonsOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </CollapsibleTrigger>
@@ -429,12 +480,15 @@ export default function ItemDetails() {
           {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
             <Collapsible open={isRemovablesOpen} onOpenChange={setIsRemovablesOpen}>
               <Card className="border-none shadow-none">
-                <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-xl font-semibold">Опции "Без"</h2>
+                <CollapsibleTrigger className="w-full group">
+                  <div className="flex items-center justify-between mb-2 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <MinusCircle className="h-5 w-5 text-destructive" />
+                      <h2 className="text-xl font-semibold">Опции "Без"</h2>
+                    </div>
                     <ChevronDown className={`h-5 w-5 transition-transform ${isRemovablesOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <p className="text-sm text-muted-foreground text-left mb-4">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
+                  <p className="text-sm text-muted-foreground text-left mb-4 px-2">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
                 </CollapsibleTrigger>
 
                 <CollapsibleContent>
@@ -474,6 +528,7 @@ export default function ItemDetails() {
                                       checked={isRemovableSelected(template.template_id, removableItem)}
                                       onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableItem, checked)}
                                       className="mr-3"
+                                      onClick={(e) => e.stopPropagation()}
                                     />
                                     <span className="font-medium">{removableItem}</span>
                                   </div>
@@ -496,6 +551,7 @@ export default function ItemDetails() {
                                       checked={isRemovableSelected(template.template_id, removableKey)}
                                       onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
                                       className="mr-3"
+                                      onClick={(e) => e.stopPropagation()}
                                     />
                                     <span className="font-medium capitalize">{removableValue}</span>
                                   </div>
@@ -512,54 +568,6 @@ export default function ItemDetails() {
               </Card>
             </Collapsible>
           )}
-
-          <div className="pt-4 border-t">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold">Обща цена:</span>
-              <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice * quantity)}</span>
-            </div>
-
-            {/* Quantity selector */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                disabled={quantity >= 10}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              Добави в количката
-            </Button>
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              {getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0 ? (
-                <>
-                  {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} добавки избрани`}
-                  {getAllSelectedAddons().length > 0 && getAllSelectedRemovables().length > 0 && ', '}
-                  {getAllSelectedRemovables().length > 0 && `${getAllSelectedRemovables().length} съставки премахнати`}
-                </>
-              ) : (
-                "Няма избрани персонализации"
-              )}
-            </p>
-          </div>
         </div>
       </div>
 
