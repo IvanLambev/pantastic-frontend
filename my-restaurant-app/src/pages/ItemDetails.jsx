@@ -53,11 +53,11 @@ export default function ItemDetails() {
     const fetchItemAndAddons = async () => {
       try {
         setLoading(true);
-        
+
         // Check if user is logged in
         const user = JSON.parse(localStorage.getItem('user') || '{}')
         setIsLoggedIn(!!user.customer_id)
-        
+
         // Fetch item details
         const itemRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
         if (!itemRes.ok) throw new Error('Failed to fetch item details');
@@ -91,7 +91,7 @@ export default function ItemDetails() {
         const removablesRes = await fetchWithAuth(`${API_URL}/restaurant/removables/item/${itemId}`);
         if (!removablesRes.ok) throw new Error('Failed to fetch removables');
         let removables = await removablesRes.json();
-        
+
         // Handle both old and new API response formats
         if (Array.isArray(removables)) {
           // New format: array of templates with removables array
@@ -154,7 +154,7 @@ export default function ItemDetails() {
   const handleAddonChange = (templateId, addon, isChecked) => {
     setSelectedAddons(prev => {
       const updatedAddons = { ...prev };
-      
+
       if (isChecked) {
         if (!updatedAddons[templateId]) {
           updatedAddons[templateId] = [];
@@ -167,10 +167,10 @@ export default function ItemDetails() {
           );
         }
       }
-      
+
       // Update total price (only addons affect price)
       updateTotalPrice(updatedAddons);
-      
+
       return updatedAddons;
     });
   };
@@ -179,7 +179,7 @@ export default function ItemDetails() {
   const handleRemovableChange = (templateId, removableKey, isChecked) => {
     setSelectedRemovables(prev => {
       const updatedRemovables = { ...prev };
-      
+
       if (isChecked) {
         if (!updatedRemovables[templateId]) {
           updatedRemovables[templateId] = [];
@@ -192,27 +192,27 @@ export default function ItemDetails() {
           );
         }
       }
-      
+
       return updatedRemovables;
     });
   };
-  
+
   // Calculate total price based on item price and selected addons (removables don't affect price)
   const updateTotalPrice = (selectedAddonObj) => {
     if (!item) return;
-    
+
     let newTotal = Number(item.price);
-    
+
     // Add price of all selected addons (removables don't affect price)
     Object.values(selectedAddonObj).forEach(addonArray => {
       addonArray.forEach(addon => {
         newTotal += Number(addon.price);
       });
     });
-    
+
     setTotalPrice(newTotal);
   };
-  
+
   // Check if an addon is selected - Updated for new API structure
   const isAddonSelected = (templateId, addonName) => {
     return selectedAddons[templateId]?.some(addon => addon.name === addonName) || false;
@@ -222,7 +222,7 @@ export default function ItemDetails() {
   const isRemovableSelected = (templateId, removableKey) => {
     return selectedRemovables[templateId]?.includes(removableKey) || false;
   };
-  
+
   // Get all selected addons as a flat array
   const getAllSelectedAddons = () => {
     return Object.values(selectedAddons).flat();
@@ -232,16 +232,16 @@ export default function ItemDetails() {
   const getAllSelectedRemovables = () => {
     return Object.values(selectedRemovables).flat();
   };
-  
+
   const handleAddToCart = () => {
     const selectedAddonList = getAllSelectedAddons();
     const selectedRemovableList = getAllSelectedRemovables();
-    
+
     // Create a unique identifier for this specific item configuration
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',');
     const removableIds = selectedRemovableList.sort().join(',');
     const configurationId = `${item.item_id}-${addonIds}-${removableIds}`;
-    
+
     const cartItem = {
       id: configurationId, // Unique ID for this configuration
       originalItemId: item.item_id,
@@ -256,15 +256,15 @@ export default function ItemDetails() {
       removableCount: selectedRemovableList.length,
       quantity: quantity
     };
-    
+
     // Add to cart multiple times based on quantity
     for (let i = 0; i < quantity; i++) {
       addToCart(cartItem);
     }
-    
+
     const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
     const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
-    
+
     toast.success(
       <div className="flex flex-col">
         <span>Добавихте {quantity}x {item.name} в количката</span>
@@ -289,7 +289,7 @@ export default function ItemDetails() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           item_id: itemId,
           restaurant_id: restaurantId  // Include restaurant_id
         }),
@@ -364,143 +364,153 @@ export default function ItemDetails() {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
-            <div className="flex items-center space-x-2 mb-4">
-              <p className="text-2xl font-semibold text-primary">
-                {formatDualCurrencyCompact(totalPrice)}
-              </p>
-              {totalPrice !== Number(item.price) && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  Основна: {formatDualCurrencyCompact(item.price)}
-                </Badge>
-              )}
-            </div>
+            {/* Price removed from here as requested */}
             <p className="text-muted-foreground">{item.description}</p>
           </div>
 
           {/* Addon selection section */}
           {addonTemplates.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Добавки</h2>
-              
-              {addonTemplates.map((template) => (
-                <Card key={template.template_id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Добавки</CardTitle>
-                      <Badge variant="outline">{Object.keys(template.addons || {}).length} опции</Badge>
-                    </div>
-                    <CardDescription>
-                      Изберете опциите, които искате да добавите
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {Object.entries(template.addons || {}).map(([addonName, price]) => (
-                        <div
-                          key={`${template.template_id}-${addonName}`}
-                          className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                            isAddonSelected(template.template_id, addonName)
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border bg-background hover:bg-muted/50'
-                          }`}
-                          onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
-                        >
-                          <div className="flex items-center flex-1">
-                            <Checkbox
-                              checked={isAddonSelected(template.template_id, addonName)}
-                              onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
-                              className="mr-3"
-                            />
-                            <span className="font-medium">{addonName}</span>
+            <Collapsible open={isAddonsOpen} onOpenChange={setIsAddonsOpen}>
+              <Card className="border-none shadow-none">
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Добавки</h2>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isAddonsOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <div className="space-y-6">
+                    {addonTemplates.map((template) => (
+                      <Card key={template.template_id} className="overflow-hidden">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg">Добавки</CardTitle>
+                            <Badge variant="outline">{Object.keys(template.addons || {}).length} опции</Badge>
                           </div>
-                          <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          <CardDescription>
+                            Изберете опциите, които искате да добавите
+                          </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="pt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.entries(template.addons || {}).map(([addonName, price]) => (
+                              <div
+                                key={`${template.template_id}-${addonName}`}
+                                className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border bg-background hover:bg-muted/50'
+                                  }`}
+                                onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
+                              >
+                                <div className="flex items-center flex-1">
+                                  <Checkbox
+                                    checked={isAddonSelected(template.template_id, addonName)}
+                                    onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
+                                    className="mr-3"
+                                  />
+                                  <span className="font-medium">{addonName}</span>
+                                </div>
+                                <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           )}
 
           {/* Removables selection section */}
           {removableData && removableData.applied_templates && removableData.applied_templates.length > 0 && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold">Опции "Без"</h2>
-              <p className="text-sm text-muted-foreground">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
-              
-              {removableData.applied_templates.map((template) => (
-                <Card key={template.template_id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Опции "Без"</CardTitle>
-                      <Badge variant="outline">
-                        {Array.isArray(template.removables) 
-                          ? template.removables.length 
-                          : Object.keys(template.removables || {}).length
-                        } опции
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      Изберете съставки, които искате да премахнете
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {Array.isArray(template.removables) ? (
-                        // New format: array of removables
-                        template.removables.map((removableItem, index) => (
-                          <div
-                            key={`${template.template_id}-${index}`}
-                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                              isRemovableSelected(template.template_id, removableItem)
-                                ? 'border-red-500 bg-red-50'
-                                : 'border-border bg-background hover:bg-muted/50'
-                            }`}
-                            onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
-                          >
-                            <div className="flex items-center flex-1">
-                              <Checkbox
-                                checked={isRemovableSelected(template.template_id, removableItem)}
-                                onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableItem, checked)}
-                                className="mr-3"
-                              />
-                              <span className="font-medium">{removableItem}</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">Премахни</span>
+            <Collapsible open={isRemovablesOpen} onOpenChange={setIsRemovablesOpen}>
+              <Card className="border-none shadow-none">
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-xl font-semibold">Опции "Без"</h2>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${isRemovablesOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <p className="text-sm text-muted-foreground text-left mb-4">Изберете съставки, които искате да премахнете (без допълнителна такса)</p>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <div className="space-y-6">
+                    {removableData.applied_templates.map((template) => (
+                      <Card key={template.template_id} className="overflow-hidden">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg">Опции "Без"</CardTitle>
+                            <Badge variant="outline">
+                              {Array.isArray(template.removables)
+                                ? template.removables.length
+                                : Object.keys(template.removables || {}).length
+                              } опции
+                            </Badge>
                           </div>
-                        ))
-                      ) : (
-                        // Old format: object with key-value pairs
-                        Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
-                          <div
-                            key={`${template.template_id}-${removableKey}`}
-                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                              isRemovableSelected(template.template_id, removableKey)
-                                ? 'border-red-500 bg-red-50'
-                                : 'border-border bg-background hover:bg-muted/50'
-                            }`}
-                            onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
-                          >
-                            <div className="flex items-center flex-1">
-                              <Checkbox
-                                checked={isRemovableSelected(template.template_id, removableKey)}
-                                onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
-                                className="mr-3"
-                              />
-                              <span className="font-medium capitalize">{removableValue}</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">Премахни</span>
+                          <CardDescription>
+                            Изберете съставки, които искате да премахнете
+                          </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="pt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Array.isArray(template.removables) ? (
+                              // New format: array of removables
+                              template.removables.map((removableItem, index) => (
+                                <div
+                                  key={`${template.template_id}-${index}`}
+                                  className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableItem)
+                                      ? 'border-red-500 bg-red-50'
+                                      : 'border-border bg-background hover:bg-muted/50'
+                                    }`}
+                                  onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
+                                >
+                                  <div className="flex items-center flex-1">
+                                    <Checkbox
+                                      checked={isRemovableSelected(template.template_id, removableItem)}
+                                      onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableItem, checked)}
+                                      className="mr-3"
+                                    />
+                                    <span className="font-medium">{removableItem}</span>
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">Премахни</span>
+                                </div>
+                              ))
+                            ) : (
+                              // Old format: object with key-value pairs
+                              Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
+                                <div
+                                  key={`${template.template_id}-${removableKey}`}
+                                  className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableKey)
+                                      ? 'border-red-500 bg-red-50'
+                                      : 'border-border bg-background hover:bg-muted/50'
+                                    }`}
+                                  onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
+                                >
+                                  <div className="flex items-center flex-1">
+                                    <Checkbox
+                                      checked={isRemovableSelected(template.template_id, removableKey)}
+                                      onCheckedChange={(checked) => handleRemovableChange(template.template_id, removableKey, checked)}
+                                      className="mr-3"
+                                    />
+                                    <span className="font-medium capitalize">{removableValue}</span>
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">Премахни</span>
+                                </div>
+                              ))
+                            )}
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
           )}
 
           <div className="pt-4 border-t">
@@ -508,7 +518,7 @@ export default function ItemDetails() {
               <span className="text-lg font-semibold">Обща цена:</span>
               <span className="text-xl font-bold text-primary">{formatDualCurrencyCompact(totalPrice * quantity)}</span>
             </div>
-            
+
             {/* Quantity selector */}
             <div className="flex items-center justify-center gap-4 mb-4">
               <Button
@@ -597,7 +607,7 @@ export default function ItemDetails() {
                   </Badge>
                 )}
               </div>
-              
+
               {/* Quantity selector */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
@@ -629,7 +639,7 @@ export default function ItemDetails() {
               <ShoppingCart className="mr-2 h-4 w-4" />
               Добави в количката
             </Button>
-            
+
             {(getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0) && (
               <p className="text-xs text-center text-muted-foreground mt-2">
                 {getAllSelectedAddons().length > 0 && `${getAllSelectedAddons().length} добавки`}
@@ -670,7 +680,7 @@ export default function ItemDetails() {
                   </CardDescription>
                 </CardHeader>
               </CollapsibleTrigger>
-              
+
               <CollapsibleContent>
                 <CardContent className="pt-2 space-y-4">
                   {addonTemplates.map((template) => (
@@ -684,11 +694,10 @@ export default function ItemDetails() {
                         {Object.entries(template.addons || {}).map(([addonName, price]) => (
                           <div
                             key={`${template.template_id}-${addonName}`}
-                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                              isAddonSelected(template.template_id, addonName)
+                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
                                 ? 'border-primary bg-primary/10'
                                 : 'border-border bg-background hover:bg-muted/50'
-                            }`}
+                              }`}
                             onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
                           >
                             <div className="flex items-center flex-1">
@@ -732,15 +741,15 @@ export default function ItemDetails() {
                   </CardDescription>
                 </CardHeader>
               </CollapsibleTrigger>
-              
+
               <CollapsibleContent>
                 <CardContent className="pt-2 space-y-4">
                   {removableData.applied_templates.map((template) => (
                     <div key={template.template_id} className="space-y-2">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-muted-foreground">
-                          {Array.isArray(template.removables) 
-                            ? template.removables.length 
+                          {Array.isArray(template.removables)
+                            ? template.removables.length
                             : Object.keys(template.removables || {}).length
                           } опции
                         </span>
@@ -751,11 +760,10 @@ export default function ItemDetails() {
                           template.removables.map((removableItem, index) => (
                             <div
                               key={`${template.template_id}-${index}`}
-                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                                isRemovableSelected(template.template_id, removableItem)
+                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableItem)
                                   ? 'border-red-500 bg-red-50'
                                   : 'border-border bg-background hover:bg-muted/50'
-                              }`}
+                                }`}
                               onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
                             >
                               <div className="flex items-center flex-1">
@@ -775,11 +783,10 @@ export default function ItemDetails() {
                           Object.entries(template.removables || {}).map(([removableKey, removableValue]) => (
                             <div
                               key={`${template.template_id}-${removableKey}`}
-                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
-                                isRemovableSelected(template.template_id, removableKey)
+                              className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableKey)
                                   ? 'border-red-500 bg-red-50'
                                   : 'border-border bg-background hover:bg-muted/50'
-                              }`}
+                                }`}
                               onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
                             >
                               <div className="flex items-center flex-1">
