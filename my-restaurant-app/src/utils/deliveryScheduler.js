@@ -29,12 +29,26 @@ export function isRestaurantOpen(restaurant) {
     const [openH, openM] = open.split(":").map(Number);
     const [closeH, closeM] = close.split(":").map(Number);
     
-    const openDate = new Date(gmt3);
-    openDate.setHours(openH, openM, 0, 0);
-    const closeDate = new Date(gmt3);
-    closeDate.setHours(closeH, closeM, 0, 0);
+    const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes();
+    const openTime = openH * 60 + openM;
+    const closeTime = closeH * 60 + closeM;
     
-    return gmt3 >= openDate && gmt3 <= closeDate;
+    // Check if this is a 24/7 restaurant
+    const is24_7 = (openH === closeH && openM === closeM) || 
+                   (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
+    
+    if (is24_7) {
+      return true; // Always open
+    }
+    
+    // Check if the restaurant closes the next day (e.g., 20:00-03:00)
+    if (closeTime < openTime) {
+      // Restaurant is open if current time is after opening OR before closing (next day)
+      return currentTime >= openTime || currentTime <= closeTime;
+    } else {
+      // Normal case: restaurant opens and closes on the same day
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
   } catch (error) {
     console.error("Error parsing restaurant hours:", error);
     return false;
@@ -67,12 +81,28 @@ export function getAvailableDeliverySlots(restaurant, preparationTimeMinutes = 6
       const [openH, openM] = open.split(":").map(Number);
       const [closeH, closeM] = close.split(":").map(Number);
       
-      // Calculate delivery window (1 hour after opening to 1 hour before closing)
+      // Check if this is a 24/7 restaurant (opens and closes at the same time, e.g., "00:00-00:00" or "00:00-23:59")
+      const is24_7 = (openH === closeH && openM === closeM) || 
+                     (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
+      
+      // Calculate delivery window (30 minutes after opening to 1 hour before closing)
       const deliveryStart = new Date(checkDate);
-      deliveryStart.setHours(openH, openM + 60, 0, 0); // 1 hour after opening
+      deliveryStart.setHours(openH, openM + 30, 0, 0); // 30 minutes after opening
       
       const deliveryEnd = new Date(checkDate);
-      deliveryEnd.setHours(closeH, closeM - 60, 0, 0); // 1 hour before closing
+      
+      if (is24_7) {
+        // For 24/7 restaurants, set end time to 23:59
+        deliveryEnd.setHours(23, 59, 0, 0);
+      } else if (closeH < openH || (closeH === openH && closeM < openM)) {
+        // Restaurant closes the next day (e.g., 20:00-03:00)
+        // Set deliveryEnd to next day at closing time minus 1 hour
+        deliveryEnd.setDate(deliveryEnd.getDate() + 1);
+        deliveryEnd.setHours(closeH, closeM - 60, 0, 0);
+      } else {
+        // Normal case: same day closing
+        deliveryEnd.setHours(closeH, closeM - 60, 0, 0); // 1 hour before closing
+      }
       
       // If it's today, make sure delivery time is in the future and accounts for preparation time
       if (dayOffset === 0) {
