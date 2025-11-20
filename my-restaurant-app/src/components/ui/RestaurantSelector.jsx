@@ -498,13 +498,14 @@ export default function RestaurantSelector({
         }
       }
 
-      // Check if the closest open restaurant is more than 10km away
-      if (closest && minDist > 10) {
+      // Only show warning if the closest open restaurant is more than 20km away
+      // This makes the algorithm less aggressive and only warns for truly distant locations
+      if (closest && minDist > 20) {
         return {
           restaurant: closest,
           distance: minDist,
           isOpen: true,
-          message: `Най-близкият работещ ресторант "${closest.name}" е на ${minDist.toFixed(1)} км от вашето местоположение. Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?`
+          message: t('restaurantSelector.distanceWarningMessage', { name: closest.name, distance: minDist.toFixed(1) })
         };
       }
 
