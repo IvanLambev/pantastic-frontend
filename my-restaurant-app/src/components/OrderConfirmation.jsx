@@ -50,14 +50,20 @@ export default function OrderConfirmation({
         }
       }
 
-      // Calculate estimated time
+      // Calculate estimated time and scheduled info
       let estimatedTime;
+      let scheduledInfo = null;
       if (scheduledDelivery) {
         // Use scheduled delivery time if available
         try {
           const scheduledData = JSON.parse(scheduledDelivery);
           if (scheduledData.timeSlot && scheduledData.timeSlot.startString) {
             estimatedTime = scheduledData.timeSlot.startString;
+            scheduledInfo = {
+              dayName: scheduledData.dayName || 'Unknown day',
+              timeRange: `${scheduledData.timeSlot.startString} - ${scheduledData.timeSlot.endString}`,
+              isScheduled: scheduledData.isScheduled || false
+            };
           } else {
             // Fallback to default 45 minutes if scheduled data is incomplete
             estimatedTime = new Date(Date.now() + 45 * 60000).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
@@ -76,25 +82,26 @@ export default function OrderConfirmation({
         coords,
         restaurant: selectedRestaurant,
         isDelivery: deliveryMethod === 'delivery',
-        estimatedTime
+        estimatedTime,
+        scheduledInfo
       });
     }
   }, [open]);
 
   if (!orderDetails) return null;
 
-  const { deliveryAddress, coords, restaurant, isDelivery, estimatedTime } = orderDetails;
+  const { deliveryAddress, coords, restaurant, isDelivery, estimatedTime, scheduledInfo } = orderDetails;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="flex-shrink-0 p-6 pb-0">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 p-6 pb-4">
           <DialogTitle className="text-2xl font-bold text-center">
             {t('checkout.confirmOrder')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 pt-0 space-y-6">
           {/* Order Items */}
           <Card>
             <CardHeader>
@@ -166,16 +173,30 @@ export default function OrderConfirmation({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h4 className="font-semibold">{Array.isArray(restaurant) ? restaurant[7] : restaurant.name}</h4>
                 <p className="text-gray-600">{Array.isArray(restaurant) ? restaurant[1] : restaurant.address}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Clock className="h-4 w-4" />
-                  <span>{t('checkout.estimatedTime', { 
-                    method: isDelivery ? t('tracking.delivery') : t('tracking.pickup'), 
-                    time: estimatedTime 
-                  })}</span>
-                </div>
+                
+                {scheduledInfo && scheduledInfo.isScheduled ? (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-orange-800 font-medium">
+                      <Clock className="h-5 w-5" />
+                      <span>{t('checkout.scheduledDelivery')}</span>
+                    </div>
+                    <div className="text-sm text-orange-700 ml-7">
+                      <p><strong>{t('checkout.day')}:</strong> {scheduledInfo.dayName}</p>
+                      <p><strong>{t('checkout.time')}:</strong> {scheduledInfo.timeRange}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="h-4 w-4" />
+                    <span>{t('checkout.estimatedTime', { 
+                      method: isDelivery ? t('tracking.delivery') : t('tracking.pickup'), 
+                      time: estimatedTime 
+                    })}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

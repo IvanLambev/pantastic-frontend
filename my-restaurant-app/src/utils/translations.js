@@ -227,6 +227,8 @@ export const translations = {
     today: "днес",
     tomorrow: "утре",
     at: "в",
+    scheduledDelivery: "Планирана доставка",
+    day: "Ден",
     
     // Order timing
     orderTiming: "Време за поръчка",
