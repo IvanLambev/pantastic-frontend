@@ -8,6 +8,7 @@ import {
   generateTimeSlots, 
   checkOrderScheduling
 } from '@/utils/deliveryScheduler';
+import { t } from '@/utils/translations';
 
 export default function DeliverySchedulingBanner({ 
   restaurant, 
@@ -137,7 +138,7 @@ export default function DeliverySchedulingBanner({
       <Alert className={`border-green-200 bg-green-50 ${className}`}>
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{restaurant[8] || 'Restaurant'}</strong> is open now! Your order will be prepared and delivered as soon as possible.
+          <strong>{restaurant[8] || 'Restaurant'}</strong> {t('restaurantSelector.open')} сега! Вашата поръчка ще бъде приготвена и доставена възможно най-скоро.
         </AlertDescription>
       </Alert>
     );
@@ -149,9 +150,9 @@ export default function DeliverySchedulingBanner({
       <Alert className={`border-red-200 bg-red-50 ${className}`}>
         <AlertCircle className="h-4 w-4 text-red-600" />
         <AlertDescription className="text-red-800">
-          <strong>{restaurant[8] || 'Restaurant'}</strong> is currently closed and has no available delivery slots in the next 7 days. 
+          <strong>{restaurant[8] || 'Restaurant'}</strong> {t('checkout.restaurantClosedMsg')} и няма налични часове за доставка през следващите 7 дни. 
           {schedulingInfo.nextOpening && (
-            <span> Next opening: {schedulingInfo.nextOpening}</span>
+            <span> {t('checkout.nextOpening')}: {schedulingInfo.nextOpening}</span>
           )}
         </AlertDescription>
       </Alert>
@@ -164,24 +165,24 @@ export default function DeliverySchedulingBanner({
       <CardHeader className="pb-3">
         <CardTitle className="text-orange-800 flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Schedule Your Delivery
+          {t('checkout.scheduleYourDelivery')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert className="border-orange-300 bg-orange-100">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            <strong>{restaurant[8] || 'Restaurant'}</strong> is currently closed. Please select a delivery time that coordinates with the restaurant's working hours.
+            <strong>{restaurant[8] || 'Restaurant'}</strong> {t('checkout.restaurantClosedSchedule')}
           </AlertDescription>
         </Alert>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Day Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-orange-800">Select Day</label>
+            <label className="text-sm font-medium text-orange-800">{t('checkout.selectDay')}</label>
             <Select value={selectedDay} onValueChange={handleDayChange}>
               <SelectTrigger className="border-orange-300">
-                <SelectValue placeholder="Choose a day" />
+                <SelectValue placeholder={t('checkout.chooseDay')} />
               </SelectTrigger>
               <SelectContent>
                 {schedulingInfo.availableSlots.map((slot) => (
@@ -189,7 +190,7 @@ export default function DeliverySchedulingBanner({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {slot.isToday ? 'Today' : slot.isTomorrow ? 'Tomorrow' : slot.dayName}
+                        {slot.isToday ? t('checkout.today') : slot.isTomorrow ? t('checkout.tomorrow') : slot.dayName}
                         <span className="text-xs text-gray-500 ml-1">
                           ({slot.startTimeString} - {slot.endTimeString})
                         </span>
@@ -203,10 +204,10 @@ export default function DeliverySchedulingBanner({
 
           {/* Time Slot Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-orange-800">Select Time</label>
+            <label className="text-sm font-medium text-orange-800">{t('checkout.selectTimeSlot')}</label>
             <Select value={selectedTimeSlot} onValueChange={handleTimeSlotChange}>
               <SelectTrigger className="border-orange-300">
-                <SelectValue placeholder="Choose a time" />
+                <SelectValue placeholder={t('checkout.chooseTime')} />
               </SelectTrigger>
               <SelectContent>
                 {availableTimeSlots.map((slot) => (
@@ -226,10 +227,10 @@ export default function DeliverySchedulingBanner({
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              <strong>Delivery scheduled:</strong> Your order will be delivered on{' '}
-              {schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isToday ? 'today' : 
-               schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isTomorrow ? 'tomorrow' :
-               schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.dayName} at{' '}
+              <strong>{t('checkout.deliveryScheduled')}:</strong> {t('checkout.deliveryScheduledMsg')}{' '}
+              {schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isToday ? t('checkout.today') : 
+               schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isTomorrow ? t('checkout.tomorrow') :
+               schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.dayName} {t('checkout.at')}{' '}
               {availableTimeSlots.find(s => s.value === selectedTimeSlot)?.startString} - {' '}
               {availableTimeSlots.find(s => s.value === selectedTimeSlot)?.endString}.
             </AlertDescription>

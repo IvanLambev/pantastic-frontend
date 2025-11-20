@@ -39,6 +39,7 @@ export default function OrderConfirmation({
       const deliveryCoords = sessionStorage.getItem('delivery_coords');
       const deliveryMethod = sessionStorage.getItem('delivery_method');
       const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '{}');
+      const scheduledDelivery = sessionStorage.getItem('order_scheduled_delivery');
       
       let coords = null;
       if (deliveryCoords) {
@@ -49,12 +50,33 @@ export default function OrderConfirmation({
         }
       }
 
+      // Calculate estimated time
+      let estimatedTime;
+      if (scheduledDelivery) {
+        // Use scheduled delivery time if available
+        try {
+          const scheduledData = JSON.parse(scheduledDelivery);
+          if (scheduledData.timeSlot && scheduledData.timeSlot.startString) {
+            estimatedTime = scheduledData.timeSlot.startString;
+          } else {
+            // Fallback to default 45 minutes if scheduled data is incomplete
+            estimatedTime = new Date(Date.now() + 45 * 60000).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+          }
+        } catch (e) {
+          console.error('Error parsing scheduled delivery time:', e);
+          estimatedTime = new Date(Date.now() + 45 * 60000).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+        }
+      } else {
+        // No scheduled time - calculate based on current time + 45 minutes
+        estimatedTime = new Date(Date.now() + 45 * 60000).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+      }
+
       setOrderDetails({
         deliveryAddress,
         coords,
         restaurant: selectedRestaurant,
         isDelivery: deliveryMethod === 'delivery',
-        estimatedTime: new Date(Date.now() + 45 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        estimatedTime
       });
     }
   }, [open]);

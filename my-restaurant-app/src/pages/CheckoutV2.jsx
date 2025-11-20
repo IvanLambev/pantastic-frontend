@@ -530,11 +530,6 @@ export default function CheckoutV2() {
                                 <div className="font-medium">{method.name}</div>
                                 <div className="text-sm text-muted-foreground">{method.description}</div>
                               </div>
-                              {method.available && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {t('checkout.available')}
-                                </Badge>
-                              )}
                             </Label>
                           </div>
                         )
