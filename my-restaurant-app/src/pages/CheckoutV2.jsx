@@ -637,7 +637,7 @@ export default function CheckoutV2() {
                       <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="date-picker">Date</Label>
+                            <Label htmlFor="date-picker">{t('checkout.selectDate')}</Label>
                             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                               <PopoverTrigger asChild>
                                 <Button
@@ -646,7 +646,7 @@ export default function CheckoutV2() {
                                   className="w-full justify-start font-normal"
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {selectedDate ? selectedDate.toLocaleDateString() : "Select date"}
+                                  {selectedDate ? selectedDate.toLocaleDateString('bg-BG') : t('checkout.selectDate')}
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
@@ -665,7 +665,7 @@ export default function CheckoutV2() {
                           </div>
                           
                           <div className="space-y-2">
-                            <Label htmlFor="time-picker">Time</Label>
+                            <Label htmlFor="time-picker">{t('checkout.time')}</Label>
                             <select
                               id="time-picker"
                               value={selectedTime}
@@ -673,7 +673,7 @@ export default function CheckoutV2() {
                               className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                               disabled={!selectedDate}
                             >
-                              <option value="" disabled>Select time</option>
+                              <option value="" disabled>{t('checkout.selectTime')}</option>
                               {getAvailableTimeSlots().map(slot => (
                                 <option key={slot} value={slot}>{slot}</option>
                               ))}
@@ -682,9 +682,9 @@ export default function CheckoutV2() {
                         </div>
                         
                         <div className="text-xs text-muted-foreground space-y-1">
-                          <p>• You can schedule orders up to 3 days in advance</p>
-                          <p>• Available times: 08:00 - 22:30</p>
-                          <p>• Times are in 30-minute intervals</p>
+                          <p>• {t('checkout.scheduleNote1')}</p>
+                          <p>• {t('checkout.scheduleNote2')}</p>
+                          <p>• {t('checkout.scheduleNote3')}</p>
                         </div>
                       </div>
                     )}
