@@ -214,7 +214,6 @@ export const translations = {
     selectTime: "Избери час",
     time: "Час",
     scheduleNote1: "Можете да планирате поръчки до 3 дни предварително",
-    scheduleNote2: "Налични часове: 08:00 - 22:30",
     scheduleNote3: "Часовете са на 30-минутни интервали",
     scheduleYourDelivery: "Планирайте вашата доставка",
     selectDay: "Изберетеден",

@@ -245,14 +245,68 @@ export default function CheckoutV2() {
 
   // Helper functions for scheduling
   const getAvailableTimeSlots = () => {
-    const slots = []
-    for (let hour = 8; hour <= 22; hour++) {
-      for (let minute of [0, 30]) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-        slots.push(time)
+    if (!selectedDate || !selectedRestaurant || selectedRestaurant.length === 0) return [];
+    
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayName = days[selectedDate.getDay()];
+    const hours = selectedRestaurant[9] || {};
+    const dayHours = hours[dayName];
+    
+    if (!dayHours) return [];
+    
+    try {
+      const [open, close] = dayHours.split("-");
+      const [openH, openM] = open.split(":").map(Number);
+      const [closeH, closeM] = close.split(":").map(Number);
+      
+      // Check if 24/7 restaurant
+      const is24_7 = (openH === closeH && openM === closeM) || 
+                     (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
+      
+      // Calculate delivery window (30 minutes after opening to 1 hour before closing)
+      let startH = openH;
+      let startM = openM + 30;
+      if (startM >= 60) {
+        startH += 1;
+        startM -= 60;
       }
+      
+      let endH = closeH;
+      let endM = closeM - 60;
+      if (endM < 0) {
+        endH -= 1;
+        endM += 60;
+      }
+      
+      if (is24_7) {
+        endH = 23;
+        endM = 59;
+      }
+      
+      const slots = [];
+      let currentH = startH;
+      let currentM = startM;
+      
+      // Generate 30-minute slots
+      while (currentH < endH || (currentH === endH && currentM <= endM)) {
+        const time = `${currentH.toString().padStart(2, '0')}:${currentM.toString().padStart(2, '0')}`;
+        slots.push(time);
+        
+        currentM += 30;
+        if (currentM >= 60) {
+          currentH += 1;
+          currentM = 0;
+        }
+        
+        // Prevent infinite loop for edge cases
+        if (currentH > 23 || (currentH === 23 && currentM > 59)) break;
+      }
+      
+      return slots;
+    } catch (error) {
+      console.error('Error generating time slots:', error);
+      return [];
     }
-    return slots
   }
 
   const isDateDisabled = (date) => {
@@ -683,7 +737,32 @@ export default function CheckoutV2() {
                         
                         <div className="text-xs text-muted-foreground space-y-1">
                           <p>• {t('checkout.scheduleNote1')}</p>
-                          <p>• {t('checkout.scheduleNote2')}</p>
+                          {selectedDate && selectedRestaurant && selectedRestaurant.length > 0 && (() => {
+                            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                            const dayName = days[selectedDate.getDay()];
+                            const hours = selectedRestaurant[9] || {};
+                            const dayHours = hours[dayName];
+                            if (dayHours) {
+                              const [open, close] = dayHours.split("-");
+                              const [openH, openM] = open.split(":").map(Number);
+                              const [closeH, closeM] = close.split(":").map(Number);
+                              
+                              // Calculate display times (30 min after opening, 1 hour before closing)
+                              let startH = openH;
+                              let startM = openM + 30;
+                              if (startM >= 60) { startH += 1; startM -= 60; }
+                              
+                              let endH = closeH;
+                              let endM = closeM - 60;
+                              if (endM < 0) { endH -= 1; endM += 60; }
+                              
+                              const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
+                              const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
+                              
+                              return <p>• Налични часове за {dayName}: {startTime} - {endTime}</p>;
+                            }
+                            return null;
+                          })()}
                           <p>• {t('checkout.scheduleNote3')}</p>
                         </div>
                       </div>
