@@ -283,6 +283,20 @@ const Cart = () => {
                           </div>
                         )}
                         
+                        {/* Display selected removables if any */}
+                        {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                          <div className="text-sm mb-2 bg-background p-2 rounded-md">
+                            <p className="font-semibold mb-1">{t('menu.removed')}:</p>
+                            <ul className="space-y-1 pl-2">
+                              {item.selectedRemovables.map((removable, index) => (
+                                <li key={index} className="text-red-600 capitalize">
+                                  {removable}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
                         {item.specialInstructions && (
                           <div className="text-sm">
                             <span className="font-semibold">{t('menu.instructions')}: </span>
@@ -334,6 +348,20 @@ const Cart = () => {
                               <span>{formatDualCurrencyCompact(item.basePrice)}</span>
                             </div>
                           )}
+                        </div>
+                      )}
+                      
+                      {/* Display selected removables if any */}
+                      {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                        <div className="text-sm mb-2 bg-muted p-2 rounded-md">
+                          <p className="font-semibold mb-1">{t('menu.removed')}:</p>
+                          <ul className="space-y-1 pl-2">
+                            {item.selectedRemovables.map((removable, index) => (
+                              <li key={index} className="text-red-600 capitalize">
+                                {removable}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
                       
@@ -389,6 +417,11 @@ const Cart = () => {
                       {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="text-xs text-muted-foreground pl-4">
                           {item.selectedAddons.length} {t('cart.addonsSelected')}
+                        </div>
+                      )}
+                      {item.selectedRemovables && item.selectedRemovables.length > 0 && (
+                        <div className="text-xs text-red-600 pl-4">
+                          {item.selectedRemovables.length} {t('cart.removables')}
                         </div>
                       )}
                     </div>
