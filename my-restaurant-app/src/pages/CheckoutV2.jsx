@@ -271,35 +271,76 @@ export default function CheckoutV2() {
         startM -= 60;
       }
       
-      let endH = closeH;
-      let endM = closeM - 60;
-      if (endM < 0) {
-        endH -= 1;
-        endM += 60;
-      }
+      let endH, endM;
       
       if (is24_7) {
         endH = 23;
         endM = 59;
+      } else {
+        // Calculate end time (1 hour before closing)
+        endH = closeH;
+        endM = closeM - 60;
+        if (endM < 0) {
+          endH -= 1;
+          endM += 60;
+        }
+        // Handle negative hour (wraps to previous day)
+        if (endH < 0) {
+          endH += 24;
+        }
       }
       
       const slots = [];
       let currentH = startH;
       let currentM = startM;
       
+      // Check if restaurant closes next day (e.g., 20:00-03:00)
+      const closesNextDay = closeH < openH || (closeH === openH && closeM < openM);
+      
       // Generate 30-minute slots
-      while (currentH < endH || (currentH === endH && currentM <= endM)) {
+      const maxIterations = 100; // Safety limit
+      let iterations = 0;
+      
+      while (iterations < maxIterations) {
+        iterations++;
+        
         const time = `${currentH.toString().padStart(2, '0')}:${currentM.toString().padStart(2, '0')}`;
         slots.push(time);
         
+        // Check if we've reached the end
+        if (closesNextDay) {
+          // For next-day closing, check if we've passed midnight and reached end time
+          const currentTotalMinutes = currentH * 60 + currentM;
+          const endTotalMinutes = endH * 60 + endM;
+          const startTotalMinutes = startH * 60 + startM;
+          
+          if (currentTotalMinutes >= startTotalMinutes) {
+            // Still in the same day, continue until 23:59
+            if (currentH >= 23 && currentM >= 30) break;
+          } else {
+            // Crossed midnight, check if we reached end time
+            if (currentTotalMinutes >= endTotalMinutes) break;
+          }
+        } else {
+          // Normal same-day closing
+          if (currentH > endH || (currentH === endH && currentM >= endM)) break;
+        }
+        
+        // Increment by 30 minutes
         currentM += 30;
         if (currentM >= 60) {
           currentH += 1;
           currentM = 0;
         }
         
-        // Prevent infinite loop for edge cases
-        if (currentH > 23 || (currentH === 23 && currentM > 59)) break;
+        // Handle hour overflow
+        if (currentH >= 24) {
+          if (closesNextDay) {
+            currentH = 0; // Continue to next day
+          } else {
+            break; // Stop if not a next-day restaurant
+          }
+        }
       }
       
       return slots;
@@ -747,19 +788,36 @@ export default function CheckoutV2() {
                               const [openH, openM] = open.split(":").map(Number);
                               const [closeH, closeM] = close.split(":").map(Number);
                               
+                              // Check if 24/7
+                              const is24_7 = (openH === closeH && openM === closeM) || 
+                                           (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
+                              
                               // Calculate display times (30 min after opening, 1 hour before closing)
                               let startH = openH;
                               let startM = openM + 30;
                               if (startM >= 60) { startH += 1; startM -= 60; }
                               
-                              let endH = closeH;
-                              let endM = closeM - 60;
-                              if (endM < 0) { endH -= 1; endM += 60; }
+                              let endH, endM;
+                              if (is24_7) {
+                                endH = 23;
+                                endM = 59;
+                              } else {
+                                endH = closeH;
+                                endM = closeM - 60;
+                                if (endM < 0) { endH -= 1; endM += 60; }
+                                if (endH < 0) { endH += 24; }
+                              }
                               
                               const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
                               const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
                               
-                              return <p>• Налични часове за {dayName}: {startTime} - {endTime}</p>;
+                              // Check if closes next day
+                              const closesNextDay = closeH < openH || (closeH === openH && closeM < openM);
+                              const displayText = closesNextDay 
+                                ? `${startTime} - ${endTime} (до следващия ден)`
+                                : `${startTime} - ${endTime}`;
+                              
+                              return <p>• Налични часове за {dayName}: {displayText}</p>;
                             }
                             return null;
                           })()}
