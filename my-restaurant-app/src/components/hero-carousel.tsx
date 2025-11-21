@@ -142,11 +142,11 @@ export function HeroCarousel() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="container mx-auto px-4 md:px-8 lg:px-12">
                         <div className="max-w-2xl mx-auto text-white space-y-4 md:space-y-6 text-center">
-                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight animate-in fade-in duration-700">
+                          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight animate-in fade-in duration-700">
                             {slide.title}
                           </h1>
                           {slide.subtitle && (
-                            <p className="text-lg md:text-xl lg:text-2xl text-gray-200 animate-in fade-in duration-700 delay-100">
+                            <p className="text-base md:text-lg lg:text-xl text-gray-200 animate-in fade-in duration-700 delay-100">
                               {slide.subtitle}
                             </p>
                           )}
