@@ -4,6 +4,10 @@ import RestaurantSelector from "@/components/ui/RestaurantSelector"
 import { t } from "@/utils/translations"
 import { HeroCarousel } from "@/components/hero-carousel"
 import { CollectionSection } from "@/components/collection-section"
+import HowItWorks from "@/components/how-it-works"
+import DeliveryPickupInfo from "@/components/delivery-pickup-info"
+import FAQ from "@/components/faq"
+import AboutUs from "@/components/about-us"
 
 const Home = () => {
   const [showModal, setShowModal] = useState(false)
@@ -63,6 +67,13 @@ const Home = () => {
         collectionIndex={3}
         limit={4}
       />
+
+      <div className="container mx-auto px-4 py-12 space-y-24">
+        <HowItWorks />
+        <DeliveryPickupInfo />
+        <FAQ />
+        <AboutUs />
+      </div>
     </>
   )
 }
