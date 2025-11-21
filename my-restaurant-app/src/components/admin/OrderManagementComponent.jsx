@@ -57,13 +57,27 @@ export default function OrderManagementComponent() {
 
   const fetchItems = useCallback(async (restaurantId) => {
     try {
+      console.log('🔄 [ITEMS DEBUG] Fetching items for restaurant:', restaurantId);
+      console.log('🔄 [ITEMS DEBUG] Items URL:', `${API_URL}/restaurant/${restaurantId}/items`);
+
       const response = await fetchWithAdminAuth(`${API_URL}/restaurant/${restaurantId}/items`);
+      console.log('📡 [ITEMS DEBUG] Response status:', response.status, response.ok);
+
       if (!response.ok) {
+        console.error('❌ [ITEMS DEBUG] Failed to fetch menu items. Status:', response.status);
         throw new Error('Failed to fetch menu items');
       }
+
       const data = await response.json();
+      console.log('✅ [ITEMS DEBUG] Items data received:', data);
+      console.log('📊 [ITEMS DEBUG] Items data type:', typeof data, 'Is Array:', Array.isArray(data));
+      console.log('📊 [ITEMS DEBUG] Items count:', data?.length);
+
       if (Array.isArray(data)) {
         const validItems = data.filter(item => Array.isArray(item) && item.length >= 5 && item[0] && item[4]);
+        console.log('📊 [ITEMS DEBUG] Valid items count:', validItems.length);
+        console.log('📊 [ITEMS DEBUG] First valid item:', validItems[0]);
+
         // For each item, parse addons if present
         const itemsWithAddons = validItems.map(item => {
           let addons = [];
@@ -71,71 +85,107 @@ export default function OrderManagementComponent() {
             try {
               addons = typeof item[2] === 'string' ? JSON.parse(item[2]) : item[2];
             } catch (e) {
+              console.warn('⚠️ [ITEMS DEBUG] Failed to parse addons for item:', item[0], e);
               addons = [];
             }
           }
           return { raw: item, addons };
         });
+
+        console.log('🎯 [ITEMS DEBUG] Setting items state. Count:', itemsWithAddons.length);
         setItems(itemsWithAddons);
+        console.log('✅ [ITEMS DEBUG] Items set successfully');
       } else {
+        console.warn('⚠️ [ITEMS DEBUG] Items data is not an array');
         setItems([]);
       }
     } catch (err) {
+      console.error('❌ [ITEMS DEBUG] Error fetching items:', err);
+      console.error('❌ [ITEMS DEBUG] Error stack:', err.stack);
       setItems([]);
     }
   }, []);
 
   const fetchOrders = useCallback(async () => {
     try {
+      console.log('🔄 [ORDER DEBUG] Starting fetchOrders...');
       const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+      console.log('👤 [ORDER DEBUG] Admin user from session:', adminUser);
+      console.log('🔑 [ORDER DEBUG] Has access token:', !!adminUser?.access_token);
+
       if (!adminUser?.access_token) {
-        console.log('⚠️ No admin token available');
+        console.warn('⚠️ [ORDER DEBUG] No admin token available');
         setLoading(false);
         return;
       }
-      
-      console.log('🔄 Fetching orders as admin...');
+
+      console.log('🔄 [ORDER DEBUG] Fetching orders from:', `${API_URL}/order/orders/worker`);
       const response = await fetchWithAdminAuth(`${API_URL}/order/orders/worker`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         }
       });
-      
+
+      console.log('📡 [ORDER DEBUG] Response status:', response.status, response.ok);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ [ORDER DEBUG] Failed to fetch orders. Status:', response.status);
+        console.error('❌ [ORDER DEBUG] Error response:', errorText);
         throw new Error(`Failed to fetch orders: ${response.status} ${errorText}`);
       }
-      
+
       const data = await response.json();
-      console.log('📦 Orders fetched:', data.length);
-      
+      console.log('✅ [ORDER DEBUG] Orders data received:', data);
+      console.log('📊 [ORDER DEBUG] Orders data type:', typeof data, 'Is Array:', Array.isArray(data));
+      console.log('📊 [ORDER DEBUG] Orders count:', data?.length);
+
       if (!Array.isArray(data)) {
-        console.log('⚠️ Orders data is not an array:', data);
+        console.error('❌ [ORDER DEBUG] Orders data is not an array:', data);
         setLoading(false);
         return;
       }
-      
+
+      console.log('🔍 [ORDER DEBUG] Checking for new orders...');
       checkForNewOrders(data);
+
+      console.log('🔍 [ORDER DEBUG] Looking for restaurant ID in orders...');
       const orderWithRestaurantId = data.find(order => order?.restaurant_id);
+      console.log('🔍 [ORDER DEBUG] Order with restaurant ID:', orderWithRestaurantId);
+
       if (orderWithRestaurantId) {
+        console.log('🏪 [ORDER DEBUG] Fetching items for restaurant:', orderWithRestaurantId.restaurant_id);
         await fetchItems(orderWithRestaurantId.restaurant_id);
       } else {
         const restaurantId = localStorage.getItem('selectedRestaurantId');
+        console.log('🏪 [ORDER DEBUG] Using restaurant ID from localStorage:', restaurantId);
         if (restaurantId) {
           await fetchItems(restaurantId);
+        } else {
+          console.warn('⚠️ [ORDER DEBUG] No restaurant ID found');
         }
       }
+
+      console.log('🔄 [ORDER DEBUG] Filtering and sorting orders...');
       const validOrders = data.filter(order => order.created_at);
+      console.log('📊 [ORDER DEBUG] Valid orders (with created_at):', validOrders.length);
+
       const sortedOrders = validOrders.sort((a, b) => {
         const dateA = new Date(a.created_at).getTime();
         const dateB = new Date(b.created_at).getTime();
         return dateB - dateA;
       });
+
+      console.log('🎯 [ORDER DEBUG] Setting orders state. Count:', sortedOrders.length);
+      console.log('🎯 [ORDER DEBUG] First order:', sortedOrders[0]);
       setOrders(sortedOrders);
       setLoading(false);
+      console.log('✅ [ORDER DEBUG] Orders fetched and set successfully');
+
     } catch (error) {
-      console.error('❌ Error fetching orders:', error);
+      console.error('❌ [ORDER DEBUG] Error fetching orders:', error);
+      console.error('❌ [ORDER DEBUG] Error stack:', error.stack);
       // Don't show toast for permission errors, as they might be expected
       if (!error.message.includes('forbidden')) {
         toast.error(`Failed to load orders: ${error.message}`);
@@ -198,19 +248,19 @@ export default function OrderManagementComponent() {
               <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                 <div className="flex-grow space-y-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">                    <div>
-                      <h3 className="font-semibold">Order #{order.order_id.split('-')[0]}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(order.created_at).toLocaleString()}
-                      </p>
-                      {order.scheduled_delivery_time && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-400">Scheduled</Badge>
-                          <span className="text-xs text-orange-700 font-semibold">
-                            Scheduled for: {new Date(order.scheduled_delivery_time).toLocaleString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    <h3 className="font-semibold">Order #{order.order_id.split('-')[0]}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(order.created_at).toLocaleString()}
+                    </p>
+                    {order.scheduled_delivery_time && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-400">Scheduled</Badge>
+                        <span className="text-xs text-orange-700 font-semibold">
+                          Scheduled for: {new Date(order.scheduled_delivery_time).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                     <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
                       {order.status}
                     </Badge>
@@ -223,7 +273,7 @@ export default function OrderManagementComponent() {
                         console.log('Order items:', order.items);
                         console.log('Items length:', order.items?.length);
                         console.log('Items exists:', !!order.items);
-                        
+
                         // Check for new format (items array)
                         if (order.items && Array.isArray(order.items) && order.items.length > 0) {
                           return order.items.map((item, itemIndex) => (
@@ -241,7 +291,7 @@ export default function OrderManagementComponent() {
                                   <p className="text-sm font-medium">{formatDualCurrencyCompact(item.item_total || 0)}</p>
                                 </div>
                               </div>
-                              
+
                               {item.applied_addons && item.applied_addons.length > 0 && (
                                 <div className="mt-2 ml-2">
                                   <p className="text-xs font-medium text-green-700 mb-1">Addons:</p>
@@ -270,7 +320,7 @@ export default function OrderManagementComponent() {
                             </div>
                           ));
                         }
-                        
+
                         // Fallback to old format if new format not available
                         if (order.products && typeof order.products === 'object') {
                           return Object.entries(order.products).map(([id, quantity]) => {
@@ -284,7 +334,7 @@ export default function OrderManagementComponent() {
                             );
                           });
                         }
-                        
+
                         // No items found
                         return <p className="text-sm text-muted-foreground">No items available</p>;
                       })()}
@@ -305,7 +355,7 @@ export default function OrderManagementComponent() {
                       <SelectItem value="Delivered">Delivered</SelectItem>
                       <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
-                  </Select>                  <Button 
+                  </Select>                  <Button
                     variant="outline"
                     onClick={() => window.open(`/order-tracking-v2/${order.order_id}`, '_blank')}
                     className="w-full md:w-auto"
