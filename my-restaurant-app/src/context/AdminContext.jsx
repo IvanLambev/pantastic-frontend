@@ -23,7 +23,7 @@ export const AdminProvider = ({ children }) => {
       console.log('🔍 AdminContext: Verifying admin token...')
       console.log('🔍 AdminContext: Using cookie-based auth')
       console.log('🔍 AdminContext: All cookies:', document.cookie)
-      
+
       const response = await fetch(`${API_URL}/restaurant/admin/verify`, {
         method: "GET",
         credentials: 'include', // Send HttpOnly cookies
@@ -40,7 +40,7 @@ export const AdminProvider = ({ children }) => {
 
       if (!response.ok) {
         console.log('🔍 AdminContext: Token verification failed with status:', response.status)
-        
+
         // If token is expired/invalid (401), clear the stored admin data
         if (response.status === 401) {
           console.log('🔍 AdminContext: Token expired/invalid, clearing admin session')
@@ -48,7 +48,7 @@ export const AdminProvider = ({ children }) => {
           setAdminToken(null)
           setIsAdminLoggedIn(false)
         }
-        
+
         throw new Error("Admin verification failed")
       }
 
@@ -66,32 +66,36 @@ export const AdminProvider = ({ children }) => {
       console.log('🚀 AdminContext: Initializing admin auth check')
       const adminUser = sessionStorage.getItem("adminUser")
       console.log('🚀 AdminContext: Admin user in storage:', adminUser ? 'Found' : 'Not found')
-      
+
       if (adminUser) {
         try {
           const parsedUser = JSON.parse(adminUser)
-          console.log('🚀 AdminContext: Parsed admin user data:', { 
-            hasToken: !!parsedUser.access_token,
-            role: parsedUser.admin_info?.role,
-            email: parsedUser.admin_info?.email
+          console.log('🚀 AdminContext: Parsed admin user data:', {
+            role: parsedUser.role,
+            email: parsedUser.email,
+            name: parsedUser.name
           })
-          
-          if (parsedUser.access_token) {
-            // Verify the token on initial load
-            console.log('🚀 AdminContext: Found token, verifying...')
-            const verification = await verifyAdminToken(parsedUser.access_token)
-            if (verification.success) {
-              setAdminToken(parsedUser.access_token)
-              setIsAdminLoggedIn(true)
-              console.log('🚀 AdminContext: Admin login status set to true')
-            } else {
-              console.log('🚀 AdminContext: Token verification failed, clearing session')
-              sessionStorage.removeItem("adminUser")
-              setAdminToken(null)
-              setIsAdminLoggedIn(false)
+
+          // For cookie-based auth, verify the session is still valid
+          console.log('🚀 AdminContext: Verifying cookie-based session...')
+          const verification = await verifyAdminToken()
+          if (verification.success) {
+            // Update stored admin info with fresh data from verification
+            const updatedAdminData = {
+              ...verification.data,
+              role: verification.data.role,
+              email: verification.data.email,
+              name: verification.data.name
             }
+            sessionStorage.setItem("adminUser", JSON.stringify(updatedAdminData))
+            setAdminToken('cookie-based') // Set a flag to indicate authenticated
+            setIsAdminLoggedIn(true)
+            console.log('🚀 AdminContext: Admin login status set to true (cookie-based)')
           } else {
-            console.log('🚀 AdminContext: No access token found in stored admin data')
+            console.log('🚀 AdminContext: Cookie verification failed, clearing session')
+            sessionStorage.removeItem("adminUser")
+            setAdminToken(null)
+            setIsAdminLoggedIn(false)
           }
         } catch (error) {
           console.error("🚀 AdminContext: Error parsing admin user data:", error)
@@ -102,7 +106,7 @@ export const AdminProvider = ({ children }) => {
       } else {
         console.log('🚀 AdminContext: No admin user found in session storage')
       }
-      
+
       console.log('🚀 AdminContext: Setting loading to false')
       setLoading(false)
     }
@@ -134,26 +138,30 @@ export const AdminProvider = ({ children }) => {
       }
 
       const data = await response.json()
-      console.log('🔐 AdminContext: Login successful, received data:', { 
+      console.log('🔐 AdminContext: Login successful, received data:', {
         hasAccessToken: !!data.access_token,
-        hasRefreshToken: !!data.refresh_token 
+        hasRefreshToken: !!data.refresh_token
       })
-      
-      // Verify the token immediately after login
-      const verification = await verifyAdminToken(data.access_token)
+
+      // Verify the token immediately after login using cookies
+      console.log('🔐 AdminContext: Verifying login with cookie-based auth...')
+      const verification = await verifyAdminToken()
       if (!verification.success) {
         throw new Error("Failed to verify admin token")
       }
-      
-      // Store admin token and user info
+
+      // Store only admin info (not tokens, since they're in HttpOnly cookies)
       const adminUserData = {
-        ...data,
-        admin_info: verification.data
+        admin_id: verification.data.admin_id,
+        email: verification.data.email,
+        name: verification.data.name,
+        role: verification.data.role
       }
+      console.log('🔐 AdminContext: Storing admin user data:', adminUserData)
       sessionStorage.setItem("adminUser", JSON.stringify(adminUserData))
-      setAdminToken(data.access_token)
+      setAdminToken('cookie-based') // Set a flag to indicate authenticated
       setIsAdminLoggedIn(true)
-      
+
       return { success: true, data: adminUserData }
     } catch (error) {
       console.error("Admin login error:", error)
@@ -163,7 +171,7 @@ export const AdminProvider = ({ children }) => {
 
   const adminLogout = async () => {
     console.log('🚪 AdminContext: Admin logout requested')
-    
+
     try {
       // Call backend to clear HttpOnly cookies
       const response = await fetch(`${API_URL}/user/logout`, {
@@ -177,18 +185,18 @@ export const AdminProvider = ({ children }) => {
       if (!response.ok) {
         console.error('Admin logout request failed, but clearing local data anyway')
       }
-      
+
       console.log('✅ Admin backend logout successful - cookies cleared')
     } catch (error) {
       console.error('Admin logout error:', error)
       // Continue to clear local data even if backend call fails
     }
-    
+
     // Clear admin session data
     sessionStorage.removeItem("adminUser")
     localStorage.removeItem("adminUser")
     localStorage.removeItem("isAdmin")
-    
+
     // Clear state
     setIsAdminLoggedIn(false)
     setAdminToken(null)
@@ -200,15 +208,15 @@ export const AdminProvider = ({ children }) => {
   }
 
   return (
-    <AdminContext.Provider 
-      value={{ 
-        isAdminLoggedIn, 
-        adminToken, 
-        adminLogin, 
-        adminLogout, 
+    <AdminContext.Provider
+      value={{
+        isAdminLoggedIn,
+        adminToken,
+        adminLogin,
+        adminLogout,
         verifyAdminToken,
         isAdminEnabled,
-        loading 
+        loading
       }}
     >
       {children}
