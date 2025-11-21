@@ -335,7 +335,8 @@ export default function ItemDetails() {
       selectedRemovables: selectedRemovableList,
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
-      quantity: quantity
+      quantity: quantity,
+      restaurant_id: item.restaurant_id
     };
 
     if (isEditing && location.state?.cartItem) {

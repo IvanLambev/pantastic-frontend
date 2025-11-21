@@ -50,8 +50,15 @@ const Cart = () => {
   }
 
   const handleEditItem = (item) => {
-    const restaurantId = selectedRestaurant[0] || item.restaurant_id
-    if (!restaurantId) return
+    // Handle both array format [id, ...] and object format { restaurant_id: id, ... }
+    const restaurantId = Array.isArray(selectedRestaurant)
+      ? selectedRestaurant[0]
+      : (selectedRestaurant?.restaurant_id || selectedRestaurant?.id || item.restaurant_id)
+
+    if (!restaurantId) {
+      console.error("Could not determine restaurant ID for item", item)
+      return
+    }
 
     navigate(`/restaurant/${restaurantId}/item/${item.originalItemId}`, {
       state: {
