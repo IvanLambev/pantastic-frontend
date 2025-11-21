@@ -139,19 +139,19 @@ export function HeroCarousel() {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
                     
                     {/* Content overlay */}
-                    <div className="absolute inset-0 flex items-center">
+                    <div className="absolute inset-0 flex items-center justify-center">
                       <div className="container mx-auto px-4 md:px-8 lg:px-12">
-                        <div className="max-w-2xl text-white space-y-4 md:space-y-6">
-                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight animate-in fade-in slide-in-from-left-8 duration-700">
+                        <div className="max-w-2xl mx-auto text-white space-y-4 md:space-y-6 text-center">
+                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight animate-in fade-in duration-700">
                             {slide.title}
                           </h1>
                           {slide.subtitle && (
-                            <p className="text-lg md:text-xl lg:text-2xl text-gray-200 animate-in fade-in slide-in-from-left-8 duration-700 delay-100">
+                            <p className="text-lg md:text-xl lg:text-2xl text-gray-200 animate-in fade-in duration-700 delay-100">
                               {slide.subtitle}
                             </p>
                           )}
                           {slide.ctaText && (
-                            <div className="animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
+                            <div className="animate-in fade-in duration-700 delay-200">
                               <Button 
                                 size="lg" 
                                 className="text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto bg-primary hover:bg-primary/90 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
