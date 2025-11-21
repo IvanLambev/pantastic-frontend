@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAdminAuth } from "@/context/AdminContext"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import AdminStats from "@/components/admin/AdminStats"
+import RevenueChart from "@/components/admin/RevenueChart"
+import { fetchDataAvailability, fetchRevenueByPeriod } from "@/services/adminApi"
 
 export default function Dashboard() {
   const { adminToken, verifyAdminToken } = useAdminAuth()
   const [adminInfo, setAdminInfo] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [dataAvailability, setDataAvailability] = useState(null)
+  const [revenueData, setRevenueData] = useState(null)
+  const [revenueLoading, setRevenueLoading] = useState(true)
+  const [timePeriod, setTimePeriod] = useState("week")
 
   useEffect(() => {
     const loadAdminInfo = async () => {
@@ -22,9 +29,47 @@ export default function Dashboard() {
       }
       setLoading(false)
     }
-    
+
     loadAdminInfo()
   }, [adminToken, verifyAdminToken])
+
+  // Fetch data availability
+  useEffect(() => {
+    const loadDataAvailability = async () => {
+      try {
+        const data = await fetchDataAvailability()
+        setDataAvailability(data)
+        console.log("Data availability:", data)
+      } catch (error) {
+        console.error("Failed to fetch data availability:", error)
+      }
+    }
+
+    if (adminToken) {
+      loadDataAvailability()
+    }
+  }, [adminToken])
+
+  // Fetch revenue data based on time period
+  useEffect(() => {
+    const loadRevenueData = async () => {
+      setRevenueLoading(true)
+      try {
+        const data = await fetchRevenueByPeriod(timePeriod)
+        setRevenueData(data)
+        console.log("Revenue data:", data)
+      } catch (error) {
+        console.error("Failed to fetch revenue data:", error)
+      } finally {
+        setRevenueLoading(false)
+      }
+    }
+
+    if (adminToken) {
+      loadRevenueData()
+    }
+  }, [adminToken, timePeriod])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -36,94 +81,68 @@ export default function Dashboard() {
     )
   }
 
+  // Prepare stats data from revenue response
+  const statsData = revenueData?.restaurants?.[0] ? {
+    total_revenue: revenueData.restaurants.reduce((sum, r) => sum + r.total_revenue, 0),
+    order_count: revenueData.restaurants.reduce((sum, r) => sum + r.order_count, 0),
+    average_order_value: revenueData.restaurants.reduce((sum, r) => sum + r.average_order_value, 0) / revenueData.restaurants.length,
+    comparison: revenueData.comparison
+  } : null;
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Admin Dashboard</h1>
-        {adminInfo && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">Admin: {adminInfo.email}</Badge>
-            <Badge variant="outline">ID: {adminInfo.admin_id?.slice(0, 8)}...</Badge>
-          </div>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">€45,231.89</div>
-            <p className="text-xs md:text-sm text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">2,345</div>
-            <p className="text-xs md:text-sm text-muted-foreground">+15% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">+573</div>
-            <p className="text-xs md:text-sm text-muted-foreground">+201 since last hour</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Restaurants</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-bold">25</div>
-            <p className="text-xs md:text-sm text-muted-foreground">+2 this week</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Debug information */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Admin Session Debug</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm">
-            <div><strong>Token Present:</strong> {adminToken ? 'Yes' : 'No'}</div>
-            <div><strong>Token Length:</strong> {adminToken ? adminToken.length : 'N/A'}</div>
-            <div><strong>Admin Info:</strong> {adminInfo ? JSON.stringify(adminInfo, null, 2) : 'Not loaded'}</div>
-            <div><strong>Environment Admin Enabled:</strong> {import.meta.env.VITE_ADMIN_ENABLED || 'Not set'}</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl">Recent Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Recent orders content */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">Admin Dashboard</h1>
+          {adminInfo && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="secondary">Admin: {adminInfo.email}</Badge>
+              <Badge variant="outline">ID: {adminInfo.admin_id?.slice(0, 8)}...</Badge>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg md:text-xl">Popular Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Popular items content */}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2">
+          <Select value={timePeriod} onValueChange={setTimePeriod}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* Stats Cards */}
+      <AdminStats data={statsData} loading={revenueLoading} />
+
+      {/* Revenue Chart */}
+      <div className="mt-6">
+        <RevenueChart data={revenueData} loading={revenueLoading} timePeriod={timePeriod} />
+      </div>
+
+      {/* Data Availability Info */}
+      {dataAvailability && (
+        <div className="mt-6 p-4 bg-muted rounded-lg">
+          <h3 className="font-semibold mb-2">Data Availability</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Total Orders</p>
+              <p className="font-medium">{dataAvailability.all_orders?.total_orders || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Paid Orders</p>
+              <p className="font-medium">{dataAvailability.paid_orders?.total_orders || 0}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Days of Data</p>
+              <p className="font-medium">{dataAvailability.all_orders?.days_of_data || 0}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
