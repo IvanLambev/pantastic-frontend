@@ -1,0 +1,5 @@
+var cc_customer_data = {"id":null,"group_id":2,"group_name":"Guests","first_name":null,"last_name":null,"full_name":null,"email":null,"type":"guest","cpadm":0,"country":"BG"};
+var cc_subscriber_data = {"id":611,"first_name":"Stefan","last_name":"Zaharinov","country":"BG","last_active_at":"2025-11-10T16:33:39+02:00","uuid":"69065332e6f0deebe0223a60","email":null,"qr":"https:\/\/chart.googleapis.com\/chart?cht=qr&chl=69065332e6f0deebe0223a60&chs=160x160&chld=L%7C0"};
+dataLayer.push(cc_customer_data);
+dataLayer.push(cc_subscriber_data);
+

@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react"
-import HowItWorks from "@/components/how-it-works"
-import DeliveryPickupInfo from "@/components/delivery-pickup-info"
-import FAQ from "@/components/faq"
-import AboutUs from "@/components/about-us"
 import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
 import { t } from "@/utils/translations"
 import { HeroCarousel } from "@/components/hero-carousel"
-import { PantasticSections } from "@/components/pantastic-sections"
+import { MenuItemsGrid } from "@/components/menu-items-grid"
 
 const Home = () => {
   const [showModal, setShowModal] = useState(false)
@@ -40,14 +36,10 @@ const Home = () => {
 
       <HeroCarousel />
 
-      <PantasticSections />
-
-      <div className="container mx-auto px-4 py-12 space-y-24">
-        <HowItWorks />
-        <DeliveryPickupInfo />
-        <FAQ />
-        <AboutUs />
-      </div>
+      <MenuItemsGrid 
+        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
+        title="Нашето меню"
+      />
     </>
   )
 }

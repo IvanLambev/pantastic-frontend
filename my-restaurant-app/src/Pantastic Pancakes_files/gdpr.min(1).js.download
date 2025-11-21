@@ -1,0 +1,157 @@
+CloudCartApps.Gdpr=function(){class t{constructor(s){this.settings=s||{},this.isAppended=!1,this.popup=new i(this.settings)}install(){this.isAppended||$("body").append(this.template()),this.registerListenersScripts(),this.popup.install()}template(){return`<div class="bottom-freezed-bar">
+                <div class="container">
+                    <div class="bottom-freezed-bar-inner">
+                        <div class="bottom-freezed-bar-content">
+                            ${this.settings.cookies_bar_text}
+                        </div>
+            
+                        <div class="bottom-freezed-bar-buttons">
+                            <a href="javascript:" id="gdpr-trigger">${this.settings.labels.cookie_settings}</a>
+            
+                            <button class="cc-button cc-button-small js-cookies-accept">${this.settings.labels.accept_settings}</button>
+                        </div>
+                    </div>
+                </div>
+            
+                <a class="bottom-freezed-bar-close" href="javascript:void(0);"><i class="fa fa-times"></i></a>
+            </div>`}registerListenersScripts(){$(document).off("click","#gdpr-trigger").on("click","#gdpr-trigger",function(s){s.preventDefault(),$("#gdpr_popup").modal()}).off("click",".bottom-freezed-bar-close").on("click",".bottom-freezed-bar-close",function(s){$(".bottom-freezed-bar").hide(),s.preventDefault()}).off("click",".js-cookies-accept").on("click",".js-cookies-accept",function(s){$(".bottom-freezed-bar").hide();var t=$("#gdpr_popup");let i=[];t.modal("hide"),t.find("._switchbox-input").each(function(){i.push($(this).attr("name")+":yes")}),Cookies.set(window.CCGDPR.cookieName,i.join("+"),{path:"/",expires:365})}),window.CCGDPR.isAcceptedAll()&&$(".bottom-freezed-bar").hide()}}class i{constructor(s){this.settings=s||{},this.isAppended=!1}install(){this.isAppended||($("body").append(this.template()),this.isAppended=!0),this.registerListenersScripts()}isCookiePolicyPage(){return"page"===window.cc_settings.page&&"/page/cookie-policy"===document.location.pathname}template(){return`<div class="modal medium fade" id="gdpr_popup" tabindex="-1" role="dialog" ${this.settings.show_cookies_wall&&!this.isCookiePolicyPage()?'data-backdrop="static" data-keyboard="false"':'aria-hidden="true"'}>
+                <div class="modal-dialog">
+                    <div class="modal-tabs">
+                        <div class="modal-tabs-title">
+                            <div class="modal-tabs-title-text">
+                                <h3>${this.settings.labels.cookie_preference_center}</h3>
+                                ${!this.settings.show_cookies_wall||this.isCookiePolicyPage()?'<span class="modal-tabs-title-close" data-dismiss="modal"><i class="fa fa-times"></i></span>':""}
+                            </div>
+                        </div>
+            
+                        <div class="modal-tabs-body">
+                            <div class="modal-tabs-nav">
+                                <a href="javascript:void(0);" class="js-modal-tabs-link active"
+                                   data-target="#tab-privacy">${this.settings.labels.your_privacy}</a>
+                                
+                                ${this.settings.groups.map(s=>`<a href="javascript:void(0);" class="js-modal-tabs-link"
+                                       data-target="#tab-${s.mapping}">${s.name}</a>`).join("")}
+            
+                                ${this.isCookiePolicyPage()?"":`<a href="${window.ccRoutes.home}/page/cookie-policy" target="_blank">${this.settings.labels.other_information}</a>`}
+                            </div>
+            
+                            <div class="modal-tabs-group">
+                                <div class="modal-tab" id="tab-privacy">
+                                    <div class="modal-tab-title">
+                                        <div class="modal-tab-title-main">
+                                            <h4>${this.settings.labels.your_privacy}</h4>
+                                        </div>
+                                    </div>
+            
+                                    <div class="modal-tab-description">
+                                        ${this.settings.cookies_consent_text}
+                                    </div>
+                                </div>
+                                
+                                ${this.settings.groups.map(s=>this.templateTabContent(s)).join("")}
+                            </div>
+                        </div>
+            
+                        <div class="modal-tabs-footer">
+                            <div class="modal-tabs-footer-right">
+                                <button class="cc-button cc-button-small cc-button-ghost js-cookies-accept-modal">${this.settings.labels.save_settings}</button>
+                                <button class="cc-button cc-button-small js-cookies-accept-modal">${this.settings.labels.accept_settings}</button>
+                            </div>
+            
+                            <div class="modal-tabs-footer-left">
+                                Powered by <a href="https://cloudcart.com" target="_blank"><strong>CloudCart</strong></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`}templateTabContent(s){return`<div class="modal-tab" id="tab-${s.mapping}">
+                        <div class="modal-tab-title">
+                            <div class="modal-tab-title-main">
+                                <h4>${s.name}</h4>
+                            </div>
+
+                            <div class="modal-tab-title-addon">
+                                <label class="_switchbox" for="id-${s.mapping}">
+                                    <input  name="${s.mapping}" 
+                                            type="checkbox" 
+                                            class="_switchbox-input"
+                                            ${"system"===s.mapping||s.default?'checked="checked"':""}
+                                            ${"system"===s.mapping?"disabled":`id="id-${s.mapping}"`}
+                                    >
+                                    <span class="_switchbox-button"></span>
+                                    <span class="_switchbox-background"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="modal-tab-description">
+                            <p>${s.description}</p>
+                        </div>
+
+                        <div class="cookies-used">
+                            <h5>${this.settings.labels.cookies}</h5>
+
+                            <ul>
+                                ${s.providers.map(s=>`<li>${s.name}</li>`).join("")}
+                            </ul>
+                        </div>
+                    </div>`}registerListenersScripts(){$(document).off("click",".js-cookies-accept-modal").on("click",".js-cookies-accept-modal",function(s){var t=$("#gdpr_popup");let i=[];t.modal("hide"),t.find("._switchbox-input").each(function(){var s=$(this);i.push(s.attr("name")+":"+(s.is(":checked")?"yes":"no"))}),Cookies.set(window.CCGDPR.cookieName,i.join("+"),{path:"/",expires:365}),$(".bottom-freezed-bar").hide(),$.ajax(window.ccRoutes.home+"/gdpr/cookie-consent")}).off("click",".js-modal-tabs-link").on("click",".js-modal-tabs-link",function(s){var t=$(this),i=$(t.data("target"));t.addClass("active").siblings().removeClass("active"),i.show().siblings().hide(),s.preventDefault()}).off("click","#cookies-trigger").on("click","#cookies-trigger",function(s){s.preventDefault(),$("#gdpr_popup").modal()}),this.isCookiePolicyPage()||!this.settings.show_cookies_wall||window.CCGDPR.isAcceptedAll()||$("#gdpr_popup").modal()}}class s{constructor(s){this.settings=s||{},this.isAppended=!1}install(){this.isAppended||($("body").append(this.template()),this.isAppended=!0),this.registerListenersScripts()}template(){return`<div class="modal medium fade" id="gdpr_policies_popup" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <form class="cc-form cc-form-policies-popup js-form-submit-ajax-new" data-submit-loader="true"
+                          role="form"
+                          method="POST" action="${window.ccRoutes.home}/gdpr/policies-popup">
+                        <div class="modal-tabs">
+                            <div class="modal-tabs-title">
+                                <div class="modal-tabs-title-text">
+                                    <h3>${this.settings.labels.privacy_notice}</h3>
+                                </div>
+                            </div>
+            
+                            <div class="modal-tabs-body">
+            
+                                <div class="modal-tabs-group">
+                                    <div class="modal-tab" id="tab-privacy">
+                                        <div class="modal-tab-description">
+                                            ${this.settings.policies_popup_text}
+                                            <br>
+                                            ${this.templateFormPolicies()}
+                                        </div>
+                                    </div>
+            
+                                </div>
+                            </div>
+            
+                            <div class="modal-tabs-footer">
+                                <div class="modal-tabs-footer-right">
+                                    <button class="cc-button cc-button-small cc-button-ghost js-policies-cancel">${this.settings.labels.logout}</button>
+                                </div>
+            
+                                <div class="modal-tabs-footer-left">
+                                    <button class="cc-button cc-button-small js-policies-accept"
+                                            type="submit">${this.settings.labels.accept_settings}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>`}templateFormPolicies(){return this.settings.policies.map(s=>`<div class="cc-form-row">
+                            <div class="cc-form-col-12">
+                                <div class="cc-form-group ${s.optional?"":"required"}">
+                                    <div class="cc-form-field-container skip-has-error">
+                                        <label class="cc-checkbox" for="policies-popup-form-gdpr-input-${s.id}">
+                                            <input name="gdpr[${s.id}]"
+                                                type="checkbox"
+                                                class="cc-checkbox-input"
+                                                id="policies-popup-form-gdpr-input-${s.id}"
+                                                value="On"
+                                                ${s.optional?"":"required"}>
+                                            <span class="cc-checkbox-check"></span>
+                                            <span class="cc-checkbox-text">
+                                                ${this.settings.labels.agree_terms} 
+                                                <a href='${window.ccRoutes.home}/page/${s.url_handle}' data-ajax-panel='true' data-modal-class='modal-lg'>${s.name}</a>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`).join("")}registerListenersScripts(){$(".cc-form-policies-popup").on("cc.ajax.success",function(){Cookies.remove("policies_popup"),$("#gdpr_policies_popup").modal("hide")}),$(".js-policies-cancel").on("click",function(){Cookies.remove("policies_popup"),window.location.href=window.ccRoutes.home+"/auth/logout",$("#gdpr_policies_popup").modal("hide")})}open(){Cookies.get("policies_popup")&&$("#gdpr_policies_popup").modal({backdrop:"static",keyboard:!1})}}return new class{constructor(s){this.settings=s||{},this.instance=null,"page"===window.cc_settings.page&&"/page/cookie-policy"===document.location.pathname?(this.instance=new i(this.settings),CCEvents.ready(()=>{this.install()})):"checkout"===window.cc_settings.page?this.policiesPopupEnabled()&&this.policiesPopupShow():this.mustShowCookiesBar()&&(this.settings.show_cookies_bar?this.instance=new t(this.settings):this.settings.show_cookies_wall&&(this.instance=new i(this.settings)),CCEvents.ready(()=>{this.install()}))}install(){this.instance&&$(window).on("load",()=>{this.instance.install()})}mustShowCookiesBar(){return!window.CCGDPR.isAcceptedAll()&&(this.settings.show_cookies_bar||this.settings.show_cookies_wall)}policiesPopupEnabled(){return this.settings.show_policies_popup}policiesPopupShow(){this.instance=new s(this.settings),this.instance.install(),window.addEventListener("dataLayer:push",s=>{s=s.detail;s&&s[0]&&s[0].type&&"customer"===s[0].type&&s[0].id&&$(window).on("load",()=>{this.instance.open()})}),$(document).on("cc.user.sign.in",(s,t)=>{t.customer.customer_id&&this.instance.open()})}}(window.CCAppsConfig?.gdpr||{})}();
