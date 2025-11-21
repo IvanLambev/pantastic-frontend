@@ -201,6 +201,32 @@ export const CartProvider = ({ children }) => {
     }
   }
 
+  const updateCartItem = (oldId, newItem) => {
+    setCartItems(prevItems => {
+      // Remove the old item
+      const itemsWithoutOld = prevItems.filter(item => item.id !== oldId)
+
+      // Check if the new item configuration already exists in the remaining items
+      const existingItemIndex = itemsWithoutOld.findIndex(i => i.id === newItem.id)
+
+      let newItems
+      if (existingItemIndex > -1) {
+        // If it exists, update the quantity
+        newItems = [...itemsWithoutOld]
+        newItems[existingItemIndex] = {
+          ...newItems[existingItemIndex],
+          quantity: newItems[existingItemIndex].quantity + newItem.quantity
+        }
+      } else {
+        // If it doesn't exist, add it as a new item
+        newItems = [...itemsWithoutOld, newItem]
+      }
+
+      localStorage.setItem('cart', JSON.stringify(newItems))
+      return newItems
+    })
+  }
+
   const contextValue = {
     cartItems,
     addToCart,
@@ -210,6 +236,7 @@ export const CartProvider = ({ children }) => {
     checkout,
     updateOrder,
     cancelOrder,
+    updateCartItem,
     orderId
   }
 

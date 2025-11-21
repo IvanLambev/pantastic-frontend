@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
@@ -29,6 +29,7 @@ import {
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -37,8 +38,9 @@ export default function ItemDetails() {
   const [selectedAddons, setSelectedAddons] = useState({})
   const [selectedRemovables, setSelectedRemovables] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
-  const { addToCart } = useCart()
+  const { addToCart, updateCartItem } = useCart()
   const [quantity, setQuantity] = useState(1)
+  const [isEditing, setIsEditing] = useState(false)
 
   // Add state for favorite
   const [isFavorite, setIsFavorite] = useState(false)
@@ -140,6 +142,58 @@ export default function ItemDetails() {
         }
         setSelectedRemovables(initialSelectedRemovables);
 
+        // Check for edit mode
+        if (location.state?.cartItem) {
+          const cartItem = location.state.cartItem
+          setIsEditing(true)
+          setQuantity(cartItem.quantity)
+
+          // Restore addons
+          const restoredAddons = { ...initialSelectedAddons }
+          if (cartItem.selectedAddons) {
+            templates.forEach(template => {
+              if (template.addons) {
+                const matchingAddons = cartItem.selectedAddons.filter(cartAddon =>
+                  Object.keys(template.addons).includes(cartAddon.name)
+                )
+                if (matchingAddons.length > 0) {
+                  restoredAddons[template.template_id] = matchingAddons
+                }
+              }
+            })
+          }
+          setSelectedAddons(restoredAddons)
+
+          // Restore removables
+          const restoredRemovables = { ...initialSelectedRemovables }
+          if (cartItem.selectedRemovables) {
+            if (removables.applied_templates) {
+              removables.applied_templates.forEach(template => {
+                let matchingRemovables = []
+                if (Array.isArray(template.removables)) {
+                  matchingRemovables = template.removables.filter(r => cartItem.selectedRemovables.includes(r))
+                } else {
+                  matchingRemovables = Object.keys(template.removables || {}).filter(r => cartItem.selectedRemovables.includes(r))
+                }
+
+                if (matchingRemovables.length > 0) {
+                  restoredRemovables[template.template_id] = matchingRemovables
+                }
+              })
+            }
+          }
+          setSelectedRemovables(restoredRemovables)
+
+          // Recalculate total price
+          let newTotal = Number(data.price)
+          Object.values(restoredAddons).forEach(addonArray => {
+            addonArray.forEach(addon => {
+              newTotal += Number(addon.price)
+            })
+          })
+          setTotalPrice(newTotal)
+        }
+
       } catch (err) {
         setError(err.message);
         console.error('Error fetching item/addons/removables:', err);
@@ -148,7 +202,7 @@ export default function ItemDetails() {
       }
     };
     fetchItemAndAddons();
-  }, [restaurantId, itemId]);
+  }, [restaurantId, itemId, location.state]);
 
   // Check if item is favorite on mount
   useEffect(() => {
@@ -284,22 +338,37 @@ export default function ItemDetails() {
       quantity: quantity
     };
 
-    // Add to cart multiple times based on quantity
-    for (let i = 0; i < quantity; i++) {
-      addToCart(cartItem);
+    if (isEditing && location.state?.cartItem) {
+      updateCartItem(location.state.cartItem.id, cartItem)
+      toast.success('Количката е обновена')
+    } else {
+      // Add to cart multiple times based on quantity
+      // Wait, addToCart in context adds 1 to quantity if exists.
+      // But here we loop.
+      // If I use updateCartItem, I pass the full quantity.
+      // If I use addToCart, I should probably just call it once with quantity?
+      // The current implementation loops.
+      // I should keep the loop for consistency if I don't change addToCart.
+      // But wait, if I add 5 items, I get 5 calls.
+      // My updateCartItem implementation handles quantity directly.
+
+      for (let i = 0; i < quantity; i++) {
+        addToCart(cartItem);
+      }
+
+      const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
+      const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
+
+      toast.success(
+        <div className="flex flex-col">
+          <span>Добавихте {quantity}x {item.name} в количката</span>
+          {(selectedAddonList.length > 0 || selectedRemovableList.length > 0) && (
+            <span className="text-xs">{addonText}{removableText}</span>
+          )}
+        </div>
+      );
     }
 
-    const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
-    const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
-
-    toast.success(
-      <div className="flex flex-col">
-        <span>Добавихте {quantity}x {item.name} в количката</span>
-        {(selectedAddonList.length > 0 || selectedRemovableList.length > 0) && (
-          <span className="text-xs">{addonText}{removableText}</span>
-        )}
-      </div>
-    );
     navigate(-1);
   };
 
@@ -428,7 +497,7 @@ export default function ItemDetails() {
               onClick={handleAddToCart}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
-              Добави в количката
+              {isEditing ? 'Обнови количката' : 'Добави в количката'}
             </Button>
             <p className="text-xs text-center text-muted-foreground mt-2">
               {getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0 ? (
@@ -672,7 +741,7 @@ export default function ItemDetails() {
               onClick={handleAddToCart}
             >
               <ShoppingCart className="mr-2 h-4 w-4" />
-              Добави в количката
+              {isEditing ? 'Обнови количката' : 'Добави в количката'}
             </Button>
 
             {(getAllSelectedAddons().length > 0 || getAllSelectedRemovables().length > 0) && (
