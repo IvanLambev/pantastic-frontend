@@ -60,7 +60,7 @@ const Cart = () => {
       return
     }
 
-    navigate(`/restaurant/${restaurantId}/item/${item.originalItemId}`, {
+    navigate(`/restaurants/${restaurantId}/items/${item.originalItemId}`, {
       state: {
         cartItem: item
       }
