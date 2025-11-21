@@ -42,12 +42,12 @@ interface CollectionSectionProps {
   limit?: number
 }
 
-export function CollectionSection({ 
-  restaurantId, 
-  collectionId, 
+export function CollectionSection({
+  restaurantId,
+  collectionId,
   collectionIndex = 0,
   title,
-  limit = 8 
+  limit = 8
 }: CollectionSectionProps) {
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -63,16 +63,16 @@ export function CollectionSection({
         const collectionsResponse = await fetchWithAuth(
           `${API_URL}/restaurant/collections/${restaurantId}`
         )
-        
+
         if (!collectionsResponse.ok) {
           throw new Error('Failed to fetch collections')
         }
-        
+
         const collectionsData = await collectionsResponse.json()
-        
+
         // Find the specific collection by ID, index, or use the first one
         let targetCollection: Collection | null = null
-        
+
         if (collectionId) {
           // Find by specific collection ID
           targetCollection = collectionsData.collections.find(
@@ -85,34 +85,34 @@ export function CollectionSection({
           // Fallback to first collection
           targetCollection = collectionsData.collections[0]
         }
-        
+
         if (!targetCollection) {
           setLoading(false)
           return
         }
-        
+
         setCollection(targetCollection)
-        
+
         // Fetch all items from the restaurant
         const itemsResponse = await fetchWithAuth(
           `${API_URL}/restaurant/${restaurantId}/items`
         )
-        
+
         if (!itemsResponse.ok) {
           throw new Error('Failed to fetch items')
         }
-        
+
         const allItems = await itemsResponse.json()
-        
+
         // Filter items that belong to this collection
-        const collectionItems = allItems.filter((item: MenuItem) => 
+        const collectionItems = allItems.filter((item: MenuItem) =>
           targetCollection!.item_ids.includes(item.item_id)
         )
-        
+
         // Apply limit if specified
         const itemsToShow = limit ? collectionItems.slice(0, limit) : collectionItems
         setItems(itemsToShow)
-        
+
       } catch (err) {
         console.error('Error fetching collection:', err)
         toast.error('Не успяхме да заредим колекцията')
@@ -131,9 +131,9 @@ export function CollectionSection({
       collection_id: collection?.collection_id
     }
     localStorage.setItem('lastViewedRestaurant', JSON.stringify(restaurantData))
-    
+
     addToCart({
-      id: item.item_id,
+      id: String(item.item_id),
       name: item.name,
       price: Number(item.price) || 0,
       image: item.image_url,
@@ -150,7 +150,7 @@ export function CollectionSection({
       collection_id: collection?.collection_id
     }
     localStorage.setItem('lastViewedRestaurant', JSON.stringify(restaurantData))
-    
+
     navigate(`/restaurants/${restaurantId}/items/${item.item_id}`)
   }
 
@@ -187,14 +187,14 @@ export function CollectionSection({
           <p className="text-muted-foreground text-lg">{collection.description}</p>
         )}
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {items.map((item) => (
-          <Card 
-            key={item.item_id} 
+          <Card
+            key={item.item_id}
             className="overflow-hidden group cursor-pointer hover:shadow-lg transition-all"
           >
-            <div 
+            <div
               className="relative aspect-square overflow-hidden bg-muted"
               onClick={() => handleItemClick(item)}
             >
@@ -211,9 +211,9 @@ export function CollectionSection({
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
             </div>
-            
+
             <CardHeader className="pb-3">
-              <CardTitle 
+              <CardTitle
                 className="text-lg line-clamp-1 cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleItemClick(item)}
               >
@@ -225,13 +225,13 @@ export function CollectionSection({
                 </CardDescription>
               )}
             </CardHeader>
-            
+
             <CardContent className="pt-0">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xl font-bold">
                   {item.price.toFixed(2)} лв
                 </span>
-                <Button 
+                <Button
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -247,10 +247,10 @@ export function CollectionSection({
           </Card>
         ))}
       </div>
-      
+
       {collection.item_count > items.length && (
         <div className="text-center mt-8">
-          <Button 
+          <Button
             variant="outline"
             size="lg"
             onClick={() => navigate(`/restaurants/${restaurantId}`)}

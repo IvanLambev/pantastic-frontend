@@ -166,13 +166,13 @@ const Food = () => {
   const handleAddToCart = (item) => {
     // Handle both old array format and new object format
     const itemData = Array.isArray(item) ? {
-      id: item[0],
+      id: String(item[0]),
       name: item[7],
       price: Number(item[8]) || 0,
       image: item[5],
       description: item[4]
     } : {
-      id: item.item_id,
+      id: String(item.item_id),
       name: item.name,
       price: Number(item.price) || 0,
       image: item.image_url,

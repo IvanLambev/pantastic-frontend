@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
       const existingItem = prevItems.find(i => i.id === item.id)
       let newItems
       if (existingItem) {
-        newItems = prevItems.map(i => 
+        newItems = prevItems.map(i =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         )
       } else {
@@ -134,11 +134,11 @@ export const CartProvider = ({ children }) => {
   const updateOrder = async (newItems) => {
     if (!orderId) return
 
-    try {      
+    try {
       const products = {}
       const instructions = {}
       const order_addons = {}
-      
+
       newItems.forEach(item => {
         products[item.id] = item.quantity
         if (item.specialInstructions) {
@@ -192,7 +192,7 @@ export const CartProvider = ({ children }) => {
       })
 
       if (!response.ok) throw new Error('Failed to cancel order')
-      
+
       clearCart()
       return await response.json()
     } catch (error) {

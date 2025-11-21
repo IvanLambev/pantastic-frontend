@@ -68,7 +68,7 @@ export default function ItemDetails() {
               const restaurantRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
               if (restaurantRes.ok) {
                 const restaurants = await restaurantRes.json()
-                const currentRestaurant = restaurants.find(r => 
+                const currentRestaurant = restaurants.find(r =>
                   (Array.isArray(r) ? r[0] : r.restaurant_id) === restaurantId
                 )
                 if (currentRestaurant) {
@@ -263,7 +263,11 @@ export default function ItemDetails() {
     // Create a unique identifier for this specific item configuration
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',');
     const removableIds = selectedRemovableList.sort().join(',');
-    const configurationId = `${item.item_id}-${addonIds}-${removableIds}`;
+
+    // Use simple ID if no customizations, otherwise use composite ID
+    const configurationId = (selectedAddonList.length === 0 && selectedRemovableList.length === 0)
+      ? String(item.item_id)
+      : `${item.item_id}-${addonIds}-${removableIds}`;
 
     const cartItem = {
       id: configurationId, // Unique ID for this configuration
@@ -473,8 +477,8 @@ export default function ItemDetails() {
                               <div
                                 key={`${template.template_id}-${addonName}`}
                                 className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-border bg-background hover:bg-muted/50'
+                                  ? 'border-primary bg-primary/10'
+                                  : 'border-border bg-background hover:bg-muted/50'
                                   }`}
                                 onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
                               >
@@ -541,8 +545,8 @@ export default function ItemDetails() {
                                 <div
                                   key={`${template.template_id}-${index}`}
                                   className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableItem)
-                                      ? 'border-red-500 bg-red-50'
-                                      : 'border-border bg-background hover:bg-muted/50'
+                                    ? 'border-red-500 bg-red-50'
+                                    : 'border-border bg-background hover:bg-muted/50'
                                     }`}
                                   onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
                                 >
@@ -564,8 +568,8 @@ export default function ItemDetails() {
                                 <div
                                   key={`${template.template_id}-${removableKey}`}
                                   className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableKey)
-                                      ? 'border-red-500 bg-red-50'
-                                      : 'border-border bg-background hover:bg-muted/50'
+                                    ? 'border-red-500 bg-red-50'
+                                    : 'border-border bg-background hover:bg-muted/50'
                                     }`}
                                   onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
                                 >
@@ -726,8 +730,8 @@ export default function ItemDetails() {
                           <div
                             key={`${template.template_id}-${addonName}`}
                             className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
-                                ? 'border-primary bg-primary/10'
-                                : 'border-border bg-background hover:bg-muted/50'
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border bg-background hover:bg-muted/50'
                               }`}
                             onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
                           >
@@ -792,8 +796,8 @@ export default function ItemDetails() {
                             <div
                               key={`${template.template_id}-${index}`}
                               className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableItem)
-                                  ? 'border-red-500 bg-red-50'
-                                  : 'border-border bg-background hover:bg-muted/50'
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-border bg-background hover:bg-muted/50'
                                 }`}
                               onClick={() => handleRemovableChange(template.template_id, removableItem, !isRemovableSelected(template.template_id, removableItem))}
                             >
@@ -815,8 +819,8 @@ export default function ItemDetails() {
                             <div
                               key={`${template.template_id}-${removableKey}`}
                               className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isRemovableSelected(template.template_id, removableKey)
-                                  ? 'border-red-500 bg-red-50'
-                                  : 'border-border bg-background hover:bg-muted/50'
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-border bg-background hover:bg-muted/50'
                                 }`}
                               onClick={() => handleRemovableChange(template.template_id, removableKey, !isRemovableSelected(template.template_id, removableKey))}
                             >
