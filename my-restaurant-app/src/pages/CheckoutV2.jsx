@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL, FRONTEND_BASE_URL } from "@/config/api"
@@ -17,109 +17,32 @@ import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
+import { api } from "@/utils/apiClient"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
-import { api } from "@/utils/apiClient"
-
-// Utility functions for restaurant status
-function isRestaurantOpen(restaurant) {
-  if (!restaurant) return false;
-  
-  // Get current time in GMT+3
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = days[gmt3.getDay()];
-  
-  const hours = (Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours) || {};
-  const todayHours = hours[currentDay];
-  
-  if (!todayHours) return false;
-  
-  try {
-    // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
-    const [open, close] = todayHours.split("-");
-    const [openH, openM] = open.split(":").map(Number);
-    const [closeH, closeM] = close.split(":").map(Number);
-    
-    const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
-    const openTime = openH * 60 + openM; // Opening time in minutes
-    const closeTime = closeH * 60 + closeM; // Closing time in minutes
-    
-    // Check if the restaurant closes the next day (e.g., 10:00-03:00)
-    if (closeTime < openTime) {
-      // Restaurant is open if current time is after opening OR before closing (next day)
-      return currentTime >= openTime || currentTime <= closeTime;
-    } else {
-      // Normal case: restaurant opens and closes on the same day
-      return currentTime >= openTime && currentTime <= closeTime;
-    }
-  } catch (error) {
-    console.error("Error parsing restaurant hours:", error);
-    return false;
-  }
-}
-
-function getNextOpenTime(restaurant) {
-  if (!restaurant) return null;
-  
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  
-  const hours = (Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours) || {};
-  
-  // Check today and next few days
-  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDate = new Date(gmt3);
-    checkDate.setDate(checkDate.getDate() + dayOffset);
-    const dayName = days[checkDate.getDay()];
-    
-    const dayHours = hours[dayName];
-    
-    if (dayHours) {
-      try {
-        const [open] = dayHours.split("-");
-        const [openH, openM] = open.split(":").map(Number);
-        const openTime = new Date(checkDate);
-        openTime.setHours(openH, openM, 0, 0);
-        
-        // If it's today, make sure the opening time is in the future
-        if (dayOffset === 0 && openTime <= gmt3) continue;
-        
-        if (dayOffset === 0) {
-          return `${t('time.today')} ${t('time.at')} ${open}`;
-        } else if (dayOffset === 1) {
-          return `${t('time.tomorrow')} ${t('time.at')} ${open}`;
-        } else {
-          return `${dayName} ${t('time.at')} ${open}`;
-        }
-      } catch {
-        continue;
-      }
-    }
-  }
-  return null;
-}
+import {
+  getAvailableDeliverySlots,
+  generateTimeSlots,
+  isRestaurantOpen,
+  getNextOpenTime
+} from "@/utils/deliveryScheduler"
 
 export default function CheckoutV2() {
-  const navigate = useNavigate()
   const { cartItems, clearCart, updateQuantity, removeFromCart } = useCart()
+  const navigate = useNavigate()
   const [selectedPayment, setSelectedPayment] = useState("cash")
   const [isProcessing, setIsProcessing] = useState(false)
   const [showAddressEdit, setShowAddressEdit] = useState(false)
   const [newAddress, setNewAddress] = useState("")
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
-  
+
   // Discount states
   const [discountCode, setDiscountCode] = useState("")
   const [discountInfo, setDiscountInfo] = useState(null)
   const [discountValidating, setDiscountValidating] = useState(false)
   const [discountError, setDiscountError] = useState("")
-  
+
   // Scheduling states
   const [isScheduled, setIsScheduled] = useState(false)
   const [selectedDate, setSelectedDate] = useState(undefined)
@@ -127,26 +50,65 @@ export default function CheckoutV2() {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [, setDeliverySchedule] = useState(null)
   const debounceTimeoutRef = useRef(null)
-  
+
+  // Restaurant state
+  const [selectedRestaurant, setSelectedRestaurant] = useState(() =>
+    JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
+  )
+
+  // Fetch restaurant details if hours are missing
+  useEffect(() => {
+    const fetchRestaurantDetails = async () => {
+      if (!selectedRestaurant || (Array.isArray(selectedRestaurant) && selectedRestaurant.length === 0)) return;
+
+      // Check if we have hours data
+      const hasHours = Array.isArray(selectedRestaurant)
+        ? !!selectedRestaurant[9]
+        : !!selectedRestaurant.opening_hours;
+
+      if (!hasHours) {
+        try {
+          const restaurantId = Array.isArray(selectedRestaurant)
+            ? selectedRestaurant[0]
+            : selectedRestaurant.restaurant_id;
+
+          if (!restaurantId) return;
+
+          console.log('Fetching full restaurant details for:', restaurantId);
+          const data = await api.get(`/restaurant/restaurants/${restaurantId}`);
+
+          // Update state and localStorage
+          setSelectedRestaurant(data);
+          localStorage.setItem('selectedRestaurant', JSON.stringify(data));
+          console.log('Updated restaurant details:', data);
+        } catch (error) {
+          console.error("Failed to fetch restaurant details", error);
+        }
+      }
+    };
+
+    fetchRestaurantDetails();
+  }, []); // Run once on mount
+
   // Memoized callback to prevent infinite re-renders
   const handleScheduleSelect = useCallback((schedule) => {
     console.log('handleScheduleSelect called with:', schedule);
-    
+
     // Clear any existing timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
-    
+
     // Debounce the actual update
     debounceTimeoutRef.current = setTimeout(() => {
       // Don't update if the schedule is the same as current
       const currentSchedule = sessionStorage.getItem('order_scheduled_delivery');
       const newScheduleString = JSON.stringify(schedule);
-      
+
       if (currentSchedule === newScheduleString) {
         return; // No change, skip update
       }
-      
+
       if (schedule && schedule.isScheduled) {
         setDeliverySchedule(schedule);
         setIsScheduled(true);
@@ -159,32 +121,31 @@ export default function CheckoutV2() {
       }
     }, 100); // 100ms debounce
   }, []);
-  
+
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
-  const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
   const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
-  
+
   // Check if user is logged in
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   // User is logged in if they have either access_token OR customer_id
   const isLoggedIn = !!(user?.access_token || user?.customer_id)
-  
+
   // Check if it's a guest checkout
   const guestCheckoutData = sessionStorage.getItem('guest_checkout_data')
   const isGuestCheckout = !!guestCheckoutData
-  
+
   // If not logged in and not guest checkout, redirect to checkout login
   if (!isLoggedIn && !isGuestCheckout) {
     navigate('/checkout-login')
     return null
   }
-  
+
   // Check if restaurant is currently open
   const isOpen = isRestaurantOpen(selectedRestaurant)
   const nextOpenTime = !isOpen ? getNextOpenTime(selectedRestaurant) : null
-  
+
   // Get delivery coordinates from sessionStorage
   const getDeliveryCoordinates = () => {
     const coordinates = sessionStorage.getItem('delivery_coordinates')
@@ -194,7 +155,7 @@ export default function CheckoutV2() {
   // Calculate subtotal in BGN (without delivery fee)
   const calculateSubtotalBGN = () => {
     return cartItems.reduce((sum, item) => {
-      const addOnsTotal = item.addOns ? 
+      const addOnsTotal = item.addOns ?
         item.addOns.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) : 0;
       return sum + (item.price * item.quantity) + (addOnsTotal * item.quantity);
     }, 0);
@@ -215,8 +176,6 @@ export default function CheckoutV2() {
     return subtotal - discountAmount + deliveryFee;
   };
 
-
-
   // Handle address editing
   const handleAddressEdit = () => {
     setNewAddress(deliveryAddress || "")
@@ -232,122 +191,32 @@ export default function CheckoutV2() {
         .replace(/[^\p{L}\p{N}\s,.\-–—/]/gu, '')  // Keep Unicode letters, numbers, spaces, commas, dots, hyphens, slashes
         .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
         .trim()
-      
+
       sessionStorage.setItem('delivery_address', normalizedAddress)
-      
-      // Note: When manually editing address, coordinates are cleared since we don't have exact coordinates
-      // The user should use the map to set precise coordinates if needed
       sessionStorage.removeItem('delivery_coordinates')
-      
+
       setShowAddressEdit(false)
     }
   }
 
   // Helper functions for scheduling
   const getAvailableTimeSlots = () => {
-    if (!selectedDate || !selectedRestaurant || selectedRestaurant.length === 0) return [];
-    
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const dayName = days[selectedDate.getDay()];
-    const hours = selectedRestaurant[9] || {};
-    const dayHours = hours[dayName];
-    
-    if (!dayHours) return [];
-    
-    try {
-      const [open, close] = dayHours.split("-");
-      const [openH, openM] = open.split(":").map(Number);
-      const [closeH, closeM] = close.split(":").map(Number);
-      
-      // Check if 24/7 restaurant
-      const is24_7 = (openH === closeH && openM === closeM) || 
-                     (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
-      
-      // Calculate delivery window (30 minutes after opening to 1 hour before closing)
-      let startH = openH;
-      let startM = openM + 30;
-      if (startM >= 60) {
-        startH += 1;
-        startM -= 60;
-      }
-      
-      let endH, endM;
-      
-      if (is24_7) {
-        endH = 23;
-        endM = 59;
-      } else {
-        // Calculate end time (1 hour before closing)
-        endH = closeH;
-        endM = closeM - 60;
-        if (endM < 0) {
-          endH -= 1;
-          endM += 60;
-        }
-        // Handle negative hour (wraps to previous day)
-        if (endH < 0) {
-          endH += 24;
-        }
-      }
-      
-      const slots = [];
-      let currentH = startH;
-      let currentM = startM;
-      
-      // Check if restaurant closes next day (e.g., 20:00-03:00)
-      const closesNextDay = closeH < openH || (closeH === openH && closeM < openM);
-      
-      // Generate 30-minute slots
-      const maxIterations = 100; // Safety limit
-      let iterations = 0;
-      
-      while (iterations < maxIterations) {
-        iterations++;
-        
-        const time = `${currentH.toString().padStart(2, '0')}:${currentM.toString().padStart(2, '0')}`;
-        slots.push(time);
-        
-        // Check if we've reached the end
-        if (closesNextDay) {
-          // For next-day closing, check if we've passed midnight and reached end time
-          const currentTotalMinutes = currentH * 60 + currentM;
-          const endTotalMinutes = endH * 60 + endM;
-          const startTotalMinutes = startH * 60 + startM;
-          
-          if (currentTotalMinutes >= startTotalMinutes) {
-            // Still in the same day, continue until 23:59
-            if (currentH >= 23 && currentM >= 30) break;
-          } else {
-            // Crossed midnight, check if we reached end time
-            if (currentTotalMinutes >= endTotalMinutes) break;
-          }
-        } else {
-          // Normal same-day closing
-          if (currentH > endH || (currentH === endH && currentM >= endM)) break;
-        }
-        
-        // Increment by 30 minutes
-        currentM += 30;
-        if (currentM >= 60) {
-          currentH += 1;
-          currentM = 0;
-        }
-        
-        // Handle hour overflow
-        if (currentH >= 24) {
-          if (closesNextDay) {
-            currentH = 0; // Continue to next day
-          } else {
-            break; // Stop if not a next-day restaurant
-          }
-        }
-      }
-      
-      return slots;
-    } catch (error) {
-      console.error('Error generating time slots:', error);
-      return [];
-    }
+    if (!selectedDate || !selectedRestaurant || (Array.isArray(selectedRestaurant) && selectedRestaurant.length === 0)) return [];
+
+    // Use the utility function to get available slots for the restaurant
+    const deliverySlots = getAvailableDeliverySlots(selectedRestaurant);
+
+    // Find the slot for the selected date
+    const selectedDateString = selectedDate.toDateString();
+    const daySlot = deliverySlots.find(slot => slot.date === selectedDateString);
+
+    if (!daySlot) return [];
+
+    // Generate specific time slots (30 min intervals)
+    const timeSlots = generateTimeSlots(daySlot, 30);
+
+    // Return just the time strings (HH:MM)
+    return timeSlots.map(slot => slot.startString);
   }
 
   const isDateDisabled = (date) => {
@@ -377,8 +246,8 @@ export default function CheckoutV2() {
         return
       }
 
-      const data = await api.post('/order/discount/validate', { 
-        discount_code: discountCode.trim() 
+      const data = await api.post('/order/discount/validate', {
+        discount_code: discountCode.trim()
       })
 
       if (data.valid) {
@@ -418,7 +287,7 @@ export default function CheckoutV2() {
         console.error('Error parsing scheduled delivery:', error);
       }
     }
-    
+
     // Fallback to manual scheduling
     if (!isScheduled || !selectedDate || !selectedTime) return null;
     const scheduledDateTime = new Date(selectedDate);
@@ -469,7 +338,7 @@ export default function CheckoutV2() {
       // Each unique cart item (with its specific addons/removables) should be sent separately
       const orderItems = cartItems.map(item => {
         const itemId = item.originalItemId || item.id
-        
+
         // Build addons object
         const addons = {}
         if (item.selectedAddons && item.selectedAddons.length > 0) {
@@ -477,12 +346,12 @@ export default function CheckoutV2() {
             addons[addon.name] = (addons[addon.name] || 0) + 1
           })
         }
-        
+
         // Build removables array
-        const removables = item.selectedRemovables && item.selectedRemovables.length > 0 
-          ? item.selectedRemovables 
+        const removables = item.selectedRemovables && item.selectedRemovables.length > 0
+          ? item.selectedRemovables
           : []
-        
+
         return {
           item_id: itemId,
           quantity: item.quantity || 1, // Use the cart item's quantity
@@ -514,12 +383,12 @@ export default function CheckoutV2() {
       const data = await api.post('/order/orders', orderData)
 
       if (!data.order_id) throw new Error('No order ID received')
-      
+
       // Clean up scheduling session data
       sessionStorage.removeItem('scheduled_order');
       sessionStorage.removeItem('order_scheduling_reason');
       sessionStorage.removeItem('order_scheduled_delivery');
-      
+
       // Clean up discount data
       setDiscountCode("");
       setDiscountInfo(null);
@@ -546,17 +415,17 @@ export default function CheckoutV2() {
         if (!data.payment_url || !data.payment_id) {
           throw new Error('Payment information missing')
         }
-        
+
         // Save payment info to session storage
         sessionStorage.setItem('pending_order_id', data.order_id)
         sessionStorage.setItem('pending_payment_id', data.payment_id)
-        
+
         // Clear cart before redirecting to payment
         clearCart()
         cartItems.forEach(item => {
           sessionStorage.removeItem(`item-instructions-${item.id}`);
         });
-        
+
         // Redirect to payment URL
         window.location.href = data.payment_url
       }
@@ -599,7 +468,7 @@ export default function CheckoutV2() {
               <p className="text-muted-foreground">{t('checkout.subtitle')}</p>
             </div>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="space-y-6">
               {/* Payment Method */}
@@ -646,7 +515,7 @@ export default function CheckoutV2() {
                   <CardContent>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex-1">
-                        <p 
+                        <p
                           className="font-medium hover:text-blue-600 hover:underline cursor-pointer"
                           onClick={() => openInMaps(deliveryAddress)}
                         >
@@ -656,8 +525,8 @@ export default function CheckoutV2() {
                           {t('checkout.deliveryToAddress')}
                         </p>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={handleAddressEdit}
                         className="flex items-center gap-2"
@@ -682,7 +551,7 @@ export default function CheckoutV2() {
                   <CardContent>
                     <div className="p-3 bg-muted rounded-lg">
                       <p className="font-medium">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</p>
-                      <p 
+                      <p
                         className="text-sm text-muted-foreground hover:text-blue-600 hover:underline cursor-pointer"
                         onClick={() => {
                           const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
@@ -697,8 +566,8 @@ export default function CheckoutV2() {
                 </Card>
               )}
 
-              {/* Delivery Scheduling Banner - Only show when restaurant is open */}
-              {selectedRestaurant.length > 0 && isOpen && (
+              {/* Delivery Scheduling Banner - Show for both open and closed restaurants */}
+              {selectedRestaurant.length > 0 && (
                 <DeliverySchedulingBanner
                   restaurant={selectedRestaurant}
                   onScheduleSelect={handleScheduleSelect}
@@ -706,7 +575,7 @@ export default function CheckoutV2() {
                 />
               )}
 
-              {/* Manual Order Scheduling (fallback) - Only show when restaurant is open */}
+              {/* Manual Order Scheduling (fallback) - Only show when restaurant is open and not scheduled via banner */}
               {!isScheduledOrder && isOpen && (
                 <Card>
                   <CardHeader>
@@ -720,14 +589,14 @@ export default function CheckoutV2() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="schedule-order" 
+                      <Checkbox
+                        id="schedule-order"
                         checked={isScheduled}
                         onCheckedChange={setIsScheduled}
                       />
                       <Label htmlFor="schedule-order">{t('checkout.scheduleForLater')}</Label>
                     </div>
-                    
+
                     {isScheduled && (
                       <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
                         <div className="grid grid-cols-2 gap-4">
@@ -758,7 +627,7 @@ export default function CheckoutV2() {
                               </PopoverContent>
                             </Popover>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor="time-picker">{t('checkout.time')}</Label>
                             <select
@@ -775,52 +644,9 @@ export default function CheckoutV2() {
                             </select>
                           </div>
                         </div>
-                        
+
                         <div className="text-xs text-muted-foreground space-y-1">
                           <p>• {t('checkout.scheduleNote1')}</p>
-                          {selectedDate && selectedRestaurant && selectedRestaurant.length > 0 && (() => {
-                            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                            const dayName = days[selectedDate.getDay()];
-                            const hours = selectedRestaurant[9] || {};
-                            const dayHours = hours[dayName];
-                            if (dayHours) {
-                              const [open, close] = dayHours.split("-");
-                              const [openH, openM] = open.split(":").map(Number);
-                              const [closeH, closeM] = close.split(":").map(Number);
-                              
-                              // Check if 24/7
-                              const is24_7 = (openH === closeH && openM === closeM) || 
-                                           (openH === 0 && openM === 0 && closeH === 23 && closeM === 59);
-                              
-                              // Calculate display times (30 min after opening, 1 hour before closing)
-                              let startH = openH;
-                              let startM = openM + 30;
-                              if (startM >= 60) { startH += 1; startM -= 60; }
-                              
-                              let endH, endM;
-                              if (is24_7) {
-                                endH = 23;
-                                endM = 59;
-                              } else {
-                                endH = closeH;
-                                endM = closeM - 60;
-                                if (endM < 0) { endH -= 1; endM += 60; }
-                                if (endH < 0) { endH += 24; }
-                              }
-                              
-                              const startTime = `${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}`;
-                              const endTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
-                              
-                              // Check if closes next day
-                              const closesNextDay = closeH < openH || (closeH === openH && closeM < openM);
-                              const displayText = closesNextDay 
-                                ? `${startTime} - ${endTime} (до следващия ден)`
-                                : `${startTime} - ${endTime}`;
-                              
-                              return <p>• Налични часове за {dayName}: {displayText}</p>;
-                            }
-                            return null;
-                          })()}
                           <p>• {t('checkout.scheduleNote3')}</p>
                         </div>
                       </div>
@@ -842,7 +668,7 @@ export default function CheckoutV2() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="font-medium">{item.name}</div>
-                          
+
                           {/* Display addons */}
                           {item.selectedAddons && item.selectedAddons.length > 0 && (
                             <div className="text-sm text-green-600 mt-1">
@@ -855,7 +681,7 @@ export default function CheckoutV2() {
                               ))}
                             </div>
                           )}
-                          
+
                           {/* Display removables */}
                           {item.selectedRemovables && item.selectedRemovables.length > 0 && (
                             <div className="text-sm text-red-600 mt-1">
@@ -868,7 +694,7 @@ export default function CheckoutV2() {
                               ))}
                             </div>
                           )}
-                          
+
                           {/* Display special instructions */}
                           {item.specialInstructions && (
                             <div className="text-sm text-muted-foreground mt-1">
@@ -931,7 +757,7 @@ export default function CheckoutV2() {
                             disabled={discountValidating}
                             className="h-9 text-sm"
                           />
-                          <Button 
+                          <Button
                             onClick={validateDiscountCode}
                             disabled={!discountCode.trim() || discountValidating}
                             size="sm"
@@ -948,9 +774,9 @@ export default function CheckoutV2() {
                               {discountCode} - {discountInfo.discount_percentage}% off
                             </span>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={removeDiscount}
                             className="h-6 text-green-600 hover:text-green-800 p-1"
                           >
@@ -962,9 +788,9 @@ export default function CheckoutV2() {
                         <p className="text-xs text-red-600">{discountError}</p>
                       )}
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="flex justify-between">
                       <span>{t('cart.subtotal')}</span>
                       <span>{formatDualCurrencyCompact(calculateSubtotalBGN())}</span>
@@ -989,24 +815,24 @@ export default function CheckoutV2() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
-                  {!isOpen && nextOpenTime && (
+                  {!isOpen && nextOpenTime && !isScheduled && (
                     <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
                       <p className="text-sm text-orange-800 font-medium">{t('checkout.restaurantClosed')}</p>
                       <p className="text-xs text-orange-600">{t('checkout.nextOpening')}: {nextOpenTime}</p>
                     </div>
                   )}
-                  <Button 
-                    className={`w-full ${!isOpen ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
+                  <Button
+                    className={`w-full ${(!isOpen && !isScheduled) ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
                     size="lg"
-                    onClick={handleCheckout} 
-                    disabled={isProcessing || !isOpen}
+                    onClick={handleCheckout}
+                    disabled={isProcessing || (!isOpen && !isScheduled)}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         {t('checkout.processingPayment')}
                       </div>
-                    ) : !isOpen ? (
+                    ) : (!isOpen && !isScheduled) ? (
                       <div className="flex items-center gap-2">
                         <X className="h-4 w-4" />
                         {t('checkout.restaurantClosed')}
@@ -1014,7 +840,7 @@ export default function CheckoutV2() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <Check className="h-4 w-4" />
-                        {t('checkout.reviewOrder')}
+                        {isScheduled ? t('checkout.scheduleOrder') : t('checkout.reviewOrder')}
                       </div>
                     )}
                   </Button>
