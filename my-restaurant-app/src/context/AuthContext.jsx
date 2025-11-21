@@ -21,17 +21,24 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLoginStatus = async () => {
+      // Skip user auth check if we're on admin routes - AdminContext handles admin auth
+      const isAdminRoute = window.location.pathname.startsWith('/admin');
+      if (isAdminRoute) {
+        console.log("🔍 Skipping user auth check - on admin route");
+        return;
+      }
+
       console.log("🔍 Checking login status on app load...")
-      
+
       // First check localStorage for existing user data
       const user = localStorage.getItem("user")
-      
+
       if (user) {
         // User data exists in localStorage, restore session
         try {
           const parsedUser = JSON.parse(user)
           console.log("📦 Found user in localStorage:", parsedUser)
-          
+
           if (parsedUser.customer_id) {
             setToken(parsedUser.access_token || null)
             setIsLoggedIn(true)
@@ -56,15 +63,15 @@ const AuthProvider = ({ children }) => {
               "Content-Type": "application/json",
             },
           })
-          
+
           if (response.ok) {
             const userData = await response.json()
             console.log("✅ User session restored from cookies:", userData)
-            
+
             // Store user data in localStorage for next time
             localStorage.setItem("user", JSON.stringify(userData))
             setIsLoggedIn(true)
-            
+
             // Check if user is admin
             if (userData.is_admin) {
               setIsAdmin(true)
@@ -131,7 +138,7 @@ const AuthProvider = ({ children }) => {
           setToken(parsedUser.access_token || null)
           setIsLoggedIn(true)
           console.log("✅ User is logged in, isLoggedIn set to true")
-          
+
           // Check if user is admin
           if (parsedUser.is_admin) {
             setIsAdmin(true)
@@ -168,7 +175,7 @@ const AuthProvider = ({ children }) => {
       if (!response.ok) {
         console.error('Logout request failed, but clearing local data anyway')
       }
-      
+
       console.log('✅ Backend logout successful - cookies cleared')
     } catch (error) {
       console.error('Logout error:', error)
@@ -180,12 +187,12 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("selectedRestaurant")
     localStorage.removeItem("isAdmin")
     localStorage.removeItem("cart") // Also clear cart on logout
-    
+
     // Clear state
     setIsLoggedIn(false)
     setToken(null)
     setIsAdmin(false)
-    
+
     alert("You have been logged out!")
   }
 
@@ -202,12 +209,12 @@ const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ 
-      isLoggedIn, 
-      token, 
-      setToken, 
-      updateLoginState, 
-      handleLogout, 
+    <AuthContext.Provider value={{
+      isLoggedIn,
+      token,
+      setToken,
+      updateLoginState,
+      handleLogout,
       isAdmin,
       refreshUserTokens
     }}>
@@ -241,11 +248,11 @@ export async function refreshTokens() {
   try {
     const response = await fetch(`${API_URL}/user/refresh-token?refresh_token=${encodeURIComponent(refresh_token)}`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json" 
+      headers: {
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ 
-        refresh_token: refresh_token 
+      body: JSON.stringify({
+        refresh_token: refresh_token
       })
     });
 
@@ -259,17 +266,17 @@ export async function refreshTokens() {
     }
 
     const data = await response.json();
-    
+
     if (data.access_token && data.token_type === 'bearer') {
       // Update tokens in localStorage
       parsedUser.access_token = data.access_token;
       if (data.refresh_token) {
         parsedUser.refresh_token = data.refresh_token;
       }
-      
+
       localStorage.setItem("user", JSON.stringify(parsedUser));
       console.log('Tokens refreshed successfully');
-      
+
       return {
         access_token: data.access_token,
         refresh_token: data.refresh_token || refresh_token
@@ -286,13 +293,13 @@ export async function refreshTokens() {
 // Helper function to check if token is about to expire (within 5 minutes)
 export function isTokenExpiringSoon(token) {
   if (!token) return true;
-  
+
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const exp = payload.exp * 1000; // Convert to milliseconds
     const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-    
+
     return (exp - now) < fiveMinutes;
   } catch (error) {
     console.error('Error parsing token:', error);
@@ -305,7 +312,7 @@ export async function fetchWithAuth(url, options = {}) {
   let user = localStorage.getItem("user");
   let access_token = null;
   let refresh_token = null;
-  
+
   if (user) {
     try {
       const parsedUser = JSON.parse(user);
@@ -337,50 +344,50 @@ export async function fetchWithAuth(url, options = {}) {
     };
   }
   let response = await fetch(url, options);
-  
+
   // Handle 401 Unauthorized responses
   if (response.status === 401 && refresh_token) {
     console.log('Access token expired, attempting to refresh...');
-    
+
     // Try to refresh the access token
     try {
       const refreshRes = await fetch(`${API_URL}/user/refresh-token?refresh_token=${encodeURIComponent(refresh_token)}`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json" 
+        headers: {
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
-          refresh_token: refresh_token 
+        body: JSON.stringify({
+          refresh_token: refresh_token
         })
       });
-      
+
       if (refreshRes.ok) {
         const refreshData = await refreshRes.json();
         console.log('Token refresh successful');
-        
+
         // Validate response structure
         if (refreshData.access_token && refreshData.token_type === 'bearer') {
           // Update localStorage with new tokens
           const userObj = JSON.parse(localStorage.getItem("user"));
           userObj.access_token = refreshData.access_token;
-          
+
           // Update refresh token if provided
           if (refreshData.refresh_token) {
             userObj.refresh_token = refreshData.refresh_token;
           }
-          
+
           localStorage.setItem("user", JSON.stringify(userObj));
           console.log('Tokens updated in localStorage');
-          
+
           // Retry original request with new access token
           options.headers = {
             ...(options.headers || {}),
             "Authorization": `Bearer ${refreshData.access_token}`,
           };
-          
+
           console.log('Retrying original request with new token');
           response = await fetch(url, options);
-          
+
           // Return the response from the retry
           return response;
         } else {
@@ -391,7 +398,7 @@ export async function fetchWithAuth(url, options = {}) {
         // Handle refresh token failure
         const errorData = await refreshRes.json().catch(() => ({}));
         console.error('Token refresh failed:', errorData);
-        
+
         if (errorData.detail === "Invalid refresh token") {
           console.log('Refresh token is invalid or expired');
         }
