@@ -58,6 +58,29 @@ export default function ItemDetails() {
         const user = JSON.parse(localStorage.getItem('user') || '{}')
         setIsLoggedIn(!!user.customer_id)
 
+        // Check if we came from a collection and ensure restaurant is selected
+        const lastViewedRestaurant = localStorage.getItem('lastViewedRestaurant')
+        if (lastViewedRestaurant && restaurantId) {
+          try {
+            const restaurantData = JSON.parse(lastViewedRestaurant)
+            if (restaurantData.restaurant_id === restaurantId) {
+              // Fetch restaurant details to set selectedRestaurant
+              const restaurantRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
+              if (restaurantRes.ok) {
+                const restaurants = await restaurantRes.json()
+                const currentRestaurant = restaurants.find(r => 
+                  (Array.isArray(r) ? r[0] : r.restaurant_id) === restaurantId
+                )
+                if (currentRestaurant) {
+                  localStorage.setItem('selectedRestaurant', JSON.stringify(currentRestaurant))
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error setting restaurant context:', e)
+          }
+        }
+
         // Fetch item details
         const itemRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}`);
         if (!itemRes.ok) throw new Error('Failed to fetch item details');

@@ -3,7 +3,7 @@ import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
 import { t } from "@/utils/translations"
 import { HeroCarousel } from "@/components/hero-carousel"
-import { MenuItemsGrid } from "@/components/menu-items-grid"
+import { CollectionSection } from "@/components/collection-section"
 
 const Home = () => {
   const [showModal, setShowModal] = useState(false)
@@ -36,9 +36,32 @@ const Home = () => {
 
       <HeroCarousel />
 
-      <MenuItemsGrid 
+      {/* Collection Section 1 - First collection */}
+      <CollectionSection 
         restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
-        title="Нашето меню"
+        collectionIndex={0}
+        limit={4}
+      />
+
+      {/* Collection Section 2 - Second collection */}
+      <CollectionSection 
+        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
+        collectionIndex={1}
+        limit={4}
+      />
+
+      {/* Collection Section 3 - Third collection */}
+      <CollectionSection 
+        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
+        collectionIndex={2}
+        limit={4}
+      />
+
+      {/* Collection Section 4 - Fourth collection */}
+      <CollectionSection 
+        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
+        collectionIndex={3}
+        limit={4}
       />
     </>
   )
