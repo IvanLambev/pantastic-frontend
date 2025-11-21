@@ -21,24 +21,80 @@ interface HeroSlide {
 const slides: HeroSlide[] = [
   {
     image: "/pancake1.jpg",
-    title: "Поръчай за вкъщи",
-    subtitle: "Насладете се на любимите си палачинки от комфорта на дома си",
-    ctaText: "Поръчай сега",
+    title: "ПАНТАСТИК В МОЛ ЯМБОЛ!",
+    subtitle: "Заповядайте в мол Ямбол на ул. \"Александър Стамболийски\" 30. Работим всеки ден от 8:00 до 00:00ч. в полунощ!",
+    ctaText: "",
+    ctaLink: ""
+  },
+  {
+    image: "/pancake2.jpg",
+    title: "СКОРО И В СТУДЕНТСКИ ГРАД!",
+    subtitle: "Очаквайте скоро нашия нов обект. Отваряме в края на м. Септермври! Ще работим всеки ден от 10:00 до 03:00ч. в полунощ!",
+    ctaText: "",
+    ctaLink: ""
+  },
+  {
+    image: "/pancake3.jpg",
+    title: "ВЕЛИКО ТЪРНОВО ВЕЧЕ НИ Е ОЩЕ ПО-ЛЮБИМ!",
+    subtitle: "Заповядайте на ул. \"Христо Караминков\" 33 всеки ден от 8:00 до 00:00ч. в полунощ!",
+    ctaText: "ВИЖ ЛОКАЦИЯТА",
+    ctaLink: "/food"
+  },
+  {
+    image: "/pancake1.jpg",
+    title: "ПАНТАСТИК ВЕЧЕ И В МЕДЕН РУДНИК!",
+    subtitle: "Заповядайте в новооткрития ни обект в комплекс ''Меден Рудник'' гр. Бургас. Работим всеки ден от 10:00 до 24:00 ч.",
+    ctaText: "ПОРЪЧАЙ ЗА ВКЪЩИ",
     ctaLink: "/food"
   },
   {
     image: "/pancake2.jpg",
-    title: "Свежи и вкусни палачинки",
-    subtitle: "Приготвени с любов и качествени съставки",
-    ctaText: "Виж менюто",
+    title: "ДОСТАВЯМЕ ДО ВАС",
+    subtitle: "Поръчай любимата си палачинка или опитай нашия Deluxe Box!",
+    ctaText: "ПОРЪЧАЙ ТУК!",
     ctaLink: "/food"
   },
   {
     image: "/pancake3.jpg",
-    title: "Deluxe Box",
-    subtitle: "Перфектният избор за споделяне",
-    ctaText: "Научи повече",
-    ctaLink: "/deluxe-box"
+    title: "ИМА НИ И В ГЕО МИЛЕВ",
+    subtitle: "Ще ни намерите на ул. \"Акад. Никола Обрешков 2а\".",
+    ctaText: "ПОРЪЧАЙ ТУК!",
+    ctaLink: "/food"
+  },
+  {
+    image: "/pancake1.jpg",
+    title: "СОФИЯ Е ВЕЧЕ ПО-ВКУСНА!",
+    subtitle: "Очакваме ви в нашия апетитен хотспот Пантастик на ул. \"Ангел Кънчев\" № 10!",
+    ctaText: "КЪМ ЛОКАЦИЯТА",
+    ctaLink: "/food"
+  },
+  {
+    image: "/pancake2.jpg",
+    title: "PLOVEDIV, ЗДРАВЕЙ!",
+    subtitle: "Посетете ни в Пловдив в Мол Марково Тепе. Доставяме всеки ден от 10 до 22 ч.",
+    ctaText: "ПОРЪЧАЙ В ПЛОВДИВ",
+    ctaLink: "/food"
+  },
+  {
+    image: "/pancake3.jpg",
+    title: "ИМА НИ И В EAT BOX",
+    subtitle: "Ще ни намерите на бул. Черни Връх 69 в EatBox. Тук е мястото, където можеш да разпуснеш с приятели и да хапнеш нещо вкусно!",
+    ctaText: "НАШАТА КОНЦЕПЦИЯ",
+    ctaLink: "/about"
+  },
+  {
+    image: "/pancake1.jpg",
+    title: "АМЕРИКАНСКИ ПАЛАЧИНКИ",
+    subtitle: "Въздушни и пухкави... По оригинална рецепта с много неустоими съставки. Опитахте ли ги?",
+    ctaText: "ПОРЪЧАЙ СЕГА!",
+    ctaLink: "/food"
+  },
+  {
+    image: "/pancake2.jpg",
+    title: "СТАНИ НАШ ПАРТНЬОР!",
+    subtitle: "16 години опит и гъвкава концепция без конкуренция. Разберете повече за нашия франчайз модел!",
+    ctaText: "НАШАТА КОНЦЕПЦИЯ",
+    ctaLink: "/about"
   }
 ]
 
@@ -86,7 +142,7 @@ export function HeroCarousel() {
                     <div className="absolute inset-0 flex items-center">
                       <div className="container mx-auto px-4 md:px-8 lg:px-12">
                         <div className="max-w-2xl text-white space-y-4 md:space-y-6">
-                          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight animate-in fade-in slide-in-from-left-8 duration-700">
+                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight animate-in fade-in slide-in-from-left-8 duration-700">
                             {slide.title}
                           </h1>
                           {slide.subtitle && (
@@ -94,16 +150,18 @@ export function HeroCarousel() {
                               {slide.subtitle}
                             </p>
                           )}
-                          <div className="animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
-                            <Button 
-                              size="lg" 
-                              className="text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto bg-primary hover:bg-primary/90 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-                              onClick={() => navigate(slide.ctaLink)}
-                            >
-                              {slide.ctaText}
-                              <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
-                          </div>
+                          {slide.ctaText && (
+                            <div className="animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
+                              <Button 
+                                size="lg" 
+                                className="text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto bg-primary hover:bg-primary/90 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                                onClick={() => navigate(slide.ctaLink)}
+                              >
+                                {slide.ctaText}
+                                <ArrowRight className="ml-2 h-5 w-5" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

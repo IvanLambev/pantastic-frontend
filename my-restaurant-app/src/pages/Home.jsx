@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import RestaurantSelector from "@/components/ui/RestaurantSelector"
 import { t } from "@/utils/translations"
 import { HeroCarousel } from "@/components/hero-carousel"
+import { PantasticSections } from "@/components/pantastic-sections"
 
 const Home = () => {
   const [showModal, setShowModal] = useState(false)
@@ -38,6 +39,8 @@ const Home = () => {
       />
 
       <HeroCarousel />
+
+      <PantasticSections />
 
       <div className="container mx-auto px-4 py-12 space-y-24">
         <HowItWorks />
