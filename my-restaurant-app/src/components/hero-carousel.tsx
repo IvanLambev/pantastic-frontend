@@ -153,12 +153,12 @@ export function HeroCarousel() {
                           {slide.ctaText && (
                             <div className="animate-in fade-in duration-700 delay-200">
                               <Button 
-                                size="lg" 
-                                className="text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto bg-primary hover:bg-primary/90 shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+                                size="default" 
+                                className="text-sm md:text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
                                 onClick={() => navigate(slide.ctaLink)}
                               >
                                 {slide.ctaText}
-                                <ArrowRight className="ml-2 h-5 w-5" />
+                                <ArrowRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           )}
