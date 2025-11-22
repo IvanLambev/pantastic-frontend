@@ -103,21 +103,17 @@ export default function Orders() {
         setSelectedOrder(order);
         setIsSheetOpen(true);
         setCustomerDetails(null);
-
-        // Fetch full order details if needed (sometimes list item is partial)
-        // But the prompt says "get order by id" returns details including items.
-        // The list item might not have everything. Let's fetch fresh details to be sure.
         setLoadingDetails(true);
+
         try {
             const fullOrder = await fetchOrderById(order.order_id);
             setSelectedOrder(fullOrder);
 
-            if (fullOrder.customer_id) {
+            if (fullOrder.customer) {
+                setCustomerDetails(fullOrder.customer);
+            } else if (fullOrder.customer_id) {
                 const user = await fetchUserDetails(fullOrder.customer_id);
                 setCustomerDetails(user);
-            } else if (fullOrder.customer) {
-                // Sometimes customer object is directly in order
-                setCustomerDetails(fullOrder.customer);
             }
         } catch (error) {
             console.error("Failed to load order details", error);
@@ -240,6 +236,11 @@ export default function Orders() {
                         <SheetTitle>Order Details</SheetTitle>
                         <SheetDescription>
                             ID: {selectedOrder?.order_id}
+                            {(selectedOrder?.restaurant?.name || selectedOrder?.restaurant_name) && (
+                                <span className="block mt-1 font-medium text-foreground">
+                                    Restaurant: {selectedOrder?.restaurant?.name || selectedOrder?.restaurant_name}
+                                </span>
+                            )}
                         </SheetDescription>
                     </SheetHeader>
 
@@ -250,16 +251,36 @@ export default function Orders() {
                     ) : selectedOrder && (
                         <div className="space-y-6 mt-6">
                             {/* Status Section */}
-                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                                    <Badge className={`mt-1 ${getStatusColor(selectedOrder.status)}`}>
-                                        {selectedOrder.status}
-                                    </Badge>
+                            <div className="flex flex-col gap-4 p-4 bg-muted/30 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                        <Badge className={`mt-1 ${getStatusColor(selectedOrder.status)}`}>
+                                            {selectedOrder.status}
+                                        </Badge>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+                                        <p className="text-xl font-bold">{selectedOrder.total_price?.toFixed(2)} BGN</p>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                                    <p className="text-xl font-bold">{selectedOrder.total_price?.toFixed(2)} BGN</p>
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-muted-foreground/20">
+                                    <div>
+                                        <p className="text-xs font-medium text-muted-foreground">Payment Method</p>
+                                        <p className="text-sm font-medium capitalize">{selectedOrder.payment_method || 'N/A'}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-medium text-muted-foreground">Paid</p>
+                                        <p className="text-sm font-medium">{selectedOrder.paid ? 'Yes' : 'No'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-medium text-muted-foreground">Delivery Fee</p>
+                                        <p className="text-sm font-medium">{selectedOrder.delivery_fee?.toFixed(2)} BGN</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-medium text-muted-foreground">Discount</p>
+                                        <p className="text-sm font-medium">{selectedOrder.discount?.toFixed(2)} BGN</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -274,16 +295,18 @@ export default function Orders() {
                                             <>
                                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                                     <span className="text-muted-foreground">Name:</span>
-                                                    <span className="font-medium">{customerDetails.first_name} {customerDetails.last_name}</span>
+                                                    <span className="font-medium">
+                                                        {customerDetails.name || `${customerDetails.first_name || ''} ${customerDetails.last_name || ''}`.trim() || 'N/A'}
+                                                    </span>
 
                                                     <span className="text-muted-foreground">Phone:</span>
-                                                    <span className="font-medium">{customerDetails.phone}</span>
+                                                    <span className="font-medium">{customerDetails.phone || 'N/A'}</span>
 
                                                     <span className="text-muted-foreground">Email:</span>
-                                                    <span className="font-medium">{customerDetails.email}</span>
+                                                    <span className="font-medium">{customerDetails.email || 'N/A'}</span>
 
                                                     <span className="text-muted-foreground">City:</span>
-                                                    <span className="font-medium">{customerDetails.city}</span>
+                                                    <span className="font-medium">{customerDetails.city || 'N/A'}</span>
                                                 </div>
                                             </>
                                         ) : (
@@ -304,7 +327,7 @@ export default function Orders() {
                                             <span className="text-muted-foreground">Method:</span>
                                             <span className="capitalize font-medium">{selectedOrder.delivery_method}</span>
 
-                                            {selectedOrder.address && (
+                                            {(selectedOrder.address || selectedOrder.delivery_address) && (
                                                 <>
                                                     <span className="text-muted-foreground">Address:</span>
                                                     <span className="font-medium">{selectedOrder.address || selectedOrder.delivery_address}</span>
@@ -313,6 +336,19 @@ export default function Orders() {
 
                                             <span className="text-muted-foreground">Created At:</span>
                                             <span>{selectedOrder.created_at ? format(new Date(selectedOrder.created_at), 'PPpp') : 'N/A'}</span>
+
+                                            {selectedOrder.estimated_delivery_time && (
+                                                <>
+                                                    <span className="text-muted-foreground">Est. Delivery:</span>
+                                                    <span>{format(new Date(selectedOrder.estimated_delivery_time), 'PPpp')}</span>
+                                                </>
+                                            )}
+                                            {selectedOrder.scheduled_delivery_time && (
+                                                <>
+                                                    <span className="text-muted-foreground">Scheduled:</span>
+                                                    <span>{format(new Date(selectedOrder.scheduled_delivery_time), 'PPpp')}</span>
+                                                </>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -329,24 +365,37 @@ export default function Orders() {
                                             <Card key={idx}>
                                                 <CardContent className="p-3 flex justify-between items-start">
                                                     <div>
-                                                        <p className="font-medium">{item.item_name || `Item #${idx + 1}`}</p>
+                                                        <p className="font-medium">{item.name || item.item_name || `Item #${idx + 1}`}</p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            Qty: {item.item_quantity || 1}
+                                                            Qty: {item.quantity || item.item_quantity || 1}
                                                         </p>
                                                         {/* Addons if available */}
-                                                        {item.applied_addons && item.applied_addons.length > 0 && (
+                                                        {(item.applied_addons?.length > 0 || (item.selected_addons && Object.keys(item.selected_addons).length > 0)) && (
                                                             <div className="mt-1 text-xs text-muted-foreground">
                                                                 <p className="font-semibold">Addons:</p>
                                                                 <ul className="list-disc list-inside">
-                                                                    {item.applied_addons.map((addon, aIdx) => (
+                                                                    {item.applied_addons?.map((addon, aIdx) => (
                                                                         <li key={aIdx}>{addon.addon_name} (x{addon.addon_quantity})</li>
+                                                                    ))}
+                                                                    {item.selected_addons && Object.entries(item.selected_addons).map(([key, value], aIdx) => (
+                                                                        <li key={aIdx}>{key}: {JSON.stringify(value)}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                        {item.removed_ingredients?.length > 0 && (
+                                                            <div className="mt-1 text-xs text-red-500">
+                                                                <p className="font-semibold">Removed:</p>
+                                                                <ul className="list-disc list-inside">
+                                                                    {item.removed_ingredients.map((ing, iIdx) => (
+                                                                        <li key={iIdx}>{ing}</li>
                                                                     ))}
                                                                 </ul>
                                                             </div>
                                                         )}
                                                     </div>
                                                     <p className="font-medium">
-                                                        {item.item_total ? item.item_total.toFixed(2) : '0.00'} BGN
+                                                        {(item.final_price || item.item_total || 0).toFixed(2)} BGN
                                                     </p>
                                                 </CardContent>
                                             </Card>
