@@ -143,3 +143,96 @@ export async function fetchRevenueByDateRange(startDate, endDate, restaurantId =
         throw error;
     }
 }
+
+/**
+ * Fetch all orders with pagination
+ * @param {number} pageSize - Number of orders per page
+ * @param {string} pagingState - Cursor for the next page
+ * @returns {Promise<Object>} Orders data and pagination info
+ */
+export async function fetchAllOrders(pageSize = 10, pagingState = null) {
+    try {
+        let url = `${API_URL}/order/admin/orders?page_size=${pageSize}`;
+        if (pagingState) {
+            url += `&paging_state=${encodeURIComponent(pagingState)}`;
+        }
+
+        const response = await fetchWithAdminAuth(url);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch orders: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching all orders:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch orders by restaurant with pagination
+ * @param {string} restaurantId - Restaurant UUID
+ * @param {number} pageSize - Number of orders per page
+ * @param {string} pagingState - Cursor for the next page
+ * @returns {Promise<Object>} Orders data and pagination info
+ */
+export async function fetchOrdersByRestaurant(restaurantId, pageSize = 10, pagingState = null) {
+    try {
+        let url = `${API_URL}/order/admin/orders/restaurant/${restaurantId}?page_size=${pageSize}`;
+        if (pagingState) {
+            url += `&paging_state=${encodeURIComponent(pagingState)}`;
+        }
+
+        const response = await fetchWithAdminAuth(url);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch restaurant orders: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching restaurant orders:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch a single order by ID
+ * @param {string} orderId - Order UUID
+ * @returns {Promise<Object>} Order details
+ */
+export async function fetchOrderById(orderId) {
+    try {
+        const response = await fetchWithAdminAuth(`${API_URL}/order/admin/orders/${orderId}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch order: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching order:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch user details by customer ID
+ * @param {string} customerId - Customer UUID
+ * @returns {Promise<Object>} User details
+ */
+export async function fetchUserDetails(customerId) {
+    try {
+        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/user/${customerId}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user details: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        throw error;
+    }
+}

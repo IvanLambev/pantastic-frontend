@@ -1,0 +1,365 @@
+import { useState, useEffect } from 'react';
+import {
+    fetchAllOrders,
+    fetchOrdersByRestaurant,
+    fetchRestaurants,
+    fetchUserDetails,
+    fetchOrderById
+} from '@/services/adminApi';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { Loader2, User, MapPin, CreditCard, ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
+
+export default function Orders() {
+    const [orders, setOrders] = useState([]);
+    const [restaurants, setRestaurants] = useState([]);
+    const [selectedRestaurant, setSelectedRestaurant] = useState("all");
+    const [loading, setLoading] = useState(true);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const [pageHistory, setPageHistory] = useState([]); // To potentially handle "back" if we stored tokens, but for now just reset
+
+    // Details Sheet State
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [customerDetails, setCustomerDetails] = useState(null);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+
+    // Initial Load
+    useEffect(() => {
+        loadRestaurants();
+        loadOrders();
+    }, []);
+
+    // Reload when restaurant filter changes
+    useEffect(() => {
+        setPageHistory([]);
+        setNextPageToken(null);
+        loadOrders(null, selectedRestaurant);
+    }, [selectedRestaurant]);
+
+    const loadRestaurants = async () => {
+        try {
+            const data = await fetchRestaurants();
+            setRestaurants(data);
+        } catch (error) {
+            console.error("Failed to load restaurants", error);
+            toast.error("Failed to load restaurants");
+        }
+    };
+
+    const loadOrders = async (pagingState = null, restaurantId = selectedRestaurant) => {
+        setLoading(true);
+        try {
+            let data;
+            if (restaurantId === "all") {
+                data = await fetchAllOrders(10, pagingState);
+            } else {
+                data = await fetchOrdersByRestaurant(restaurantId, 10, pagingState);
+            }
+
+            setOrders(data.orders || []);
+            setNextPageToken(data.next_page_token);
+        } catch (error) {
+            console.error("Failed to load orders", error);
+            toast.error("Failed to load orders");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (nextPageToken) {
+            loadOrders(nextPageToken);
+        }
+    };
+
+    const handleOrderClick = async (order) => {
+        setSelectedOrder(order);
+        setIsSheetOpen(true);
+        setCustomerDetails(null);
+
+        // Fetch full order details if needed (sometimes list item is partial)
+        // But the prompt says "get order by id" returns details including items.
+        // The list item might not have everything. Let's fetch fresh details to be sure.
+        setLoadingDetails(true);
+        try {
+            const fullOrder = await fetchOrderById(order.order_id);
+            setSelectedOrder(fullOrder);
+
+            if (fullOrder.customer_id) {
+                const user = await fetchUserDetails(fullOrder.customer_id);
+                setCustomerDetails(user);
+            } else if (fullOrder.customer) {
+                // Sometimes customer object is directly in order
+                setCustomerDetails(fullOrder.customer);
+            }
+        } catch (error) {
+            console.error("Failed to load order details", error);
+            toast.error("Failed to load order details");
+        } finally {
+            setLoadingDetails(false);
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'delivered': return 'bg-green-500 hover:bg-green-600';
+            case 'pending': return 'bg-yellow-500 hover:bg-yellow-600';
+            case 'canceled': return 'bg-red-500 hover:bg-red-600';
+            case 'processing': return 'bg-blue-500 hover:bg-blue-600';
+            default: return 'bg-gray-500 hover:bg-gray-600';
+        }
+    };
+
+    return (
+        <div className="p-6 space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+                <div className="flex items-center gap-2">
+                    <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant}>
+                        <SelectTrigger className="w-[250px]">
+                            <SelectValue placeholder="Filter by Restaurant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Restaurants</SelectItem>
+                            {restaurants.map((r) => (
+                                <SelectItem key={r.restaurant_id} value={r.restaurant_id}>
+                                    {r.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={() => loadOrders(null, selectedRestaurant)}>
+                        Refresh
+                    </Button>
+                </div>
+            </div>
+
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Order ID</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Restaurant</TableHead>
+                                <TableHead>Total</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : orders.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                        No orders found.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                orders.map((order) => (
+                                    <TableRow key={order.order_id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleOrderClick(order)}>
+                                        <TableCell className="font-medium">
+                                            {order.order_id.slice(0, 8)}...
+                                        </TableCell>
+                                        <TableCell>
+                                            {order.created_at ? format(new Date(order.created_at), 'MMM d, yyyy HH:mm') : 'N/A'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {order.restaurant_name || order.restaurant?.name || 'Unknown'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {order.total_price?.toFixed(2)} BGN
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge className={getStatusColor(order.status)}>
+                                                {order.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="ghost" size="sm">View</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+                <Button
+                    variant="outline"
+                    onClick={handleNextPage}
+                    disabled={!nextPageToken || loading}
+                >
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Next Page
+                </Button>
+            </div>
+
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetContent className="overflow-y-auto sm:max-w-xl">
+                    <SheetHeader>
+                        <SheetTitle>Order Details</SheetTitle>
+                        <SheetDescription>
+                            ID: {selectedOrder?.order_id}
+                        </SheetDescription>
+                    </SheetHeader>
+
+                    {loadingDetails ? (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : selectedOrder && (
+                        <div className="space-y-6 mt-6">
+                            {/* Status Section */}
+                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                    <Badge className={`mt-1 ${getStatusColor(selectedOrder.status)}`}>
+                                        {selectedOrder.status}
+                                    </Badge>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+                                    <p className="text-xl font-bold">{selectedOrder.total_price?.toFixed(2)} BGN</p>
+                                </div>
+                            </div>
+
+                            {/* Customer Details */}
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                                    <User className="h-4 w-4" /> Customer
+                                </h3>
+                                <Card>
+                                    <CardContent className="p-4 space-y-2">
+                                        {customerDetails ? (
+                                            <>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <span className="text-muted-foreground">Name:</span>
+                                                    <span className="font-medium">{customerDetails.first_name} {customerDetails.last_name}</span>
+
+                                                    <span className="text-muted-foreground">Phone:</span>
+                                                    <span className="font-medium">{customerDetails.phone}</span>
+
+                                                    <span className="text-muted-foreground">Email:</span>
+                                                    <span className="font-medium">{customerDetails.email}</span>
+
+                                                    <span className="text-muted-foreground">City:</span>
+                                                    <span className="font-medium">{customerDetails.city}</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground italic">No customer details available</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Delivery Details */}
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                                    <MapPin className="h-4 w-4" /> Delivery Info
+                                </h3>
+                                <Card>
+                                    <CardContent className="p-4 space-y-2 text-sm">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <span className="text-muted-foreground">Method:</span>
+                                            <span className="capitalize font-medium">{selectedOrder.delivery_method}</span>
+
+                                            {selectedOrder.address && (
+                                                <>
+                                                    <span className="text-muted-foreground">Address:</span>
+                                                    <span className="font-medium">{selectedOrder.address || selectedOrder.delivery_address}</span>
+                                                </>
+                                            )}
+
+                                            <span className="text-muted-foreground">Created At:</span>
+                                            <span>{selectedOrder.created_at ? format(new Date(selectedOrder.created_at), 'PPpp') : 'N/A'}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Items */}
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                                    <ShoppingBag className="h-4 w-4" /> Items
+                                </h3>
+                                <div className="space-y-2">
+                                    {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                                        selectedOrder.items.map((item, idx) => (
+                                            <Card key={idx}>
+                                                <CardContent className="p-3 flex justify-between items-start">
+                                                    <div>
+                                                        <p className="font-medium">{item.item_name || `Item #${idx + 1}`}</p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Qty: {item.item_quantity || 1}
+                                                        </p>
+                                                        {/* Addons if available */}
+                                                        {item.applied_addons && item.applied_addons.length > 0 && (
+                                                            <div className="mt-1 text-xs text-muted-foreground">
+                                                                <p className="font-semibold">Addons:</p>
+                                                                <ul className="list-disc list-inside">
+                                                                    {item.applied_addons.map((addon, aIdx) => (
+                                                                        <li key={aIdx}>{addon.addon_name} (x{addon.addon_quantity})</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <p className="font-medium">
+                                                        {item.item_total ? item.item_total.toFixed(2) : '0.00'} BGN
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">No items details available.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+        </div>
+    );
+}

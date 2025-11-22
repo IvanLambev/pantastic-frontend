@@ -10,7 +10,7 @@ import Analytics from "./admin/Analytics"
 import Projects from "./admin/Projects"
 import Team from "./admin/Team"
 import Restaurant from "./admin/Restaurant"
-import OrderManagement from "./admin/OrderManagement"
+import Orders from "./admin/Orders"
 import RestaurantDetailsAdmin from "./admin/RestaurantDetailsAdmin"
 
 function AdminDashboard() {
@@ -29,7 +29,7 @@ function AdminDashboard() {
                 <Route path="/team" element={<Team />} />
                 <Route path="/restaurant" element={<Restaurant />} />
                 <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsAdmin />} />
-                <Route path="/orders" element={<OrderManagement />} />
+                <Route path="/orders" element={<Orders />} />
               </Routes>
             </main>
           </div>

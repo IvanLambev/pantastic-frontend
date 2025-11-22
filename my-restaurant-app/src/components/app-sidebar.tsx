@@ -58,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: IconDatabase,
       },
       {
-        title: "Order Management",
+        title: "Orders",
         url: "/admin/orders",
         icon: IconListDetails,
       }
@@ -148,8 +148,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar 
-      collapsible="offcanvas" 
+    <Sidebar
+      collapsible="offcanvas"
       className="border-r border-gray-200 bg-white"
       {...props}
     >
