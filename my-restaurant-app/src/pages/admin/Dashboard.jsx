@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AdminStats from "@/components/admin/AdminStats"
 import RevenueChart from "@/components/admin/RevenueChart"
-import { fetchDataAvailability, fetchRevenueByPeriod } from "@/services/adminApi"
+import { fetchDataAvailability, fetchRevenueByPeriod, fetchRestaurants } from "@/services/adminApi"
 
 export default function Dashboard() {
   const { adminToken, verifyAdminToken } = useAdminAuth()
@@ -14,6 +14,9 @@ export default function Dashboard() {
   const [revenueData, setRevenueData] = useState(null)
   const [revenueLoading, setRevenueLoading] = useState(true)
   const [timePeriod, setTimePeriod] = useState("week")
+  const [restaurants, setRestaurants] = useState([])
+  const [selectedRestaurant, setSelectedRestaurant] = useState("all")
+  const [restaurantsLoading, setRestaurantsLoading] = useState(true)
 
   useEffect(() => {
     const loadAdminInfo = async () => {
@@ -33,6 +36,25 @@ export default function Dashboard() {
     loadAdminInfo()
   }, [adminToken, verifyAdminToken])
 
+  // Fetch restaurants list
+  useEffect(() => {
+    const loadRestaurants = async () => {
+      try {
+        const data = await fetchRestaurants()
+        setRestaurants(data)
+        console.log("Restaurants loaded:", data)
+      } catch (error) {
+        console.error("Failed to fetch restaurants:", error)
+      } finally {
+        setRestaurantsLoading(false)
+      }
+    }
+
+    if (adminToken) {
+      loadRestaurants()
+    }
+  }, [adminToken])
+
   // Fetch data availability
   useEffect(() => {
     const loadDataAvailability = async () => {
@@ -50,12 +72,13 @@ export default function Dashboard() {
     }
   }, [adminToken])
 
-  // Fetch revenue data based on time period
+  // Fetch revenue data based on time period and selected restaurant
   useEffect(() => {
     const loadRevenueData = async () => {
       setRevenueLoading(true)
       try {
-        const data = await fetchRevenueByPeriod(timePeriod)
+        const restaurantId = selectedRestaurant === "all" ? null : selectedRestaurant
+        const data = await fetchRevenueByPeriod(timePeriod, restaurantId)
         setRevenueData(data)
         console.log("Revenue data:", data)
       } catch (error) {
@@ -68,7 +91,7 @@ export default function Dashboard() {
     if (adminToken) {
       loadRevenueData()
     }
-  }, [adminToken, timePeriod])
+  }, [adminToken, timePeriod, selectedRestaurant])
 
   if (loading) {
     return (
@@ -86,7 +109,9 @@ export default function Dashboard() {
     total_revenue: revenueData.restaurants.reduce((sum, r) => sum + r.total_revenue, 0),
     order_count: revenueData.restaurants.reduce((sum, r) => sum + r.order_count, 0),
     average_order_value: revenueData.restaurants.reduce((sum, r) => sum + r.average_order_value, 0) / revenueData.restaurants.length,
-    comparison: revenueData.comparison
+    comparison: revenueData.comparison,
+    total_restaurants: revenueData.total_restaurants || revenueData.restaurants.length,
+    restaurants: revenueData.restaurants
   } : null;
 
   return (
@@ -102,7 +127,23 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Restaurant Selector */}
+          <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant} disabled={restaurantsLoading}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select restaurant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Restaurants</SelectItem>
+              {restaurants.map((restaurant) => (
+                <SelectItem key={restaurant.restaurant_id} value={restaurant.restaurant_id}>
+                  {restaurant.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Time Period Selector */}
           <Select value={timePeriod} onValueChange={setTimePeriod}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select period" />

@@ -34,18 +34,55 @@ export async function fetchDataAvailability() {
 }
 
 /**
- * Fetch revenue data for a specific time period
- * @param {string} timePeriod - 'week' or 'month'
- * @returns {Promise<Object>} Revenue data
+ * Fetch all restaurants
+ * @returns {Promise<Array>} List of all restaurants
  */
-export async function fetchRevenueByPeriod(timePeriod = 'week') {
+export async function fetchRestaurants() {
     try {
-        console.log('📊 [ANALYTICS DEBUG] fetchRevenueByPeriod called with timePeriod:', timePeriod);
-        console.log('📊 [ANALYTICS DEBUG] URL:', `${API_URL}/restaurant/admin/revenue?time_period=${timePeriod}`);
+        console.log('🏪 [ANALYTICS DEBUG] fetchRestaurants called');
+        console.log('🏪 [ANALYTICS DEBUG] URL:', `${API_URL}/restaurant/restaurants`);
 
         const response = await fetchWithAdminAuth(
-            `${API_URL}/restaurant/admin/revenue?time_period=${timePeriod}`
+            `${API_URL}/restaurant/restaurants`
         );
+
+        console.log('📡 [ANALYTICS DEBUG] Restaurants response status:', response.status, response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [ANALYTICS DEBUG] Failed to fetch restaurants. Status:', response.status);
+            console.error('❌ [ANALYTICS DEBUG] Error response:', errorText);
+            throw new Error(`Failed to fetch restaurants: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ [ANALYTICS DEBUG] Restaurants received:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ [ANALYTICS DEBUG] Error fetching restaurants:', error);
+        console.error('❌ [ANALYTICS DEBUG] Error stack:', error.stack);
+        throw error;
+    }
+}
+
+/**
+ * Fetch revenue data for a specific time period
+ * @param {string} timePeriod - 'week' or 'month'
+ * @param {string} restaurantId - Optional restaurant UUID to filter by
+ * @returns {Promise<Object>} Revenue data
+ */
+export async function fetchRevenueByPeriod(timePeriod = 'week', restaurantId = null) {
+    try {
+        console.log('📊 [ANALYTICS DEBUG] fetchRevenueByPeriod called with timePeriod:', timePeriod, 'restaurantId:', restaurantId);
+
+        let url = `${API_URL}/restaurant/admin/revenue?time_period=${timePeriod}`;
+        if (restaurantId) {
+            url += `&restaurant_id=${restaurantId}`;
+        }
+
+        console.log('📊 [ANALYTICS DEBUG] URL:', url);
+
+        const response = await fetchWithAdminAuth(url);
 
         console.log('📡 [ANALYTICS DEBUG] Revenue response status:', response.status, response.ok);
 
@@ -71,17 +108,22 @@ export async function fetchRevenueByPeriod(timePeriod = 'week') {
  * Fetch revenue data for a custom date range
  * @param {string} startDate - Start date in YYYY-MM-DD format
  * @param {string} endDate - End date in YYYY-MM-DD format
+ * @param {string} restaurantId - Optional restaurant UUID to filter by
  * @returns {Promise<Object>} Revenue data
  */
-export async function fetchRevenueByDateRange(startDate, endDate) {
+export async function fetchRevenueByDateRange(startDate, endDate, restaurantId = null) {
     try {
         console.log('📊 [ANALYTICS DEBUG] fetchRevenueByDateRange called');
-        console.log('📊 [ANALYTICS DEBUG] Date range:', startDate, 'to', endDate);
-        console.log('📊 [ANALYTICS DEBUG] URL:', `${API_URL}/restaurant/admin/revenue?start_date=${startDate}&end_date=${endDate}`);
+        console.log('📊 [ANALYTICS DEBUG] Date range:', startDate, 'to', endDate, 'restaurantId:', restaurantId);
 
-        const response = await fetchWithAdminAuth(
-            `${API_URL}/restaurant/admin/revenue?start_date=${startDate}&end_date=${endDate}`
-        );
+        let url = `${API_URL}/restaurant/admin/revenue?start_date=${startDate}&end_date=${endDate}`;
+        if (restaurantId) {
+            url += `&restaurant_id=${restaurantId}`;
+        }
+
+        console.log('📊 [ANALYTICS DEBUG] URL:', url);
+
+        const response = await fetchWithAdminAuth(url);
 
         console.log('📡 [ANALYTICS DEBUG] Revenue (date range) response status:', response.status, response.ok);
 

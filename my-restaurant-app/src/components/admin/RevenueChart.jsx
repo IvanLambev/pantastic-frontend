@@ -59,8 +59,9 @@ export default function RevenueChart({ data, loading, timePeriod = "week" }) {
     }
 
     // Transform the data for the chart
-    // Since we get aggregated data, we'll create a simple visualization
-    const restaurant = data.restaurants[0];
+    // Aggregate data from all restaurants in the response
+    const totalRevenue = data.restaurants.reduce((sum, r) => sum + r.total_revenue, 0);
+
     const chartData = [
         {
             period: "Previous",
@@ -68,7 +69,7 @@ export default function RevenueChart({ data, loading, timePeriod = "week" }) {
         },
         {
             period: "Current",
-            revenue: restaurant.total_revenue || 0,
+            revenue: totalRevenue,
         },
     ];
 

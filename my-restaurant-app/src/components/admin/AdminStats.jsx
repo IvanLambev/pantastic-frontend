@@ -17,12 +17,16 @@ export default function AdminStats({ data, loading }) {
     // Transform data into the format expected by the UI
     // We expect data to contain: total_revenue, order_count, average_order_value, and comparison info
 
+    // Calculate active restaurants count
+    const activeRestaurantsCount = data.total_restaurants || data.restaurants_count ||
+        (data.restaurants ? data.restaurants.length : 1);
+
     const stats = [
         {
             name: "Total Revenue",
             value: `€${data.total_revenue?.toFixed(2) || '0.00'}`,
             change: data.comparison?.revenue_change_percent
-                ? `${data.comparison.revenue_change_percent > 0 ? '+' : ''}${data.comparison.revenue_change_percent}%`
+                ? `${data.comparison.revenue_change_percent > 0 ? '+' : ''}${data.comparison.revenue_change_percent.toFixed(2)}%`
                 : "N/A",
             changeType: data.comparison?.revenue_change_percent >= 0 ? "positive" : "negative",
         },
@@ -37,12 +41,12 @@ export default function AdminStats({ data, loading }) {
         {
             name: "Avg Order Value",
             value: `€${data.average_order_value?.toFixed(2) || '0.00'}`,
-            change: "N/A", // We don't have comparison for this in the example response
+            change: "N/A", // We don't have comparison for this in the API response
             changeType: "neutral",
         },
         {
             name: "Active Restaurants",
-            value: "1", // Hardcoded for now as per example response showing 1 restaurant
+            value: activeRestaurantsCount.toString(),
             change: "0",
             changeType: "neutral",
         },
