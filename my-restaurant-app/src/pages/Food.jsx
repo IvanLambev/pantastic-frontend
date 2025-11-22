@@ -12,6 +12,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -198,6 +199,7 @@ const Food = () => {
   const getItemImage = (item) => Array.isArray(item) ? item[5] : item.image_url;
   const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
   const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
+  const getItemLabels = (item) => Array.isArray(item) ? [] : (item.labels || []);
 
 
 
@@ -454,6 +456,19 @@ const Food = () => {
                         <LuExpand className="h-6 w-6 text-white" />
                       </div>
 
+                      {/* Labels/Badges */}
+                      <div className="absolute top-2 left-2 z-20 flex flex-col gap-1">
+                        {getItemLabels(item).map((label, index) => (
+                          <Badge
+                            key={index}
+                            variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
+                            className="shadow-sm capitalize"
+                          >
+                            {label}
+                          </Badge>
+                        ))}
+                      </div>
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -596,6 +611,19 @@ const Food = () => {
                           {/* Hover overlay with expand icon */}
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                             <LuExpand className="h-10 w-10 text-white" />
+                          </div>
+
+                          {/* Labels/Badges */}
+                          <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
+                            {getItemLabels(item).map((label, index) => (
+                              <Badge
+                                key={index}
+                                variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
+                                className="shadow-md text-sm capitalize px-3 py-1"
+                              >
+                                {label}
+                              </Badge>
+                            ))}
                           </div>
 
                           <button

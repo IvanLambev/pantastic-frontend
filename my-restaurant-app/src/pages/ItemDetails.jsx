@@ -443,6 +443,20 @@ export default function ItemDetails() {
             alt={item.name}
             className="w-full h-full object-cover rounded-lg"
           />
+
+          {/* Labels/Badges */}
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-2">
+            {(item.labels || []).map((label, index) => (
+              <Badge
+                key={index}
+                variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
+                className="shadow-md capitalize"
+              >
+                {label}
+              </Badge>
+            ))}
+          </div>
+
           {isLoggedIn && (
             <button
               type="button"
@@ -695,6 +709,19 @@ export default function ItemDetails() {
             alt={item.name}
             className="w-full h-full object-cover"
           />
+
+          {/* Labels/Badges */}
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+            {(item.labels || []).map((label, index) => (
+              <Badge
+                key={index}
+                variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
+                className="shadow-sm capitalize"
+              >
+                {label}
+              </Badge>
+            ))}
+          </div>
         </div>
 
         {/* Price and Quantity Selector */}
