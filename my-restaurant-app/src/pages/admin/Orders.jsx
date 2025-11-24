@@ -42,7 +42,8 @@ export default function Orders() {
     const [selectedRestaurant, setSelectedRestaurant] = useState("all");
     const [loading, setLoading] = useState(true);
     const [nextPageToken, setNextPageToken] = useState(null);
-    const [pageHistory, setPageHistory] = useState([]); // To potentially handle "back" if we stored tokens, but for now just reset
+    const [currentPageToken, setCurrentPageToken] = useState(null);
+    const [pageHistory, setPageHistory] = useState([]);
 
     // Details Sheet State
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -60,6 +61,7 @@ export default function Orders() {
     useEffect(() => {
         setPageHistory([]);
         setNextPageToken(null);
+        setCurrentPageToken(null);
         loadOrders(null, selectedRestaurant);
     }, [selectedRestaurant]);
 
@@ -95,7 +97,18 @@ export default function Orders() {
 
     const handleNextPage = () => {
         if (nextPageToken) {
+            setPageHistory(prev => [...prev, currentPageToken]);
+            setCurrentPageToken(nextPageToken);
             loadOrders(nextPageToken);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (pageHistory.length > 0) {
+            const prevToken = pageHistory[pageHistory.length - 1];
+            setPageHistory(prev => prev.slice(0, -1));
+            setCurrentPageToken(prevToken);
+            loadOrders(prevToken);
         }
     };
 
@@ -219,7 +232,14 @@ export default function Orders() {
                 </CardContent>
             </Card>
 
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+                <Button
+                    variant="outline"
+                    onClick={handlePreviousPage}
+                    disabled={pageHistory.length === 0 || loading}
+                >
+                    Previous Page
+                </Button>
                 <Button
                     variant="outline"
                     onClick={handleNextPage}
