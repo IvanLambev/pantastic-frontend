@@ -150,9 +150,9 @@ export async function fetchRevenueByDateRange(startDate, endDate, restaurantId =
  * @param {string} pagingState - Cursor for the next page
  * @returns {Promise<Object>} Orders data and pagination info
  */
-export async function fetchAllOrders(pageSize = 10, pagingState = null) {
+export async function fetchAllOrders(pageSize = 10, pagingState = null, sortBy = 'created_at', sortOrder = 'desc') {
     try {
-        let url = `${API_URL}/order/admin/orders?page_size=${pageSize}`;
+        let url = `${API_URL}/order/admin/orders?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
         if (pagingState) {
             url += `&paging_state=${encodeURIComponent(pagingState)}`;
         }
@@ -177,9 +177,9 @@ export async function fetchAllOrders(pageSize = 10, pagingState = null) {
  * @param {string} pagingState - Cursor for the next page
  * @returns {Promise<Object>} Orders data and pagination info
  */
-export async function fetchOrdersByRestaurant(restaurantId, pageSize = 10, pagingState = null) {
+export async function fetchOrdersByRestaurant(restaurantId, pageSize = 10, pagingState = null, sortBy = 'created_at', sortOrder = 'desc') {
     try {
-        let url = `${API_URL}/order/admin/orders/restaurant/${restaurantId}?page_size=${pageSize}`;
+        let url = `${API_URL}/order/admin/orders/restaurant/${restaurantId}?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
         if (pagingState) {
             url += `&paging_state=${encodeURIComponent(pagingState)}`;
         }

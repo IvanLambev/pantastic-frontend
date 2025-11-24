@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Loader2, User, MapPin, CreditCard, ShoppingBag } from "lucide-react";
+import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Orders() {
@@ -44,6 +44,8 @@ export default function Orders() {
     const [nextPageToken, setNextPageToken] = useState(null);
     const [currentPageToken, setCurrentPageToken] = useState(null);
     const [pageHistory, setPageHistory] = useState([]);
+    const [sortBy, setSortBy] = useState('created_at');
+    const [sortOrder, setSortOrder] = useState('desc');
 
     // Details Sheet State
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -62,7 +64,7 @@ export default function Orders() {
         setPageHistory([]);
         setNextPageToken(null);
         setCurrentPageToken(null);
-        loadOrders(null, selectedRestaurant);
+        loadOrders(null, selectedRestaurant, sortBy, sortOrder);
     }, [selectedRestaurant]);
 
     const loadRestaurants = async () => {
@@ -75,14 +77,14 @@ export default function Orders() {
         }
     };
 
-    const loadOrders = async (pagingState = null, restaurantId = selectedRestaurant) => {
+    const loadOrders = async (pagingState = null, restaurantId = selectedRestaurant, sort = sortBy, order = sortOrder) => {
         setLoading(true);
         try {
             let data;
             if (restaurantId === "all") {
-                data = await fetchAllOrders(10, pagingState);
+                data = await fetchAllOrders(10, pagingState, sort, order);
             } else {
-                data = await fetchOrdersByRestaurant(restaurantId, 10, pagingState);
+                data = await fetchOrdersByRestaurant(restaurantId, 10, pagingState, sort, order);
             }
 
             setOrders(data.orders || []);
@@ -110,6 +112,19 @@ export default function Orders() {
             setCurrentPageToken(prevToken);
             loadOrders(prevToken);
         }
+    };
+
+    const handleSort = (column) => {
+        const newOrder = sortBy === column && sortOrder === 'desc' ? 'asc' : 'desc';
+        setSortBy(column);
+        setSortOrder(newOrder);
+
+        // Reset pagination
+        setPageHistory([]);
+        setNextPageToken(null);
+        setCurrentPageToken(null);
+
+        loadOrders(null, selectedRestaurant, column, newOrder);
     };
 
     const handleOrderClick = async (order) => {
@@ -176,10 +191,26 @@ export default function Orders() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Order ID</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => handleSort('created_at')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Date
+                                        <ArrowUpDown className="h-4 w-4" />
+                                    </div>
+                                </TableHead>
                                 <TableHead>Restaurant</TableHead>
                                 <TableHead>Total</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => handleSort('status')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Status
+                                        <ArrowUpDown className="h-4 w-4" />
+                                    </div>
+                                </TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
