@@ -300,11 +300,18 @@ export default function Orders() {
                     <SheetHeader>
                         <SheetTitle>Order Details</SheetTitle>
                         <SheetDescription>
-                            ID: {selectedOrder?.order_id}
-                            {(selectedOrder?.restaurant?.name || selectedOrder?.restaurant_name) && (
-                                <span className="block mt-1 font-medium text-foreground">
-                                    Restaurant: {selectedOrder?.restaurant?.name || selectedOrder?.restaurant_name}
-                                </span>
+                            <span className="block">ID: {selectedOrder?.order_id}</span>
+                            {(selectedOrder?.restaurant || selectedOrder?.restaurant_name) && (
+                                <div className="mt-2 space-y-1">
+                                    <span className="block font-medium text-foreground">
+                                        Restaurant: {selectedOrder?.restaurant?.name || selectedOrder?.restaurant_name}
+                                    </span>
+                                    {selectedOrder?.restaurant?.address && (
+                                        <span className="block text-xs text-muted-foreground">
+                                            {selectedOrder.restaurant.address}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </SheetDescription>
                     </SheetHeader>
@@ -344,7 +351,14 @@ export default function Orders() {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-xs font-medium text-muted-foreground">Discount</p>
-                                        <p className="text-sm font-medium">{selectedOrder.discount?.toFixed(2)} BGN</p>
+                                        <p className="text-sm font-medium">
+                                            {selectedOrder.discount_amount?.toFixed(2)} BGN
+                                            {selectedOrder.discount_percentage > 0 && (
+                                                <span className="text-xs text-muted-foreground ml-1">
+                                                    ({selectedOrder.discount_percentage}%)
+                                                </span>
+                                            )}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -357,23 +371,25 @@ export default function Orders() {
                                 <Card>
                                     <CardContent className="p-4 space-y-2">
                                         {customerDetails ? (
-                                            <>
-                                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                                    <span className="text-muted-foreground">Name:</span>
-                                                    <span className="font-medium">
-                                                        {customerDetails.name || `${customerDetails.first_name || ''} ${customerDetails.last_name || ''}`.trim() || 'N/A'}
-                                                    </span>
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                <span className="text-muted-foreground">Name:</span>
+                                                <span className="font-medium">
+                                                    {customerDetails.name || `${customerDetails.first_name || ''} ${customerDetails.last_name || ''}`.trim() || 'N/A'}
+                                                </span>
 
-                                                    <span className="text-muted-foreground">Phone:</span>
-                                                    <span className="font-medium">{customerDetails.phone || 'N/A'}</span>
+                                                <span className="text-muted-foreground">Phone:</span>
+                                                <span className="font-medium">{customerDetails.phone || 'N/A'}</span>
 
-                                                    <span className="text-muted-foreground">Email:</span>
-                                                    <span className="font-medium">{customerDetails.email || 'N/A'}</span>
+                                                <span className="text-muted-foreground">Email:</span>
+                                                <span className="font-medium">{customerDetails.email || 'N/A'}</span>
 
-                                                    <span className="text-muted-foreground">City:</span>
-                                                    <span className="font-medium">{customerDetails.city || 'N/A'}</span>
-                                                </div>
-                                            </>
+                                                {customerDetails.city && (
+                                                    <>
+                                                        <span className="text-muted-foreground">City:</span>
+                                                        <span className="font-medium">{customerDetails.city}</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         ) : (
                                             <p className="text-sm text-muted-foreground italic">No customer details available</p>
                                         )}
@@ -392,15 +408,29 @@ export default function Orders() {
                                             <span className="text-muted-foreground">Method:</span>
                                             <span className="capitalize font-medium">{selectedOrder.delivery_method}</span>
 
-                                            {(selectedOrder.address || selectedOrder.delivery_address) && (
+                                            {selectedOrder.delivery_address && (
                                                 <>
                                                     <span className="text-muted-foreground">Address:</span>
-                                                    <span className="font-medium">{selectedOrder.address || selectedOrder.delivery_address}</span>
+                                                    <span className="font-medium">{selectedOrder.delivery_address}</span>
+                                                </>
+                                            )}
+
+                                            {selectedOrder.delivery_person && (
+                                                <>
+                                                    <span className="text-muted-foreground">Driver:</span>
+                                                    <span className="font-medium">{selectedOrder.delivery_person}</span>
                                                 </>
                                             )}
 
                                             <span className="text-muted-foreground">Created At:</span>
                                             <span>{selectedOrder.created_at ? format(new Date(selectedOrder.created_at), 'PPpp') : 'N/A'}</span>
+
+                                            {selectedOrder.preparation_started_at && (
+                                                <>
+                                                    <span className="text-muted-foreground">Prep Started:</span>
+                                                    <span>{format(new Date(selectedOrder.preparation_started_at), 'PPpp')}</span>
+                                                </>
+                                            )}
 
                                             {selectedOrder.estimated_delivery_time && (
                                                 <>
@@ -408,10 +438,18 @@ export default function Orders() {
                                                     <span>{format(new Date(selectedOrder.estimated_delivery_time), 'PPpp')}</span>
                                                 </>
                                             )}
+
                                             {selectedOrder.scheduled_delivery_time && (
                                                 <>
                                                     <span className="text-muted-foreground">Scheduled:</span>
                                                     <span>{format(new Date(selectedOrder.scheduled_delivery_time), 'PPpp')}</span>
+                                                </>
+                                            )}
+
+                                            {selectedOrder.delivery_time && (
+                                                <>
+                                                    <span className="text-muted-foreground">Delivered At:</span>
+                                                    <span>{format(new Date(selectedOrder.delivery_time), 'PPpp')}</span>
                                                 </>
                                             )}
                                         </div>
@@ -429,25 +467,31 @@ export default function Orders() {
                                         selectedOrder.items.map((item, idx) => (
                                             <Card key={idx}>
                                                 <CardContent className="p-3 flex justify-between items-start">
-                                                    <div>
+                                                    <div className="flex-1 mr-4">
                                                         <p className="font-medium">{item.name || item.item_name || `Item #${idx + 1}`}</p>
+                                                        {item.description && (
+                                                            <p className="text-xs text-muted-foreground italic mb-1">{item.description}</p>
+                                                        )}
                                                         <p className="text-sm text-muted-foreground">
                                                             Qty: {item.quantity || item.item_quantity || 1}
                                                         </p>
-                                                        {/* Addons if available */}
-                                                        {(item.applied_addons?.length > 0 || (item.selected_addons && Object.keys(item.selected_addons).length > 0)) && (
+
+                                                        {/* Addons */}
+                                                        {((item.selected_addons && Object.keys(item.selected_addons).length > 0) || (item.applied_addons && item.applied_addons.length > 0)) && (
                                                             <div className="mt-1 text-xs text-muted-foreground">
                                                                 <p className="font-semibold">Addons:</p>
                                                                 <ul className="list-disc list-inside">
-                                                                    {item.applied_addons?.map((addon, aIdx) => (
-                                                                        <li key={aIdx}>{addon.addon_name} (x{addon.addon_quantity})</li>
-                                                                    ))}
                                                                     {item.selected_addons && Object.entries(item.selected_addons).map(([key, value], aIdx) => (
-                                                                        <li key={aIdx}>{key}: {JSON.stringify(value)}</li>
+                                                                        <li key={`sel-${aIdx}`}>{key}: {value}</li>
+                                                                    ))}
+                                                                    {item.applied_addons?.map((addon, aIdx) => (
+                                                                        <li key={`app-${aIdx}`}>{addon.addon_name} (x{addon.addon_quantity})</li>
                                                                     ))}
                                                                 </ul>
                                                             </div>
                                                         )}
+
+                                                        {/* Removed Ingredients */}
                                                         {item.removed_ingredients?.length > 0 && (
                                                             <div className="mt-1 text-xs text-red-500">
                                                                 <p className="font-semibold">Removed:</p>
@@ -459,7 +503,7 @@ export default function Orders() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <p className="font-medium">
+                                                    <p className="font-medium whitespace-nowrap">
                                                         {(item.final_price || item.item_total || 0).toFixed(2)} BGN
                                                     </p>
                                                 </CardContent>
@@ -473,7 +517,7 @@ export default function Orders() {
                         </div>
                     )}
                 </SheetContent>
-            </Sheet>
-        </div>
+            </Sheet >
+        </div >
     );
 }
