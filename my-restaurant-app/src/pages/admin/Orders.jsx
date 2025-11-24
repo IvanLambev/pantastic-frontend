@@ -64,7 +64,7 @@ export default function Orders() {
         setPageHistory([]);
         setNextPageToken(null);
         setCurrentPageToken(null);
-        loadOrders(null, selectedRestaurant, sortBy, sortOrder);
+        loadOrders(null, selectedRestaurant);
     }, [selectedRestaurant]);
 
     const loadRestaurants = async () => {
@@ -77,14 +77,14 @@ export default function Orders() {
         }
     };
 
-    const loadOrders = async (pagingState = null, restaurantId = selectedRestaurant, sort = sortBy, order = sortOrder) => {
+    const loadOrders = async (pagingState = null, restaurantId = selectedRestaurant) => {
         setLoading(true);
         try {
             let data;
             if (restaurantId === "all") {
-                data = await fetchAllOrders(10, pagingState, sort, order);
+                data = await fetchAllOrders(10, pagingState);
             } else {
-                data = await fetchOrdersByRestaurant(restaurantId, 10, pagingState, sort, order);
+                data = await fetchOrdersByRestaurant(restaurantId, 10, pagingState);
             }
 
             setOrders(data.orders || []);
@@ -118,14 +118,28 @@ export default function Orders() {
         const newOrder = sortBy === column && sortOrder === 'desc' ? 'asc' : 'desc';
         setSortBy(column);
         setSortOrder(newOrder);
-
-        // Reset pagination
-        setPageHistory([]);
-        setNextPageToken(null);
-        setCurrentPageToken(null);
-
-        loadOrders(null, selectedRestaurant, column, newOrder);
     };
+
+    const getSortedOrders = () => {
+        const sorted = [...orders];
+        sorted.sort((a, b) => {
+            if (sortBy === 'created_at') {
+                const dateA = new Date(a.created_at || 0);
+                const dateB = new Date(b.created_at || 0);
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            } else if (sortBy === 'status') {
+                const statusA = (a.status || '').toLowerCase();
+                const statusB = (b.status || '').toLowerCase();
+                if (statusA < statusB) return sortOrder === 'asc' ? -1 : 1;
+                if (statusA > statusB) return sortOrder === 'asc' ? 1 : -1;
+                return 0;
+            }
+            return 0;
+        });
+        return sorted;
+    };
+
+    const sortedOrders = getSortedOrders();
 
     const handleOrderClick = async (order) => {
         setSelectedOrder(order);
@@ -233,7 +247,7 @@ export default function Orders() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                orders.map((order) => (
+                                sortedOrders.map((order) => (
                                     <TableRow key={order.order_id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleOrderClick(order)}>
                                         <TableCell className="font-medium">
                                             {order.order_id.slice(0, 8)}...
