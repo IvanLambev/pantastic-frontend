@@ -113,12 +113,19 @@ const Food = () => {
     const savedCategory = sessionStorage.getItem('selectedCategory');
     if (savedCategory) {
       setCategory(savedCategory);
-      // We don't clear it immediately so it persists if they reload, 
-      // but maybe we should clear it if they navigate away? 
-      // For now, let's keep it to ensure it works across the redirect flow.
-      // Actually, user said "if we select a category we must save it in session storage so when the user is than redirected... and they select a restaurant... display the selected category"
-      // So reading it here is correct.
     }
+
+    const handleStorageChange = () => {
+      const newCategory = sessionStorage.getItem('selectedCategory');
+      if (newCategory) {
+        setCategory(newCategory);
+      }
+    };
+
+    window.addEventListener('category-change', handleStorageChange);
+    return () => {
+      window.removeEventListener('category-change', handleStorageChange);
+    };
   }, []);
 
   const handleChangeSelection = async () => {
