@@ -113,12 +113,12 @@ export function HeroCarousel() {
 
   return (
     <div className="w-full relative">
-      <Carousel 
+      <Carousel
         plugins={[
           Autoplay({
             delay: 5000,
           }),
-        ]} 
+        ]}
         className="w-full"
         setApi={setApi}
       >
@@ -128,16 +128,16 @@ export function HeroCarousel() {
               <Card className="border-none rounded-none">
                 <CardContent className="p-0 relative">
                   {/* Image */}
-                  <div className="relative h-[60vh] md:h-[70vh] lg:h-[85vh] w-full overflow-hidden">
-                    <img 
-                      src={slide.image} 
+                  <div className="relative h-[45vh] md:h-[70vh] lg:h-[85vh] w-full overflow-hidden">
+                    <img
+                      src={slide.image}
                       alt={slide.title}
                       className="w-full h-full object-cover"
                     />
-                    
+
                     {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-                    
+
                     {/* Content overlay */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="container mx-auto px-4 md:px-8 lg:px-12">
@@ -152,8 +152,8 @@ export function HeroCarousel() {
                           )}
                           {slide.ctaText && (
                             <div className="animate-in fade-in duration-700 delay-200">
-                              <Button 
-                                size="default" 
+                              <Button
+                                size="default"
                                 className="text-sm md:text-base bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all hover:scale-105"
                                 onClick={() => navigate(slide.ctaLink)}
                               >
@@ -171,16 +171,15 @@ export function HeroCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        
+
         {/* Carousel dots positioned at bottom */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => api?.scrollTo(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                selectedIndex === index ? "bg-white scale-110" : "bg-white/50 hover:bg-white/70"
-              }`}
+              className={`w-3 h-3 rounded-full transition-all ${selectedIndex === index ? "bg-white scale-110" : "bg-white/50 hover:bg-white/70"
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
