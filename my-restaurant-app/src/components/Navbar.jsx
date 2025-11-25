@@ -152,11 +152,9 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <NavigationMenuLink asChild>
-              <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-gray-900 hover:text-white")}>
-                {t('nav.login')}
-              </Link>
-            </NavigationMenuLink>
+            <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-gray-900 hover:text-white")}>
+              {t('nav.login')}
+            </Link>
           )}
         </div>
       </div>
