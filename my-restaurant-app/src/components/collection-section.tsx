@@ -226,23 +226,23 @@ export function CollectionSection({
               )}
             </CardHeader>
 
-            <CardContent className="pt-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xl font-bold">
+            <CardContent className="flex flex-col gap-3 p-4 pt-0 mt-auto">
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-bold text-primary">
                   {item.price.toFixed(2)} лв
                 </span>
-                <Button
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleAddToCart(item)
-                  }}
-                  className="gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Добави
-                </Button>
               </div>
+              <Button
+                size="default"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddToCart(item)
+                }}
+                className="w-full gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Добави в количката
+              </Button>
             </CardContent>
           </Card>
         ))}
