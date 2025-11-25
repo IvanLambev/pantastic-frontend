@@ -30,12 +30,21 @@ const categories = [
 ];
 
 export function CategoryGrid() {
+    const handleCategoryClick = (categoryId) => {
+        sessionStorage.setItem('selectedCategory', categoryId);
+    };
+
     return (
         <section className="container mx-auto px-4 py-12">
             <h2 className="text-3xl font-bold text-center mb-8">Нашето Меню</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {categories.map((category) => (
-                    <Link key={category.id} to={category.link} className="group">
+                    <Link
+                        key={category.id}
+                        to={category.link}
+                        className="group"
+                        onClick={() => handleCategoryClick(category.id)}
+                    >
                         <Card className="overflow-hidden border-none shadow-lg transition-transform duration-300 group-hover:scale-105">
                             <CardContent className="p-0 relative aspect-[4/5]">
                                 <img
@@ -43,8 +52,8 @@ export function CategoryGrid() {
                                     alt={category.title}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-                                    <h3 className="text-white text-xl font-bold text-center">{category.title}</h3>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-6">
+                                    <h3 className="text-white text-lg sm:text-xl font-bold text-center leading-tight">{category.title}</h3>
                                 </div>
                             </CardContent>
                         </Card>

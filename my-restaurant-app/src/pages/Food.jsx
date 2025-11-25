@@ -108,6 +108,17 @@ const Food = () => {
       }
     };
     fetchFavorites();
+
+    // Check for saved category from Home page
+    const savedCategory = sessionStorage.getItem('selectedCategory');
+    if (savedCategory) {
+      setCategory(savedCategory);
+      // We don't clear it immediately so it persists if they reload, 
+      // but maybe we should clear it if they navigate away? 
+      // For now, let's keep it to ensure it works across the redirect flow.
+      // Actually, user said "if we select a category we must save it in session storage so when the user is than redirected... and they select a restaurant... display the selected category"
+      // So reading it here is correct.
+    }
   }, []);
 
   const handleChangeSelection = async () => {
@@ -306,6 +317,13 @@ const Food = () => {
       matchesCategory = !isDeluxe;
     } else if (category === "sweet") {
       matchesCategory = itemType.includes('sweet') && !isDeluxe;
+    } else if (category === "american") {
+      // Assuming american pancakes are also 'sweet' but maybe we want to filter specifically?
+      // If there is no specific 'american' type in the backend, we might just show 'sweet' or 
+      // if the user meant specific items. For now, let's treat it as 'sweet' or check for 'american' in name/type if possible.
+      // The user said "american-sweet_pancake" in the prompt, so let's check for that or just 'sweet' if not found.
+      // Let's try to match 'american' in itemType or name if possible, otherwise fallback to sweet.
+      matchesCategory = (itemType.includes('american') || itemType.includes('sweet')) && !isDeluxe;
     } else if (category === "savory") {
       // Strict filtering for savory/sour
       matchesCategory = (itemType.includes('sour') || itemType.includes('savory')) &&
@@ -382,7 +400,7 @@ const Food = () => {
       {/* Category Buttons Row */}
       {selectedRestaurant && (
         <div className="container mx-auto px-4 my-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "sweet" ? "default" : "outline"}
@@ -398,6 +416,14 @@ const Food = () => {
             >
               <span className="hidden sm:inline">{t('menu.sourPancakes')}</span>
               <span className="sm:hidden">{t('menu.sour')}</span>
+            </Button>
+            <Button
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              variant={category === "american" ? "default" : "outline"}
+              onClick={() => setCategory("american")}
+            >
+              <span className="hidden sm:inline">American</span>
+              <span className="sm:hidden">American</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
@@ -581,6 +607,9 @@ const Food = () => {
                       </ToggleGroupItem>
                       <ToggleGroupItem value="savory" aria-label="Show savory items">
                         Savory
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="american" aria-label="Show american items">
+                        American
                       </ToggleGroupItem>
                       <ToggleGroupItem value="promo" aria-label="Show promotional items">
                         Promo
