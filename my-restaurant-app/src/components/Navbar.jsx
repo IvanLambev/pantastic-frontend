@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/hooks/use-cart';
@@ -12,7 +12,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { FaBars } from 'react-icons/fa';
 import { IoCartOutline } from "react-icons/io5";
 import { CiUser } from "react-icons/ci";
@@ -52,6 +52,7 @@ const Navbar = () => {
   const { isLoggedIn, handleLogout, isAdmin } = useAuth();
   const { cartItems } = useCart();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleCategoryClick = (category) => {
     sessionStorage.setItem('selectedCategory', category);
@@ -198,55 +199,65 @@ const Navbar = () => {
           )}
 
           {/* Mobile Menu */}
-          <Sheet>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} modal={false}>
             <SheetTrigger asChild>
               <button className="text-white md:hidden hover:text-gray-300 transition-colors">
                 <FaBars className="h-6 w-6" />
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto">
-              <SheetTitle className="text-white mb-6">Меню</SheetTitle>
+              <SheetTitle className="text-white mb-6 mt-4">Меню</SheetTitle>
               <div className="flex flex-col gap-6 mt-8 px-2">
-                <Link
-                  to="/"
-                  className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
-                >
-                  {t('nav.home')}
-                </Link>
-                <Link
-                  to="/about"
-                  className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
-                >
-                  {t('nav.about')}
-                </Link>
+                <SheetClose asChild>
+                  <Link
+                    to="/"
+                    className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                  >
+                    {t('nav.home')}
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/about"
+                    className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                  >
+                    {t('nav.about')}
+                  </Link>
+                </SheetClose>
 
                 <div className="space-y-3 pt-2 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Сладки Палачинки</h3>
                   <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => handleCategoryClick('sweet')}
-                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
-                    >
-                      Сладки Палачинки
-                    </button>
-                    <button
-                      onClick={() => handleCategoryClick('american')}
-                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
-                    >
-                      Американски Палачинки
-                    </button>
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => handleCategoryClick('sweet')}
+                        className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                      >
+                        Сладки Палачинки
+                      </button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => handleCategoryClick('american')}
+                        className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                      >
+                        Американски Палачинки
+                      </button>
+                    </SheetClose>
                   </div>
                 </div>
 
                 <div className="space-y-3 pt-2 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Солени Палачинки</h3>
                   <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => handleCategoryClick('savory')}
-                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
-                    >
-                      Солени Палачинки
-                    </button>
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => handleCategoryClick('savory')}
+                        className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                      >
+                        Солени Палачинки
+                      </button>
+                    </SheetClose>
                     <div className="text-gray-500 px-4 py-2.5">Американски Солени (Скоро)</div>
                   </div>
                 </div>
@@ -254,18 +265,22 @@ const Navbar = () => {
                 <div className="space-y-3 pt-2 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Делукс Кутии</h3>
                   <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => handleCategoryClick('deluxe')}
-                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
-                    >
-                      Делукс Кутия за Един
-                    </button>
-                    <button
-                      onClick={() => handleCategoryClick('deluxe')}
-                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
-                    >
-                      Делукс Кутия за Двама
-                    </button>
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => handleCategoryClick('deluxe')}
+                        className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                      >
+                        Делукс Кутия за Един
+                      </button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <button
+                        onClick={() => handleCategoryClick('deluxe')}
+                        className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                      >
+                        Делукс Кутия за Двама
+                      </button>
+                    </SheetClose>
                   </div>
                 </div>
               </div>
