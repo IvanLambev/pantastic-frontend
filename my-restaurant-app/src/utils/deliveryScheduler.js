@@ -11,6 +11,37 @@ export function getCurrentGMT3Time() {
 }
 
 /**
+ * Parse opening hours data (handles string format from backend)
+ * @param {string|Object} openingHoursData 
+ * @returns {Object} Parsed hours object
+ */
+function parseOpeningHours(openingHoursData) {
+  if (!openingHoursData) return {};
+
+  // If it's already an object, return it
+  if (typeof openingHoursData === 'object' && !Array.isArray(openingHoursData)) {
+    return openingHoursData;
+  }
+
+  // If it's a string, parse it (handles Python dict format like "{'Friday': '10:00-03:00'}")
+  if (typeof openingHoursData === 'string') {
+    try {
+      // Replace single quotes with double quotes for valid JSON
+      const jsonString = openingHoursData
+        .replace(/'/g, '"')
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error("[DeliveryScheduler] Error parsing opening hours string:", error, openingHoursData);
+      return {};
+    }
+  }
+
+  return {};
+}
+
+/**
  * Helper to safely get hours from restaurant data (supports both array and object formats)
  * @param {Array|Object} restaurant 
  * @returns {Object} Hours object
@@ -18,7 +49,9 @@ export function getCurrentGMT3Time() {
 function getRestaurantHours(restaurant) {
   if (!restaurant) return {};
   // Support legacy array format (index 9) and new object format (opening_hours)
-  return (Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours) || {};
+  const rawHours = Array.isArray(restaurant) ? restaurant[9] : restaurant.opening_hours;
+  // Parse the hours (handles both string and object formats)
+  return parseOpeningHours(rawHours);
 }
 
 /**
