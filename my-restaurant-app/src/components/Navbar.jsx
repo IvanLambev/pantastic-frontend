@@ -151,6 +151,12 @@ const Navbar = () => {
               className="text-white hover:text-gray-300 transition-colors relative animate-in slide-in-from-right duration-500"
             >
               <IoCartOutline className="h-6 w-6" />
+              <Badge
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center rounded-full px-1 text-xs font-bold"
+              >
+                {cartItems.length}
+              </Badge>
             </Link>
           )}
 
@@ -199,36 +205,67 @@ const Navbar = () => {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto">
-              <SheetTitle className="text-white">Меню</SheetTitle>
-              <div className="flex flex-col gap-6 mt-8">
-                <Link to="/" className="text-lg font-medium hover:text-gray-300">
+              <SheetTitle className="text-white mb-6">Меню</SheetTitle>
+              <div className="flex flex-col gap-6 mt-8 px-2">
+                <Link
+                  to="/"
+                  className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                >
                   {t('nav.home')}
                 </Link>
-                <Link to="/about" className="text-lg font-medium hover:text-gray-300">
+                <Link
+                  to="/about"
+                  className="text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                >
                   {t('nav.about')}
                 </Link>
 
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Сладки Палачинки</h3>
-                  <div className="flex flex-col gap-2 pl-4">
-                    <button onClick={() => handleCategoryClick('sweet')} className="text-left hover:text-gray-300">Сладки Палачинки</button>
-                    <button onClick={() => handleCategoryClick('american')} className="text-left hover:text-gray-300">Американски Палачинки</button>
+                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Сладки Палачинки</h3>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleCategoryClick('sweet')}
+                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                    >
+                      Сладки Палачинки
+                    </button>
+                    <button
+                      onClick={() => handleCategoryClick('american')}
+                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                    >
+                      Американски Палачинки
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Солени Палачинки</h3>
-                  <div className="flex flex-col gap-2 pl-4">
-                    <button onClick={() => handleCategoryClick('savory')} className="text-left hover:text-gray-300">Солени Палачинки</button>
-                    <div className="text-gray-500">Американски Солени (Скоро)</div>
+                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Солени Палачинки</h3>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleCategoryClick('savory')}
+                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                    >
+                      Солени Палачинки
+                    </button>
+                    <div className="text-gray-500 px-4 py-2.5">Американски Солени (Скоро)</div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Делукс Кутии</h3>
-                  <div className="flex flex-col gap-2 pl-4">
-                    <button onClick={() => handleCategoryClick('deluxe')} className="text-left hover:text-gray-300">Делукс Кутия за Един</button>
-                    <button onClick={() => handleCategoryClick('deluxe')} className="text-left hover:text-gray-300">Делукс Кутия за Двама</button>
+                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Делукс Кутии</h3>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleCategoryClick('deluxe')}
+                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                    >
+                      Делукс Кутия за Един
+                    </button>
+                    <button
+                      onClick={() => handleCategoryClick('deluxe')}
+                      className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
+                    >
+                      Делукс Кутия за Двама
+                    </button>
                   </div>
                 </div>
               </div>
