@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import { handle401Logout } from "@/lib/utils"
 import { API_URL } from '@/config/api'
+import { toast } from "sonner"
 
 const AuthContext = createContext()
 
@@ -193,7 +194,7 @@ const AuthProvider = ({ children }) => {
     setToken(null)
     setIsAdmin(false)
 
-    alert("You have been logged out!")
+    toast.success("Успешно излязохте от профила си!")
   }
 
   const refreshUserTokens = async () => {

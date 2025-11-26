@@ -172,7 +172,7 @@ const Navbar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
-                  <Link to="/user-dashboard" className="cursor-pointer">{t('nav.dashboard')}</Link>
+                  <Link to="/dashboard" className="cursor-pointer">{t('nav.dashboard')}</Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
@@ -207,8 +207,8 @@ const Navbar = () => {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto">
-              <SheetTitle className="text-white mb-6 mt-4">Меню</SheetTitle>
-              <div className="flex flex-col gap-3 mt-4 px-2">
+              <SheetTitle className="text-white mb-2 mt-2">Меню</SheetTitle>
+              <div className="flex flex-col gap-3 mt-2 px-2">
                 <SheetClose asChild>
                   <Link
                     to="/"
@@ -284,6 +284,60 @@ const Navbar = () => {
                     </SheetClose>
                   </div>
                 </div>
+
+                {/* User Menu Section for Logged-in Users */}
+                {isLoggedIn && (
+                  <div className="mt-auto pt-4 border-t border-zinc-800">
+                    <SheetClose asChild>
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center gap-2 text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                      >
+                        <CiUser className="h-5 w-5" />
+                        {t('nav.dashboard')}
+                      </Link>
+                    </SheetClose>
+                    {isAdmin && (
+                      <SheetClose asChild>
+                        <Link
+                          to="/admin"
+                          className="flex items-center gap-2 text-lg font-medium hover:bg-zinc-900 hover:text-white transition-colors px-4 py-3 rounded-lg -mx-2"
+                        >
+                          {t('nav.admin')}
+                        </Link>
+                      </SheetClose>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 text-lg font-medium text-red-600 hover:bg-zinc-900 transition-colors px-4 py-3 rounded-lg -mx-2 text-left"
+                    >
+                      {t('nav.logout')}
+                    </button>
+                  </div>
+                )}
+
+                {/* Login/Signup Section for Logged-out Users */}
+                {!isLoggedIn && (
+                  <div className="mt-auto pt-4 border-t border-zinc-800 flex flex-col gap-2">
+                    <SheetClose asChild>
+                      <Link to="/login">
+                        <Button variant="ghost" className="w-full text-white hover:bg-white/10 hover:text-white">
+                          {t('nav.login')}
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link to="/signup">
+                        <Button className="w-full bg-white text-black hover:bg-gray-200">
+                          Регистрация
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                  </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>
