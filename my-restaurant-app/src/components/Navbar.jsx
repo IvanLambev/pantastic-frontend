@@ -91,7 +91,7 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900 data-[state=open]:text-white">
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
                   Сладки Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -110,7 +110,7 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900 data-[state=open]:text-white">
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
                   Солени Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -126,7 +126,7 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900 data-[state=open]:text-white">
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
                   Делукс Кутии
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -207,7 +207,7 @@ const Navbar = () => {
             </SheetTrigger>
             <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto">
               <SheetTitle className="text-white mb-6 mt-4">Меню</SheetTitle>
-              <div className="flex flex-col gap-6 mt-8 px-2">
+              <div className="flex flex-col gap-3 mt-4 px-2">
                 <SheetClose asChild>
                   <Link
                     to="/"
@@ -225,9 +225,9 @@ const Navbar = () => {
                   </Link>
                 </SheetClose>
 
-                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                <div className="space-y-2 pt-1 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Сладки Палачинки</h3>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
                         onClick={() => handleCategoryClick('sweet')}
@@ -247,9 +247,9 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                <div className="space-y-2 pt-1 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Солени Палачинки</h3>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
                         onClick={() => handleCategoryClick('savory')}
@@ -262,9 +262,9 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-2 border-t border-zinc-800">
+                <div className="space-y-2 pt-1 border-t border-zinc-800">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Делукс Кутии</h3>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
                         onClick={() => handleCategoryClick('deluxe')}
