@@ -11,10 +11,11 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { User } from 'lucide-react';
+import { FaShoppingCart, FaUserCircle, FaBars } from 'react-icons/fa';
 import { cn } from "@/lib/utils";
 import { t } from '@/utils/translations';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const ListItem = React.forwardRef(({ className, title, children, badge, onClick, ...props }, ref) => {
   return (
@@ -54,108 +55,134 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-black text-white backdrop-blur supports-[backdrop-filter]:bg-black/60">
-      <div className="container flex h-14 items-center">
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <NavigationMenuLink asChild>
-                <Link to="/" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white")}>
-                  {t('nav.home')}
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink asChild>
-                <Link to="/about" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white")}>
-                  {t('nav.about')}
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
+    <nav className="sticky top-0 z-50 w-full border-b bg-black text-white">
+      <div className="container flex h-16 items-center justify-between">
+        {/* Logo Section */}
+        <Link to="/" className="mr-6 flex items-center space-x-2">
+          <img src="/desktop-logo.png" alt="Pantastic" className="hidden md:block h-10 object-contain" />
+          <img src="/mobile-logo.webp" alt="Pantastic" className="block md:hidden h-10 object-contain" />
+        </Link>
 
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className="bg-black text-white hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white">
-                Sweet Pancakes
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <ListItem title="Sweet Pancakes" onClick={() => handleCategoryClick('sweet')}>
-                    Delicious sweet pancakes for every taste.
-                  </ListItem>
-                  <ListItem title="American Pancakes" onClick={() => handleCategoryClick('american')}>
-                    Fluffy American style pancakes.
-                  </ListItem>
-                  <ListItem title="Mini American Pancakes" onClick={() => handleCategoryClick('american')}>
-                    Bite-sized American pancakes.
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-4">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900")}>
+                    {t('nav.home')}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link to="/about" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900")}>
+                    {t('nav.about')}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className="bg-black text-white hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white">
-                Sour Pancakes
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <ListItem title="Sour Pancakes" onClick={() => handleCategoryClick('savory')}>
-                    Savory pancakes for a hearty meal.
-                  </ListItem>
-                  <ListItem title="American Sour Pancakes" badge="Coming Soon">
-                    New savory American pancakes coming soon!
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900">
+                  Sweet Pancakes
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ListItem title="Sweet Pancakes" onClick={() => handleCategoryClick('sweet')}>
+                      Delicious sweet pancakes for every taste.
+                    </ListItem>
+                    <ListItem title="American Pancakes" onClick={() => handleCategoryClick('american')}>
+                      Fluffy American style pancakes.
+                    </ListItem>
+                    <ListItem title="Mini American Pancakes" onClick={() => handleCategoryClick('american')}>
+                      Bite-sized American pancakes.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className="bg-black text-white hover:bg-gray-900 hover:text-white focus:bg-gray-900 focus:text-white">
-                Deluxe Boxes
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <ListItem title="Deluxe Box for One" onClick={() => handleCategoryClick('deluxe')}>
-                    A special treat just for you.
-                  </ListItem>
-                  <ListItem title="Deluxe Box for Two" onClick={() => handleCategoryClick('deluxe')}>
-                    Perfect for sharing with a loved one.
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900">
+                  Sour Pancakes
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ListItem title="Sour Pancakes" onClick={() => handleCategoryClick('savory')}>
+                      Savory pancakes for a hearty meal.
+                    </ListItem>
+                    <ListItem title="American Sour Pancakes" badge="Coming Soon">
+                      New savory American pancakes coming soon!
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <div className="flex items-center space-x-4 text-white">
-            <button className="burger-menu text-white md:hidden">☰</button>
-            <Link to="/cart" className="cart-icon text-white">🛒</Link>
-          </div>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900">
+                  Deluxe Boxes
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ListItem title="Deluxe Box for One" onClick={() => handleCategoryClick('deluxe')}>
+                      A special treat just for you.
+                    </ListItem>
+                    <ListItem title="Deluxe Box for Two" onClick={() => handleCategoryClick('deluxe')}>
+                      Perfect for sharing with a loved one.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
+
+        {/* Right Side Actions */}
+        <div className="flex items-center space-x-4">
+          <Link to="/cart" className="text-white hover:text-gray-300 transition-colors relative">
+            <FaShoppingCart className="h-6 w-6" />
+          </Link>
+
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-white">
-                  <User className="h-6 w-6" />
+                <button className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors outline-none">
+                  <FaUserCircle className="h-7 w-7" />
                   <span className="sr-only">{t('nav.profile')}</span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
-                  <Link to="/user-dashboard">{t('nav.dashboard')}</Link>
+                  <Link to="/user-dashboard" className="cursor-pointer">{t('nav.dashboard')}</Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/admin">{t('nav.admin')}</Link>
+                    <Link to="/admin" className="cursor-pointer">{t('nav.admin')}</Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={handleLogout}>{t('nav.logout')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
+                  {t('nav.logout')}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/login" className={cn(navigationMenuTriggerStyle(), "bg-black text-white hover:bg-gray-900 hover:text-white")}>
-              {t('nav.login')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+                  {t('nav.login')}
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button className="bg-white text-black hover:bg-gray-200">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           )}
+
+          {/* Mobile Menu Button */}
+          <button className="text-white md:hidden hover:text-gray-300 transition-colors">
+            <FaBars className="h-6 w-6" />
+          </button>
         </div>
       </div>
     </nav>
