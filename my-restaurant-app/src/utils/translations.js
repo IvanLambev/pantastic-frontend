@@ -68,7 +68,14 @@ export const translations = {
     extrasAvailable: "Налични екстри",
     customizable: "Персонализируемо",
     removed: "Премахнато",
-    instructions: "Инструкции"
+    instructions: "Инструкции",
+    sortBy: "Сортирай по",
+    default: "По подразбиране",
+    priceLowToHigh: "Цена: ниска към висока",
+    priceHighToLow: "Цена: висока към ниска",
+    mostOrdered: "Най-поръчвани",
+    item: "артикул",
+    items: "артикула"
   },
 
   // Cart

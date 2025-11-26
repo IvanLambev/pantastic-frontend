@@ -61,6 +61,7 @@ const Navbar = () => {
   };
 
   const hasItems = cartItems.length > 0;
+  const totalQuantity = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-black text-white">
@@ -156,7 +157,7 @@ const Navbar = () => {
                 variant="destructive"
                 className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center rounded-full px-1 text-xs font-bold"
               >
-                {cartItems.length}
+                {totalQuantity}
               </Badge>
             </Link>
           )}

@@ -568,9 +568,80 @@ const Food = () => {
           <div className="container mx-auto px-4 py-8 pb-32">
             <div className="flex flex-col lg:flex-row gap-8">
 
+              {/* Filter Sidebar - Desktop Only - LEFT SIDE */}
+              <div className="w-64 shrink-0">
+                <Card className="sticky top-4 p-5">
+                  <div className="space-y-5">
+                    {/* Search */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">{t('menu.search')}</Label>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={t('menu.searchPlaceholder')}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-8 h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Price Range */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">{t('menu.priceRange')}</Label>
+                      <div className="pt-2">
+                        <Slider
+                          min={minPrice}
+                          max={maxPrice}
+                          step={1}
+                          value={priceRange}
+                          onValueChange={setPriceRange}
+                          className="mb-3"
+                        />
+                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>{Math.round(priceRange[0])} €</span>
+                            <span>{Math.round(priceRange[1])} €</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{Math.round(priceRange[0] / 0.51)} лв</span>
+                            <span>{Math.round(priceRange[1] / 0.51)} лв</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Sort By */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">{t('menu.sortBy')}</Label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">{t('menu.default')}</SelectItem>
+                          <SelectItem value="price-low">{t('menu.priceLowToHigh')}</SelectItem>
+                          <SelectItem value="price-high">{t('menu.priceHighToLow')}</SelectItem>
+                          <SelectItem value="most-ordered">{t('menu.mostOrdered')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="pt-2 text-xs text-muted-foreground text-center">
+                      {filteredItems.length} {filteredItems.length === 1 ? t('menu.item') : t('menu.items')}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
               {/* Menu Items Grid - Auto-responsive based on available space */}
               <div className="flex-1">
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(280px,100%),1fr))] gap-6">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(240px,100%),1fr))] gap-6">
                   {filteredItems.map((item) => {
                     const itemId = getItemId(item);
                     const itemName = getItemName(item);
@@ -654,71 +725,6 @@ const Food = () => {
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Filter Sidebar - Desktop Only */}
-              <div className="w-80 shrink-0">
-                <Card className="sticky top-4 p-6">
-                  <div className="space-y-6">
-                    {/* Search */}
-                    <div className="space-y-2">
-                      <Label className="text-base font-semibold">{t('menu.search')}</Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder={t('menu.searchPlaceholder')}
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9"
-                        />
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Price Range */}
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">{t('menu.priceRange')}</Label>
-                      <div className="pt-2">
-                        <Slider
-                          min={minPrice}
-                          max={maxPrice}
-                          step={0.5}
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                          className="mb-4"
-                        />
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>€{priceRange[0].toFixed(2)}</span>
-                          <span>€{priceRange[1].toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Sort By */}
-                    <div className="space-y-2">
-                      <Label className="text-base font-semibold">{t('menu.sortBy')}</Label>
-                      <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="default">{t('menu.default')}</SelectItem>
-                          <SelectItem value="price-low">{t('menu.priceLowToHigh')}</SelectItem>
-                          <SelectItem value="price-high">{t('menu.priceHighToLow')}</SelectItem>
-                          <SelectItem value="most-ordered">{t('menu.mostOrdered')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Results Count */}
-                    <div className="pt-4 text-sm text-muted-foreground text-center">
-                      {filteredItems.length} {filteredItems.length === 1 ? t('menu.item') : t('menu.items')}
-                    </div>
-                  </div>
-                </Card>
               </div>
             </div>
           </div>
