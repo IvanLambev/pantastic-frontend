@@ -1017,7 +1017,7 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl">
           <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
@@ -1043,7 +1043,8 @@ export default function RestaurantSelector({
                 const gmt3 = new Date(utc + 3 * 3600000);
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
                 const currentDay = days[gmt3.getDay()];
-                const hours = restaurant.opening_hours || {};  // Opening hours object
+                // Parse opening hours properly (handles both string and object formats)
+                const hours = parseOpeningHours(restaurant.opening_hours);
                 const todayHours = hours[currentDay];
                 let isOpen = false;
                 let timeText = "Closed";
