@@ -11,7 +11,9 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { FaShoppingCart, FaUserCircle, FaBars } from 'react-icons/fa';
+import { FaBars } from 'react-icons/fa';
+import { IoCartOutline } from "react-icons/io5";
+import { CiUser } from "react-icons/ci";
 import { cn } from "@/lib/utils";
 import { t } from '@/utils/translations';
 import { Badge } from "@/components/ui/badge";
@@ -84,11 +86,11 @@ const Navbar = () => {
 
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900">
-                  Sweet Pancakes
+                  Сладки Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <ListItem title="Sweet Pancakes" onClick={() => handleCategoryClick('sweet')}>
+                    <ListItem title="Сладки Палачинки" onClick={() => handleCategoryClick('sweet')}>
                       Delicious sweet pancakes for every taste.
                     </ListItem>
                     <ListItem title="American Pancakes" onClick={() => handleCategoryClick('american')}>
@@ -103,11 +105,11 @@ const Navbar = () => {
 
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-black text-white hover:bg-zinc-900 hover:text-white focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-zinc-900">
-                  Sour Pancakes
+                  Солени Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <ListItem title="Sour Pancakes" onClick={() => handleCategoryClick('savory')}>
+                    <ListItem title="Солени Палачинки" onClick={() => handleCategoryClick('savory')}>
                       Savory pancakes for a hearty meal.
                     </ListItem>
                     <ListItem title="American Sour Pancakes" badge="Coming Soon">
@@ -139,14 +141,14 @@ const Navbar = () => {
         {/* Right Side Actions */}
         <div className="flex items-center space-x-4">
           <Link to="/cart" className="text-white hover:text-gray-300 transition-colors relative">
-            <FaShoppingCart className="h-6 w-6" />
+            <IoCartOutline className="h-6 w-6" />
           </Link>
 
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors outline-none">
-                  <FaUserCircle className="h-7 w-7" />
+                  <CiUser className="h-7 w-7" />
                   <span className="sr-only">{t('nav.profile')}</span>
                 </button>
               </DropdownMenuTrigger>
