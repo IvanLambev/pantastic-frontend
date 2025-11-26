@@ -527,14 +527,14 @@ const Food = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleItemNavigation(item)}
-                          className="w-full text-xs py-2 h-9"
+                          className="w-full text-xs py-2 h-auto min-h-9 whitespace-normal"
                         >
                           {t('menu.options')}
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(item)}
-                          className="w-full text-xs py-2 h-9"
+                          className="w-full text-xs py-2 h-auto min-h-9 whitespace-normal"
                         >
                           {t('menu.add')}
                         </Button>
@@ -691,14 +691,14 @@ const Food = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleItemNavigation(item)}
-                                className="flex-1"
+                                className="flex-1 h-auto min-h-9 whitespace-normal"
                               >
                                 {t('menu.options')}
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => handleAddToCart(item)}
-                                className="flex-1"
+                                className="flex-1 h-auto min-h-9 whitespace-normal"
                               >
                                 {t('menu.addToCart')}
                               </Button>

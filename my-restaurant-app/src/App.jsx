@@ -81,13 +81,11 @@ function MainLayout() {
       <Outlet />
     </main>
   ) : (
-    <div className="relative min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-
-      <main className="flex-1">
+      <main className={`flex-1 ${location.pathname === '/' ? '' : 'mt-8'}`}>
         <Outlet />
       </main>
-
       <Footer />
     </div>
   )
@@ -121,7 +119,6 @@ export default function App() {
         </Route>
         <Route path="/admin/*" element={<Admin />} />
       </Routes>
-
     </CartProvider>
   )
 }
