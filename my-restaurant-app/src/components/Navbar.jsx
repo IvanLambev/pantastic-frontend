@@ -165,7 +165,7 @@ const Navbar = () => {
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors outline-none">
+                <button className="hidden md:flex items-center gap-2 text-white hover:text-gray-300 transition-colors outline-none">
                   <CiUser className="h-7 w-7" />
                   <span className="sr-only">{t('nav.profile')}</span>
                 </button>
@@ -185,7 +185,7 @@ const Navbar = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Link to="/login">
                 <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
                   {t('nav.login')}
