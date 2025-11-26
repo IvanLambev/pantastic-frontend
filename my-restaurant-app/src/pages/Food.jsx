@@ -44,6 +44,8 @@ const Food = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [items, setItems] = useState([])
   const [priceRange, setPriceRange] = useState([0, 100])
+  const [minPrice, setMinPrice] = useState(0)
+  const [maxPrice, setMaxPrice] = useState(100)
   const [category, setCategory] = useState("sweet")
   const [sortBy, setSortBy] = useState("default")
   const { addToCart, clearCart } = useCart()
@@ -173,6 +175,21 @@ const Food = () => {
       const data = await response.json()
       console.log('Fetched menu items:', data)
       setItems(data)
+
+      // Calculate dynamic price range: 3 EUR below cheapest and 3 EUR above most expensive
+      if (data && data.length > 0) {
+        const prices = data.map(item => {
+          const price = Array.isArray(item) ? Number(item[8]) || 0 : Number(item.price) || 0;
+          return convertBgnToEur(price);
+        });
+        const cheapest = Math.min(...prices);
+        const mostExpensive = Math.max(...prices);
+        const minPriceValue = Math.max(0, cheapest - 3);
+        const maxPriceValue = mostExpensive + 3;
+        setMinPrice(minPriceValue);
+        setMaxPrice(maxPriceValue);
+        setPriceRange([minPriceValue, maxPriceValue]);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch menu items'
       setError(errorMessage)
@@ -444,8 +461,7 @@ const Food = () => {
               style={{ letterSpacing: 1 }}
               onClick={() => setCategory("deluxe")}
             >
-              <span className="hidden lg:inline">PANTASTIC DELUXE BOX</span>
-              <span className="lg:hidden">DELUXE BOX</span>
+              DELUXE BOX
             </Button>
           </div>
         </div>
@@ -550,81 +566,6 @@ const Food = () => {
         <>
           <div className="container mx-auto px-4 py-8 pb-32">
             <div className="flex flex-col lg:flex-row gap-8">
-              <div className="w-full lg:w-64 space-y-8">
-                {/* Filters Section */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t('menu.search')}</Label>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder={t('menu.searchPlaceholder')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>{t('menu.priceRange')}</Label>
-                    <div className="pt-2">
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                        <span>€{priceRange[0]}</span>
-                        <span>€{priceRange[1]}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Label>Sort By</Label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default</SelectItem>
-                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                        <SelectItem value="most-ordered">Most Ordered</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <Label>Categories</Label>
-                    <ToggleGroup type="single" value={category} onValueChange={setCategory} className="flex flex-wrap gap-2">
-                      <ToggleGroupItem value="all" aria-label="Show all items">
-                        All
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="sweet" aria-label="Show sweet items">
-                        Sweet
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="savory" aria-label="Show savory items">
-                        Savory
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="american" aria-label="Show american items">
-                        American
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="promo" aria-label="Show promotional items">
-                        Promo
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-                </div>
-              </div>
 
               {/* Menu Items Grid - Auto-responsive based on available space */}
               <div className="flex-1">
