@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Search, Heart } from "lucide-react"
+import { IoCartOutline } from "react-icons/io5"
 import { LuExpand } from "react-icons/lu"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -632,15 +633,18 @@ const Food = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleItemNavigation(item)}
-                                className="flex-1 h-auto min-h-9 whitespace-normal"
+                                className="h-auto min-h-9 whitespace-normal"
+                                style={{ width: '35%' }}
                               >
                                 {t('menu.options')}
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => handleAddToCart(item)}
-                                className="flex-1 h-auto min-h-9 whitespace-normal"
+                                className="h-auto min-h-9 whitespace-normal flex items-center justify-center gap-2"
+                                style={{ width: '65%' }}
                               >
+                                <IoCartOutline className="h-4 w-4" />
                                 {t('menu.addToCart')}
                               </Button>
                             </div>
@@ -650,6 +654,71 @@ const Food = () => {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Filter Sidebar - Desktop Only */}
+              <div className="w-80 shrink-0">
+                <Card className="sticky top-4 p-6">
+                  <div className="space-y-6">
+                    {/* Search */}
+                    <div className="space-y-2">
+                      <Label className="text-base font-semibold">{t('menu.search')}</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={t('menu.searchPlaceholder')}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Price Range */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">{t('menu.priceRange')}</Label>
+                      <div className="pt-2">
+                        <Slider
+                          min={minPrice}
+                          max={maxPrice}
+                          step={0.5}
+                          value={priceRange}
+                          onValueChange={setPriceRange}
+                          className="mb-4"
+                        />
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>€{priceRange[0].toFixed(2)}</span>
+                          <span>€{priceRange[1].toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Sort By */}
+                    <div className="space-y-2">
+                      <Label className="text-base font-semibold">{t('menu.sortBy')}</Label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">{t('menu.default')}</SelectItem>
+                          <SelectItem value="price-low">{t('menu.priceLowToHigh')}</SelectItem>
+                          <SelectItem value="price-high">{t('menu.priceHighToLow')}</SelectItem>
+                          <SelectItem value="most-ordered">{t('menu.mostOrdered')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="pt-4 text-sm text-muted-foreground text-center">
+                      {filteredItems.length} {filteredItems.length === 1 ? t('menu.item') : t('menu.items')}
+                    </div>
+                  </div>
+                </Card>
               </div>
             </div>
           </div>

@@ -46,7 +46,7 @@ export const translations = {
     subtitle: "Изберете от нашата селекция от вкусни палачинки",
     searchPlaceholder: "Търси палачинки...",
     noResults: "Не са намерени резултати",
-    addToCart: "Добави в количката",
+    addToCart: "Добави",
     viewDetails: "Виж детайли",
     customize: "Персонализирай",
     from: "от",
@@ -131,7 +131,7 @@ export const translations = {
     networkError: "Грешка в мрежата. Моля, проверете връзката си",
     back: "Назад",
     creatingAccount: "Създаване на акаунт...",
-    
+
     // Guest form
     firstName: "Име",
     lastName: "Фамилия",
@@ -142,7 +142,7 @@ export const translations = {
     phoneFormat: "Формат: +359888000000",
     passwordMin: "Минимум 8 символа",
     allFieldsRequired: "Всички полета са задължителни",
-    
+
     // Guest form placeholders and validation
     guest: {
       firstName: "Име",
@@ -151,7 +151,7 @@ export const translations = {
       phone: "Телефон",
       city: "Град",
       firstNamePlaceholder: "Иван",
-      lastNamePlaceholder: "Иванов", 
+      lastNamePlaceholder: "Иванов",
       emailPlaceholder: "name@example.com",
       phonePlaceholder: "+359888000000",
       phoneFormat: "Формат: +359888000000",
@@ -163,7 +163,7 @@ export const translations = {
       invalidPhone: "Телефонът трябва да е във формат: +359888000000",
       guestCheckoutFailed: "Неуспешна поръчка като гост"
     },
-    
+
     // Discount
     discountCode: "Код за отстъпка",
     discountCodeDesc: "Имате промоционален код? Приложете го тук",
@@ -176,13 +176,13 @@ export const translations = {
     loginToApplyDiscount: "Моля, влезте, за да приложите отстъпка",
     invalidDiscountCode: "Невалиден код за отстъпка",
     discountValidationError: "Грешка при проверка на кода за отстъпка",
-    
+
     // Delivery/Pickup address editing
     editDeliveryAddress: "Редактирай адрес за доставка",
     updateDeliveryAddress: "Актуализирайте вашия адрес за доставка",
     enterNewAddress: "Въведете нов адрес",
     saveAddress: "Запази адрес",
-    
+
     // Payment
     paymentMethod: "Начин на плащане",
     paymentMethodDesc: "Изберете как искате да платите за поръчката си",
@@ -191,21 +191,21 @@ export const translations = {
     cash: "В брой при доставка/вземане",
     cashDesc: "Платете в брой когато пристигне поръчката ви",
     available: "Налично",
-    
+
     payment: {
       card: "Кредитна/Дебитна карта",
       cardDesc: "Платете с вашата кредитна или дебитна карта",
       cash: "В брой при доставка/вземане",
       cashDesc: "Платете в брой когато пристигне поръчката ви"
     },
-    
+
     // Delivery info
     deliveryAddress: "Адрес за доставка",
     deliveryTo: "Доставка до този адрес",
     deliveryToAddress: "Доставка до този адрес",
     edit: "Редактирай",
     pickupLocation: "Място за вземане",
-    
+
     // Scheduling
     scheduleDelivery: "Планирай доставка",
     scheduleDesc: "Искате да получите поръчката си по-късно?",
@@ -228,12 +228,12 @@ export const translations = {
     at: "в",
     scheduledDelivery: "Планирана доставка",
     day: "Ден",
-    
+
     // Order timing
     orderTiming: "Време за поръчка",
     orderTimingDesc: "Планирайте поръчката си за определено време (по желание)",
     scheduleForLater: "Планирай за по-късно",
-    
+
     // Order summary
     orderSummary: "Обобщение на поръчката",
     reviewOrder: "Прегледай поръчка",
@@ -241,7 +241,7 @@ export const translations = {
     restaurantClosedMsg: "Ресторантът в момента е затворен",
     nextOpening: "Следващо отваряне",
     processingPayment: "Обработка на плащане...",
-    
+
     // Order confirmation
     confirmOrder: "Потвърди поръчка",
     orderItems: "Артикули от поръчката",
@@ -256,7 +256,7 @@ export const translations = {
     pickupInformation: "Информация за вземане",
     orderPlacedSuccess: "Поръчката е направена успешно!",
     failedToPlaceOrder: "Неуспешно поръчване",
-    
+
     // Errors
     pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите"
   },
@@ -269,7 +269,7 @@ export const translations = {
     estimatedTime: "Очаквано време",
     trackingNumber: "Номер за проследяване",
     paymentStatus: "Статус на плащането",
-    
+
     // Statuses
     pending: "В изчакване",
     confirmed: "Потвърдена",
@@ -278,16 +278,16 @@ export const translations = {
     onTheWay: "В движение",
     delivered: "Доставена",
     cancelled: "Отказана",
-    
+
     // Payment statuses
     paid: "Платено",
     unpaid: "Неплатено",
     refunded: "Възстановено",
-    
+
     // Delivery method
     delivery: "Доставка",
     pickup: "Вземане",
-    
+
     // Steps
     orderPlaced: "Поръчката е направена",
     orderConfirmed: "Поръчката е потвърдена",
@@ -295,7 +295,7 @@ export const translations = {
     readyForPickup: "Готова за вземане",
     outForDelivery: "Излязла за доставка",
     orderDelivered: "Поръчката е доставена",
-    
+
     // Messages
     orderReceived: "Вашата поръчка е получена",
     restaurantConfirmed: "Ресторантът потвърди вашата поръчка",
@@ -303,7 +303,7 @@ export const translations = {
     readyMessage: "Вашата поръчка е готова за вземане",
     driverOnWay: "Шофьорът е на път към вас",
     enjoyMeal: "Насладете се на храната си!",
-    
+
     loading: "Зареждане на информация за поръчката...",
     error: "Грешка при зареждане на поръчката",
     notFound: "Поръчката не е намерена",
@@ -317,35 +317,35 @@ export const translations = {
     pickupDesc: "Вземете поръчката си от ресторанта",
     delivery: "Доставка",
     deliveryDesc: "Доставка до вашата врата",
-    
+
     whereLocated: "Къде се намирате?",
     whereDeliver: "Къде да доставим?",
     searchAddress: "Търсете адрес или кликнете на картата, за да изберете местоположението си",
     useCurrentLocation: "Използвай текущото ми местоположение",
-    
+
     selectCity: "Изберете град",
     selectRestaurant: "Изберете ресторант в",
     changeCity: "Промени град",
     backToAddress: "Обратно към адрес",
-    
+
     open: "Отворено",
     closed: "Затворено",
     opensAt: "Отваря в",
     closesAt: "Затваря в",
-    
+
     distanceWarning: "Предупреждение за разстояние",
     distanceMessage: "Най-близкият работещ ресторант е на {distance} км от вашето местоположение.",
     distanceWarningMessage: "Най-близкият работещ ресторант \"{name}\" е на {distance} км от вашето местоположение. Поради разстоянието, доставката може да отнеме повече време и таксите може да бъдат по-високи от обичайното. Искате ли да продължите?",
     distanceQuestion: "Поради разстоянието, таксите за доставка може да бъдат по-високи от обичайното. Искате ли да продължите с този ресторант?",
     yesSelect: "Да, изберете този ресторант",
     tryDifferent: "Опитайте друго местоположение",
-    
+
     noRestaurantsOpen: "В момента няма отворени ресторанти",
     noRestaurantsOpenDesc: "Няма отворени ресторанти за поръчка в момента, но можете да разгледате менюто на най-близкия ресторант.",
     nearestRestaurant: "Най-близък ресторант",
     browseMenu: "Разгледай менюто",
     away: "разстояние",
-    
+
     or: "Или",
     manuallySelect: "Избери ръчно ресторант",
     mapHint: "Използвайте два пръста за движение на картата"
@@ -484,30 +484,30 @@ export const translations = {
     title: "За Пантастик",
     subtitle: "Предоставяне на лукса на избор, ежедневно. В Pantastic направихме революция в изкуството на правене на палачинки, предоставяйки ви перфектна комбинация от традиционни вкусове и модерни иновации.",
     deliciousPancakes: "Вкусни пантастични палачинки",
-    
+
     missionTitle: "Нашата мисия",
     missionSubtitle: "Да направим радостта достъпна",
     missionDesc: "Да донесем вкусни, висококачествени палачинки на всеки, правейки всеки ден малко по-специален с нашите уникални вкусове и комбинации.",
-    
+
     visionTitle: "Нашата визия",
     visionSubtitle: "Водеща иновация",
     visionDesc: "Да направи революция в индустрията за палачинки чрез иновативни рецепти, устойчиви практики и изключително обслужване на клиентите.",
-    
+
     valuesTitle: "Нашите ценности",
     valuesSubtitle: "Качество и грижа",
     valuesDesc: "Вярваме в използването на първокласни съставки, поддържането на най-високите стандарти за качество и отношението към всеки клиент като към семейство.",
-    
+
     journeyTitle: "Нашето пътуване",
     journeySubtitle: "От проста идея до палачинкова революция",
     journey2020: "Започва като малък местен магазин за палачинки с визия да революционизира закуската.",
     journey2021: "Открихме три нови места и представихме нашите характерни рецепти.",
     journey2022: "Стартирахме нашата програма за екологични опаковки и устойчиви източници.",
     journey2023: "Представихме нашето ново мобилно приложение и програма за награди, за да подобрим изживяването на клиентите.",
-    
+
     kitchenTitle: "Нашата кухня",
     kitchenSubtitle: "Качествени съставки",
     kitchenDesc: "Ние доставяме само най-добрите съставки, за да гарантираме, че всяка палачинка отговаря на нашите високи стандарти за съвършенство.",
-    
+
     teamTitle: "Нашият екип",
     teamSubtitle: "Експертен екип",
     teamDesc: "Нашите квалифицирани готвачи и всеотдаен персонал работят заедно, за да създадат перфектното изживяване при хранене."
@@ -667,7 +667,7 @@ export const translations = {
 export const t = (key, params = {}) => {
   const keys = key.split('.');
   let value = translations;
-  
+
   for (const k of keys) {
     if (value && typeof value === 'object') {
       value = value[k];
@@ -675,16 +675,16 @@ export const t = (key, params = {}) => {
       return key; // Return key if translation not found
     }
   }
-  
+
   let result = value || key;
-  
+
   // Replace parameters if any
   if (typeof result === 'string' && Object.keys(params).length > 0) {
     Object.keys(params).forEach(param => {
       result = result.replace(`{${param}}`, params[param]);
     });
   }
-  
+
   return result;
 };
 
