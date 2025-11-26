@@ -437,6 +437,33 @@ export default function RestaurantSelector({
     return R * c;
   }
 
+  // Helper function to parse opening hours from string format
+  function parseOpeningHours(openingHoursData) {
+    if (!openingHoursData) return {};
+
+    // If it's already an object, return it
+    if (typeof openingHoursData === 'object' && !Array.isArray(openingHoursData)) {
+      return openingHoursData;
+    }
+
+    // If it's a string, parse it (handles Python dict format like "{'Friday': '10:00-03:00'}")
+    if (typeof openingHoursData === 'string') {
+      try {
+        // Replace single quotes with double quotes for valid JSON
+        const jsonString = openingHoursData
+          .replace(/'/g, '"')
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim();
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error("Error parsing opening hours string:", error, openingHoursData);
+        return {};
+      }
+    }
+
+    return {};
+  }
+
   // Check if restaurant is currently open
   function isRestaurantOpen(restaurant) {
     // Get current time in GMT+3
@@ -445,8 +472,12 @@ export default function RestaurantSelector({
     const gmt3 = new Date(utc + 3 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const currentDay = days[gmt3.getDay()];
-    const hours = restaurant.opening_hours || {};  // Working hours object
+
+    // Parse opening hours (handles both object and string formats)
+    const hours = parseOpeningHours(restaurant.opening_hours);
     const todayHours = hours[currentDay];
+
+    console.log(`[isRestaurantOpen] Restaurant: ${restaurant.name}, Day: ${currentDay}, Hours: ${todayHours}`);
 
     if (!todayHours) return false;
 
@@ -481,15 +512,18 @@ export default function RestaurantSelector({
     // First, try to find CLOSEST open restaurant
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
 
+    console.log(`[findClosestRestaurant] Found ${openRestaurants.length} open restaurants out of ${restaurants.length} total`);
+
     // If we have open restaurants, find the CLOSEST one by distance
     if (openRestaurants.length > 0) {
       let minDist = Infinity;
       let closest = null;
-      
+
       for (const r of openRestaurants) {
-        const rLat = r.latitude;
-        const rLng = r.longitude;
-        if (typeof rLat === "number" && typeof rLng === "number") {
+        // Parse coordinates as numbers (API might return strings)
+        const rLat = parseFloat(r.latitude);
+        const rLng = parseFloat(r.longitude);
+        if (!isNaN(rLat) && !isNaN(rLng)) {
           const dist = getDistance(lat, lng, rLat, rLng);
           if (dist < minDist) {
             minDist = dist;
@@ -516,11 +550,12 @@ export default function RestaurantSelector({
     // No open restaurants found - Find the CLOSEST restaurant (regardless of status) for menu browsing
     let minDist = Infinity;
     let closest = null;
-    
+
     for (const r of restaurants) {
-      const rLat = r.latitude;
-      const rLng = r.longitude;
-      if (typeof rLat === "number" && typeof rLng === "number") {
+      // Parse coordinates as numbers (API might return strings)
+      const rLat = parseFloat(r.latitude);
+      const rLng = parseFloat(r.longitude);
+      if (!isNaN(rLat) && !isNaN(rLng)) {
         const dist = getDistance(lat, lng, rLat, rLng);
         if (dist < minDist) {
           minDist = dist;
@@ -555,7 +590,8 @@ export default function RestaurantSelector({
       const dayName = days[checkDate.getDay()];
 
       for (const restaurant of restaurants) {
-        const hours = restaurant.opening_hours || {};
+        // Parse opening hours using the helper function
+        const hours = parseOpeningHours(restaurant.opening_hours);
         const dayHours = hours[dayName];
 
         if (dayHours) {
@@ -815,13 +851,13 @@ export default function RestaurantSelector({
 
       {/* Address Input Modal */}
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto sm:overflow-visible overflow-x-hidden">
-          <DialogHeader className="p-4 sm:p-8 pb-2 sm:pb-4">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 flex-shrink-0">
             <DialogTitle className="text-lg sm:text-2xl md:text-3xl font-bold">
               {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 sm:space-y-6 px-4 sm:px-6 md:px-8 pb-4 sm:pb-8 w-full max-w-full overflow-x-hidden">
+          <div className="space-y-3 sm:space-y-6 px-4 sm:px-6 md:px-8 pb-4 sm:pb-8 w-full max-w-full overflow-y-auto flex-1">
             {/* Google Maps Container - Always Visible */}
             <div className="w-full max-w-full overflow-hidden">
               <p className="text-xs sm:text-base text-gray-600 text-center font-medium mb-2 sm:mb-4">
