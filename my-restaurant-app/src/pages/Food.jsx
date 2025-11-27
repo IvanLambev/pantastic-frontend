@@ -100,9 +100,9 @@ const Food = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const isAuthenticated = Boolean(user.access_token)
-      setCanFavorite(isAuthenticated)
-      if (!user.customer_id || !isAuthenticated) return;
+      const hasCustomer = Boolean(user.customer_id);
+      setCanFavorite(hasCustomer);
+      if (!hasCustomer) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         credentials: 'include', // Send HttpOnly cookies
         headers: {
@@ -252,7 +252,10 @@ const Food = () => {
   const handleToggleFavorite = async (item) => {
     const itemId = getItemId(item);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (!user.access_token) return;
+    if (!user.customer_id) {
+      toast.info(t('menu.loginToFavorite') || 'Влезте, за да добавите любими.');
+      return;
+    }
     if (!isItemFavorite(itemId)) {
       const restaurantId = Array.isArray(selectedRestaurant)
         ? selectedRestaurant[0]
