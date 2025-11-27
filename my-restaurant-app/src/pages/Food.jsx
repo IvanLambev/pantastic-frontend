@@ -519,20 +519,21 @@ const Food = () => {
                         ))}
                       </div>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleFavorite(item);
                         }}
-                        className="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors"
+                        className="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors h-auto w-auto"
                         aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
                           className={`h-3.5 w-3.5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                           fill={isItemFavorite(itemId) ? 'red' : 'none'}
                         />
-                      </button>
+                      </Button>
                     </div>
 
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
@@ -675,20 +676,21 @@ const Food = () => {
                             ))}
                           </div>
 
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleFavorite(item);
                             }}
-                            className="absolute top-3 right-3 z-20 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors"
+                            className="absolute top-3 right-3 z-20 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors h-auto w-auto"
                             aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                           >
                             <Heart
                               className={`h-5 w-5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                               fill={isItemFavorite(itemId) ? 'red' : 'none'}
                             />
-                          </button>
+                          </Button>
 
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">

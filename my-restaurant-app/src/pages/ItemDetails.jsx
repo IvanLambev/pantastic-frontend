@@ -458,17 +458,18 @@ export default function ItemDetails() {
           </div>
 
           {isLoggedIn && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleToggleFavorite}
-              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
                 className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -688,17 +689,18 @@ export default function ItemDetails() {
         <div className="flex items-start justify-between">
           <h1 className="text-2xl font-bold flex-1">{item.name}</h1>
           {isLoggedIn && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleToggleFavorite}
-              className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow"
+              className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
                 className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
-            </button>
+            </Button>
           )}
         </div>
 
