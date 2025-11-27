@@ -53,6 +53,7 @@ const Food = () => {
   const { addToCart, clearCart } = useCart()
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
+  const [canFavorite, setCanFavorite] = useState(false)
 
   // Fetch all restaurants and auto-select with fallback logic
   useEffect(() => {
@@ -99,7 +100,9 @@ const Food = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user.customer_id) return;
+      const isAuthenticated = Boolean(user.access_token)
+      setCanFavorite(isAuthenticated)
+      if (!user.customer_id || !isAuthenticated) return;
       const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
         credentials: 'include', // Send HttpOnly cookies
         headers: {
@@ -500,7 +503,7 @@ const Food = () => {
                         className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                       />
                       {/* Hover overlay with expand icon */}
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
                         <LuExpand className="h-6 w-6 text-white" />
                       </div>
 
@@ -517,23 +520,25 @@ const Food = () => {
                         ))}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleFavorite(item);
-                        }}
-                        className={cn(
-                          buttonVariants({ variant: "ghost", size: "icon" }),
-                          "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
-                        )}
-                        aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <Heart
-                          className={`h-3.5 w-3.5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                          fill={isItemFavorite(itemId) ? 'red' : 'none'}
-                        />
-                      </button>
+                      {canFavorite && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFavorite(item);
+                          }}
+                          className={cn(
+                            buttonVariants({ variant: "ghost", size: "icon" }),
+                            "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
+                          )}
+                          aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          <Heart
+                            className={`h-3.5 w-3.5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                            fill={isItemFavorite(itemId) ? 'red' : 'none'}
+                          />
+                        </button>
+                      )}
                     </div>
 
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
@@ -659,7 +664,7 @@ const Food = () => {
                             className="w-full h-full object-cover transition-all duration-300 group-hover:blur-sm"
                           />
                           {/* Hover overlay with expand icon */}
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
                             <LuExpand className="h-10 w-10 text-white" />
                           </div>
 
@@ -676,23 +681,25 @@ const Food = () => {
                             ))}
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleFavorite(item);
-                            }}
-                            className={cn(
-                              buttonVariants({ variant: "ghost", size: "icon" }),
-                              "absolute top-3 right-3 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-lg transition-colors p-2 pointer-events-auto"
-                            )}
-                            aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
-                          >
-                            <Heart
-                              className={`h-5 w-5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                              fill={isItemFavorite(itemId) ? 'red' : 'none'}
-                            />
-                          </button>
+                          {canFavorite && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavorite(item);
+                              }}
+                              className={cn(
+                                buttonVariants({ variant: "ghost", size: "icon" }),
+                                "absolute top-3 right-3 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-lg transition-colors p-2 pointer-events-auto"
+                              )}
+                              aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              <Heart
+                                className={`h-5 w-5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                                fill={isItemFavorite(itemId) ? 'red' : 'none'}
+                              />
+                            </button>
+                          )}
 
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
