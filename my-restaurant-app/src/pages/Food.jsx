@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils"
 
 const Food = () => {
   const navigate = useNavigate()
+  const favouriteItemsUrl = `${API_URL}/user/favouriteitems`
   const [showRestaurantModal, setShowRestaurantModal] = useState(false)
   const [selectedRestaurant, setSelectedRestaurant] = useState(null)
   const [restaurants, setRestaurants] = useState([]) // All available restaurants
@@ -100,7 +101,7 @@ const Food = () => {
     const fetchFavorites = async () => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (!user.customer_id) return;
-      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+      const res = await fetchWithAuth(favouriteItemsUrl, {
         credentials: 'include', // Send HttpOnly cookies
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ const Food = () => {
     return () => {
       window.removeEventListener('category-change', handleStorageChange);
     };
-  }, []);
+  }, [favouriteItemsUrl]);
 
   const handleChangeSelection = async () => {
     // Clear the cart when changing restaurants
@@ -240,51 +241,75 @@ const Food = () => {
 
 
 
-  const isItemFavorite = (itemId) => favoriteItems.some(f => f.item_id === itemId);
+  const isItemFavorite = (itemId) => {
+    if (!itemId) return false;
+    return favoriteItems.some(f => f?.item_id === itemId);
+  };
   const getFavoriteId = (itemId) => {
-    const fav = favoriteItems.find(f => f.item_id === itemId);
-    return fav ? (fav.id || fav.favourite_id || fav._id) : null;
+    const fav = favoriteItems.find(f => f?.item_id === itemId);
+    if (!fav) return null;
+    return fav.favourite_id || fav.favorite_id || fav.id || fav._id || null;
   };
 
   const handleToggleFavorite = async (item) => {
     const itemId = getItemId(item);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user.access_token) return;
-    if (!isItemFavorite(itemId)) {
-      // Get restaurant_id from selectedRestaurant
-      const restaurantId = Array.isArray(selectedRestaurant)
-        ? selectedRestaurant[0]
-        : selectedRestaurant?.restaurant_id;
+    const restaurantId = Array.isArray(selectedRestaurant)
+      ? selectedRestaurant?.[0]
+      : selectedRestaurant?.restaurant_id;
 
-      // Add to favorites
-      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
-        method: 'POST',
-        credentials: 'include', // Send HttpOnly cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          item_id: itemId,
-          restaurant_id: restaurantId  // Include restaurant_id
-        }),
-      });
-      if (res.ok) {
+    if (!restaurantId) {
+      toast.error(t('menu.restaurantRequired') || 'Моля, изберете ресторант за да добавите любими.');
+      return;
+    }
+
+    try {
+      if (!isItemFavorite(itemId)) {
+        const res = await fetchWithAuth(favouriteItemsUrl, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            restaurant_id: restaurantId,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to add favourite');
+        }
+
         const data = await res.json();
-        setFavoriteItems([...favoriteItems, data]);
+        setFavoriteItems((prev) => [...prev, data]);
+        toast.success(t('menu.addedToFavorites') || 'Добавено към любимите.');
+      } else {
+        const favId = getFavoriteId(itemId);
+        if (!favId) {
+          console.warn('Favorite id missing for item', itemId);
+          return;
+        }
+
+        const res = await fetchWithAuth(`${favouriteItemsUrl}/${favId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to remove favourite');
+        }
+
+        setFavoriteItems((prev) => prev.filter((f) => f?.favourite_id !== favId));
+        toast.info(t('menu.removedFromFavorites') || 'Премахнато от любимите.');
       }
-    } else {
-      // Remove from favorites
-      const favId = getFavoriteId(itemId);
-      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems/${favId || itemId}`, {
-        method: 'DELETE',
-        credentials: 'include', // Send HttpOnly cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (res.ok) {
-        setFavoriteItems(favoriteItems.filter(f => f.item_id !== itemId));
-      }
+    } catch (error) {
+      console.error('Favourite toggle failed', error);
+      toast.error(t('menu.favoriteError') || 'Неуспешно обновяване на любими.');
     }
   };
 
