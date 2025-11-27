@@ -194,11 +194,11 @@ export default function UserDashboard() {
 
   // Helper function to get restaurant by ID
   const getRestaurantById = (restaurantId) => {
-    const restaurant = restaurants.find(r => 
+    const restaurant = restaurants.find(r =>
       (r.restaurant_id || r[0]) === restaurantId
     );
     if (!restaurant) return null;
-    
+
     // Normalize restaurant data (handle both array and object formats)
     if (Array.isArray(restaurant)) {
       return {
@@ -241,7 +241,7 @@ export default function UserDashboard() {
         body: JSON.stringify({ email: userInfo.email }),
       });
       console.log("Delete account response:", response);
-      console.log("uzera",JSON.stringify({ email: userInfo.email }));
+      console.log("uzera", JSON.stringify({ email: userInfo.email }));
 
       if (!response.ok) {
         throw new Error("Failed to delete account");
@@ -362,8 +362,8 @@ export default function UserDashboard() {
                                 order.status === "Delivered"
                                   ? "default"
                                   : order.status === "Processing"
-                                  ? "secondary"
-                                  : "outline"
+                                    ? "secondary"
+                                    : "outline"
                               }
                             >
                               {translateStatus(order.status)}
@@ -412,7 +412,7 @@ export default function UserDashboard() {
                                   <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                                   <div>
                                     <p className="font-medium">{t('dashboard.deliveryAddress')}</p>
-                                    <p 
+                                    <p
                                       className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
                                       onClick={() => openInMaps(order.address)}
                                     >
@@ -428,7 +428,7 @@ export default function UserDashboard() {
                                     {(() => {
                                       const restaurant = getRestaurantById(order.restaurant_id);
                                       return restaurant ? (
-                                        <p 
+                                        <p
                                           className="text-sm hover:text-blue-600 hover:underline cursor-pointer"
                                           onClick={() => openInMaps(restaurant.address, restaurant.city)}
                                         >
@@ -471,8 +471,8 @@ export default function UserDashboard() {
                                 <div>
                                   <p className="font-medium">{t('cart.total')}</p>
                                   <p className="text-sm font-medium">
-                                    {order.total_price && !isNaN(Number(order.total_price)) 
-                                      ? formatDualCurrencyCompact(Number(order.total_price)) 
+                                    {order.total_price && !isNaN(Number(order.total_price))
+                                      ? formatDualCurrencyCompact(Number(order.total_price))
                                       : '0.00 € (0.00 лв)'}
                                   </p>
                                 </div>
@@ -526,7 +526,7 @@ export default function UserDashboard() {
                         <div className="text-sm text-muted-foreground">{fav.description || ''}</div>
                         {fav.addons && Object.keys(fav.addons).length > 0 && (
                           <div className="text-xs text-gray-500 mt-1">
-                            {t('cart.addons')}: {Object.entries(fav.addons).map(([name, price]) => 
+                            {t('cart.addons')}: {Object.entries(fav.addons).map(([name, price]) =>
                               `${name} (+${formatDualCurrencyCompact(price)})`
                             ).join(', ')}
                           </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
 import { selectRestaurantWithFallback } from "@/utils/ipGeolocation"
+import { cn } from "@/lib/utils"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -519,21 +520,23 @@ const Food = () => {
                         ))}
                       </div>
 
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleToggleFavorite(item);
                         }}
-                        className="absolute top-2 right-2 z-20 bg-white/80 rounded-full p-1.5 hover:bg-white shadow transition-colors h-auto w-auto"
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "icon" }),
+                          "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
+                        )}
                         aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Heart
                           className={`h-3.5 w-3.5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                           fill={isItemFavorite(itemId) ? 'red' : 'none'}
                         />
-                      </Button>
+                      </button>
                     </div>
 
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
@@ -676,21 +679,23 @@ const Food = () => {
                             ))}
                           </div>
 
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleToggleFavorite(item);
                             }}
-                            className="absolute top-3 right-3 z-20 bg-white/80 rounded-full p-2 hover:bg-white shadow transition-colors h-auto w-auto"
+                            className={cn(
+                              buttonVariants({ variant: "ghost", size: "icon" }),
+                              "absolute top-3 right-3 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-lg transition-colors p-2 pointer-events-auto"
+                            )}
                             aria-label={isItemFavorite(itemId) ? 'Remove from favorites' : 'Add to favorites'}
                           >
                             <Heart
                               className={`h-5 w-5 ${isItemFavorite(itemId) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                               fill={isItemFavorite(itemId) ? 'red' : 'none'}
                             />
-                          </Button>
+                          </button>
 
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
