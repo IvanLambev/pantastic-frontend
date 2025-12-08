@@ -598,29 +598,31 @@ const Food = () => {
                     <Separator />
 
                     {/* Price Range */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">{t('menu.priceRange')}</Label>
-                      <div className="pt-2">
-                        <Slider
-                          min={minPrice}
-                          max={maxPrice}
-                          step={1}
-                          value={priceRange}
-                          onValueChange={setPriceRange}
-                          className="mb-3"
-                        />
-                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                          <div className="flex justify-between">
-                            <span>{Math.round(priceRange[0])} €</span>
-                            <span>{Math.round(priceRange[1])} €</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{Math.round(priceRange[0] / 0.51)} лв</span>
-                            <span>{Math.round(priceRange[1] / 0.51)} лв</span>
+                        {/*
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">{t('menu.priceRange')}</Label>
+                          <div className="pt-2">
+                            <Slider
+                              min={minPrice}
+                              max={maxPrice}
+                              step={1}
+                              value={priceRange}
+                              onValueChange={setPriceRange}
+                              className="mb-3"
+                            />
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                              <div className="flex justify-between">
+                                <span>{Math.round(priceRange[0])} €</span>
+                                <span>{Math.round(priceRange[1])} €</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{Math.round(priceRange[0] / 0.51)} лв</span>
+                                <span>{Math.round(priceRange[1] / 0.51)} лв</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                        */}
 
                     <Separator />
 
