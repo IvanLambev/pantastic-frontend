@@ -173,17 +173,22 @@ const Food = () => {
   const fetchItems = async (restaurantId) => {
     setLoading(true)
     try {
-      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`)
+      const response = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
+        credentials: 'include', // Send HttpOnly cookies for personalization
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch menu items')
       }
       const data = await response.json()
       console.log('Fetched menu items:', data)
-      setItems(data)
+      
+      // Handle both array format (non-personalized) and object format (personalized)
+      const itemsArray = Array.isArray(data) ? data : (data.items || [])
+      setItems(itemsArray)
 
       // Calculate dynamic price range: 3 EUR below cheapest and 3 EUR above most expensive
-      if (data && data.length > 0) {
-        const prices = data.map(item => {
+      if (itemsArray && itemsArray.length > 0) {
+        const prices = itemsArray.map(item => {
           const price = Array.isArray(item) ? Number(item[8]) || 0 : Number(item.price) || 0;
           return convertBgnToEur(price);
         });
@@ -240,6 +245,7 @@ const Food = () => {
   const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
   const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
   const getItemLabels = (item) => Array.isArray(item) ? [] : (item.labels || []);
+  const getDynamicLabels = (item) => Array.isArray(item) ? [] : (item.dynamic_labels || []);
 
 
 
@@ -363,7 +369,13 @@ const Food = () => {
 
     return matchesSearch && matchesPrice && matchesCategory;
   }).sort((a, b) => {
-    // Sort favorites first
+    // Sort items with dynamic labels first (personalized recommendations)
+    const aDynamic = getDynamicLabels(a).length > 0;
+    const bDynamic = getDynamicLabels(b).length > 0;
+    if (aDynamic && !bDynamic) return -1;
+    if (!aDynamic && bDynamic) return 1;
+
+    // Then sort favorites
     const aFav = isItemFavorite(getItemId(a));
     const bFav = isItemFavorite(getItemId(b));
     if (aFav && !bFav) return -1;
@@ -497,8 +509,22 @@ const Food = () => {
                 const itemPrice = getItemPrice(item);
                 const itemImage = getItemImage(item);
 
+                const dynamicLabels = getDynamicLabels(item);
+                const hasDynamicLabels = dynamicLabels.length > 0;
+
                 return (
-                  <Card key={itemId} className="flex flex-col overflow-hidden p-0">
+                  <Card key={itemId} className={cn(
+                    "flex flex-col overflow-hidden p-0 relative",
+                    hasDynamicLabels && "border-2 border-dashed border-gray-400"
+                  )}>
+                    {/* Dynamic Label Badge on Top */}
+                    {hasDynamicLabels && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-30 bg-white px-2 py-0.5 rounded-md border border-gray-400">
+                        <span className="text-xs font-semibold text-gray-700">
+                          {dynamicLabels[0]}
+                        </span>
+                      </div>
+                    )}
                     <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
@@ -659,9 +685,22 @@ const Food = () => {
                     const itemPrice = getItemPrice(item);
                     const itemImage = getItemImage(item);
                     const itemDescription = getItemDescription(item);
+                    const dynamicLabels = getDynamicLabels(item);
+                    const hasDynamicLabels = dynamicLabels.length > 0;
 
                     return (
-                      <Card key={itemId} className="flex flex-col h-full overflow-hidden p-0">
+                      <Card key={itemId} className={cn(
+                        "flex flex-col h-full overflow-hidden p-0 relative",
+                        hasDynamicLabels && "border-2 border-dashed border-gray-400"
+                      )}>
+                        {/* Dynamic Label Badge on Top */}
+                        {hasDynamicLabels && (
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 bg-white px-3 py-1 rounded-md border border-gray-400">
+                            <span className="text-sm font-semibold text-gray-700">
+                              {dynamicLabels[0]}
+                            </span>
+                          </div>
+                        )}
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                           <img
                             src={itemImage || '/elementor-placeholder-image.webp'}
