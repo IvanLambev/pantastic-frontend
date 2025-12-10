@@ -612,7 +612,7 @@ const Food = () => {
 
                 // Regular card without dynamic labels
                 return (
-                  <Card key={itemId} className="flex flex-col overflow-hidden p-0">
+                  <Card key={itemId} className="flex flex-col overflow-hidden p-0 mt-2">
                     <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
@@ -772,7 +772,6 @@ const Food = () => {
                     const itemName = getItemName(item);
                     const itemPrice = getItemPrice(item);
                     const itemImage = getItemImage(item);
-                    const itemDescription = getItemDescription(item);
                     const dynamicLabels = getDynamicLabels(item);
                     const hasDynamicLabels = dynamicLabels.length > 0;
 
@@ -847,8 +846,7 @@ const Food = () => {
                               </div>
                               
                               <CardContent className="flex flex-col flex-grow p-4">
-                                <h3 className="font-semibold mb-2 text-lg line-clamp-1">{itemName}</h3>
-                                <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
+                                <h3 className="font-semibold mb-2 text-lg line-clamp-2">{itemName}</h3>
 
                                 <div className="flex flex-col gap-3 mt-auto">
                                   <div className="flex justify-between items-center">
@@ -884,7 +882,7 @@ const Food = () => {
 
                     // Regular card without dynamic labels
                     return (
-                      <Card key={itemId} className="flex flex-col h-full overflow-hidden p-0">
+                      <Card key={itemId} className="flex flex-col h-full overflow-hidden p-0 mt-3">
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                           <img
                             src={itemImage || '/elementor-placeholder-image.webp'}
@@ -931,8 +929,7 @@ const Food = () => {
 
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
-                          <h3 className="font-semibold mb-2 text-lg line-clamp-1">{itemName}</h3>
-                          <p className="text-sm text-muted-foreground mb-3 flex-grow line-clamp-2">{itemDescription}</p>
+                          <h3 className="font-semibold mb-2 text-lg line-clamp-2">{itemName}</h3>
 
                           <div className="flex flex-col gap-3 mt-auto">
                             <div className="flex justify-between items-center">
