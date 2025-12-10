@@ -513,18 +513,26 @@ const Food = () => {
                 const hasDynamicLabels = dynamicLabels.length > 0;
 
                 return (
-                  <Card key={itemId} className={cn(
-                    "flex flex-col overflow-hidden p-0 relative",
-                    hasDynamicLabels && "border-2 border-dashed border-gray-400"
+                  <div key={itemId} className={cn(
+                    "relative",
+                    hasDynamicLabels && "p-1"
                   )}>
-                    {/* Dynamic Label Badge on Top */}
+                    {/* Dynamic Label Text on Top */}
                     {hasDynamicLabels && (
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-30 bg-white px-2 py-0.5 rounded-md border border-gray-400">
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 z-30 bg-background px-1">
                         <span className="text-xs font-semibold text-gray-700">
                           {dynamicLabels[0]}
                         </span>
                       </div>
                     )}
+                    <Card className={cn(
+                      "flex flex-col overflow-hidden p-0 relative transition-colors",
+                      hasDynamicLabels && "border-2 border-dashed hover:border-orange-500",
+                      hasDynamicLabels ? "[border-spacing:4px]" : ""
+                    )}
+                    style={hasDynamicLabels ? { borderColor: 'rgb(156 163 175)', strokeDasharray: '8 6' } : {}}
+                    onMouseEnter={(e) => hasDynamicLabels && (e.currentTarget.style.borderColor = 'rgb(249 115 22)')}
+                    onMouseLeave={(e) => hasDynamicLabels && (e.currentTarget.style.borderColor = 'rgb(156 163 175)')}>
                     <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                       <img
                         src={itemImage || '/elementor-placeholder-image.webp'}
@@ -593,6 +601,7 @@ const Food = () => {
                       </div>
                     </CardContent>
                   </Card>
+                  </div>
                 );
               })}
             </div>
@@ -689,18 +698,25 @@ const Food = () => {
                     const hasDynamicLabels = dynamicLabels.length > 0;
 
                     return (
-                      <Card key={itemId} className={cn(
-                        "flex flex-col h-full overflow-hidden p-0 relative",
-                        hasDynamicLabels && "border-2 border-dashed border-gray-400"
+                      <div key={itemId} className={cn(
+                        "relative h-full",
+                        hasDynamicLabels && "p-1"
                       )}>
-                        {/* Dynamic Label Badge on Top */}
+                        {/* Dynamic Label Text on Top */}
                         {hasDynamicLabels && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 bg-white px-3 py-1 rounded-md border border-gray-400">
+                          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 z-30 bg-background px-1.5">
                             <span className="text-sm font-semibold text-gray-700">
                               {dynamicLabels[0]}
                             </span>
                           </div>
                         )}
+                        <Card className={cn(
+                          "flex flex-col h-full overflow-hidden p-0 relative transition-colors",
+                          hasDynamicLabels && "border-2 border-dashed hover:border-orange-500"
+                        )}
+                        style={hasDynamicLabels ? { borderColor: 'rgb(156 163 175)', strokeDasharray: '8 6' } : {}}
+                        onMouseEnter={(e) => hasDynamicLabels && (e.currentTarget.style.borderColor = 'rgb(249 115 22)')}
+                        onMouseLeave={(e) => hasDynamicLabels && (e.currentTarget.style.borderColor = 'rgb(156 163 175)')}>
                         <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
                           <img
                             src={itemImage || '/elementor-placeholder-image.webp'}
@@ -777,6 +793,7 @@ const Food = () => {
                           </div>
                         </CardContent>
                       </Card>
+                      </div>
                     );
                   })}
                 </div>
