@@ -516,17 +516,25 @@ const Food = () => {
                   return (
                     <div key={itemId} className="relative">
                       {/* Dynamic Label Text on Top */}
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-30 bg-background px-1">
-                        <span className="text-xs font-semibold text-gray-700">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 bg-background px-1">
+                        <span className="text-xs font-semibold text-gray-700 transition-colors group-hover:text-orange-500">
                           {dynamicLabels[0]}
                         </span>
                       </div>
                       {/* Dashed Border Wrapper */}
                       <div 
-                        className="border-2 border-dashed rounded-lg p-1 transition-colors"
+                        className="border-2 border-dashed rounded-lg p-1 transition-colors group mt-2"
                         style={{ borderColor: 'rgb(156 163 175)' }}
-                        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgb(249 115 22)'}
-                        onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgb(156 163 175)'}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'rgb(249 115 22)';
+                          const label = e.currentTarget.parentElement?.querySelector('span');
+                          if (label) label.style.color = 'rgb(249 115 22)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgb(156 163 175)';
+                          const label = e.currentTarget.parentElement?.querySelector('span');
+                          if (label) label.style.color = 'rgb(55 65 81)';
+                        }}
                       >
                         <Card className="flex flex-col overflow-hidden p-0">
                           <div className="w-full aspect-square relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
@@ -772,17 +780,25 @@ const Food = () => {
                       return (
                         <div key={itemId} className="relative h-full">
                           {/* Dynamic Label Text on Top */}
-                          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 z-30 bg-background px-1.5">
-                            <span className="text-sm font-semibold text-gray-700">
+                          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 bg-background px-1.5">
+                            <span className="text-sm font-semibold text-gray-700 transition-colors">
                               {dynamicLabels[0]}
                             </span>
                           </div>
                           {/* Dashed Border Wrapper */}
                           <div 
-                            className="border-2 border-dashed rounded-lg p-1 h-full transition-colors"
+                            className="border-2 border-dashed rounded-lg p-1 h-full transition-colors mt-3"
                             style={{ borderColor: 'rgb(156 163 175)' }}
-                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgb(249 115 22)'}
-                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgb(156 163 175)'}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = 'rgb(249 115 22)';
+                              const label = e.currentTarget.parentElement?.querySelector('span');
+                              if (label) label.style.color = 'rgb(249 115 22)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = 'rgb(156 163 175)';
+                              const label = e.currentTarget.parentElement?.querySelector('span');
+                              if (label) label.style.color = 'rgb(55 65 81)';
+                            }}
                           >
                             <Card className="flex flex-col h-full overflow-hidden p-0">
                               <div className="aspect-video relative group cursor-pointer" onClick={() => handleItemNavigation(item)}>
