@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Pencil, User, ShoppingBag, Clock, MapPin, Truck, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/config/api";
 import { fetchWithAuth } from "@/context/AuthContext";
@@ -15,7 +28,8 @@ import { formatDualCurrencyCompact } from "@/utils/currency";
 import { openInMaps } from "@/utils/mapsHelper";
 
 export default function UserDashboard() {
-  const { user, token, setToken } = useAuth();
+  const { token, setToken } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,6 +38,7 @@ export default function UserDashboard() {
   const [itemMap, setItemMap] = useState({});
   const [isItemMapLoading, setIsItemMapLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch token from sessionStorage and set it, then fetch orders when token is set
   useEffect(() => {
@@ -225,11 +240,9 @@ export default function UserDashboard() {
     console.log("handleDeleteAccount function triggered.");
     if (!userInfo?.email) {
       console.error("No email found for user. Cannot delete account.");
+      toast.error("No email found for user. Cannot delete account.");
       return;
     }
-
-    const confirmDelete = window.confirm(t('dashboard.deleteAccountConfirm'));
-    if (!confirmDelete) return;
 
     try {
       console.log("Deleting user account for email:", userInfo.email);
@@ -249,15 +262,24 @@ export default function UserDashboard() {
 
       const data = await response.json();
       console.log("Delete account result:", data);
-      alert(data.message || t('dashboard.deleteAccountSuccess'));
+      toast.success(data.message || t('dashboard.deleteAccountSuccess'));
+      
+      // Clean up user data
       localStorage.removeItem("user");
       localStorage.removeItem("selectedRestaurant");
       setToken(null);
       setOrders([]);
-      // Optionally, log the user out or redirect them
+      
+      // Close dialog
+      setDeleteDialogOpen(false);
+      
+      // Redirect to main page after a short delay
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (err) {
       console.error("Error deleting account:", err);
-      alert(t('dashboard.deleteAccountError'));
+      toast.error(t('dashboard.deleteAccountError'));
     }
   };
 
@@ -551,12 +573,27 @@ export default function UserDashboard() {
       </Tabs>
 
       <div className="mt-8 text-center">
-        <button
-          onClick={handleDeleteAccount}
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-        >
-          {t('dashboard.deleteAccount')}
-        </button>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="lg">
+              {t('dashboard.deleteAccount')}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('dashboard.deleteAccount')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('dashboard.deleteAccountConfirm')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('cart.cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-500 hover:bg-red-600">
+                {t('dashboard.deleteAccount')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

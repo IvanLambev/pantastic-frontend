@@ -25,6 +25,7 @@ import UserDashboard from '@/pages/UserDashboard'
 import ItemDetails from '@/pages/ItemDetails'
 import Cart from '@/pages/Cart'
 import PaymentSuccess from '@/pages/PaymentSuccess'
+import UserProtectedRoute from '@/components/UserProtectedRoute'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
 import DeluxeBox from '@/pages/DeluxeBox'
@@ -112,7 +113,7 @@ export default function App() {
           <Route path="/order-tracking" element={<OrderTrackingV2 />} />
           <Route path="/order-tracking-v2/:orderId" element={<OrderTrackingV2 />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
+          <Route path="/dashboard" element={<UserProtectedRoute><UserDashboard /></UserProtectedRoute>} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/deluxe-box" element={<DeluxeBox />} />
           <Route path="*" element={<NotFound />} />

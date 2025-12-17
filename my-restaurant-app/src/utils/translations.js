@@ -75,7 +75,25 @@ export const translations = {
     priceHighToLow: "Цена: висока към ниска",
     mostOrdered: "Най-поръчвани",
     item: "артикул",
-    items: "артикула"
+    items: "артикула",
+    // Labels
+    labels: {
+      new: "Ново",
+      popular: "Популярно",
+      featured: "Представено",
+      bestseller: "Бестселър",
+      recommended: "Препоръчано"
+    },
+    // Dynamic labels (personalized recommendations)
+    dynamicLabels: {
+      "Buy again": "Поръчай отново",
+      "Personalized for you": "Персонализирано за теб",
+      "You might like": "Може да ти хареса",
+      "Trending": "Популярно сега",
+      "Your favorite": "Любимо",
+      "Previously ordered": "Предишни поръчки",
+      "Recommended for you": "Препоръчано за теб"
+    }
   },
 
   // Cart
@@ -693,6 +711,25 @@ export const t = (key, params = {}) => {
   }
 
   return result;
+};
+
+// Helper function to translate static labels (new, popular, etc.)
+export const translateLabel = (label) => {
+  if (!label) return label;
+  const lowerLabel = label.toLowerCase();
+  return t(`menu.labels.${lowerLabel}`) || label;
+};
+
+// Helper function to translate dynamic labels (Buy again, Personalized for you, etc.)
+export const translateDynamicLabel = (label) => {
+  if (!label) return label;
+  // Try to find exact match in dynamicLabels
+  const translated = t(`menu.dynamicLabels.${label}`);
+  // If translation found and it's different from the key, return it
+  if (translated && translated !== `menu.dynamicLabels.${label}`) {
+    return translated;
+  }
+  return label;
 };
 
 export default translations;

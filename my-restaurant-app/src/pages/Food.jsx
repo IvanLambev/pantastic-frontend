@@ -31,7 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
-import { t } from "@/utils/translations"
+import { t, translateLabel, translateDynamicLabel } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
 import { selectRestaurantWithFallback } from "@/utils/ipGeolocation"
 import { cn } from "@/lib/utils"
@@ -518,7 +518,7 @@ const Food = () => {
                       {/* Dynamic Label Text on Top */}
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 bg-background px-1">
                         <span className="text-xs font-semibold text-gray-700 transition-colors group-hover:text-orange-500">
-                          {dynamicLabels[0]}
+                          {translateDynamicLabel(dynamicLabels[0])}
                         </span>
                       </div>
                       {/* Dashed Border Wrapper */}
@@ -556,7 +556,7 @@ const Food = () => {
                                   variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
                                   className="shadow-sm capitalize"
                                 >
-                                  {label}
+                                  {translateLabel(label)}
                                 </Badge>
                               ))}
                             </div>
@@ -632,7 +632,7 @@ const Food = () => {
                             variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
                             className="shadow-sm capitalize"
                           >
-                            {label}
+                            {translateLabel(label)}
                           </Badge>
                         ))}
                       </div>
@@ -781,7 +781,7 @@ const Food = () => {
                           {/* Dynamic Label Text on Top */}
                           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-30 bg-background px-1.5">
                             <span className="text-sm font-semibold text-gray-700 transition-colors">
-                              {dynamicLabels[0]}
+                              {translateDynamicLabel(dynamicLabels[0])}
                             </span>
                           </div>
                           {/* Dashed Border Wrapper */}
@@ -819,7 +819,7 @@ const Food = () => {
                                       variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
                                       className="shadow-md text-sm capitalize px-3 py-1"
                                     >
-                                      {label}
+                                      {translateLabel(label)}
                                     </Badge>
                                   ))}
                                 </div>
@@ -902,7 +902,7 @@ const Food = () => {
                                 variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
                                 className="shadow-md text-sm capitalize px-3 py-1"
                               >
-                                {label}
+                                {translateLabel(label)}
                               </Badge>
                             ))}
                           </div>

@@ -18,7 +18,7 @@ export default function Analytics() {
   const generateMonthOptions = () => {
     const options = []
     const currentDate = new Date()
-    
+
     for (let i = 0; i < 12; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
       const year = date.getFullYear()
@@ -27,7 +27,7 @@ export default function Analytics() {
       const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       options.push({ value, label })
     }
-    
+
     return options
   }
 
@@ -51,7 +51,7 @@ export default function Analytics() {
 
       // Get the blob from the response
       const blob = await response.blob()
-      
+
       // Create a download link and trigger it
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -59,11 +59,11 @@ export default function Analytics() {
       a.download = `monthly-report-${selectedMonth}.xlsx`
       document.body.appendChild(a)
       a.click()
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      
+
       // Close dialog
       setIsDialogOpen(false)
       setSelectedMonth("")
@@ -170,7 +170,7 @@ export default function Analytics() {
               Select a month to download the .xlsx report
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-4">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-full">
