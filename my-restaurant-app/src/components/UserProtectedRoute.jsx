@@ -2,14 +2,10 @@ import { Navigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 
 export default function UserProtectedRoute({ children }) {
-  const { user, token } = useAuth()
+  const { isLoggedIn } = useAuth()
   
   console.log('🛡️ UserProtectedRoute: Auth check started')
-  console.log('🛡️ UserProtectedRoute: user:', user)
-  console.log('🛡️ UserProtectedRoute: token:', token)
-  
-  // Check if user is logged in (either has token or user object)
-  const isLoggedIn = Boolean(token || user)
+  console.log('🛡️ UserProtectedRoute: isLoggedIn:', isLoggedIn)
   
   // Redirect to login if not authenticated
   if (!isLoggedIn) {
