@@ -717,18 +717,22 @@ export const t = (key, params = {}) => {
 export const translateLabel = (label) => {
   if (!label) return label;
   const lowerLabel = label.toLowerCase();
-  return t(`menu.labels.${lowerLabel}`) || label;
+  const translationKey = `menu.labels.${lowerLabel}`;
+  const translated = t(translationKey);
+  // Return translation only if it's different from the key (meaning it was found)
+  return translated !== translationKey ? translated : label;
 };
 
 // Helper function to translate dynamic labels (Buy again, Personalized for you, etc.)
 export const translateDynamicLabel = (label) => {
   if (!label) return label;
-  // Try to find exact match in dynamicLabels
-  const translated = t(`menu.dynamicLabels.${label}`);
-  // If translation found and it's different from the key, return it
-  if (translated && translated !== `menu.dynamicLabels.${label}`) {
-    return translated;
+  
+  // Check if we have a direct translation in dynamicLabels
+  if (translations.menu && translations.menu.dynamicLabels && translations.menu.dynamicLabels[label]) {
+    return translations.menu.dynamicLabels[label];
   }
+  
+  // Return original label if no translation found
   return label;
 };
 
