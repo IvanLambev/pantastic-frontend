@@ -149,7 +149,22 @@ export const api = {
       ...options
     })
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+      // Try to extract detailed error message from response
+      let errorMessage = `API request failed: ${response.status} ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        if (errorData.detail) {
+          errorMessage = errorData.detail
+        } else if (errorData.message) {
+          errorMessage = errorData.message
+        }
+      } catch {
+        // If parsing fails, use default message
+      }
+      const error = new Error(errorMessage)
+      error.status = response.status
+      error.response = response
+      throw error
     }
     return await response.json()
   },

@@ -48,6 +48,12 @@ export default function CheckoutV2() {
   const [selectedDate, setSelectedDate] = useState(undefined)
   const [selectedTime, setSelectedTime] = useState("")
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  // Phone number modal states
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [phoneError, setPhoneError] = useState("")
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false)
   const [, setDeliverySchedule] = useState(null)
   const debounceTimeoutRef = useRef(null)
 
@@ -320,121 +326,178 @@ export default function CheckoutV2() {
   const handleOrderConfirm = async () => {
     setIsProcessing(true)
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-
-      // Check authentication (works for both regular users and guest users)
-      // Guest users have customer_id set during CheckoutLogin authentication
-      if (!user?.customer_id) {
-        throw new Error('User not logged in. Please restart checkout process.')
-      }
-
-      // Check if restaurant is selected
-      if (!selectedRestaurant || selectedRestaurant.length === 0) {
-        throw new Error('No restaurant selected')
-      }
-
-      // Format order items according to new API structure
-      // Do NOT group items with different customizations
-      // Each unique cart item (with its specific addons/removables) should be sent separately
-      const orderItems = cartItems.map(item => {
-        const itemId = item.originalItemId || item.id
-
-        // Build addons object
-        const addons = {}
-        if (item.selectedAddons && item.selectedAddons.length > 0) {
-          item.selectedAddons.forEach(addon => {
-            addons[addon.name] = (addons[addon.name] || 0) + 1
-          })
-        }
-
-        // Build removables array
-        const removables = item.selectedRemovables && item.selectedRemovables.length > 0
-          ? item.selectedRemovables
-          : []
-
-        return {
-          item_id: itemId,
-          quantity: item.quantity || 1, // Use the cart item's quantity
-          addons: Object.keys(addons).length > 0 ? addons : null,
-          removables: removables.length > 0 ? removables : null,
-          special_instructions: item.specialInstructions || null
-        }
-      })
-
-      // Get delivery coordinates if delivery method is delivery
-      const coordinates = getDeliveryCoordinates()
-
-      const orderData = {
-        restaurant_id: Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id,
-        order_items: orderItems,
-        discount: discountInfo && discountInfo.valid ? discountCode.trim() : null,
-        payment_method: selectedPayment,
-        delivery_method: deliveryMethod,
-        address: deliveryMethod === 'pickup' ? null : deliveryAddress,
-        latitude: deliveryMethod === 'delivery' && coordinates.latitude ? coordinates.latitude : null,
-        longitude: deliveryMethod === 'delivery' && coordinates.longitude ? coordinates.longitude : null,
-        scheduled_delivery_time: getScheduledDeliveryTime(),
-        success_url: `${FRONTEND_BASE_URL}/payment-success`,
-        cancel_url: `${FRONTEND_BASE_URL}/cart`
-      }
-
-      console.log('Placing order with:', orderData)
-
-      const data = await api.post('/order/orders', orderData)
-
-      if (!data.order_id) throw new Error('No order ID received')
-
-      // Clean up scheduling session data
-      sessionStorage.removeItem('scheduled_order');
-      sessionStorage.removeItem('order_scheduling_reason');
-      sessionStorage.removeItem('order_scheduled_delivery');
-
-      // Clean up discount data
-      setDiscountCode("");
-      setDiscountInfo(null);
-      setDiscountError("");
-
-      // Clean up guest checkout data if this was a guest order
-      if (user.is_guest) {
-        sessionStorage.removeItem('guest_checkout_data')
-        // Note: Keep the customer_id in localStorage for order tracking
-        // It will be cleared when the user closes the browser or navigates away
-      }
-
-      // Handle different payment methods
-      if (selectedPayment === 'cash') {
-        // Cash payment - redirect directly to order tracking
-        clearCart()
-        cartItems.forEach(item => {
-          sessionStorage.removeItem(`item-instructions-${item.id}`);
-        });
-        toast.success(t('checkout.orderPlacedSuccess'))
-        navigate(`/order-tracking-v2/${data.order_id}`)
-      } else if (selectedPayment === 'card') {
-        // Card payment - save payment info and redirect to payment URL
-        if (!data.payment_url || !data.payment_id) {
-          throw new Error('Payment information missing')
-        }
-
-        // Save payment info to session storage
-        sessionStorage.setItem('pending_order_id', data.order_id)
-        sessionStorage.setItem('pending_payment_id', data.payment_id)
-
-        // Clear cart before redirecting to payment
-        clearCart()
-        cartItems.forEach(item => {
-          sessionStorage.removeItem(`item-instructions-${item.id}`);
-        });
-
-        // Redirect to payment URL
-        window.location.href = data.payment_url
-      }
+      await createOrder()
     } catch (error) {
-      console.error('Checkout error:', error)
-      toast.error(error.message || t('checkout.failedToPlaceOrder'))
-    } finally {
+      console.error('Order creation failed:', error)
       setIsProcessing(false)
       setShowOrderConfirmation(false)
+      
+      // Check if error is due to missing phone number
+      const errorMessage = error.message || error.detail || error.toString()
+      if (errorMessage.includes('Phone number required') || errorMessage.includes('phone number') || errorMessage.includes('phone')) {
+        // Store the order data and show phone modal
+        setShowPhoneModal(true)
+        toast.error(t('checkout.phoneRequired'))
+      } else {
+        toast.error(error.message || t('checkout.orderError'))
+      }
+    }
+  }
+
+  // Extract order creation logic to a separate function for retry
+  const createOrder = async () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    // Check authentication (works for both regular users and guest users)
+    // Guest users have customer_id set during CheckoutLogin authentication
+    if (!user?.customer_id) {
+      throw new Error('User not logged in. Please restart checkout process.')
+    }
+
+    // Check if restaurant is selected
+    if (!selectedRestaurant || selectedRestaurant.length === 0) {
+      throw new Error('No restaurant selected')
+    }
+
+    // Format order items according to new API structure
+    // Do NOT group items with different customizations
+    // Each unique cart item (with its specific addons/removables) should be sent separately
+    const orderItems = cartItems.map(item => {
+      const itemId = item.originalItemId || item.id
+
+      // Build addons object
+      const addons = {}
+      if (item.selectedAddons && item.selectedAddons.length > 0) {
+        item.selectedAddons.forEach(addon => {
+          addons[addon.name] = (addons[addon.name] || 0) + 1
+        })
+      }
+
+      // Build removables array
+      const removables = item.selectedRemovables && item.selectedRemovables.length > 0
+        ? item.selectedRemovables
+        : []
+
+      return {
+        item_id: itemId,
+        quantity: item.quantity || 1, // Use the cart item's quantity
+        addons: Object.keys(addons).length > 0 ? addons : null,
+        removables: removables.length > 0 ? removables : null,
+        special_instructions: item.specialInstructions || null
+      }
+    })
+
+    // Get delivery coordinates if delivery method is delivery
+    const coordinates = getDeliveryCoordinates()
+
+    const orderData = {
+      restaurant_id: Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id,
+      order_items: orderItems,
+      discount: discountInfo && discountInfo.valid ? discountCode.trim() : null,
+      payment_method: selectedPayment,
+      delivery_method: deliveryMethod,
+      address: deliveryMethod === 'pickup' ? null : deliveryAddress,
+      latitude: deliveryMethod === 'delivery' && coordinates.latitude ? coordinates.latitude : null,
+      longitude: deliveryMethod === 'delivery' && coordinates.longitude ? coordinates.longitude : null,
+      scheduled_delivery_time: getScheduledDeliveryTime(),
+      success_url: `${FRONTEND_BASE_URL}/payment-success`,
+      cancel_url: `${FRONTEND_BASE_URL}/cart`
+    }
+
+    console.log('Placing order with:', orderData)
+
+    const data = await api.post('/order/orders', orderData)
+
+    if (!data.order_id) throw new Error('No order ID received')
+
+    // Clean up scheduling session data
+    sessionStorage.removeItem('scheduled_order');
+    sessionStorage.removeItem('order_scheduling_reason');
+    sessionStorage.removeItem('order_scheduled_delivery');
+
+    // Clean up discount data
+    setDiscountCode("");
+    setDiscountInfo(null);
+    setDiscountError("");
+    
+    // Clean up guest checkout data if this was a guest order
+    if (user.is_guest) {
+      sessionStorage.removeItem('guest_checkout_data')
+      // Note: Keep the customer_id in localStorage for order tracking
+      // It will be cleared when the user closes the browser or navigates away
+    }
+
+    // Handle different payment methods
+    if (selectedPayment === 'cash') {
+      // Cash payment - redirect directly to order tracking
+      clearCart()
+      cartItems.forEach(item => {
+        sessionStorage.removeItem(`item-instructions-${item.id}`);
+      });
+      setIsProcessing(false)
+      setShowOrderConfirmation(false)
+      toast.success(t('checkout.orderPlacedSuccess'))
+      navigate(`/order-tracking-v2/${data.order_id}`)
+    } else if (selectedPayment === 'card') {
+      // Card payment - save payment info and redirect to payment URL
+      if (!data.payment_url || !data.payment_id) {
+        throw new Error('Payment information missing')
+      }
+
+      // Save payment info to session storage
+      sessionStorage.setItem('pending_order_id', data.order_id)
+      sessionStorage.setItem('pending_payment_id', data.payment_id)
+
+      // Clear cart before redirecting to payment
+      clearCart()
+      cartItems.forEach(item => {
+        sessionStorage.removeItem(`item-instructions-${item.id}`);
+      });
+
+      setIsProcessing(false)
+      setShowOrderConfirmation(false)
+
+      // Redirect to payment URL
+      window.location.href = data.payment_url
+    }
+  }
+
+  // Handle phone number submission
+  const handlePhoneSubmit = async () => {
+    setPhoneError("")
+    
+    // Validate phone format
+    const phoneRegex = /^\+359\d{9}$/
+    if (!phoneRegex.test(phoneNumber)) {
+      setPhoneError(t('checkout.invalidPhone'))
+      return
+    }
+
+    setIsUpdatingPhone(true)
+    try {
+      // Update user phone number
+      await api.put('/user/update-phone', { phone: phoneNumber })
+      
+      // Update local user data
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      user.phone = phoneNumber
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      // Close modal
+      setShowPhoneModal(false)
+      setPhoneNumber("")
+      
+      // Retry order creation
+      toast.info(t('checkout.retryingOrder'))
+      setIsProcessing(true)
+      setShowOrderConfirmation(true)
+      
+      await createOrder()
+    } catch (error) {
+      console.error('Failed to update phone:', error)
+      setPhoneError(error.message || t('checkout.phoneUpdateError'))
+    } finally {
+      setIsUpdatingPhone(false)
     }
   }
 
@@ -874,6 +937,67 @@ export default function CheckoutV2() {
                 <Button onClick={handleAddressSave}>
                   <Check className="h-4 w-4 mr-2" />
                   {t('checkout.saveAddress')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Phone Number Required Dialog */}
+          <Dialog open={showPhoneModal} onOpenChange={setShowPhoneModal}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('checkout.phoneRequiredTitle')}</DialogTitle>
+                <DialogDescription>
+                  {t('checkout.phoneRequiredDesc')}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">{t('checkout.phone')}</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder={t('checkout.phonePlaceholder')}
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value)
+                      setPhoneError("")
+                    }}
+                    disabled={isUpdatingPhone}
+                  />
+                  <p className="text-xs text-muted-foreground">{t('checkout.phoneFormat')}</p>
+                  {phoneError && (
+                    <p className="text-sm text-red-500">{phoneError}</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPhoneModal(false)
+                    setPhoneNumber("")
+                    setPhoneError("")
+                  }}
+                  disabled={isUpdatingPhone}
+                >
+                  {t('checkout.cancel')}
+                </Button>
+                <Button
+                  onClick={handlePhoneSubmit}
+                  disabled={isUpdatingPhone || !phoneNumber}
+                >
+                  {isUpdatingPhone ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {t('checkout.updating')}
+                    </div>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t('checkout.saveAndContinue')}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

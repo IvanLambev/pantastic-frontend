@@ -290,6 +290,19 @@ export const translations = {
     orderPlacedSuccess: "Поръчката е направена успешно!",
     failedToPlaceOrder: "Неуспешно поръчване",
 
+    // Phone requirement
+    phoneRequired: "Необходим е телефонен номер",
+    phoneRequiredTitle: "Добавете телефонен номер",
+    phoneRequiredDesc: "Моля, добавете телефонен номер, за да завършите поръчката си",
+    phonePlaceholder: "+359888000000",
+    invalidPhone: "Телефонът трябва да е във формат: +359888000000",
+    phoneUpdateError: "Грешка при обновяване на телефона",
+    saveAndContinue: "Запази и продължи",
+    updating: "Обновяване...",
+    retryingOrder: "Повторен опит за поръчване...",
+    cancel: "Отказ",
+    orderError: "Грешка при поръчване",
+
     // Errors
     pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите"
   },
