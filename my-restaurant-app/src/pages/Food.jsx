@@ -613,8 +613,6 @@ const Food = () => {
                 // Regular card without dynamic labels
                 return (
                   <div key={itemId} className="relative">
-                    {/* Empty space for label alignment */}
-                    <div className="h-3.5" />
                     {/* Wrapper with same padding as cards with labels */}
                     <div className="rounded-lg p-1 mt-2">
                       <Card className="flex flex-col overflow-hidden p-0">
@@ -890,8 +888,6 @@ const Food = () => {
                     // Regular card without dynamic labels
                     return (
                       <div key={itemId} className="relative h-full">
-                        {/* Empty space for label alignment */}
-                        <div className="h-4" />
                         {/* Wrapper with same padding as cards with labels */}
                         <div className="rounded-lg p-1 h-full mt-3" style={{ height: 'calc(100% - 1rem)' }}>
                           <Card className="flex flex-col h-full overflow-hidden p-0">
