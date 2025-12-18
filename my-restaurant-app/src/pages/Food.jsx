@@ -545,14 +545,14 @@ const Food = () => {
       {selectedRestaurant && (
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
-            <div className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg">
-              {/* Restaurant Info */}
+            <div className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
+              {/* Restaurant Info - Left Aligned */}
               <div className="flex flex-col items-start min-w-0 flex-1">
-                <span className="font-bold text-lg truncate w-full">
+                <span className="font-bold text-lg truncate w-full text-left">
                   {Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}
                 </span>
                 <span
-                  className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline cursor-pointer"
+                  className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline cursor-pointer text-left"
                   onClick={(e) => {
                     e.stopPropagation();
                     const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
@@ -564,13 +564,13 @@ const Food = () => {
                 </span>
               </div>
               
-              {/* Opening Hours Status */}
+              {/* Opening Hours Status - Center Aligned */}
               <TooltipProvider>
                 <Tooltip delayDuration={200}>
                   <TooltipTrigger asChild>
                     <div 
                       className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium text-center min-w-[160px] cursor-help transition-colors",
+                        "px-4 py-2 rounded-md text-sm font-medium text-center min-w-[160px] cursor-help transition-colors mx-auto sm:mx-0",
                         isRestaurantOpen(selectedRestaurant)
                           ? "bg-green-100/80 text-green-800 hover:bg-green-100"
                           : "bg-red-100/80 text-red-800 hover:bg-red-100"
@@ -587,15 +587,21 @@ const Food = () => {
                         
                         if (isRestaurantOpen(selectedRestaurant)) {
                           return (
-                            <div className="flex flex-col">
-                              <span className="font-bold">{t('menu.open')}</span>
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                <span className="font-bold">{t('menu.open')}</span>
+                              </div>
                               <span className="text-xs">{openingInfo.day}: {openingInfo.hours}</span>
                             </div>
                           );
                         } else {
                           return (
-                            <div className="flex flex-col">
-                              <span className="font-bold">{t('menu.closed')}</span>
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                <span className="font-bold">{t('menu.closed')}</span>
+                              </div>
                               <span className="text-xs">{openingInfo.day}: {openingInfo.hours}</span>
                             </div>
                           );
@@ -603,11 +609,14 @@ const Food = () => {
                       })()}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-sm p-4">
+                  <TooltipContent side="bottom" className="max-w-sm p-4 bg-white text-black border border-gray-200">
                     {isRestaurantOpen(selectedRestaurant) ? (
                       <div className="space-y-2">
-                        <p className="font-semibold text-green-700">{t('menu.open')}</p>
-                        <p className="text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                          <p className="font-semibold text-green-700">{t('menu.open')}</p>
+                        </div>
+                        <p className="text-sm text-black">
                           {(() => {
                             const openingInfo = getCurrentOpeningHours();
                             return `${t('menu.today')}: ${openingInfo?.hours || t('menu.closed')}`;
@@ -616,7 +625,10 @@ const Food = () => {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <p className="font-semibold text-red-700">{t('menu.restaurantClosed')}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                          <p className="font-semibold text-red-700">{t('menu.restaurantClosed')}</p>
+                        </div>
                         <p className="text-sm">
                           {t('menu.nextOpening')}: {getNextOpenTime(restaurants) || t('menu.tryAgainLater')}
                         </p>
