@@ -33,8 +33,14 @@ import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t, translateLabel, translateDynamicLabel } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
-import { selectRestaurantWithFallback } from "@/utils/ipGeolocation"
+import { selectRestaurantWithFallback, isRestaurantOpen, parseOpeningHours, getNextOpenTime } from "@/utils/ipGeolocation"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -54,6 +60,83 @@ const Food = () => {
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
   const [canFavorite, setCanFavorite] = useState(false)
+  const [nearestOpenRestaurant, setNearestOpenRestaurant] = useState(null)
+  const [searchingForOpen, setSearchingForOpen] = useState(false)
+
+  // Helper to calculate distance between two coordinates (Haversine formula)
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371; // km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // Find nearest open restaurant within 10km
+  const findNearestOpenRestaurant = async () => {
+    if (!selectedRestaurant || !restaurants.length) return;
+    
+    setSearchingForOpen(true);
+    const currentRestaurantLat = Array.isArray(selectedRestaurant) ? selectedRestaurant[4] : selectedRestaurant.latitude;
+    const currentRestaurantLng = Array.isArray(selectedRestaurant) ? selectedRestaurant[5] : selectedRestaurant.longitude;
+    
+    let nearest = null;
+    let minDistance = Infinity;
+    
+    for (const restaurant of restaurants) {
+      const restId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+      const currentId = Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id;
+      
+      if (restId === currentId) continue; // Skip current restaurant
+      
+      if (isRestaurantOpen(restaurant)) {
+        const restLat = Array.isArray(restaurant) ? restaurant[4] : restaurant.latitude;
+        const restLng = Array.isArray(restaurant) ? restaurant[5] : restaurant.longitude;
+        
+        const distance = getDistance(currentRestaurantLat, currentRestaurantLng, restLat, restLng);
+        
+        if (distance <= 10 && distance < minDistance) {
+          minDistance = distance;
+          nearest = restaurant;
+        }
+      }
+    }
+    
+    setNearestOpenRestaurant(nearest);
+    setSearchingForOpen(false);
+    
+    if (!nearest) {
+      toast.info(t('menu.noOpenRestaurantsNearby') + '. ' + t('menu.tryAgainLater'));
+    }
+  };
+
+  // Get current opening hours for display
+  const getCurrentOpeningHours = () => {
+    if (!selectedRestaurant) return null;
+    
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const gmt3 = new Date(utc + 3 * 3600000);
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const daysInBulgarian = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
+    const currentDay = days[gmt3.getDay()];
+    const currentDayBulgarian = daysInBulgarian[gmt3.getDay()];
+    
+    const hours = parseOpeningHours(Array.isArray(selectedRestaurant) ? selectedRestaurant[6] : selectedRestaurant.opening_hours);
+    const todayHours = hours[currentDay];
+    
+    return {
+      day: currentDayBulgarian,
+      hours: todayHours || t('menu.closed')
+    };
+  };
 
   // Fetch all restaurants and auto-select with fallback logic
   useEffect(() => {
@@ -95,6 +178,55 @@ const Food = () => {
 
     initializeRestaurant();
   }, [])
+
+  // Check if selected restaurant is open on mount and periodically
+  useEffect(() => {
+    if (!selectedRestaurant || !restaurants.length) return;
+    
+    const checkRestaurantStatus = () => {
+      const isOpen = isRestaurantOpen(selectedRestaurant);
+      
+      if (!isOpen) {
+        console.log('[Restaurant Status] Selected restaurant is currently closed');
+        // Check if there's a nearby open restaurant
+        const currentRestaurantLat = Array.isArray(selectedRestaurant) ? selectedRestaurant[4] : selectedRestaurant.latitude;
+        const currentRestaurantLng = Array.isArray(selectedRestaurant) ? selectedRestaurant[5] : selectedRestaurant.longitude;
+        
+        let nearest = null;
+        let minDistance = Infinity;
+        
+        for (const restaurant of restaurants) {
+          const restId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+          const currentId = Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id;
+          
+          if (restId === currentId) continue;
+          
+          if (isRestaurantOpen(restaurant)) {
+            const restLat = Array.isArray(restaurant) ? restaurant[4] : restaurant.latitude;
+            const restLng = Array.isArray(restaurant) ? restaurant[5] : restaurant.longitude;
+            
+            const distance = getDistance(currentRestaurantLat, currentRestaurantLng, restLat, restLng);
+            
+            if (distance <= 10 && distance < minDistance) {
+              minDistance = distance;
+              nearest = restaurant;
+            }
+          }
+        }
+        
+        if (nearest) {
+          setNearestOpenRestaurant(nearest);
+        }
+      }
+    };
+    
+    checkRestaurantStatus();
+    
+    // Check every 5 minutes
+    const interval = setInterval(checkRestaurantStatus, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [selectedRestaurant, restaurants]);
 
   // Fetch favorite items on mount
   useEffect(() => {
@@ -413,15 +545,14 @@ const Food = () => {
       {selectedRestaurant && (
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
-            <Button
-              variant="outline"
-              onClick={handleChangeSelection}
-              className="w-full min-h-[4rem] flex justify-between items-center px-6 py-3 gap-4"
-            >
-              <div className="flex flex-col items-start min-w-0">
-                <span className="font-bold text-lg truncate w-full">{Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}</span>
+            <div className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg">
+              {/* Restaurant Info */}
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                <span className="font-bold text-lg truncate w-full">
+                  {Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}
+                </span>
                 <span
-                  className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline"
+                  className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
@@ -432,8 +563,101 @@ const Food = () => {
                   {Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}
                 </span>
               </div>
-              <span className="text-sm text-primary whitespace-nowrap shrink-0">{t('menu.changeRestaurant')}</span>
-            </Button>
+              
+              {/* Opening Hours Status */}
+              <TooltipProvider>
+                <Tooltip delayDuration={200}>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className={cn(
+                        "px-4 py-2 rounded-md text-sm font-medium text-center min-w-[160px] cursor-help transition-colors",
+                        isRestaurantOpen(selectedRestaurant)
+                          ? "bg-green-100/80 text-green-800 hover:bg-green-100"
+                          : "bg-red-100/80 text-red-800 hover:bg-red-100"
+                      )}
+                      onClick={() => {
+                        if (!isRestaurantOpen(selectedRestaurant)) {
+                          findNearestOpenRestaurant();
+                        }
+                      }}
+                    >
+                      {(() => {
+                        const openingInfo = getCurrentOpeningHours();
+                        if (!openingInfo) return t('menu.loading');
+                        
+                        if (isRestaurantOpen(selectedRestaurant)) {
+                          return (
+                            <div className="flex flex-col">
+                              <span className="font-bold">{t('menu.open')}</span>
+                              <span className="text-xs">{openingInfo.day}: {openingInfo.hours}</span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="flex flex-col">
+                              <span className="font-bold">{t('menu.closed')}</span>
+                              <span className="text-xs">{openingInfo.day}: {openingInfo.hours}</span>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-sm p-4">
+                    {isRestaurantOpen(selectedRestaurant) ? (
+                      <div className="space-y-2">
+                        <p className="font-semibold text-green-700">{t('menu.open')}</p>
+                        <p className="text-sm">
+                          {(() => {
+                            const openingInfo = getCurrentOpeningHours();
+                            return `${t('menu.today')}: ${openingInfo?.hours || t('menu.closed')}`;
+                          })()}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="font-semibold text-red-700">{t('menu.restaurantClosed')}</p>
+                        <p className="text-sm">
+                          {t('menu.nextOpening')}: {getNextOpenTime(restaurants) || t('menu.tryAgainLater')}
+                        </p>
+                        {searchingForOpen ? (
+                          <p className="text-xs text-muted-foreground mt-2">{t('menu.findingNearestOpen')}</p>
+                        ) : nearestOpenRestaurant ? (
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="text-xs font-medium mb-2">Най-близък отворен ресторант:</p>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="w-full"
+                              onClick={() => {
+                                selectRestaurant(nearestOpenRestaurant);
+                                setNearestOpenRestaurant(null);
+                              }}
+                            >
+                              {Array.isArray(nearestOpenRestaurant) ? nearestOpenRestaurant[8] : nearestOpenRestaurant.name}
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Кликнете за намиране на отворен ресторант в радиус 10 км
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              {/* Change Restaurant Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangeSelection}
+                className="whitespace-nowrap shrink-0"
+              >
+                {t('menu.changeRestaurant')}
+              </Button>
+            </div>
           </div>
         </div>
       )}

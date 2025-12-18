@@ -5,6 +5,108 @@
 const DEFAULT_RESTAURANT_ID = "001a5b8a-e149-48da-83e6-ffb5772b144c";
 
 /**
+ * Helper function to parse opening hours from string format
+ */
+export function parseOpeningHours(openingHoursData) {
+  if (!openingHoursData) return {};
+  
+  if (typeof openingHoursData === 'object' && !Array.isArray(openingHoursData)) {
+    return openingHoursData;
+  }
+  
+  if (typeof openingHoursData === 'string') {
+    try {
+      const jsonStr = openingHoursData
+        .replace(/'/g, '"')
+        .replace(/None/g, 'null')
+        .replace(/True/g, 'true')
+        .replace(/False/g, 'false');
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      console.error('[Opening Hours] Error parsing:', error);
+      return {};
+    }
+  }
+  
+  return {};
+}
+
+/**
+ * Check if restaurant is currently open
+ */
+export function isRestaurantOpen(restaurant) {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const gmt3 = new Date(utc + 3 * 3600000);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDay = days[gmt3.getDay()];
+  
+  const hours = parseOpeningHours(restaurant.opening_hours || restaurant[6]);
+  const todayHours = hours[currentDay];
+  
+  if (!todayHours) return false;
+  
+  try {
+    const [openTime, closeTime] = todayHours.split('-');
+    const [openHour, openMin] = openTime.split(':').map(Number);
+    const [closeHour, closeMin] = closeTime.split(':').map(Number);
+    
+    const currentMinutes = gmt3.getHours() * 60 + gmt3.getMinutes();
+    const openMinutes = openHour * 60 + openMin;
+    let closeMinutes = closeHour * 60 + closeMin;
+    
+    if (closeMinutes < openMinutes) {
+      closeMinutes += 24 * 60;
+      if (currentMinutes < openMinutes) {
+        return currentMinutes >= 0 && currentMinutes < closeMinutes - 24 * 60;
+      }
+    }
+    
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  } catch (error) {
+    console.error('[Opening Hours] Error checking status:', error);
+    return false;
+  }
+}
+
+/**
+ * Get next opening time for restaurants
+ */
+export function getNextOpenTime(restaurants) {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const gmt3 = new Date(utc + 3 * 3600000);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const daysInBulgarian = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
+  
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const checkDate = new Date(gmt3.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+    const checkDay = days[checkDate.getDay()];
+    const checkDayBulgarian = daysInBulgarian[checkDate.getDay()];
+    
+    for (const restaurant of restaurants) {
+      const hours = parseOpeningHours(restaurant.opening_hours || restaurant[6]);
+      const dayHours = hours[checkDay];
+      
+      if (dayHours) {
+        const [openTime] = dayHours.split('-');
+        if (dayOffset === 0) {
+          const [openHour, openMin] = openTime.split(':').map(Number);
+          const openMinutes = openHour * 60 + openMin;
+          const currentMinutes = gmt3.getHours() * 60 + gmt3.getMinutes();
+          if (openMinutes > currentMinutes) {
+            return `${checkDayBulgarian} в ${openTime}`;
+          }
+        } else {
+          return `${checkDayBulgarian} в ${openTime}`;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Get user's city from IP address using ipapi.co
  * Falls back to localStorage cache if available
  * @returns {Promise<{city: string, country: string, latitude: number, longitude: number} | null>}
@@ -251,7 +353,7 @@ export async function selectRestaurantWithFallback(restaurants) {
     return null;
   }
 
-  // 2. Try IP-based city detection - find CLOSEST restaurant in user's city
+  // 2. Try IP-based city detection - find CLOSEST OPEN restaurant in user's city
   const userLocation = await getUserCityFromIP();
   if (userLocation && userLocation.city && userLocation.latitude && userLocation.longitude) {
     const cityRestaurants = restaurants.filter(r => {
@@ -262,11 +364,16 @@ export async function selectRestaurantWithFallback(restaurants) {
     });
 
     if (cityRestaurants.length > 0) {
-      // Find the CLOSEST restaurant in the city based on coordinates
-      let closestRestaurant = cityRestaurants[0];
+      // First, try to find CLOSEST OPEN restaurant in the city
+      const openRestaurants = cityRestaurants.filter(r => isRestaurantOpen(r));
+      
+      let closestRestaurant = null;
       let minDistance = Infinity;
-
-      cityRestaurants.forEach(restaurant => {
+      
+      // Look for open restaurants first
+      const restaurantsToCheck = openRestaurants.length > 0 ? openRestaurants : cityRestaurants;
+      
+      restaurantsToCheck.forEach(restaurant => {
         const restLat = restaurant.latitude || restaurant[4];
         const restLng = restaurant.longitude || restaurant[5];
         
@@ -278,9 +385,15 @@ export async function selectRestaurantWithFallback(restaurants) {
           }
         }
       });
-
-      console.log('[IP Geolocation] Auto-selected CLOSEST restaurant from user city:', closestRestaurant.name || closestRestaurant[8], `(${minDistance.toFixed(2)} km away)`);
-      return closestRestaurant;
+      
+      if (closestRestaurant) {
+        const isOpen = isRestaurantOpen(closestRestaurant);
+        console.log('[IP Geolocation] Auto-selected CLOSEST restaurant from user city:', 
+          closestRestaurant.name || closestRestaurant[8], 
+          `(${minDistance.toFixed(2)} km away)`,
+          isOpen ? '✓ OPEN' : '✗ CLOSED');
+        return closestRestaurant;
+      }
     }
   }
 

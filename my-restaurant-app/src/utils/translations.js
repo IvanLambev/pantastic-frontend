@@ -76,6 +76,14 @@ export const translations = {
     mostOrdered: "Най-поръчвани",
     item: "артикул",
     items: "артикула",
+    open: "Отворено",
+    closed: "Затворено",
+    today: "Днес",
+    restaurantClosed: "Ресторантът е затворен",
+    nextOpening: "Следващо отваряне",
+    noOpenRestaurantsNearby: "Не са намерени отворени ресторанти в радиус от 10 км",
+    tryAgainLater: "Моля, опитайте отново по-късно",
+    findingNearestOpen: "Търсене на най-близък отворен ресторант...",
     // Labels
     labels: {
       new: "Ново",
