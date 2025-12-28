@@ -258,16 +258,13 @@ export default function OrderTrackingV2() {
                 <div className="bg-blue-50 p-3 rounded-lg mb-4">
                   <div className="flex items-center gap-2 mb-1">
                     <ShoppingBag className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold text-blue-900">{restaurant.name}</span>
+                    <span className="font-semibold text-blue-900">{restaurant[8]}</span>
                   </div>
-                  {restaurant.address && (
+                  {restaurant[1] && (
                     <div className="flex items-center gap-2 text-sm text-blue-700">
                       <MapPin className="h-3 w-3" />
-                      <span>{restaurant.address}</span>
+                      <span>{restaurant[1]}</span>
                     </div>
-                  )}
-                  {restaurant.phone && (
-                    <div className="text-sm text-blue-700">Телефон: {restaurant.phone}</div>
                   )}
                 </div>
               )}
