@@ -509,7 +509,9 @@ export default function RestaurantSelector({
   function findClosestRestaurant(lat, lng) {
     if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
 
-    // First, try to find CLOSEST open restaurant
+    const MAX_RADIUS_KM = 7.5; // Maximum radius to search for restaurants
+
+    // First, try to find CLOSEST open restaurant within 20 km radius
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
 
     console.log(`[findClosestRestaurant] Found ${openRestaurants.length} open restaurants out of ${restaurants.length} total`);
@@ -532,22 +534,26 @@ export default function RestaurantSelector({
         }
       }
 
-      // Only show warning if the closest open restaurant is more than 20km away
-      // This makes the algorithm less aggressive and only warns for truly distant locations
-      if (closest && minDist > 20) {
+      // Check if closest open restaurant is within 20 km
+      if (closest && minDist <= MAX_RADIUS_KM) {
+        console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.name} at ${minDist.toFixed(2)} km`);
+        return { restaurant: closest, distance: minDist, message: null, isOpen: true };
+      } else if (closest && minDist > MAX_RADIUS_KM && minDist <= 15) {
+        // Warn about distant restaurant (between 20-50 km)
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.name} at ${minDist.toFixed(2)} km`);
         return {
           restaurant: closest,
           distance: minDist,
           isOpen: true,
           message: t('restaurantSelector.distanceWarningMessage', { name: closest.name, distance: minDist.toFixed(1) })
         };
+      } else if (closest) {
+        // Closest open restaurant is too far (> 50 km)
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is TOO FAR: ${closest.name} at ${minDist.toFixed(2)} km`);
       }
-
-      console.log(`[Restaurant Selection] Selected CLOSEST open restaurant: ${closest?.name} at ${minDist.toFixed(2)} km`);
-      return { restaurant: closest, distance: minDist, message: null, isOpen: true };
     }
 
-    // No open restaurants found - Find the CLOSEST restaurant (regardless of status) for menu browsing
+    // No open restaurants within reasonable distance - Find the CLOSEST restaurant within 20 km (regardless of status) for menu browsing
     let minDist = Infinity;
     let closest = null;
 
@@ -557,22 +563,35 @@ export default function RestaurantSelector({
       const rLng = parseFloat(r.longitude);
       if (!isNaN(rLat) && !isNaN(rLng)) {
         const dist = getDistance(lat, lng, rLat, rLng);
-        if (dist < minDist) {
+        // Only consider restaurants within 20 km radius
+        if (dist <= MAX_RADIUS_KM && dist < minDist) {
           minDist = dist;
           closest = r;
         }
       }
     }
 
-    // Return the closest restaurant even though it's closed (for menu browsing)
-    const nextOpenTime = getNextOpenTime();
-    console.log(`[Restaurant Selection] All restaurants closed. Selected CLOSEST: ${closest?.name} at ${minDist.toFixed(2)} km`);
+    // If we found a closed restaurant within 20 km, return it for menu browsing
+    if (closest) {
+      const nextOpenTime = getNextOpenTime();
+      console.log(`[Restaurant Selection] All restaurants closed within ${MAX_RADIUS_KM}km. Selected CLOSEST: ${closest?.name} at ${minDist.toFixed(2)} km`);
+      return {
+        restaurant: closest,
+        distance: minDist,
+        isOpen: false,
+        message: `No restaurants are currently open within ${MAX_RADIUS_KM}km of your location. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`,
+        allowBrowsing: true // Flag to indicate user can browse menu but not order
+      };
+    }
+
+    // No restaurants found within 20 km radius - this is now the last resort
+    console.log(`[Restaurant Selection] No restaurants found within ${MAX_RADIUS_KM}km radius`);
     return {
-      restaurant: closest,
-      distance: minDist,
+      restaurant: null,
+      distance: null,
       isOpen: false,
-      message: `No restaurants are currently open in your area. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`,
-      allowBrowsing: true // Flag to indicate user can browse menu but not order
+      message: `No restaurants found within ${MAX_RADIUS_KM}km of your location. Please try a different address or manually select a restaurant.`,
+      allowBrowsing: false
     };
   }
 
