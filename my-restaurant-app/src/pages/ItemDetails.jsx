@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
@@ -458,18 +459,20 @@ export default function ItemDetails() {
           </div>
 
           {isLoggedIn && (
-            <Button
+            <button
               type="button"
-              variant="ghost"
               onClick={handleToggleFavorite}
-              className="absolute top-2 right-2 z-20 bg-white/90 rounded-full p-1.5 hover:bg-white shadow-md h-auto w-auto"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
+              )}
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
                 className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
-            </Button>
+            </button>
           )}
         </div>
 
@@ -711,18 +714,20 @@ export default function ItemDetails() {
 
           {/* Favorite Button */}
           {isLoggedIn && (
-            <Button
+            <button
               type="button"
-              variant="ghost"
               onClick={handleToggleFavorite}
-              className="absolute top-2 right-2 z-20 bg-white/90 rounded-full p-1.5 hover:bg-white shadow-md h-auto w-auto"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
+              )}
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
                 className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
-            </Button>
+            </button>
           )}
         </div>
 
