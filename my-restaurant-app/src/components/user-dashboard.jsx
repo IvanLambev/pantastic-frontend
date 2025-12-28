@@ -67,11 +67,10 @@ export default function UserDashboard() {
     }
   }, [navigate, setToken]);
 
-  // Fetch orders when token and itemMap are available
+  // Fetch orders when token is available (no longer depends on itemMap)
   useEffect(() => {
-    // Don't fetch if no token or still loading item map
-    if (!token || isItemMapLoading) {
-      console.log("⏳ Waiting for token and item map...", { token: !!token, isItemMapLoading });
+    if (!token) {
+      console.log("⏳ Waiting for token...");
       return;
     }
     
@@ -97,7 +96,13 @@ export default function UserDashboard() {
         
         const data = await response.json();
         console.log("✅ Orders fetched:", data.length);
-        setOrders(data);
+        
+        // Sort orders by created_at (most recent first)
+        const sortedOrders = data.sort((a, b) => {
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        
+        setOrders(sortedOrders);
         setError(null);
       } catch (err) {
         console.error("Error fetching orders:", err);
@@ -107,7 +112,7 @@ export default function UserDashboard() {
       }
     };
     fetchOrders();
-  }, [token, isItemMapLoading, navigate]);
+  }, [token, navigate]);
 
   // Fetch user info when token is available
   useEffect(() => {
@@ -450,12 +455,14 @@ export default function UserDashboard() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{t('dashboard.orderNumber')} #{order.order_id.substring(0, 8)}</span>
                             <Badge
-                              variant={
-                                order.status === "Delivered"
-                                  ? "default"
-                                  : order.status === "Processing"
-                                    ? "secondary"
-                                    : "outline"
+                              className={
+                                order.status === "Delivered" || order.status === "Ready"
+                                  ? "bg-green-500 hover:bg-green-600 text-white"
+                                  : order.status === "Processing" || order.status === "Preparing" || order.status === "Pending"
+                                    ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                                    : order.status === "Cancelled" || order.status === "Canceled"
+                                      ? "bg-red-500 hover:bg-red-600 text-white"
+                                      : "bg-gray-500 hover:bg-gray-600 text-white"
                               }
                             >
                               {translateStatus(order.status)}
@@ -479,15 +486,20 @@ export default function UserDashboard() {
                                       ? order.products
                                       : Object.entries(order.products || {}).map(([itemId, quantity]) => ({ item_id: itemId, quantity }))
                                     ).map((product, index) => {
-                                      const details = itemMap[product.item_id] || {};
+                                      // Try to get details from product object first, then fallback to itemMap
+                                      const details = {
+                                        name: product.name || product.item_name || itemMap[product.item_id]?.name || 'Unknown Item',
+                                        image_url: product.image_url || itemMap[product.item_id]?.image_url || '/elementor-placeholder-image.webp',
+                                        price: product.price || itemMap[product.item_id]?.price
+                                      };
                                       return (
                                         <li key={index} className="flex items-center gap-2 mb-1">
                                           <img
-                                            src={details.image_url || '/elementor-placeholder-image.webp'}
-                                            alt={details.name || 'Unknown Item'}
+                                            src={details.image_url}
+                                            alt={details.name}
                                             className="w-8 h-8 object-cover rounded mr-2 border"
                                           />
-                                          <span className="font-medium">{details.name || 'Unknown Item'}</span>
+                                          <span className="font-medium">{details.name}</span>
                                           <span className="text-xs text-muted-foreground ml-2">x {product.quantity}</span>
                                           {details.price !== undefined && details.price !== null && !isNaN(Number(details.price)) && (
                                             <span className="ml-2 text-xs">{formatDualCurrencyCompact(Number(details.price))}</span>

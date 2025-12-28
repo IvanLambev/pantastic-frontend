@@ -31,69 +31,97 @@ const AuthProvider = ({ children }) => {
 
       console.log("🔍 Checking login status on app load...")
 
-      // Always verify with backend to ensure cookies are still valid
-      try {
-        const response = await fetch(`${API_URL}/user/me`, {
-          method: "GET",
-          credentials: 'include', // Send HttpOnly cookies
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (response.ok) {
-          const userData = await response.json()
-          console.log("✅ User session validated with backend:", userData)
-
-          // Store/update user data in localStorage
-          localStorage.setItem("user", JSON.stringify(userData))
-          setToken(userData.access_token || null)
-          setIsLoggedIn(true)
-
-          // Check if user is admin
-          if (userData.is_admin) {
-            setIsAdmin(true)
-            localStorage.setItem("isAdmin", "true")
-          } else {
-            setIsAdmin(false)
-            localStorage.setItem("isAdmin", "false")
-          }
-        } else {
-          console.log("❌ No valid cookie session found")
-          // Clear stale data
-          localStorage.removeItem("user")
-          localStorage.removeItem("isAdmin")
-          setIsLoggedIn(false)
-          setIsAdmin(false)
-          setToken(null)
-        }
-      } catch (error) {
-        console.error("❌ Error verifying session with backend:", error)
-        // On network error, try to use localStorage as fallback
-        const user = localStorage.getItem("user")
-        if (user) {
-          try {
-            const parsedUser = JSON.parse(user)
-            console.log("⚠️ Network error - using cached user data:", parsedUser)
-            if (parsedUser.customer_id) {
-              setToken(parsedUser.access_token || null)
-              setIsLoggedIn(true)
-              const admin = localStorage.getItem("isAdmin")
-              if (admin === "true") {
-                setIsAdmin(true)
-              }
+      // Check localStorage first for quick restore
+      const user = localStorage.getItem("user")
+      
+      if (user) {
+        try {
+          const parsedUser = JSON.parse(user)
+          console.log("📦 Found user in localStorage:", parsedUser)
+          
+          if (parsedUser.customer_id) {
+            // Optimistically set state from localStorage
+            setToken(parsedUser.access_token || null)
+            setIsLoggedIn(true)
+            const admin = localStorage.getItem("isAdmin")
+            if (admin === "true") {
+              setIsAdmin(true)
             }
-          } catch (parseError) {
-            console.error("❌ Error parsing cached user data:", parseError)
-            localStorage.removeItem("user")
+            console.log("✅ Session restored from localStorage")
+            
+            // Then validate in background (non-blocking)
+            try {
+              const response = await fetch(`${API_URL}/user/me`, {
+                method: "GET",
+                credentials: 'include',
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+
+              if (response.ok) {
+                const userData = await response.json()
+                console.log("✅ Session validated with backend")
+                // Update localStorage with fresh data
+                localStorage.setItem("user", JSON.stringify(userData))
+                setToken(userData.access_token || null)
+                
+                if (userData.is_admin) {
+                  setIsAdmin(true)
+                  localStorage.setItem("isAdmin", "true")
+                }
+              } else if (response.status === 401) {
+                // Only clear on explicit 401
+                console.log("❌ Session expired (401), clearing data")
+                localStorage.removeItem("user")
+                localStorage.removeItem("isAdmin")
+                setIsLoggedIn(false)
+                setIsAdmin(false)
+                setToken(null)
+              }
+              // Ignore other errors (network issues, etc.)
+            } catch (error) {
+              console.warn("⚠️ Background validation failed, using cached session:", error.message)
+              // Keep using cached session
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error parsing user data:", error)
+          localStorage.removeItem("user")
+          setIsLoggedIn(false)
+        }
+      } else {
+        // No user in localStorage, check cookies
+        console.log("📡 No user in localStorage, checking cookies with backend...")
+        try {
+          const response = await fetch(`${API_URL}/user/me`, {
+            method: "GET",
+            credentials: 'include',
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+
+          if (response.ok) {
+            const userData = await response.json()
+            console.log("✅ User session restored from cookies:", userData)
+            localStorage.setItem("user", JSON.stringify(userData))
+            setToken(userData.access_token || null)
+            setIsLoggedIn(true)
+
+            if (userData.is_admin) {
+              setIsAdmin(true)
+              localStorage.setItem("isAdmin", "true")
+            }
+          } else {
+            console.log("❌ No valid cookie session found")
             setIsLoggedIn(false)
             setIsAdmin(false)
-            setToken(null)
           }
-        } else {
+        } catch (error) {
+          console.error("❌ Error checking cookies:", error)
           setIsLoggedIn(false)
           setIsAdmin(false)
-          setToken(null)
         }
       }
     }
