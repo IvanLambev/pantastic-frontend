@@ -40,40 +40,25 @@ export default function UserDashboard() {
   const [restaurants, setRestaurants] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Redirect to login if not authenticated
+  // Initialize token from localStorage if available (but don't redirect yet)
   useEffect(() => {
-    // Check if user data exists in localStorage
     const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      console.log("❌ No user in localStorage, redirecting to login");
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      if (!parsedUser.customer_id && !parsedUser.access_token) {
-        console.log("❌ Invalid user data, redirecting to login");
-        navigate('/login');
-        return;
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.access_token || parsedUser.customer_id) {
+          console.log("✅ Setting token from localStorage");
+          setToken(parsedUser.access_token || parsedUser.customer_id);
+        }
+      } catch (err) {
+        console.error("Error parsing user data:", err);
       }
-      // Set token if available
-      if (parsedUser.access_token || parsedUser.customer_id) {
-        setToken(parsedUser.access_token || parsedUser.customer_id);
-      }
-    } catch (err) {
-      console.error("Error parsing user data:", err);
-      navigate('/login');
     }
-  }, [navigate, setToken]);
+    // Note: We don't redirect here - let the API calls handle authentication
+  }, [setToken]);
 
-  // Fetch orders when token is available (no longer depends on itemMap)
+  // Fetch orders when component mounts (uses cookies for auth)
   useEffect(() => {
-    if (!token) {
-      console.log("⏳ Waiting for token...");
-      return;
-    }
-    
     setIsLoading(true);
     const fetchOrders = async () => {
       try {
@@ -88,6 +73,7 @@ export default function UserDashboard() {
         if (!response.ok) {
           if (response.status === 401) {
             console.log("❌ Unauthorized - redirecting to login");
+            localStorage.removeItem("user"); // Clear invalid user data
             navigate('/login');
             return;
           }
@@ -112,15 +98,10 @@ export default function UserDashboard() {
       }
     };
     fetchOrders();
-  }, [token, navigate]);
+  }, [navigate]); // Removed token dependency - rely on cookies
 
-  // Fetch user info when token is available
+  // Fetch user info on mount (uses cookies for auth)
   useEffect(() => {
-    if (!token) {
-      console.log("⏳ No token yet for user info fetch");
-      return;
-    }
-    
     const fetchUserInfo = async () => {
       try {
         console.log("🔄 Fetching user info...");
@@ -135,6 +116,7 @@ export default function UserDashboard() {
         if (!response.ok) {
           if (response.status === 401) {
             console.log("❌ Unauthorized - redirecting to login");
+            localStorage.removeItem("user"); // Clear invalid user data
             navigate('/login');
             return;
           }
@@ -149,7 +131,7 @@ export default function UserDashboard() {
       }
     };
     fetchUserInfo();
-  }, [token, navigate]);
+  }, [navigate]); // Removed token dependency - rely on cookies
 
   // Fetch favorites and all items for mapping
   useEffect(() => {
@@ -257,6 +239,7 @@ export default function UserDashboard() {
         } else {
           if (res.status === 401) {
             console.log("❌ Unauthorized - redirecting to login");
+            localStorage.removeItem("user"); // Clear invalid user data
             navigate('/login');
             return;
           }
