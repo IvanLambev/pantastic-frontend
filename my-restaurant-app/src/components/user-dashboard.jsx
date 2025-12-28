@@ -436,7 +436,7 @@ export default function UserDashboard() {
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full text-left">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{t('dashboard.orderNumber')} #{order.order_id.substring(0, 8)}</span>
+                            <span className="font-medium">{t('dashboard.orderNumber')} #{order.order_id.substring(0, 6)}</span>
                             <Badge
                               className={
                                 order.status === "Delivered" || order.status === "Ready"
@@ -462,34 +462,52 @@ export default function UserDashboard() {
                             <div className="space-y-2">
                               <div className="flex items-start gap-2">
                                 <ShoppingBag className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                <div>
+                                <div className="w-full">
                                   <p className="font-medium">{t('dashboard.items')}</p>
-                                  <ul className="text-sm">
-                                    {(Array.isArray(order.products)
-                                      ? order.products
-                                      : Object.entries(order.products || {}).map(([itemId, quantity]) => ({ item_id: itemId, quantity }))
-                                    ).map((product, index) => {
-                                      // Try to get details from product object first, then fallback to itemMap
-                                      const details = {
-                                        name: product.name || product.item_name || itemMap[product.item_id]?.name || 'Unknown Item',
-                                        image_url: product.image_url || itemMap[product.item_id]?.image_url || '/elementor-placeholder-image.webp',
-                                        price: product.price || itemMap[product.item_id]?.price
-                                      };
-                                      return (
-                                        <li key={index} className="flex items-center gap-2 mb-1">
+                                  <ul className="text-sm space-y-3">
+                                    {(order.items || []).map((item, index) => (
+                                      <li key={index} className="border-b pb-2 last:border-b-0">
+                                        <div className="flex items-start gap-2 mb-1">
                                           <img
-                                            src={details.image_url}
-                                            alt={details.name}
-                                            className="w-8 h-8 object-cover rounded mr-2 border"
+                                            src={item.image_url || '/elementor-placeholder-image.webp'}
+                                            alt={item.item_name || 'Unknown Item'}
+                                            className="w-10 h-10 object-cover rounded border flex-shrink-0"
                                           />
-                                          <span className="font-medium">{details.name}</span>
-                                          <span className="text-xs text-muted-foreground ml-2">x {product.quantity}</span>
-                                          {details.price !== undefined && details.price !== null && !isNaN(Number(details.price)) && (
-                                            <span className="ml-2 text-xs">{formatDualCurrencyCompact(Number(details.price))}</span>
-                                          )}
-                                        </li>
-                                      );
-                                    })}
+                                          <div className="flex-1">
+                                            <div className="flex items-start justify-between">
+                                              <span className="font-medium">{item.item_name || 'Unknown Item'}</span>
+                                              <span className="text-xs text-muted-foreground ml-2">x {item.item_quantity}</span>
+                                            </div>
+                                            {item.item_price !== undefined && item.item_price !== null && !isNaN(Number(item.item_price)) && (
+                                              <div className="text-xs text-muted-foreground">{formatDualCurrencyCompact(Number(item.item_price))}</div>
+                                            )}
+                                            {item.applied_addons && item.applied_addons.length > 0 && (
+                                              <div className="text-xs text-green-600 mt-1">
+                                                <span className="font-medium">{t('cart.addons')}: </span>
+                                                {item.applied_addons.map((addon, addonIndex) => (
+                                                  <span key={addonIndex}>
+                                                    {addon.name} (+{formatDualCurrencyCompact(addon.total)})
+                                                    {addonIndex < item.applied_addons.length - 1 ? ', ' : ''}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            )}
+                                            {item.removables && item.removables.length > 0 && (
+                                              <div className="text-xs text-red-600 mt-1">
+                                                <span className="font-medium">{t('cart.removed')}: </span>
+                                                {item.removables.join(', ')}
+                                              </div>
+                                            )}
+                                            {item.special_instructions && (
+                                              <div className="text-xs text-blue-600 mt-1">
+                                                <span className="font-medium">{t('cart.specialInstructions')}: </span>
+                                                {item.special_instructions}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </li>
+                                    ))}
                                   </ul>
                                 </div>
                               </div>
@@ -565,6 +583,16 @@ export default function UserDashboard() {
                                 </div>
                               </div>
                             </div>
+                          </div>
+                          
+                          <div className="flex justify-center pt-2 border-t">
+                            <Button
+                              onClick={() => navigate(`/order-tracking-v2/${order.order_id}`)}
+                              variant="default"
+                              className="w-full sm:w-auto"
+                            >
+                              {t('dashboard.viewOrder') || 'View Order'}
+                            </Button>
                           </div>
                         </div>
                       </AccordionContent>
