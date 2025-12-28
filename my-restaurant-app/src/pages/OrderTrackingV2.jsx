@@ -21,6 +21,7 @@ import { formatDualCurrencyCompact } from "@/utils/currency"
 export default function OrderTrackingV2() {
   const [order, setOrder] = useState(null)
   const [items, setItems] = useState([])
+  const [restaurant, setRestaurant] = useState(null)
   const [loading, setLoading] = useState(true)
   const { orderId } = useParams()
   const { clearCart } = useCart()
@@ -144,11 +145,20 @@ export default function OrderTrackingV2() {
       }
 
       if (orderData && orderData.restaurant_id) {
+        // Fetch restaurant items
         const itemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${orderData.restaurant_id}/items`)
         if (itemsResponse.ok) {
           const itemsData = await itemsResponse.json()
           console.log('Fetched items:', itemsData)
           setItems(itemsData)
+        }
+        
+        // Fetch restaurant details
+        const restaurantResponse = await fetchWithAuth(`${API_URL}/restaurant/${orderData.restaurant_id}`)
+        if (restaurantResponse.ok) {
+          const restaurantData = await restaurantResponse.json()
+          console.log('Fetched restaurant:', restaurantData)
+          setRestaurant(restaurantData)
         }
       }
       
@@ -243,8 +253,27 @@ export default function OrderTrackingV2() {
               <CardTitle>Детайли за поръчката</CardTitle>
               <CardDescription>Информация за вашата поръчка и данни за плащането</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">              <div className="flex justify-between items-center">
-                <span className="font-medium">ID на поръчката</span>
+            <CardContent className="space-y-4">
+              {restaurant && (
+                <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShoppingBag className="h-4 w-4 text-blue-600" />
+                    <span className="font-semibold text-blue-900">{restaurant.name}</span>
+                  </div>
+                  {restaurant.address && (
+                    <div className="flex items-center gap-2 text-sm text-blue-700">
+                      <MapPin className="h-3 w-3" />
+                      <span>{restaurant.address}</span>
+                    </div>
+                  )}
+                  {restaurant.phone && (
+                    <div className="text-sm text-blue-700">Телефон: {restaurant.phone}</div>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Номер на поръчката</span>
                 <Badge variant="outline" className="font-mono text-xs">
                   {order.order_id.substring(0, 6)}
                 </Badge>
@@ -272,22 +301,28 @@ export default function OrderTrackingV2() {
                   {order.items && order.items.length > 0 ? (
                     order.items.map((item) => (
                       <div key={item.item_id} className="space-y-1">
-                        <div className="flex justify-between text-sm text-muted-foreground">
+                        <div className="flex justify-between text-sm font-medium">
                           <span>{item.item_name}</span>
                           <span>x{item.item_quantity}</span>
                         </div>
                         {item.applied_addons && item.applied_addons.length > 0 && (
-                          <div className="text-xs text-muted-foreground pl-4">
-                            <span className="font-medium">Добавки: </span>
-                            {item.applied_addons.map((addon) => 
-                              `${addon.name} (+${formatDualCurrencyCompact(addon.total)})`
-                            ).join(', ')}
+                          <div className="pl-4 mt-1">
+                            <div className="text-xs font-semibold text-green-700 mb-0.5">✓ Добавки:</div>
+                            <ul className="text-xs text-muted-foreground space-y-0.5">
+                              {item.applied_addons.map((addon, idx) => (
+                                <li key={idx}>• {addon.name} <span className="text-green-600 font-medium">(+{formatDualCurrencyCompact(addon.total)})</span></li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                         {item.removables && item.removables.length > 0 && (
-                          <div className="text-xs text-muted-foreground pl-4">
-                            <span className="font-medium">Премахнато: </span>
-                            {item.removables.join(', ')}
+                          <div className="pl-4 mt-1">
+                            <div className="text-xs font-semibold text-red-700 mb-0.5">✗ Премахнато:</div>
+                            <ul className="text-xs text-muted-foreground space-y-0.5">
+                              {item.removables.map((removable, idx) => (
+                                <li key={idx}>• {removable}</li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                         {item.special_instructions && (
