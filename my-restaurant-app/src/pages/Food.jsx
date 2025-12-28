@@ -546,7 +546,7 @@ const Food = () => {
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
             <div 
-              className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-md cursor-pointer"
+              className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-md cursor-pointer"
               onClick={handleChangeSelection}
             >
               {/* Restaurant Info - Left Aligned */}
@@ -580,7 +580,7 @@ const Food = () => {
                   <TooltipTrigger asChild>
                     <div 
                       className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium text-center min-w-[160px] cursor-help transition-colors mx-auto sm:mx-0",
+                        "px-4 py-2 rounded-md text-sm font-medium text-center min-w-[160px] cursor-help transition-colors",
                         isRestaurantOpen(selectedRestaurant)
                           ? "bg-green-100/80 text-green-800 hover:bg-green-100"
                           : "bg-red-100/80 text-red-800 hover:bg-red-100"
@@ -652,7 +652,8 @@ const Food = () => {
                               size="sm"
                               variant="secondary"
                               className="w-full"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 selectRestaurant(nearestOpenRestaurant);
                                 setNearestOpenRestaurant(null);
                               }}
