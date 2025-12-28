@@ -465,49 +465,55 @@ export default function UserDashboard() {
                                 <div className="w-full">
                                   <p className="font-medium">{t('dashboard.items')}</p>
                                   <ul className="text-sm space-y-3">
-                                    {(order.items || []).map((item, index) => (
-                                      <li key={index} className="border-b pb-2 last:border-b-0">
-                                        <div className="flex items-start gap-2 mb-1">
-                                          <img
-                                            src={item.image_url || '/elementor-placeholder-image.webp'}
-                                            alt={item.item_name || 'Unknown Item'}
-                                            className="w-10 h-10 object-cover rounded border flex-shrink-0"
-                                          />
-                                          <div className="flex-1">
-                                            <div className="flex items-start justify-between">
-                                              <span className="font-medium">{item.item_name || 'Unknown Item'}</span>
-                                              <span className="text-xs text-muted-foreground ml-2">x {item.item_quantity}</span>
+                                    {(order.items || []).map((item, index) => {
+                                      // Get image from itemMap if available
+                                      const itemDetails = itemMap[item.item_id] || {};
+                                      const imageUrl = itemDetails.image_url || '/elementor-placeholder-image.webp';
+                                      
+                                      return (
+                                        <li key={index} className="border-b pb-2 last:border-b-0">
+                                          <div className="flex items-start gap-2 mb-1">
+                                            <img
+                                              src={imageUrl}
+                                              alt={item.item_name || 'Unknown Item'}
+                                              className="w-10 h-10 object-cover rounded border flex-shrink-0"
+                                            />
+                                            <div className="flex-1">
+                                              <div className="flex items-start justify-between">
+                                                <span className="font-medium">{item.item_name || 'Unknown Item'}</span>
+                                                <span className="text-xs text-muted-foreground ml-2">x {item.item_quantity}</span>
+                                              </div>
+                                              {item.item_price !== undefined && item.item_price !== null && !isNaN(Number(item.item_price)) && (
+                                                <div className="text-xs text-muted-foreground">{formatDualCurrencyCompact(Number(item.item_price))}</div>
+                                              )}
+                                              {item.applied_addons && item.applied_addons.length > 0 && (
+                                                <div className="text-xs text-green-600 mt-1">
+                                                  <span className="font-medium">{t('cart.addons')}: </span>
+                                                  {item.applied_addons.map((addon, addonIndex) => (
+                                                    <span key={addonIndex}>
+                                                      {addon.name} (+{formatDualCurrencyCompact(addon.total)})
+                                                      {addonIndex < item.applied_addons.length - 1 ? ', ' : ''}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              )}
+                                              {item.removables && item.removables.length > 0 && (
+                                                <div className="text-xs text-red-600 mt-1">
+                                                  <span className="font-medium">{t('cart.removed')}: </span>
+                                                  {item.removables.join(', ')}
+                                                </div>
+                                              )}
+                                              {item.special_instructions && (
+                                                <div className="text-xs text-blue-600 mt-1">
+                                                  <span className="font-medium">{t('cart.specialInstructions')}: </span>
+                                                  {item.special_instructions}
+                                                </div>
+                                              )}
                                             </div>
-                                            {item.item_price !== undefined && item.item_price !== null && !isNaN(Number(item.item_price)) && (
-                                              <div className="text-xs text-muted-foreground">{formatDualCurrencyCompact(Number(item.item_price))}</div>
-                                            )}
-                                            {item.applied_addons && item.applied_addons.length > 0 && (
-                                              <div className="text-xs text-green-600 mt-1">
-                                                <span className="font-medium">{t('cart.addons')}: </span>
-                                                {item.applied_addons.map((addon, addonIndex) => (
-                                                  <span key={addonIndex}>
-                                                    {addon.name} (+{formatDualCurrencyCompact(addon.total)})
-                                                    {addonIndex < item.applied_addons.length - 1 ? ', ' : ''}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            )}
-                                            {item.removables && item.removables.length > 0 && (
-                                              <div className="text-xs text-red-600 mt-1">
-                                                <span className="font-medium">{t('cart.removed')}: </span>
-                                                {item.removables.join(', ')}
-                                              </div>
-                                            )}
-                                            {item.special_instructions && (
-                                              <div className="text-xs text-blue-600 mt-1">
-                                                <span className="font-medium">{t('cart.specialInstructions')}: </span>
-                                                {item.special_instructions}
-                                              </div>
-                                            )}
                                           </div>
-                                        </div>
-                                      </li>
-                                    ))}
+                                        </li>
+                                      );
+                                    })}
                                   </ul>
                                 </div>
                               </div>
