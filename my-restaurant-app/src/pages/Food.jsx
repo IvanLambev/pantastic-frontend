@@ -545,7 +545,10 @@ const Food = () => {
       {selectedRestaurant && (
         <div className="bg-background border-b">
           <div className="container mx-auto px-4 py-4">
-            <div className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
+            <div 
+              className="w-full min-h-[5rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-md cursor-pointer"
+              onClick={handleChangeSelection}
+            >
               {/* Restaurant Info - Left Aligned */}
               <div className="flex flex-col items-start min-w-0 flex-1">
                 <span className="font-bold text-lg truncate w-full text-left">
@@ -553,6 +556,13 @@ const Food = () => {
                 </span>
                 <span
                   className="text-sm text-muted-foreground truncate w-full hover:text-blue-600 hover:underline cursor-pointer text-left"
+                  onMouseEnter={(e) => {
+                    // Only show hover effect without opening maps on hover
+                    e.currentTarget.style.textDecoration = 'underline';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.textDecoration = 'none';
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
@@ -575,7 +585,8 @@ const Food = () => {
                           ? "bg-green-100/80 text-green-800 hover:bg-green-100"
                           : "bg-red-100/80 text-red-800 hover:bg-red-100"
                       )}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!isRestaurantOpen(selectedRestaurant)) {
                           findNearestOpenRestaurant();
                         }
@@ -664,7 +675,10 @@ const Food = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleChangeSelection}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleChangeSelection();
+                }}
                 className="whitespace-nowrap shrink-0"
               >
                 {t('menu.changeRestaurant')}
