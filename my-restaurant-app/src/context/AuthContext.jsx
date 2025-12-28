@@ -31,62 +31,69 @@ const AuthProvider = ({ children }) => {
 
       console.log("🔍 Checking login status on app load...")
 
-      // First check localStorage for existing user data
-      const user = localStorage.getItem("user")
+      // Always verify with backend to ensure cookies are still valid
+      try {
+        const response = await fetch(`${API_URL}/user/me`, {
+          method: "GET",
+          credentials: 'include', // Send HttpOnly cookies
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
 
-      if (user) {
-        // User data exists in localStorage, restore session
-        try {
-          const parsedUser = JSON.parse(user)
-          console.log("📦 Found user in localStorage:", parsedUser)
+        if (response.ok) {
+          const userData = await response.json()
+          console.log("✅ User session validated with backend:", userData)
 
-          if (parsedUser.customer_id) {
-            setToken(parsedUser.access_token || null)
-            setIsLoggedIn(true)
-            const admin = localStorage.getItem("isAdmin")
-            if (admin === "true") {
-              setIsAdmin(true)
-            }
-            console.log("✅ Session restored from localStorage")
-          }
-        } catch (error) {
-          console.error("❌ Error parsing user data:", error)
-          localStorage.removeItem("user")
-        }
-      } else {
-        // No user in localStorage, check if cookies exist by calling backend
-        console.log("📡 No user in localStorage, checking cookies with backend...")
-        try {
-          const response = await fetch(`${API_URL}/user/me`, {
-            method: "GET",
-            credentials: 'include', // Send HttpOnly cookies
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
+          // Store/update user data in localStorage
+          localStorage.setItem("user", JSON.stringify(userData))
+          setToken(userData.access_token || null)
+          setIsLoggedIn(true)
 
-          if (response.ok) {
-            const userData = await response.json()
-            console.log("✅ User session restored from cookies:", userData)
-
-            // Store user data in localStorage for next time
-            localStorage.setItem("user", JSON.stringify(userData))
-            setIsLoggedIn(true)
-
-            // Check if user is admin
-            if (userData.is_admin) {
-              setIsAdmin(true)
-              localStorage.setItem("isAdmin", "true")
-            }
+          // Check if user is admin
+          if (userData.is_admin) {
+            setIsAdmin(true)
+            localStorage.setItem("isAdmin", "true")
           } else {
-            console.log("❌ No valid cookie session found")
-            setIsLoggedIn(false)
             setIsAdmin(false)
+            localStorage.setItem("isAdmin", "false")
           }
-        } catch (error) {
-          console.error("❌ Error verifying cookie session:", error)
+        } else {
+          console.log("❌ No valid cookie session found")
+          // Clear stale data
+          localStorage.removeItem("user")
+          localStorage.removeItem("isAdmin")
           setIsLoggedIn(false)
           setIsAdmin(false)
+          setToken(null)
+        }
+      } catch (error) {
+        console.error("❌ Error verifying session with backend:", error)
+        // On network error, try to use localStorage as fallback
+        const user = localStorage.getItem("user")
+        if (user) {
+          try {
+            const parsedUser = JSON.parse(user)
+            console.log("⚠️ Network error - using cached user data:", parsedUser)
+            if (parsedUser.customer_id) {
+              setToken(parsedUser.access_token || null)
+              setIsLoggedIn(true)
+              const admin = localStorage.getItem("isAdmin")
+              if (admin === "true") {
+                setIsAdmin(true)
+              }
+            }
+          } catch (parseError) {
+            console.error("❌ Error parsing cached user data:", parseError)
+            localStorage.removeItem("user")
+            setIsLoggedIn(false)
+            setIsAdmin(false)
+            setToken(null)
+          }
+        } else {
+          setIsLoggedIn(false)
+          setIsAdmin(false)
+          setToken(null)
         }
       }
     }

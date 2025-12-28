@@ -84,6 +84,8 @@ export const translations = {
     noOpenRestaurantsNearby: "Не са намерени отворени ресторанти в радиус от 10 км",
     tryAgainLater: "Моля, опитайте отново по-късно",
     findingNearestOpen: "Търсене на най-близък отворен ресторант...",
+    autoSelected: "Автоматично избран ресторант: {name}",
+    addedToCart: "Добавено {name} в количката",
     // Labels
     labels: {
       new: "Ново",
@@ -390,6 +392,7 @@ export const translations = {
     noRestaurantsOpenDesc: "Няма отворени ресторанти за поръчка в момента, но можете да разгледате менюто на най-близкия ресторант.",
     nearestRestaurant: "Най-близък ресторант",
     browseMenu: "Разгледай менюто",
+    closedRestaurantWarning: "Този ресторант е затворен в момента. Можете да разгледате менюто, но не можете да направите поръчка, докато не отвори.",
     away: "разстояние",
 
     or: "Или",
@@ -748,13 +751,29 @@ export const translateLabel = (label) => {
 export const translateDynamicLabel = (label) => {
   if (!label) return label;
   
+  // Normalize the label (trim whitespace)
+  const normalizedLabel = String(label).trim();
+  
   // Check if we have a direct translation in dynamicLabels
-  if (translations.menu && translations.menu.dynamicLabels && translations.menu.dynamicLabels[label]) {
-    return translations.menu.dynamicLabels[label];
+  if (translations.menu && translations.menu.dynamicLabels) {
+    // First try exact match
+    if (translations.menu.dynamicLabels[normalizedLabel]) {
+      return translations.menu.dynamicLabels[normalizedLabel];
+    }
+    
+    // Try case-insensitive match
+    const lowerLabel = normalizedLabel.toLowerCase();
+    const matchingKey = Object.keys(translations.menu.dynamicLabels).find(
+      key => key.toLowerCase() === lowerLabel
+    );
+    
+    if (matchingKey) {
+      return translations.menu.dynamicLabels[matchingKey];
+    }
   }
   
   // Return original label if no translation found
-  return label;
+  return normalizedLabel;
 };
 
 export default translations;

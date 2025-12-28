@@ -965,7 +965,7 @@ export default function RestaurantSelector({
                           onClick={() => {
                             onSelect(pendingRestaurantSelection);
                             handleClose();
-                            toast.info("This restaurant is currently closed. You can browse the menu but cannot place orders until it opens.");
+                            toast.info(t('restaurantSelector.closedRestaurantWarning'));
                           }}
                           className="w-full bg-blue-600 hover:bg-blue-700"
                         >

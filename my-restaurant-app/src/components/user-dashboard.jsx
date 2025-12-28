@@ -40,162 +40,232 @@ export default function UserDashboard() {
   const [restaurants, setRestaurants] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Fetch token from sessionStorage and set it, then fetch orders when token is set
+  // Redirect to login if not authenticated
   useEffect(() => {
+    // Check if user data exists in localStorage
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && typeof parsedUser === "object" && (parsedUser.customer_id || parsedUser.access_token)) {
-          setToken(parsedUser.access_token || parsedUser.customer_id);
-        }
-      } catch (err) {
-        console.error("Error parsing user data from session storage:", err);
-      }
+    if (!storedUser) {
+      console.log("❌ No user in localStorage, redirecting to login");
+      navigate('/login');
+      return;
     }
-  }, [setToken]);
+
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      if (!parsedUser.customer_id && !parsedUser.access_token) {
+        console.log("❌ Invalid user data, redirecting to login");
+        navigate('/login');
+        return;
+      }
+      // Set token if available
+      if (parsedUser.access_token || parsedUser.customer_id) {
+        setToken(parsedUser.access_token || parsedUser.customer_id);
+      }
+    } catch (err) {
+      console.error("Error parsing user data:", err);
+      navigate('/login');
+    }
+  }, [navigate, setToken]);
 
   // Fetch orders when token and itemMap are available
   useEffect(() => {
-    if (!token || isItemMapLoading) return;
+    // Don't fetch if no token or still loading item map
+    if (!token || isItemMapLoading) {
+      console.log("⏳ Waiting for token and item map...", { token: !!token, isItemMapLoading });
+      return;
+    }
+    
     setIsLoading(true);
     const fetchOrders = async () => {
       try {
+        console.log("🔄 Fetching orders...");
         const response = await fetchWithAuth(`${API_URL}/order/orders/user`, {
-          credentials: 'include', // Send HttpOnly cookies
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        if (!response.ok) throw new Error('Failed to fetch orders');
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log("❌ Unauthorized - redirecting to login");
+            navigate('/login');
+            return;
+          }
+          throw new Error('Failed to fetch orders');
+        }
+        
         const data = await response.json();
+        console.log("✅ Orders fetched:", data.length);
         setOrders(data);
-      } catch {
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
         setError('Failed to fetch orders');
       } finally {
         setIsLoading(false);
       }
     };
     fetchOrders();
-  }, [token, isItemMapLoading]);
+  }, [token, isItemMapLoading, navigate]);
 
   // Fetch user info when token is available
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      console.log("⏳ No token yet for user info fetch");
+      return;
+    }
+    
     const fetchUserInfo = async () => {
       try {
+        console.log("🔄 Fetching user info...");
         const response = await fetch(`${API_URL}/user/user-info`, {
           method: "GET",
-          credentials: 'include', // Send HttpOnly cookies
+          credentials: 'include',
           headers: {
             "Content-Type": "application/json",
           },
         });
+        
         if (!response.ok) {
+          if (response.status === 401) {
+            console.log("❌ Unauthorized - redirecting to login");
+            navigate('/login');
+            return;
+          }
           throw new Error("Failed to fetch user information");
         }
+        
         const data = await response.json();
+        console.log("✅ User info fetched");
         setUserInfo(data);
       } catch (error) {
         console.error("Error fetching user information:", error);
       }
     };
     fetchUserInfo();
-  }, [token]);
+  }, [token, navigate]);
 
   // Fetch favorites and all items for mapping
   useEffect(() => {
     const fetchFavorites = async () => {
       setIsItemMapLoading(true);
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user.customer_id) {
-        setIsItemMapLoading(false);
-        return;
-      }
-      // Fetch all restaurants
-      const restaurantsRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`, {
-        credentials: 'include', // Send HttpOnly cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      let allItems = [];
-      if (restaurantsRes.ok) {
-        const restaurantsData = await restaurantsRes.json();
-        // Store restaurants for later use
-        setRestaurants(restaurantsData);
-        // Fetch all items for all restaurants
-        const itemsArrays = await Promise.all(
-          restaurantsData.map(async (r) => {
-            const restaurantId = r[0] || r.restaurant_id || r.id;
-            const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
-              credentials: 'include', // Send HttpOnly cookies
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-            if (itemsRes.ok) {
-              const items = await itemsRes.json();
-              // Normalize each item to object format
-              return items.map(item => {
-                if (Array.isArray(item)) {
-                  return {
-                    item_id: item[0],
-                    created_at: item[1],
-                    description: item[2],
-                    image_url: item[3],
-                    name: item[4],
-                    price: item[5],
-                    category_id: item[6],
-                  };
-                } else if (item && item.item_id) {
-                  return item;
-                } else {
-                  return null;
-                }
-              }).filter(Boolean);
-            }
-            return [];
-          })
-        );
-        allItems = itemsArrays.flat();
-      }
-      // Build a map of item_id to item details
-      const itemMapObj = {};
-      for (const item of allItems) {
-        if (item && item.item_id) {
-          itemMapObj[item.item_id] = item;
+      
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.customer_id) {
+          console.log("⏳ No customer_id, skipping favorites fetch");
+          setIsItemMapLoading(false);
+          return;
         }
-      }
-      setItemMap(itemMapObj);
-      // Fetch favourites
-      const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
-        credentials: 'include', // Send HttpOnly cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // Attach item details to each favourite, fallback to placeholder if missing
-        const detailedFavorites = data.map(fav => {
-          const details = itemMapObj[fav.item_id] || {};
-          return {
-            ...fav,
-            name: details.name || 'Unknown Item',
-            description: details.description || '',
-            image_url: details.image_url || '/elementor-placeholder-image.webp',
-            price: details.price !== undefined ? details.price : '--',
-            restaurant_id: details.category_id ? details.category_id : details.restaurant_id || '', // fallback for restaurant id
-          };
+        
+        console.log("🔄 Fetching restaurants and items for favorites...");
+        
+        // Fetch all restaurants
+        const restaurantsRes = await fetchWithAuth(`${API_URL}/restaurant/restaurants`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
-        console.log('Detailed favorites data:', detailedFavorites);
-        setFavoriteItems(detailedFavorites);
+        
+        let allItems = [];
+        if (restaurantsRes.ok) {
+          const restaurantsData = await restaurantsRes.json();
+          // Store restaurants for later use
+          setRestaurants(restaurantsData);
+          
+          // Fetch all items for all restaurants
+          const itemsArrays = await Promise.all(
+            restaurantsData.map(async (r) => {
+              const restaurantId = r[0] || r.restaurant_id || r.id;
+              const itemsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items`, {
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+              if (itemsRes.ok) {
+                const items = await itemsRes.json();
+                // Normalize each item to object format
+                return items.map(item => {
+                  if (Array.isArray(item)) {
+                    return {
+                      item_id: item[0],
+                      created_at: item[1],
+                      description: item[2],
+                      image_url: item[3],
+                      name: item[4],
+                      price: item[5],
+                      category_id: item[6],
+                    };
+                  } else if (item && item.item_id) {
+                    return item;
+                  } else {
+                    return null;
+                  }
+                }).filter(Boolean);
+              }
+              return [];
+            })
+          );
+          allItems = itemsArrays.flat();
+          console.log(`✅ Fetched ${allItems.length} items from ${restaurantsData.length} restaurants`);
+        } else {
+          console.warn("⚠️ Failed to fetch restaurants:", restaurantsRes.status);
+        }
+        
+        // Build a map of item_id to item details
+        const itemMapObj = {};
+        for (const item of allItems) {
+          if (item && item.item_id) {
+            itemMapObj[item.item_id] = item;
+          }
+        }
+        setItemMap(itemMapObj);
+        
+        // Fetch favourites
+        console.log("🔄 Fetching favorites...");
+        const res = await fetchWithAuth(`${API_URL}/user/favouriteItems`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          // Attach item details to each favourite, fallback to placeholder if missing
+          const detailedFavorites = data.map(fav => {
+            const details = itemMapObj[fav.item_id] || {};
+            return {
+              ...fav,
+              name: details.name || 'Unknown Item',
+              description: details.description || '',
+              image_url: details.image_url || '/elementor-placeholder-image.webp',
+              price: details.price !== undefined ? details.price : '--',
+              restaurant_id: details.category_id ? details.category_id : details.restaurant_id || '',
+            };
+          });
+          console.log(`✅ Fetched ${detailedFavorites.length} favorites`);
+          setFavoriteItems(detailedFavorites);
+        } else {
+          if (res.status === 401) {
+            console.log("❌ Unauthorized - redirecting to login");
+            navigate('/login');
+            return;
+          }
+          console.warn("⚠️ Failed to fetch favorites:", res.status);
+        }
+      } catch (error) {
+        console.error("❌ Error in fetchFavorites:", error);
+      } finally {
+        setIsItemMapLoading(false);
       }
-      setIsItemMapLoading(false);
     };
+    
     fetchFavorites();
-  }, []);
+  }, [navigate]);
 
   const formatDate = (dateString) => {
     try {

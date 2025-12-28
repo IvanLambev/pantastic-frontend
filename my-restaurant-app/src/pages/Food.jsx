@@ -297,7 +297,7 @@ const Food = () => {
           ? autoSelectedRestaurant[8]
           : autoSelectedRestaurant.name;
 
-        toast.info(`Auto-selected restaurant: ${restaurantName}`);
+        toast.info(t('menu.autoSelected', { name: restaurantName }));
       }
     }
   }
@@ -361,7 +361,7 @@ const Food = () => {
       ...itemData,
       quantity: 1
     })
-    toast.success(`Added ${itemData.name} to cart`)
+    toast.success(t('menu.addedToCart', { name: itemData.name }))
   }
 
   const handleItemNavigation = (item) => {
