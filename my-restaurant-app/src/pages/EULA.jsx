@@ -15,7 +15,7 @@ export default function EULA() {
   return (
     <div className="container max-w-5xl mx-auto py-12 px-4">
       <ScrollArea className="h-[calc(100vh-200px)] w-full rounded-md border p-6 md:p-8">
-        <article className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-primary prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-table:text-sm">
+        <article className="prose prose-slate dark:prose-invert max-w-none text-left prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-primary prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-table:text-sm">
           <ReactMarkdown>{content}</ReactMarkdown>
         </article>
       </ScrollArea>

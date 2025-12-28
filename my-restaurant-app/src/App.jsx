@@ -40,6 +40,11 @@ function useLenisSmoothScroll() {
     const lenis = new Lenis({
       duration: 1.2,
       smooth: true,
+      prevent: (node) => {
+        // Prevent Lenis from handling scroll on shadcn ScrollArea components
+        return node.closest('[data-slot="scroll-area-viewport"]') || 
+               node.closest('[data-radix-scroll-area-viewport]')
+      },
     })
     function raf(time) {
       lenis.raf(time)
