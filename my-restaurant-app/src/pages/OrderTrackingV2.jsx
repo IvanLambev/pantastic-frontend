@@ -154,7 +154,7 @@ export default function OrderTrackingV2() {
         }
         
         // Fetch restaurant details
-        const restaurantResponse = await fetchWithAuth(`${API_URL}/restaurant/${orderData.restaurant_id}`)
+        const restaurantResponse = await fetchWithAuth(`${API_URL}/restaurant/restaurants/${orderData.restaurant_id}`)
         if (restaurantResponse.ok) {
           const restaurantData = await restaurantResponse.json()
           console.log('Fetched restaurant:', restaurantData)
