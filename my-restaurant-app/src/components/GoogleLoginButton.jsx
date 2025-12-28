@@ -21,7 +21,7 @@ export function GoogleLoginButton({ className = "", onSuccess }) {
   }
 
   const googleLogin = useGoogleLogin({
-    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.phonenumbers.read https://www.googleapis.com/auth/user.addresses.read",
+    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
     onSuccess: async (tokenResponse) => {
       setIsLoading(true)
       

@@ -14,10 +14,15 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <nav className="flex gap-6">
+            <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
               <Link to="/" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.home')}</Link>
               <Link to="/food" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.food')}</Link>
               <Link to="/about" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.about')}</Link>
+            </nav>
+            <nav className="flex flex-wrap justify-center gap-4 text-sm">
+              <Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Политика за поверителност</Link>
+              <Link to="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">Общи условия</Link>
+              <Link to="/eula" className="text-gray-400 hover:text-white transition-colors">EULA</Link>
             </nav>
             <p className="text-sm text-gray-400">© {currentYear} {t('footer.allRightsReserved')}</p>
           </div>

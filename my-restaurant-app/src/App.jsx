@@ -29,6 +29,9 @@ import UserProtectedRoute from '@/components/UserProtectedRoute'
 import Lenis from 'lenis'
 import { Footer } from "@/components/Footer"
 import DeluxeBox from '@/pages/DeluxeBox'
+import PrivacyPolicy from '@/pages/PrivacyPolicy'
+import TermsOfService from '@/pages/TermsOfService'
+import EULA from '@/pages/EULA'
 import 'leaflet/dist/leaflet.css';
 
 
@@ -116,6 +119,9 @@ export default function App() {
           <Route path="/dashboard" element={<UserProtectedRoute><UserDashboard /></UserProtectedRoute>} />
           <Route path="/item/:id" element={<ItemDetails />} />
           <Route path="/deluxe-box" element={<DeluxeBox />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/eula" element={<EULA />} />
           <Route path="*" element={<NotFound />} />
         </Route>
         <Route path="/admin/*" element={<Admin />} />
