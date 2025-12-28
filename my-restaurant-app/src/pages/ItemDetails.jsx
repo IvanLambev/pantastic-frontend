@@ -685,24 +685,8 @@ export default function ItemDetails() {
 
       {/* Mobile Layout */}
       <div className="md:hidden space-y-4">
-        {/* Item Name with Favorite */}
-        <div className="flex items-start justify-between">
-          <h1 className="text-2xl font-bold flex-1">{item.name}</h1>
-          {isLoggedIn && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleToggleFavorite}
-              className="ml-2 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart
-                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                fill={isFavorite ? 'red' : 'none'}
-              />
-            </Button>
-          )}
-        </div>
+        {/* Item Name */}
+        <h1 className="text-2xl font-bold">{item.name}</h1>
 
         {/* Item Image */}
         <div className="relative aspect-video rounded-lg overflow-hidden">
@@ -724,6 +708,22 @@ export default function ItemDetails() {
               </Badge>
             ))}
           </div>
+
+          {/* Favorite Button */}
+          {isLoggedIn && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleToggleFavorite}
+              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart
+                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                fill={isFavorite ? 'red' : 'none'}
+              />
+            </Button>
+          )}
         </div>
 
         {/* Price and Quantity Selector */}

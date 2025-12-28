@@ -353,48 +353,63 @@ export async function selectRestaurantWithFallback(restaurants) {
     return null;
   }
 
-  // 2. Try IP-based city detection - find CLOSEST OPEN restaurant in user's city
+  // 2. Try IP-based city detection - find CLOSEST OPEN restaurant within 20 km radius
+  const MAX_RADIUS_KM = 20;
   const userLocation = await getUserCityFromIP();
   if (userLocation && userLocation.city && userLocation.latitude && userLocation.longitude) {
-    const cityRestaurants = restaurants.filter(r => {
-      const restaurantCity = r.city || r[3];
-      const normalizedRestCity = normalizeCityName(restaurantCity);
-      const normalizedUserCity = normalizeCityName(userLocation.city);
-      return normalizedRestCity === normalizedUserCity;
-    });
-
-    if (cityRestaurants.length > 0) {
-      // First, try to find CLOSEST OPEN restaurant in the city
-      const openRestaurants = cityRestaurants.filter(r => isRestaurantOpen(r));
-      
-      let closestRestaurant = null;
-      let minDistance = Infinity;
-      
-      // Look for open restaurants first
-      const restaurantsToCheck = openRestaurants.length > 0 ? openRestaurants : cityRestaurants;
-      
-      restaurantsToCheck.forEach(restaurant => {
+    // First, try to find CLOSEST OPEN restaurant within 20 km (regardless of city)
+    const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
+    
+    let closestOpenRestaurant = null;
+    let minOpenDistance = Infinity;
+    
+    if (openRestaurants.length > 0) {
+      openRestaurants.forEach(restaurant => {
         const restLat = restaurant.latitude || restaurant[4];
         const restLng = restaurant.longitude || restaurant[5];
         
         if (typeof restLat === 'number' && typeof restLng === 'number') {
           const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestRestaurant = restaurant;
+          if (distance <= MAX_RADIUS_KM && distance < minOpenDistance) {
+            minOpenDistance = distance;
+            closestOpenRestaurant = restaurant;
           }
         }
       });
       
-      if (closestRestaurant) {
-        const isOpen = isRestaurantOpen(closestRestaurant);
-        console.log('[IP Geolocation] Auto-selected CLOSEST restaurant from user city:', 
-          closestRestaurant.name || closestRestaurant[8], 
-          `(${minDistance.toFixed(2)} km away)`,
-          isOpen ? '✓ OPEN' : '✗ CLOSED');
-        return closestRestaurant;
+      if (closestOpenRestaurant) {
+        console.log('[IP Geolocation] Auto-selected CLOSEST OPEN restaurant within 20km:', 
+          closestOpenRestaurant.name || closestOpenRestaurant[8], 
+          `(${minOpenDistance.toFixed(2)} km away) ✓ OPEN`);
+        return closestOpenRestaurant;
       }
     }
+
+    // No open restaurants within 20 km - Find CLOSEST restaurant (open or closed) within 20 km
+    let closestRestaurant = null;
+    let minDistance = Infinity;
+    
+    restaurants.forEach(restaurant => {
+      const restLat = restaurant.latitude || restaurant[4];
+      const restLng = restaurant.longitude || restaurant[5];
+      
+      if (typeof restLat === 'number' && typeof restLng === 'number') {
+        const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
+        if (distance <= MAX_RADIUS_KM && distance < minDistance) {
+          minDistance = distance;
+          closestRestaurant = restaurant;
+        }
+      }
+    });
+    
+    if (closestRestaurant) {
+      console.log('[IP Geolocation] Auto-selected CLOSEST restaurant within 20km (currently closed):', 
+        closestRestaurant.name || closestRestaurant[8], 
+        `(${minDistance.toFixed(2)} km away) ✗ CLOSED`);
+      return closestRestaurant;
+    }
+
+    console.warn('[IP Geolocation] No restaurants found within 20km radius of user location');
   }
 
   // 3. Fall back to default restaurant UUID (LAST RESORT - only when IP detection fails completely)
