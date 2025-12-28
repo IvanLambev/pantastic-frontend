@@ -462,11 +462,11 @@ export default function ItemDetails() {
               type="button"
               variant="ghost"
               onClick={handleToggleFavorite}
-              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
+              className="absolute top-2 right-2 z-20 bg-white/90 rounded-full p-1.5 hover:bg-white shadow-md h-auto w-auto"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
-                className={`h-7 w-7 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
             </Button>
@@ -715,11 +715,11 @@ export default function ItemDetails() {
               type="button"
               variant="ghost"
               onClick={handleToggleFavorite}
-              className="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 hover:bg-white shadow h-auto w-auto"
+              className="absolute top-2 right-2 z-20 bg-white/90 rounded-full p-1.5 hover:bg-white shadow-md h-auto w-auto"
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
-                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
                 fill={isFavorite ? 'red' : 'none'}
               />
             </Button>
