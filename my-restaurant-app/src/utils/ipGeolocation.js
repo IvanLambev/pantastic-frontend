@@ -353,60 +353,119 @@ export async function selectRestaurantWithFallback(restaurants) {
     return null;
   }
 
+  // Helper function to normalize city name for comparison
+  const normalizeCityName = (city) => {
+    if (!city) return '';
+    return city
+      .toLowerCase()
+      .replace(/[\s-]+/g, '') // Remove spaces and hyphens
+      .replace(/^(city of|grad|г\.|гр\.)/i, '') // Remove common prefixes
+      .trim();
+  };
+
   // 2. Try IP-based city detection - find CLOSEST OPEN restaurant within 20 km radius
   const MAX_RADIUS_KM = 20;
+  const SAME_CITY_ASSUMED_DISTANCE = 3; // Assume restaurants in same city without coords are ~3km away
   const userLocation = await getUserCityFromIP();
+  
   if (userLocation && userLocation.city && userLocation.latitude && userLocation.longitude) {
-    // First, try to find CLOSEST OPEN restaurant within 20 km (regardless of city)
+    const userCity = userLocation.city;
+    console.log('[IP Geolocation] User city detected:', userCity);
+    
+    // First, try to find CLOSEST OPEN restaurant (considering both coords and same-city restaurants)
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
     
-    let closestOpenRestaurant = null;
-    let minOpenDistance = Infinity;
+    // Build a list of all open restaurants with their distances
+    const restaurantsWithDistance = [];
     
-    if (openRestaurants.length > 0) {
-      openRestaurants.forEach(restaurant => {
-        const restLat = restaurant.latitude || restaurant[4];
-        const restLng = restaurant.longitude || restaurant[5];
-        
-        if (typeof restLat === 'number' && typeof restLng === 'number') {
-          const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
-          if (distance <= MAX_RADIUS_KM && distance < minOpenDistance) {
-            minOpenDistance = distance;
-            closestOpenRestaurant = restaurant;
-          }
-        }
-      });
+    openRestaurants.forEach(restaurant => {
+      const restLat = parseFloat(restaurant.latitude || restaurant[4]);
+      const restLng = parseFloat(restaurant.longitude || restaurant[5]);
+      const hasCoords = !isNaN(restLat) && !isNaN(restLng);
+      const restaurantCity = restaurant.city || restaurant[3];
+      const isSameCity = userCity && restaurantCity && 
+        normalizeCityName(userCity) === normalizeCityName(restaurantCity);
       
-      if (closestOpenRestaurant) {
-        console.log('[IP Geolocation] Auto-selected CLOSEST OPEN restaurant within 20km:', 
-          closestOpenRestaurant.name || closestOpenRestaurant[8], 
-          `(${minOpenDistance.toFixed(2)} km away) ✓ OPEN`);
-        return closestOpenRestaurant;
-      }
-    }
-
-    // No open restaurants within 20 km - Find CLOSEST restaurant (open or closed) within 20 km
-    let closestRestaurant = null;
-    let minDistance = Infinity;
-    
-    restaurants.forEach(restaurant => {
-      const restLat = restaurant.latitude || restaurant[4];
-      const restLng = restaurant.longitude || restaurant[5];
-      
-      if (typeof restLat === 'number' && typeof restLng === 'number') {
+      if (hasCoords) {
         const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
-        if (distance <= MAX_RADIUS_KM && distance < minDistance) {
-          minDistance = distance;
-          closestRestaurant = restaurant;
-        }
+        restaurantsWithDistance.push({ restaurant, distance, hasCoords: true, isSameCity });
+      } else if (isSameCity) {
+        // Restaurant is in the same city but no coordinates - assume it could be close
+        restaurantsWithDistance.push({ 
+          restaurant, 
+          distance: SAME_CITY_ASSUMED_DISTANCE, 
+          hasCoords: false, 
+          isSameCity: true,
+          estimatedDistance: true 
+        });
+        console.log(`[IP Geolocation] Same-city restaurant without coords: ${restaurant.name || restaurant[8]} - estimated at ${SAME_CITY_ASSUMED_DISTANCE}km`);
       }
     });
     
-    if (closestRestaurant) {
-      console.log('[IP Geolocation] Auto-selected CLOSEST restaurant within 20km (currently closed):', 
-        closestRestaurant.name || closestRestaurant[8], 
-        `(${minDistance.toFixed(2)} km away) ✗ CLOSED`);
-      return closestRestaurant;
+    // Sort by distance (closest first)
+    restaurantsWithDistance.sort((a, b) => a.distance - b.distance);
+    
+    console.log('[IP Geolocation] Open restaurants with distance:', 
+      restaurantsWithDistance.map(r => `${r.restaurant.name || r.restaurant[8]}: ${r.distance.toFixed(2)}km (coords: ${r.hasCoords}, sameCity: ${r.isSameCity})`));
+    
+    // Find the closest open restaurant
+    if (restaurantsWithDistance.length > 0) {
+      const closest = restaurantsWithDistance[0];
+      
+      // Check if there's a same-city restaurant that might be closer than the one with coords
+      if (closest.hasCoords && closest.distance > 5) {
+        const sameCityRestaurant = restaurantsWithDistance.find(r => r.isSameCity && !r.hasCoords);
+        if (sameCityRestaurant) {
+          console.log('[IP Geolocation] Found same-city restaurant without coords that might be closer:', 
+            sameCityRestaurant.restaurant.name || sameCityRestaurant.restaurant[8]);
+          return sameCityRestaurant.restaurant;
+        }
+      }
+      
+      if (closest.distance <= MAX_RADIUS_KM) {
+        console.log('[IP Geolocation] Auto-selected CLOSEST OPEN restaurant:', 
+          closest.restaurant.name || closest.restaurant[8], 
+          `(${closest.distance.toFixed(2)} km away, coords: ${closest.hasCoords}) ✓ OPEN`);
+        return closest.restaurant;
+      }
+    }
+
+    // No open restaurants within range - Find CLOSEST restaurant (open or closed)
+    const allRestaurantsWithDistance = [];
+    
+    restaurants.forEach(restaurant => {
+      const restLat = parseFloat(restaurant.latitude || restaurant[4]);
+      const restLng = parseFloat(restaurant.longitude || restaurant[5]);
+      const hasCoords = !isNaN(restLat) && !isNaN(restLng);
+      const restaurantCity = restaurant.city || restaurant[3];
+      const isSameCity = userCity && restaurantCity && 
+        normalizeCityName(userCity) === normalizeCityName(restaurantCity);
+      
+      if (hasCoords) {
+        const distance = getDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
+        if (distance <= MAX_RADIUS_KM) {
+          allRestaurantsWithDistance.push({ restaurant, distance, hasCoords: true, isSameCity });
+        }
+      } else if (isSameCity) {
+        allRestaurantsWithDistance.push({ 
+          restaurant, 
+          distance: SAME_CITY_ASSUMED_DISTANCE, 
+          hasCoords: false, 
+          isSameCity: true,
+          estimatedDistance: true 
+        });
+      }
+    });
+    
+    // Sort by distance
+    allRestaurantsWithDistance.sort((a, b) => a.distance - b.distance);
+    
+    if (allRestaurantsWithDistance.length > 0) {
+      const closest = allRestaurantsWithDistance[0];
+      console.log('[IP Geolocation] Auto-selected CLOSEST restaurant (currently closed):', 
+        closest.restaurant.name || closest.restaurant[8], 
+        `(${closest.distance.toFixed(2)} km away) ✗ CLOSED`);
+      return closest.restaurant;
     }
 
     console.warn('[IP Geolocation] No restaurants found within 20km radius of user location');

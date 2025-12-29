@@ -15,7 +15,7 @@ import "@reach/combobox/styles.css";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingBag, Navigation, Store, Truck } from "lucide-react";
+import { ShoppingBag, Navigation, Store, Truck, ArrowLeft } from "lucide-react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -505,86 +505,149 @@ export default function RestaurantSelector({
     }
   }
 
+  // Helper function to normalize city name for comparison
+  function normalizeCityName(city) {
+    if (!city) return '';
+    return city
+      .toLowerCase()
+      .replace(/[\s-]+/g, '') // Remove spaces and hyphens
+      .replace(/^(city of|grad|г\.|гр\.)/i, '') // Remove common prefixes
+      .trim();
+  }
+
   // Find closest restaurant (open or closed) by coordinates
-  function findClosestRestaurant(lat, lng) {
+  // userCity parameter is optional - when provided, prioritizes restaurants in the same city
+  function findClosestRestaurant(lat, lng, userCity = null) {
     if (!restaurants.length) return { restaurant: null, distance: null, message: null, isOpen: false };
 
     const MAX_RADIUS_KM = 7.5; // Maximum radius to search for restaurants
+    const SAME_CITY_ASSUMED_DISTANCE = 3; // Assume restaurants in same city without coords are ~3km away
 
-    // First, try to find CLOSEST open restaurant within 20 km radius
+    // First, try to find CLOSEST open restaurant within MAX_RADIUS_KM radius
     const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
 
     console.log(`[findClosestRestaurant] Found ${openRestaurants.length} open restaurants out of ${restaurants.length} total`);
+    console.log(`[findClosestRestaurant] User city detected: ${userCity || 'unknown'}`);
 
-    // If we have open restaurants, find the CLOSEST one by distance
-    if (openRestaurants.length > 0) {
-      let minDist = Infinity;
-      let closest = null;
+    // Build a list of all open restaurants with their distances
+    // For restaurants without coordinates but in the same city, estimate distance
+    const restaurantsWithDistance = [];
 
-      for (const r of openRestaurants) {
-        // Parse coordinates as numbers (API might return strings)
-        const rLat = parseFloat(r.latitude);
-        const rLng = parseFloat(r.longitude);
-        if (!isNaN(rLat) && !isNaN(rLng)) {
-          const dist = getDistance(lat, lng, rLat, rLng);
-          if (dist < minDist) {
-            minDist = dist;
-            closest = r;
-          }
-        }
-      }
-
-      // Check if closest open restaurant is within 20 km
-      if (closest && minDist <= MAX_RADIUS_KM) {
-        console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.name} at ${minDist.toFixed(2)} km`);
-        return { restaurant: closest, distance: minDist, message: null, isOpen: true };
-      } else if (closest && minDist > MAX_RADIUS_KM && minDist <= 15) {
-        // Warn about distant restaurant (between 20-50 km)
-        console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.name} at ${minDist.toFixed(2)} km`);
-        return {
-          restaurant: closest,
-          distance: minDist,
-          isOpen: true,
-          message: t('restaurantSelector.distanceWarningMessage', { name: closest.name, distance: minDist.toFixed(1) })
-        };
-      } else if (closest) {
-        // Closest open restaurant is too far (> 50 km)
-        console.log(`[Restaurant Selection] CLOSEST open restaurant is TOO FAR: ${closest.name} at ${minDist.toFixed(2)} km`);
-      }
-    }
-
-    // No open restaurants within reasonable distance - Find the CLOSEST restaurant within 20 km (regardless of status) for menu browsing
-    let minDist = Infinity;
-    let closest = null;
-
-    for (const r of restaurants) {
-      // Parse coordinates as numbers (API might return strings)
+    for (const r of openRestaurants) {
       const rLat = parseFloat(r.latitude);
       const rLng = parseFloat(r.longitude);
-      if (!isNaN(rLat) && !isNaN(rLng)) {
+      const hasCoords = !isNaN(rLat) && !isNaN(rLng);
+      const isSameCity = userCity && r.city && 
+        normalizeCityName(userCity) === normalizeCityName(r.city);
+
+      if (hasCoords) {
         const dist = getDistance(lat, lng, rLat, rLng);
-        // Only consider restaurants within 20 km radius
-        if (dist <= MAX_RADIUS_KM && dist < minDist) {
-          minDist = dist;
-          closest = r;
-        }
+        restaurantsWithDistance.push({ restaurant: r, distance: dist, hasCoords: true, isSameCity });
+      } else if (isSameCity) {
+        // Restaurant is in the same city but no coordinates - assume it could be close
+        restaurantsWithDistance.push({ 
+          restaurant: r, 
+          distance: SAME_CITY_ASSUMED_DISTANCE, 
+          hasCoords: false, 
+          isSameCity: true,
+          estimatedDistance: true 
+        });
+        console.log(`[findClosestRestaurant] Same-city restaurant without coords: ${r.name} (${r.city}) - estimated at ${SAME_CITY_ASSUMED_DISTANCE}km`);
       }
     }
 
-    // If we found a closed restaurant within 20 km, return it for menu browsing
-    if (closest) {
+    // Sort by distance (closest first)
+    restaurantsWithDistance.sort((a, b) => a.distance - b.distance);
+
+    console.log(`[findClosestRestaurant] Restaurants with distance:`, 
+      restaurantsWithDistance.map(r => `${r.restaurant.name}: ${r.distance.toFixed(2)}km (coords: ${r.hasCoords}, sameCity: ${r.isSameCity})`));
+
+    // Find the closest open restaurant
+    if (restaurantsWithDistance.length > 0) {
+      const closest = restaurantsWithDistance[0];
+
+      // Check if there's a same-city restaurant that might be closer than the one with coords
+      // If the closest restaurant with coords is far (>5km) but there's a same-city restaurant without coords,
+      // prefer the same-city one as it's likely closer
+      if (closest.hasCoords && closest.distance > 5 && userCity) {
+        const sameCityRestaurant = restaurantsWithDistance.find(r => r.isSameCity && !r.hasCoords);
+        if (sameCityRestaurant) {
+          console.log(`[Restaurant Selection] Found same-city restaurant without coords that might be closer: ${sameCityRestaurant.restaurant.name}`);
+          return { 
+            restaurant: sameCityRestaurant.restaurant, 
+            distance: sameCityRestaurant.distance, 
+            message: null, 
+            isOpen: true,
+            estimatedDistance: true
+          };
+        }
+      }
+
+      // If closest is within MAX_RADIUS_KM, select it
+      if (closest.distance <= MAX_RADIUS_KM) {
+        console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km (coords: ${closest.hasCoords})`);
+        return { restaurant: closest.restaurant, distance: closest.distance, message: null, isOpen: true, estimatedDistance: closest.estimatedDistance };
+      } else if (closest.distance > MAX_RADIUS_KM && closest.distance <= 15) {
+        // Warn about distant restaurant (between MAX_RADIUS_KM and 15 km)
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
+        return {
+          restaurant: closest.restaurant,
+          distance: closest.distance,
+          isOpen: true,
+          message: t('restaurantSelector.distanceWarningMessage', { name: closest.restaurant.name, distance: closest.distance.toFixed(1) })
+        };
+      } else {
+        // Closest open restaurant is too far (> 15 km)
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is TOO FAR: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
+      }
+    }
+
+    // No open restaurants within reasonable distance - Find the CLOSEST restaurant within MAX_RADIUS_KM (regardless of status) for menu browsing
+    const allRestaurantsWithDistance = [];
+
+    for (const r of restaurants) {
+      const rLat = parseFloat(r.latitude);
+      const rLng = parseFloat(r.longitude);
+      const hasCoords = !isNaN(rLat) && !isNaN(rLng);
+      const isSameCity = userCity && r.city && 
+        normalizeCityName(userCity) === normalizeCityName(r.city);
+
+      if (hasCoords) {
+        const dist = getDistance(lat, lng, rLat, rLng);
+        if (dist <= MAX_RADIUS_KM) {
+          allRestaurantsWithDistance.push({ restaurant: r, distance: dist, hasCoords: true, isSameCity });
+        }
+      } else if (isSameCity) {
+        // Same city without coords - include as potential option
+        allRestaurantsWithDistance.push({ 
+          restaurant: r, 
+          distance: SAME_CITY_ASSUMED_DISTANCE, 
+          hasCoords: false, 
+          isSameCity: true,
+          estimatedDistance: true 
+        });
+      }
+    }
+
+    // Sort by distance
+    allRestaurantsWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // If we found a restaurant within range, return it for menu browsing
+    if (allRestaurantsWithDistance.length > 0) {
+      const closest = allRestaurantsWithDistance[0];
       const nextOpenTime = getNextOpenTime();
-      console.log(`[Restaurant Selection] All restaurants closed within ${MAX_RADIUS_KM}km. Selected CLOSEST: ${closest?.name} at ${minDist.toFixed(2)} km`);
+      console.log(`[Restaurant Selection] All restaurants closed. Selected CLOSEST: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
       return {
-        restaurant: closest,
-        distance: minDist,
+        restaurant: closest.restaurant,
+        distance: closest.distance,
         isOpen: false,
         message: `No restaurants are currently open within ${MAX_RADIUS_KM}km of your location. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`,
-        allowBrowsing: true // Flag to indicate user can browse menu but not order
+        allowBrowsing: true,
+        estimatedDistance: closest.estimatedDistance
       };
     }
 
-    // No restaurants found within 20 km radius - this is now the last resort
+    // No restaurants found within MAX_RADIUS_KM radius - this is now the last resort
     console.log(`[Restaurant Selection] No restaurants found within ${MAX_RADIUS_KM}km radius`);
     return {
       restaurant: null,
@@ -679,14 +742,20 @@ export default function RestaurantSelector({
         console.log("Got device location:", { latitude, longitude });
 
         // Save location in sessionStorage if delivery
+        let userCity = null;
         if (deliveryMethod === 'delivery') {
           // Try to reverse geocode if possible, else save as 'Device Location'
           let deviceAddress = 'Device Location';
           try {
             if (window && window.fetch) {
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=bg`);
               const data = await res.json();
               if (data && data.display_name) deviceAddress = data.display_name;
+              // Extract city from reverse geocoding response
+              if (data && data.address) {
+                userCity = data.address.city || data.address.town || data.address.village || data.address.municipality;
+                console.log("[Device Location] Detected user city:", userCity);
+              }
             }
           } catch (error) {
             console.log('Error reverse geocoding:', error);
@@ -694,10 +763,27 @@ export default function RestaurantSelector({
           sessionStorage.setItem('delivery_address', deviceAddress);
           sessionStorage.setItem('delivery_coords', JSON.stringify({ lat: latitude, lng: longitude }));
           sessionStorage.setItem('delivery_method', 'delivery');
+          if (userCity) {
+            sessionStorage.setItem('user_city', userCity);
+          }
         } else {
           sessionStorage.setItem('delivery_method', 'pickup');
+          // For pickup, also try to get user city for better restaurant suggestions
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=bg`);
+            const data = await res.json();
+            if (data && data.address) {
+              userCity = data.address.city || data.address.town || data.address.village || data.address.municipality;
+              console.log("[Device Location - Pickup] Detected user city:", userCity);
+              if (userCity) {
+                sessionStorage.setItem('user_city', userCity);
+              }
+            }
+          } catch (error) {
+            console.log('Error reverse geocoding for pickup:', error);
+          }
         }
-        const result = findClosestRestaurant(latitude, longitude);
+        const result = findClosestRestaurant(latitude, longitude, userCity);
         if (result.restaurant) {
           if (result.message) {
             setPendingRestaurantSelection(result.restaurant);
@@ -760,7 +846,7 @@ export default function RestaurantSelector({
     );
   }
 
-  function handleGoogleMapLocationSelect(coords) {
+  async function handleGoogleMapLocationSelect(coords) {
     // Google Maps callback - coordinates are already saved by the Google Maps component
     // Just set the method and find closest restaurant
     if (deliveryMethod === 'delivery') {
@@ -770,7 +856,26 @@ export default function RestaurantSelector({
     }
 
     setAddressError(""); // Clear any previous errors
-    const result = findClosestRestaurant(coords[0], coords[1]);
+    
+    // Try to get the user's city from reverse geocoding for better restaurant matching
+    let userCity = sessionStorage.getItem('user_city');
+    if (!userCity) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords[0]}&lon=${coords[1]}&accept-language=bg`);
+        const data = await res.json();
+        if (data && data.address) {
+          userCity = data.address.city || data.address.town || data.address.village || data.address.municipality;
+          console.log("[Google Maps Location] Detected user city:", userCity);
+          if (userCity) {
+            sessionStorage.setItem('user_city', userCity);
+          }
+        }
+      } catch (error) {
+        console.log('Error getting user city from coords:', error);
+      }
+    }
+    
+    const result = findClosestRestaurant(coords[0], coords[1], userCity);
     if (result.restaurant) {
       if (result.message) {
         setPendingRestaurantSelection(result.restaurant);
@@ -798,6 +903,15 @@ export default function RestaurantSelector({
   function handleDeliveryMethodSelect(method) {
     setDeliveryMethod(method);
     setCurrentStep('address-input');
+  }
+
+  function handleBackToDeliveryMethod() {
+    setCurrentStep('delivery-method');
+    setDeliveryMethod('');
+    setAddressError('');
+    setShowDistanceWarning(false);
+    setPendingRestaurantSelection(null);
+    setPendingDistance(null);
   }
 
   function handleManualRestaurantSelect() {
@@ -872,9 +986,19 @@ export default function RestaurantSelector({
       <Dialog open={open && currentStep === 'address-input'} onOpenChange={handleClose}>
         <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 flex-shrink-0">
-            <DialogTitle className="text-lg sm:text-2xl md:text-3xl font-bold">
-              {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
-            </DialogTitle>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBackToDeliveryMethod}
+                className="flex-shrink-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <DialogTitle className="text-lg sm:text-2xl md:text-3xl font-bold">
+                {deliveryMethod === 'pickup' ? t('restaurantSelector.whereLocated') : t('restaurantSelector.whereDeliver')}
+              </DialogTitle>
+            </div>
           </DialogHeader>
           <div className="space-y-3 sm:space-y-6 px-4 sm:px-6 md:px-8 pb-4 sm:pb-8 w-full max-w-full overflow-y-auto flex-1">
             {/* Google Maps Container - Always Visible */}
