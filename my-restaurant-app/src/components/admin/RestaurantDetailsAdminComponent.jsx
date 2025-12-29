@@ -233,27 +233,25 @@ export default function RestaurantDetailsAdminComponent() {
         const addonTemplatesRaw = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
         const removableTemplatesRaw = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
 
-        // Ensure all data is in array format (API might return object with data property or single object)
-        const ensureArray = (data, name) => {
+        // Helper function to ensure data is an array (defined inline for useEffect scope)
+        const ensureArrayLocal = (data, name) => {
           if (Array.isArray(data)) return data;
           if (data && typeof data === 'object') {
-            // Check for common wrapper properties
             if (Array.isArray(data.data)) return data.data;
             if (Array.isArray(data.items)) return data.items;
             if (Array.isArray(data.results)) return data.results;
             if (Array.isArray(data.restaurants)) return data.restaurants;
             if (Array.isArray(data.templates)) return data.templates;
-            // If it's a single object with expected properties, wrap it in array
             if (data.item_id || data.restaurant_id || data.template_id || data.id) return [data];
             console.warn(`⚠️ [ADMIN DEBUG] ${name} is not an array and couldn't be converted:`, data);
           }
           return [];
         };
 
-        const items = ensureArray(itemsRaw, 'items');
-        const delivery = ensureArray(deliveryRaw, 'delivery');
-        const addonTemplates = ensureArray(addonTemplatesRaw, 'addonTemplates');
-        const removableTemplates = ensureArray(removableTemplatesRaw, 'removableTemplates');
+        const items = ensureArrayLocal(itemsRaw, 'items');
+        const delivery = ensureArrayLocal(deliveryRaw, 'delivery');
+        const addonTemplates = ensureArrayLocal(addonTemplatesRaw, 'addonTemplates');
+        const removableTemplates = ensureArrayLocal(removableTemplatesRaw, 'removableTemplates');
 
         console.log('✅ [ADMIN DEBUG] Items data:', items);
         console.log('📊 [ADMIN DEBUG] Items type:', typeof items, 'Is Array:', Array.isArray(items), 'Count:', items?.length);
@@ -271,7 +269,7 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('🎯 [ADMIN DEBUG] Setting state - removableTemplates:', removableTemplates);
 
         // Ensure restaurants data is also an array
-        const restaurantsArray = ensureArray(data, 'restaurants');
+        const restaurantsArray = ensureArrayLocal(data, 'restaurants');
         setRestaurants(restaurantsArray); // Store all restaurants for selection
         setMenuItems(items);
         setDeliveryPeople(delivery);
@@ -888,7 +886,7 @@ export default function RestaurantDetailsAdminComponent() {
     try {
       const res = await fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`);
       const data = await res.json();
-      setDeliveryPeople(data);
+      setDeliveryPeople(ensureArray(data, 'deliveryPeople'));
     } catch (error) {
       console.error('Error fetching delivery people:', error);
       setDeliveryPeople([]);
@@ -1012,6 +1010,21 @@ export default function RestaurantDetailsAdminComponent() {
 
   // Remove unused fetchMenuItems function since refreshData handles this now
 
+  // Helper function to ensure data is an array
+  const ensureArray = (data, name) => {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.items)) return data.items;
+      if (Array.isArray(data.results)) return data.results;
+      if (Array.isArray(data.restaurants)) return data.restaurants;
+      if (Array.isArray(data.templates)) return data.templates;
+      if (data.item_id || data.restaurant_id || data.template_id || data.id) return [data];
+      console.warn(`⚠️ [ADMIN DEBUG] ${name} is not an array and couldn't be converted:`, data);
+    }
+    return [];
+  };
+
   // Refresh data after operations
   const refreshData = useCallback(async () => {
     if (!resolvedRestaurantId) return;
@@ -1022,11 +1035,11 @@ export default function RestaurantDetailsAdminComponent() {
         fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
       ]);
 
-      const items = await itemsRes.json();
-      const templates = templatesRes.ok ? await templatesRes.json() : [];
+      const itemsRaw = await itemsRes.json();
+      const templatesRaw = templatesRes.ok ? await templatesRes.json() : [];
 
-      setMenuItems(items);
-      setAvailableTemplates(templates);
+      setMenuItems(ensureArray(itemsRaw, 'items'));
+      setAvailableTemplates(ensureArray(templatesRaw, 'templates'));
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -1173,17 +1186,22 @@ export default function RestaurantDetailsAdminComponent() {
         fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${selectedRestaurantId}`)
       ]);
 
-      const items = await itemsRes.json();
-      const delivery = await deliveryRes.json();
-      const addonTemplates = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
-      const removableTemplates = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+      const itemsRaw = await itemsRes.json();
+      const deliveryRaw = await deliveryRes.json();
+      const addonTemplatesRaw = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
+      const removableTemplatesRaw = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+
+      const items = ensureArray(itemsRaw, 'items');
+      const delivery = ensureArray(deliveryRaw, 'delivery');
+      const addonTemplatesArr = ensureArray(addonTemplatesRaw, 'addonTemplates');
+      const removableTemplatesArr = ensureArray(removableTemplatesRaw, 'removableTemplates');
 
       setMenuItems(items);
       setDeliveryPeople(delivery);
-      setAddonTemplates(addonTemplates || []);
-      setAvailableTemplates(addonTemplates || []);
-      setAvailableAddonTemplates(addonTemplates || []);
-      setAvailableRemovableTemplates(removableTemplates || []);
+      setAddonTemplates(addonTemplatesArr);
+      setAvailableTemplates(addonTemplatesArr);
+      setAvailableAddonTemplates(addonTemplatesArr);
+      setAvailableRemovableTemplates(removableTemplatesArr);
 
     } catch (error) {
       setError("Failed to load restaurant data");
