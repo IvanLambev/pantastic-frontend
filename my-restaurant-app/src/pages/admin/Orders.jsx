@@ -296,7 +296,7 @@ export default function Orders() {
             </div>
 
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent className="overflow-y-auto sm:max-w-xl">
+                <SheetContent className="overflow-y-auto overflow-x-hidden w-full sm:max-w-2xl">
                     <SheetHeader>
                         <SheetTitle>Order Details</SheetTitle>
                         <SheetDescription>

@@ -147,9 +147,28 @@ export default function RestaurantDetailsAdminComponent() {
           throw new Error(`Failed to fetch restaurants: ${res.status}`);
         }
 
-        const data = await res.json();
-        console.log('✅ [ADMIN DEBUG] Restaurants data received:', data);
-        console.log('📊 [ADMIN DEBUG] Restaurants data type:', typeof data, 'Is Array:', Array.isArray(data));
+        const dataRaw = await res.json();
+        console.log('✅ [ADMIN DEBUG] Restaurants data received:', dataRaw);
+        console.log('📊 [ADMIN DEBUG] Restaurants data type:', typeof dataRaw, 'Is Array:', Array.isArray(dataRaw));
+        
+        // Ensure data is an array (API might return object with data property)
+        let data = dataRaw;
+        if (!Array.isArray(data)) {
+          if (data && typeof data === 'object') {
+            if (Array.isArray(data.data)) data = data.data;
+            else if (Array.isArray(data.restaurants)) data = data.restaurants;
+            else if (Array.isArray(data.items)) data = data.items;
+            else if (Array.isArray(data.results)) data = data.results;
+            else if (data.restaurant_id) data = [data]; // Single restaurant object
+            else {
+              console.error('❌ [ADMIN DEBUG] Restaurants data is not an array:', dataRaw);
+              data = [];
+            }
+          } else {
+            console.error('❌ [ADMIN DEBUG] Restaurants data is not valid:', dataRaw);
+            data = [];
+          }
+        }
         console.log('📊 [ADMIN DEBUG] Restaurants count:', data?.length);
 
         // Find by UUID (paramRestaurantId) or use first restaurant if no param
@@ -209,10 +228,32 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('📡 [ADMIN DEBUG] Addon Templates response status:', addonTemplatesRes.status, addonTemplatesRes.ok);
         console.log('📡 [ADMIN DEBUG] Removable Templates response status:', removableTemplatesRes.status, removableTemplatesRes.ok);
 
-        const items = await itemsRes.json();
-        const delivery = await deliveryRes.json();
-        const addonTemplates = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
-        const removableTemplates = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+        const itemsRaw = await itemsRes.json();
+        const deliveryRaw = await deliveryRes.json();
+        const addonTemplatesRaw = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
+        const removableTemplatesRaw = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+
+        // Ensure all data is in array format (API might return object with data property or single object)
+        const ensureArray = (data, name) => {
+          if (Array.isArray(data)) return data;
+          if (data && typeof data === 'object') {
+            // Check for common wrapper properties
+            if (Array.isArray(data.data)) return data.data;
+            if (Array.isArray(data.items)) return data.items;
+            if (Array.isArray(data.results)) return data.results;
+            if (Array.isArray(data.restaurants)) return data.restaurants;
+            if (Array.isArray(data.templates)) return data.templates;
+            // If it's a single object with expected properties, wrap it in array
+            if (data.item_id || data.restaurant_id || data.template_id || data.id) return [data];
+            console.warn(`⚠️ [ADMIN DEBUG] ${name} is not an array and couldn't be converted:`, data);
+          }
+          return [];
+        };
+
+        const items = ensureArray(itemsRaw, 'items');
+        const delivery = ensureArray(deliveryRaw, 'delivery');
+        const addonTemplates = ensureArray(addonTemplatesRaw, 'addonTemplates');
+        const removableTemplates = ensureArray(removableTemplatesRaw, 'removableTemplates');
 
         console.log('✅ [ADMIN DEBUG] Items data:', items);
         console.log('📊 [ADMIN DEBUG] Items type:', typeof items, 'Is Array:', Array.isArray(items), 'Count:', items?.length);
@@ -229,13 +270,15 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('🎯 [ADMIN DEBUG] Setting state - addonTemplates:', addonTemplates);
         console.log('🎯 [ADMIN DEBUG] Setting state - removableTemplates:', removableTemplates);
 
-        setRestaurants(data); // Store all restaurants for selection
+        // Ensure restaurants data is also an array
+        const restaurantsArray = ensureArray(data, 'restaurants');
+        setRestaurants(restaurantsArray); // Store all restaurants for selection
         setMenuItems(items);
         setDeliveryPeople(delivery);
-        setAddonTemplates(addonTemplates || []);
-        setAvailableTemplates(addonTemplates || []);
-        setAvailableAddonTemplates(addonTemplates || []);
-        setAvailableRemovableTemplates(removableTemplates || []);
+        setAddonTemplates(addonTemplates);
+        setAvailableTemplates(addonTemplates);
+        setAvailableAddonTemplates(addonTemplates);
+        setAvailableRemovableTemplates(removableTemplates);
 
         console.log('✅ [ADMIN DEBUG] All state updated successfully');
 

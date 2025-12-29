@@ -8,6 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { formatDualCurrencyCompact } from "@/utils/currency";
 
+// Helper function to get color classes for order status
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'delivered':
+      return 'bg-green-500 hover:bg-green-600 text-white';
+    case 'pending':
+      return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+    case 'canceled':
+      return 'bg-red-500 hover:bg-red-600 text-white';
+    case 'in progress':
+      return 'bg-blue-500 hover:bg-blue-600 text-white';
+    default:
+      return 'bg-gray-500 hover:bg-gray-600 text-white';
+  }
+};
+
 export default function OrderManagementComponent() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
@@ -261,7 +277,7 @@ export default function OrderManagementComponent() {
                       </div>
                     )}
                   </div>
-                    <Badge variant={order.status === 'Canceled' ? 'destructive' : 'default'}>
+                    <Badge className={getStatusColor(order.status)}>
                       {order.status}
                     </Badge>
                   </div>
