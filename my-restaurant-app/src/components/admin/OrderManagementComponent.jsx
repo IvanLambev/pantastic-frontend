@@ -323,7 +323,8 @@ export default function OrderManagementComponent() {
                       const { color, tooltip } = getStatusColorAndTooltip(order.status, order.delivery_method);
                       return (
                         <Badge 
-                          className={`${color} cursor-help`}
+                          variant={null}
+                          className={`${color} cursor-help border-transparent`}
                           title={tooltip}
                         >
                           {order.status}
