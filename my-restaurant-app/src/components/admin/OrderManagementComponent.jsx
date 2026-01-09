@@ -2,11 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { formatDualCurrencyCompact } from "@/utils/currency";
+import { Loader2 } from "lucide-react";
 
 // Helper function to get color classes and tooltip for order status
 const getStatusColorAndTooltip = (status, deliveryMethod) => {
@@ -70,6 +72,10 @@ export default function OrderManagementComponent() {
   const [orders, setOrders] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [customerInfo, setCustomerInfo] = useState(null);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   const prevOrdersRef = useRef([]);
   const audioRef = useRef(null);
 
@@ -252,6 +258,44 @@ export default function OrderManagementComponent() {
     }
   }, [checkForNewOrders, fetchItems]);
 
+  const fetchCustomerInfo = async (customerId) => {
+    if (!customerId) {
+      console.warn('No customer ID provided');
+      return null;
+    }
+    
+    try {
+      setLoadingCustomer(true);
+      // Try to fetch customer info using the customer_id
+      const response = await fetch(`${API_URL}/user/user-info?customer_id=${customerId}`);
+      
+      if (!response.ok) {
+        console.warn(`Failed to fetch customer info for ${customerId}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching customer info:', error);
+      return null;
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
+
+  const handleShowOrderDetails = async (order) => {
+    setSelectedOrder(order);
+    setCustomerInfo(null);
+    setShowOrderDetails(true);
+    
+    // Fetch customer information
+    if (order.customer_id) {
+      const customerData = await fetchCustomerInfo(order.customer_id);
+      setCustomerInfo(customerData);
+    }
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     if (!orderId) return;
     try {
@@ -269,6 +313,10 @@ export default function OrderManagementComponent() {
         }
         return order;
       }));
+      // Update selected order if it's the one being updated
+      if (selectedOrder?.order_id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
+      }
       toast.success('Order status updated successfully');
     } catch {
       toast.error('Failed to update order status');
@@ -422,7 +470,15 @@ export default function OrderManagementComponent() {
                       <SelectItem value="Delivered">Delivered</SelectItem>
                       <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
-                  </Select>                  <Button
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleShowOrderDetails(order)}
+                    className="w-full md:w-auto"
+                  >
+                    More Info
+                  </Button>
+                  <Button
                     variant="outline"
                     onClick={() => window.open(`/order-tracking-v2/${order.order_id}`, '_blank')}
                     className="w-full md:w-auto"
@@ -459,6 +515,205 @@ export default function OrderManagementComponent() {
           </Card>
         ))}
       </div>
+
+      {/* Order Details Modal */}
+      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details - #{selectedOrder?.order_id?.split('-')[0]}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Customer Information */}
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <h3 className="font-semibold text-lg mb-3">Customer Information</h3>
+                {loadingCustomer ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading customer info...</span>
+                  </div>
+                ) : customerInfo ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Name</p>
+                      <p className="text-sm">{customerInfo.first_name} {customerInfo.last_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Email</p>
+                      <p className="text-sm">{customerInfo.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Phone</p>
+                      <p className="text-sm">{customerInfo.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">City</p>
+                      <p className="text-sm">{customerInfo.city || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Customer ID</p>
+                      <p className="text-xs break-all">{selectedOrder.customer_id}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    <p>Customer ID: {selectedOrder.customer_id}</p>
+                    <p className="text-xs mt-1">Unable to load customer details</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3">Order Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Order ID</p>
+                    <p className="text-sm break-all">{selectedOrder.order_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Status</p>
+                    <Badge variant={null} className={getStatusColorAndTooltip(selectedOrder.status, selectedOrder.delivery_method).color}>
+                      {selectedOrder.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Restaurant</p>
+                    <p className="text-sm">{selectedOrder.restaurant_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Created At</p>
+                    <p className="text-sm">{new Date(selectedOrder.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Delivery Method</p>
+                    <p className="text-sm capitalize">{selectedOrder.delivery_method}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Payment Method</p>
+                    <p className="text-sm capitalize">{selectedOrder.payment_method}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Payment Status</p>
+                    <Badge variant={selectedOrder.paid ? "success" : "secondary"}>
+                      {selectedOrder.paid ? 'Paid' : 'Not Paid'}
+                    </Badge>
+                  </div>
+                  {selectedOrder.scheduled_delivery_time && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Scheduled For</p>
+                      <p className="text-sm">{new Date(selectedOrder.scheduled_delivery_time).toLocaleString()}</p>
+                    </div>
+                  )}
+                  {selectedOrder.address && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm font-medium text-gray-600">Delivery Address</p>
+                      <p className="text-sm break-words">{selectedOrder.address}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3">Order Items</h3>
+                {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                  <div className="space-y-4">
+                    {selectedOrder.items.map((item, index) => (
+                      <div key={item.item_id || index} className="border-l-4 border-blue-400 pl-4 py-2">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                            <p className="text-sm text-gray-600">Base Price: {formatDualCurrencyCompact(item.base_price)}</p>
+                          </div>
+                          <p className="font-semibold">{formatDualCurrencyCompact(item.final_price)}</p>
+                        </div>
+                        
+                        {item.selected_addons && Object.keys(item.selected_addons).length > 0 && (
+                          <div className="mt-2 bg-green-50 p-2 rounded">
+                            <p className="text-xs font-medium text-green-800 mb-1">Selected Addons:</p>
+                            {Object.entries(item.selected_addons).map(([addonName, addonPrice]) => (
+                              <div key={addonName} className="flex justify-between text-xs text-green-700">
+                                <span>+ {addonName}</span>
+                                <span>{formatDualCurrencyCompact(addonPrice)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {item.removed_ingredients && item.removed_ingredients.length > 0 && (
+                          <div className="mt-2 bg-red-50 p-2 rounded">
+                            <p className="text-xs font-medium text-red-800 mb-1">Removed Ingredients:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {item.removed_ingredients.map((ingredient, idx) => (
+                                <Badge key={idx} variant="destructive" className="text-xs">
+                                  - {ingredient}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No items in this order</p>
+                )}
+              </div>
+
+              {/* Order Summary */}
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <h3 className="font-semibold text-lg mb-3">Order Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>{formatDualCurrencyCompact(selectedOrder.total_price - selectedOrder.delivery_fee + selectedOrder.discount)}</span>
+                  </div>
+                  {selectedOrder.delivery_fee > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Delivery Fee</span>
+                      <span>{formatDualCurrencyCompact(selectedOrder.delivery_fee)}</span>
+                    </div>
+                  )}
+                  {selectedOrder.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount</span>
+                      <span>-{formatDualCurrencyCompact(selectedOrder.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Total</span>
+                    <span>{formatDualCurrencyCompact(selectedOrder.total_price)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Update Status Section */}
+              <div className="border rounded-lg p-4">
+                <h3 className="font-semibold text-lg mb-3">Update Order Status</h3>
+                <Select
+                  value={selectedOrder.status || 'Pending'}
+                  onValueChange={(value) => updateOrderStatus(selectedOrder.order_id, value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Ready">Ready</SelectItem>
+                    <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
+                    <SelectItem value="Delivered">Delivered</SelectItem>
+                    <SelectItem value="Canceled">Canceled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
