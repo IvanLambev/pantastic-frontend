@@ -12,6 +12,7 @@ import Team from "./admin/Team"
 import Restaurant from "./admin/Restaurant"
 import Orders from "./admin/Orders"
 import RestaurantDetailsAdmin from "./admin/RestaurantDetailsAdmin"
+import Customers from "./admin/Customers"
 
 function AdminDashboard() {
   return (
@@ -30,6 +31,7 @@ function AdminDashboard() {
                 <Route path="/restaurant" element={<Restaurant />} />
                 <Route path="/restaurant/:restaurantId" element={<RestaurantDetailsAdmin />} />
                 <Route path="/orders" element={<Orders />} />
+                <Route path="/customers" element={<Customers />} />
               </Routes>
             </main>
           </div>

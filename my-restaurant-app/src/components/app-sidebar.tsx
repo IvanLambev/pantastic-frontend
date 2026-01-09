@@ -61,6 +61,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Orders",
         url: "/admin/orders",
         icon: IconListDetails,
+      },
+      {
+        title: "Customers",
+        url: "/admin/customers",
+        icon: IconUsers,
       }
     ],
     navClouds: [
