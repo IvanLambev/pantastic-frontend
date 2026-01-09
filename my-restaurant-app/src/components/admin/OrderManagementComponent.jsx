@@ -8,19 +8,61 @@ import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { formatDualCurrencyCompact } from "@/utils/currency";
 
-// Helper function to get color classes for order status
-const getStatusColor = (status) => {
-  switch (status?.toLowerCase()) {
+// Helper function to get color classes and tooltip for order status
+const getStatusColorAndTooltip = (status, deliveryMethod) => {
+  const statusLower = status?.toLowerCase();
+  const isDelivery = deliveryMethod?.toLowerCase() === 'delivery';
+  
+  switch (statusLower) {
     case 'delivered':
-      return 'bg-green-500 hover:bg-green-600 text-white';
-    case 'pending':
-      return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+      return {
+        color: 'bg-green-500 hover:bg-green-600 text-white',
+        tooltip: 'Order has been delivered to customer'
+      };
+    
+    case 'ready':
+      if (isDelivery) {
+        return {
+          color: 'bg-yellow-500 hover:bg-yellow-600 text-white',
+          tooltip: 'Order is marked ready but not delivered yet'
+        };
+      }
+      return {
+        color: 'bg-green-500 hover:bg-green-600 text-white',
+        tooltip: 'Order is ready for pickup'
+      };
+    
     case 'canceled':
-      return 'bg-red-500 hover:bg-red-600 text-white';
+    case 'cancelled':
+      return {
+        color: 'bg-red-500 hover:bg-red-600 text-white',
+        tooltip: 'Order has been canceled'
+      };
+    
+    case 'pending':
+      return {
+        color: 'bg-amber-500 hover:bg-amber-600 text-white',
+        tooltip: 'Order is pending confirmation'
+      };
+    
     case 'in progress':
-      return 'bg-blue-500 hover:bg-blue-600 text-white';
+    case 'preparing':
+      return {
+        color: 'bg-blue-500 hover:bg-blue-600 text-white',
+        tooltip: 'Order is being prepared'
+      };
+    
+    case 'out for delivery':
+      return {
+        color: 'bg-purple-500 hover:bg-purple-600 text-white',
+        tooltip: 'Order is out for delivery'
+      };
+    
     default:
-      return 'bg-gray-500 hover:bg-gray-600 text-white';
+      return {
+        color: 'bg-gray-500 hover:bg-gray-600 text-white',
+        tooltip: `Status: ${status || 'Unknown'}`
+      };
   }
 };
 
@@ -277,9 +319,17 @@ export default function OrderManagementComponent() {
                       </div>
                     )}
                   </div>
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
+                    {(() => {
+                      const { color, tooltip } = getStatusColorAndTooltip(order.status, order.delivery_method);
+                      return (
+                        <Badge 
+                          className={`${color} cursor-help`}
+                          title={tooltip}
+                        >
+                          {order.status}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-2">Items:</p>
