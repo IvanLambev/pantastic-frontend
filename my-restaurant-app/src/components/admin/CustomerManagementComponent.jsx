@@ -6,10 +6,18 @@ import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
-import { Loader2, Search, User, Mail, Phone, MapPin, DollarSign, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Search, User, Mail, Phone, MapPin, DollarSign, Calendar, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { formatDualCurrencyCompact } from "@/utils/currency";
+import { fetchOrdersByCustomer } from '@/services/adminApi';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function CustomerManagementComponent() {
   const [customers, setCustomers] = useState([]);
@@ -24,6 +32,12 @@ export default function CustomerManagementComponent() {
   const [totalAllCustomers, setTotalAllCustomers] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null);
+  
+  // Customer orders modal state
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerOrders, setCustomerOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersDialogOpen, setOrdersDialogOpen] = useState(false);
 
   // Fetch customers from the API
   const fetchCustomers = useCallback(async (nameFilter = '', pageToken = null) => {
@@ -109,6 +123,39 @@ export default function CustomerManagementComponent() {
       return format(new Date(dateString), 'MMM dd, yyyy HH:mm');
     } catch (error) {
       return dateString;
+    }
+  };
+
+  // Handle viewing customer orders
+  const handleViewOrders = async (customer) => {
+    setSelectedCustomer(customer);
+    setOrdersDialogOpen(true);
+    setOrdersLoading(true);
+    
+    try {
+      const data = await fetchOrdersByCustomer(customer.customer_id);
+      setCustomerOrders(data.orders || []);
+    } catch (error) {
+      console.error('Error fetching customer orders:', error);
+      toast.error('Failed to load customer orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  // Format order status
+  const getOrderStatusVariant = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+      case 'delivered':
+        return 'default';
+      case 'pending':
+      case 'preparing':
+        return 'secondary';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
 
@@ -199,6 +246,7 @@ export default function CustomerManagementComponent() {
                       <TableHead className="text-right">Total Spent</TableHead>
                       <TableHead className="text-center">Roles</TableHead>
                       <TableHead>Joined</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,6 +321,19 @@ export default function CustomerManagementComponent() {
                             {formatDate(customer.created_at)}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewOrders(customer)}
+                              className="h-8"
+                            >
+                              <ShoppingCart className="h-3 w-3 mr-1" />
+                              View Orders
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -310,6 +371,74 @@ export default function CustomerManagementComponent() {
           )}
         </CardContent>
       </Card>
+
+      {/* Customer Orders Dialog */}
+      <Dialog open={ordersDialogOpen} onOpenChange={setOrdersDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Orders for {selectedCustomer?.full_name}
+            </DialogTitle>
+            <DialogDescription>
+              Customer ID: {selectedCustomer?.customer_id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Loading orders...</span>
+            </div>
+          ) : customerOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No orders found for this customer</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Total orders: {customerOrders.length}
+              </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Restaurant</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customerOrders.map((order) => (
+                      <TableRow key={order.order_id}>
+                        <TableCell className="font-mono text-xs">
+                          {order.order_id?.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell>
+                          {order.restaurant_name || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(order.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatDualCurrencyCompact(order.total_price || 0)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={getOrderStatusVariant(order.status)}>
+                            {order.status || 'Unknown'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

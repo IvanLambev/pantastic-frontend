@@ -236,3 +236,23 @@ export async function fetchUserDetails(customerId) {
         throw error;
     }
 }
+
+/**
+ * Fetch orders by customer ID
+ * @param {string} customerId - Customer UUID
+ * @returns {Promise<Object>} Customer orders data
+ */
+export async function fetchOrdersByCustomer(customerId) {
+    try {
+        const response = await fetchWithAdminAuth(`${API_URL}/order/admin/orders/customer/${customerId}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch customer orders: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching customer orders:', error);
+        throw error;
+    }
+}
