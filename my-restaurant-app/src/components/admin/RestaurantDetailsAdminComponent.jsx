@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreVertical, Pencil, Trash2, UserPlus, Plus, X, CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, UserPlus, Plus, X, CheckIcon, ChevronsUpDownIcon, Clock } from "lucide-react";
+import { updateWorkingHours } from '@/services/adminApi';
 import {
   Dialog,
   DialogContent,
@@ -135,6 +136,20 @@ export default function RestaurantDetailsAdminComponent() {
   // Multi-restaurant support states
   const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false);
   const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([]);
+
+  // Working Hours Dialog State
+  const [isWorkingHoursDialogOpen, setIsWorkingHoursDialogOpen] = useState(false);
+  const [selectedRestaurantsForHours, setSelectedRestaurantsForHours] = useState([]);
+  const [workingHours, setWorkingHours] = useState({
+    Monday: '9:00-22:00',
+    Tuesday: '9:00-22:00',
+    Wednesday: '9:00-22:00',
+    Thursday: '9:00-22:00',
+    Friday: '9:00-23:00',
+    Saturday: '10:00-23:00',
+    Sunday: '10:00-21:00'
+  });
+  const [updatingWorkingHours, setUpdatingWorkingHours] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -1321,6 +1336,64 @@ export default function RestaurantDetailsAdminComponent() {
   if (!resolvedRestaurantId) return <div className="p-8 text-red-500">No restaurant ID found. Please access this page from a valid restaurant context.</div>;
   if (!restaurant) return <div className="p-8">Restaurant not found</div>;
 
+  const handleRestaurantCheckboxChangeForHours = (restaurantId, checked) => {
+    if (checked) {
+      setSelectedRestaurantsForHours(prev => [...prev, restaurantId]);
+    } else {
+      setSelectedRestaurantsForHours(prev => prev.filter(id => id !== restaurantId));
+    }
+  };
+
+  const handleSelectAllRestaurantsForHours = (checked) => {
+    if (checked) {
+      setSelectedRestaurantsForHours(restaurants.map(r => r.restaurant_id));
+    } else {
+      setSelectedRestaurantsForHours([]);
+    }
+  };
+
+  const handleWorkingHoursChange = (day, value) => {
+    setWorkingHours(prev => ({
+      ...prev,
+      [day]: value
+    }));
+  };
+
+  const handleUpdateWorkingHours = async () => {
+    if (selectedRestaurantsForHours.length === 0) {
+      toast.error('Please select at least one restaurant');
+      return;
+    }
+
+    setUpdatingWorkingHours(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const restaurantId of selectedRestaurantsForHours) {
+      try {
+        await updateWorkingHours(restaurantId, workingHours);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to update working hours for restaurant ${restaurantId}:`, error);
+        errorCount++;
+      }
+    }
+
+    setUpdatingWorkingHours(false);
+
+    if (successCount > 0) {
+      toast.success(`Successfully updated working hours for ${successCount} restaurant(s)`);
+    }
+    if (errorCount > 0) {
+      toast.error(`Failed to update ${errorCount} restaurant(s)`);
+    }
+
+    if (errorCount === 0) {
+      setIsWorkingHoursDialogOpen(false);
+      setSelectedRestaurantsForHours([]);
+    }
+  };
+
   return (
     <TooltipProvider>
       <div className="w-full px-4 py-4 md:py-8">
@@ -2017,9 +2090,19 @@ export default function RestaurantDetailsAdminComponent() {
                 <h3 className="text-lg font-semibold">Menu Items</h3>
                 <p className="text-sm text-gray-500">{menuItems.length} items</p>
               </div>
-              <Button onClick={handleAddItem} className="mt-4 md:mt-0">
-                Add Menu Item
-              </Button>
+              <div className="flex gap-2 mt-4 md:mt-0">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsWorkingHoursDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Clock className="h-4 w-4" />
+                  Working Hours
+                </Button>
+                <Button onClick={handleAddItem}>
+                  Add Menu Item
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -2477,6 +2560,105 @@ export default function RestaurantDetailsAdminComponent() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Working Hours Dialog */}
+      <Dialog open={isWorkingHoursDialogOpen} onOpenChange={setIsWorkingHoursDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Restaurant Working Hours</DialogTitle>
+            <DialogDescription>
+              Select restaurants and set their working hours for each day of the week.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Restaurant Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Select Restaurants</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSelectAllRestaurantsForHours(selectedRestaurantsForHours.length !== restaurants.length);
+                  }}
+                >
+                  {selectedRestaurantsForHours.length === restaurants.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
+              <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
+                {restaurants.map((restaurant) => (
+                  <div key={restaurant.restaurant_id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`restaurant-hours-${restaurant.restaurant_id}`}
+                      checked={selectedRestaurantsForHours.includes(restaurant.restaurant_id)}
+                      onCheckedChange={(checked) => 
+                        handleRestaurantCheckboxChangeForHours(restaurant.restaurant_id, checked)
+                      }
+                    />
+                    <label
+                      htmlFor={`restaurant-hours-${restaurant.restaurant_id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {restaurant.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {selectedRestaurantsForHours.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {selectedRestaurantsForHours.length} restaurant(s) selected
+                </p>
+              )}
+            </div>
+
+            {/* Working Hours Inputs */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Working Hours</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.keys(workingHours).map((day) => (
+                  <div key={day} className="space-y-2">
+                    <Label htmlFor={`hours-${day}`}>{day}</Label>
+                    <Input
+                      id={`hours-${day}`}
+                      value={workingHours[day]}
+                      onChange={(e) => handleWorkingHoursChange(day, e.target.value)}
+                      placeholder="9:00-22:00"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Format: HH:MM-HH:MM (e.g., 9:00-22:00)
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsWorkingHoursDialogOpen(false)}
+              disabled={updatingWorkingHours}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateWorkingHours}
+              disabled={updatingWorkingHours || selectedRestaurantsForHours.length === 0}
+            >
+              {updatingWorkingHours ? (
+                <>
+                  <Plus className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Working Hours'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
