@@ -371,7 +371,6 @@ export default function OrderManagementComponent() {
                       const { color, tooltip } = getStatusColorAndTooltip(order.status, order.delivery_method);
                       return (
                         <Badge 
-                          variant={null}
                           className={`${color} cursor-help border-transparent`}
                           title={tooltip}
                         >
@@ -574,7 +573,7 @@ export default function OrderManagementComponent() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600">Status</p>
-                    <Badge variant={null} className={getStatusColorAndTooltip(selectedOrder.status, selectedOrder.delivery_method).color}>
+                    <Badge className={getStatusColorAndTooltip(selectedOrder.status, selectedOrder.delivery_method).color}>
                       {selectedOrder.status}
                     </Badge>
                   </div>
