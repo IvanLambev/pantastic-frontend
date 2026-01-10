@@ -131,6 +131,11 @@ export default function RestaurantDetailsAdminComponent() {
   const [importItemText, setImportItemText] = useState("");
   const [parsedItemData, setParsedItemData] = useState(null);
 
+  // Multi-restaurant support states
+  const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false);
+  const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([]);
+  const [restaurantSelectionOpen, setRestaurantSelectionOpen] = useState(false);
+
   useEffect(() => {
     const fetchRestaurant = async () => {
       console.log('🔄 [ADMIN DEBUG] Starting fetchRestaurant...');
@@ -318,40 +323,71 @@ export default function RestaurantDetailsAdminComponent() {
       return;
     }
 
+    // Determine which restaurants to create the template for
+    const targetRestaurants = addToMultipleRestaurants && selectedRestaurantsForCreation.length > 0
+      ? selectedRestaurantsForCreation
+      : [resolvedRestaurantId];
+
     try {
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          restaurant_id: resolvedRestaurantId,
-          template: {
-            name: newAddonTemplate.name,
-            description: newAddonTemplate.description,
-            addons: addonsObject,
-            is_predefined: false
+      let successCount = 0;
+      let failCount = 0;
+      let lastTemplateId = null;
+
+      // Loop through each selected restaurant
+      for (const restaurantId of targetRestaurants) {
+        try {
+          const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              restaurant_id: restaurantId,
+              template: {
+                name: newAddonTemplate.name,
+                description: newAddonTemplate.description,
+                addons: addonsObject,
+                is_predefined: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            successCount++;
+            if (restaurantId === resolvedRestaurantId) {
+              lastTemplateId = result.template_id;
+            }
+          } else {
+            failCount++;
           }
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success(`Шаблонът за добавки "${newAddonTemplate.name}" е създаден успешно`);
-        setShowCreateAddonTemplate(false);
-        setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }] });
-        setAddonTemplateOpen(false); // Close the popover
-
-        // Refresh addon templates
-        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
-        const templates = templatesRes.ok ? await templatesRes.json() : [];
-        setAvailableAddonTemplates(templates);
-
-        // Auto-select the new template
-        if (result.template_id) {
-          setSelectedAddonTemplates(prev => [...prev, result.template_id]);
+        } catch (error) {
+          console.error(`Error creating addon template for restaurant ${restaurantId}:`, error);
+          failCount++;
         }
+      }
+
+      // Show appropriate success/error message
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Шаблонът за добавки "${newAddonTemplate.name}" е създаден успешно за ${successCount} ресторант${successCount > 1 ? 'а' : ''}`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.warning(`Шаблонът е създаден за ${successCount} ресторант${successCount > 1 ? 'а' : ''}, но неуспешен за ${failCount}`);
       } else {
-        const error = await response.json();
-        toast.error(`Грешка: ${error.message || 'Неуспешно създаване на шаблон'}`);
+        toast.error('Неуспешно създаване на шаблон');
+      }
+
+      setShowCreateAddonTemplate(false);
+      setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }] });
+      setAddonTemplateOpen(false);
+      setAddToMultipleRestaurants(false);
+      setSelectedRestaurantsForCreation([]);
+
+      // Refresh addon templates for current restaurant
+      const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`);
+      const templates = templatesRes.ok ? await templatesRes.json() : [];
+      setAvailableAddonTemplates(templates);
+
+      // Auto-select the new template if created for current restaurant
+      if (lastTemplateId) {
+        setSelectedAddonTemplates(prev => [...prev, lastTemplateId]);
       }
     } catch (error) {
       console.error('Error creating addon template:', error);
@@ -379,40 +415,71 @@ export default function RestaurantDetailsAdminComponent() {
       return;
     }
 
+    // Determine which restaurants to create the template for
+    const targetRestaurants = addToMultipleRestaurants && selectedRestaurantsForCreation.length > 0
+      ? selectedRestaurantsForCreation
+      : [resolvedRestaurantId];
+
     try {
-      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          restaurant_id: resolvedRestaurantId,
-          template: {
-            name: newRemovableTemplate.name,
-            description: newRemovableTemplate.description,
-            removables: removables,
-            is_predefined: false
+      let successCount = 0;
+      let failCount = 0;
+      let lastTemplateId = null;
+
+      // Loop through each selected restaurant
+      for (const restaurantId of targetRestaurants) {
+        try {
+          const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              restaurant_id: restaurantId,
+              template: {
+                name: newRemovableTemplate.name,
+                description: newRemovableTemplate.description,
+                removables: removables,
+                is_predefined: false
+              }
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            successCount++;
+            if (restaurantId === resolvedRestaurantId) {
+              lastTemplateId = result.template_id;
+            }
+          } else {
+            failCount++;
           }
-        })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        toast.success(`Шаблонът за премахвания "${newRemovableTemplate.name}" е създаден успешно`);
-        setShowCreateRemovableTemplate(false);
-        setNewRemovableTemplate({ name: "", description: "", removables: [""] });
-        setRemovableTemplateOpen(false); // Close the popover
-
-        // Refresh removable templates
-        const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${resolvedRestaurantId}`);
-        const templates = templatesRes.ok ? await templatesRes.json() : [];
-        setAvailableRemovableTemplates(templates);
-
-        // Auto-select the new template
-        if (result.template_id) {
-          setSelectedRemovableTemplates(prev => [...prev, result.template_id]);
+        } catch (error) {
+          console.error(`Error creating removable template for restaurant ${restaurantId}:`, error);
+          failCount++;
         }
+      }
+
+      // Show appropriate success/error message
+      if (successCount > 0 && failCount === 0) {
+        toast.success(`Шаблонът за премахвания "${newRemovableTemplate.name}" е създаден успешно за ${successCount} ресторант${successCount > 1 ? 'а' : ''}`);
+      } else if (successCount > 0 && failCount > 0) {
+        toast.warning(`Шаблонът е създаден за ${successCount} ресторант${successCount > 1 ? 'а' : ''}, но неуспешен за ${failCount}`);
       } else {
-        const error = await response.json();
-        toast.error(`Грешка: ${error.message || 'Неуспешно създаване на шаблон'}`);
+        toast.error('Неуспешно създаване на шаблон');
+      }
+
+      setShowCreateRemovableTemplate(false);
+      setNewRemovableTemplate({ name: "", description: "", removables: [""] });
+      setRemovableTemplateOpen(false);
+      setAddToMultipleRestaurants(false);
+      setSelectedRestaurantsForCreation([]);
+
+      // Refresh removable templates for current restaurant
+      const templatesRes = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${resolvedRestaurantId}`);
+      const templates = templatesRes.ok ? await templatesRes.json() : [];
+      setAvailableRemovableTemplates(templates);
+
+      // Auto-select the new template if created for current restaurant
+      if (lastTemplateId) {
+        setSelectedRemovableTemplates(prev => [...prev, lastTemplateId]);
       }
     } catch (error) {
       console.error('Error creating removable template:', error);
@@ -794,46 +861,81 @@ export default function RestaurantDetailsAdminComponent() {
   // Submit add/edit item
   const handleItemFormSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
 
     if (modalMode === "add") {
-      // Use template-based API for new items
-      const itemData = {
-        restaurant_id: restaurant.restaurant_id,
-        item: {
-          name: itemForm.name,
-          description: itemForm.description,
-          item_type: itemForm.item_type,
-          price: parseFloat(itemForm.price),
-          addons: {}, // Custom addons can be added here if needed
-          addon_template_ids: selectedAddonTemplates,
-          removables: [], // Custom removables can be added here if needed
-          removable_template_ids: selectedRemovableTemplates
-        }
-      };
+      // Determine which restaurants to create the item for
+      const targetRestaurants = addToMultipleRestaurants && selectedRestaurantsForCreation.length > 0
+        ? selectedRestaurantsForCreation
+        : [restaurant.restaurant_id];
 
-      formData.append("data", JSON.stringify(itemData));
-
-      if (fileInputRef.current && fileInputRef.current.files[0]) {
-        formData.append("file", fileInputRef.current.files[0]);
-      }
+      let successCount = 0;
+      let failCount = 0;
 
       try {
-        await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
-          method: "POST",
-          body: formData,
-        });
-        toast.success(`Продуктът "${itemForm.name}" е създаден успешно`);
+        // Loop through each selected restaurant
+        for (const restaurantId of targetRestaurants) {
+          try {
+            const formData = new FormData();
+            
+            // Use template-based API for new items
+            const itemData = {
+              restaurant_id: restaurantId,
+              item: {
+                name: itemForm.name,
+                description: itemForm.description,
+                item_type: itemForm.item_type,
+                price: parseFloat(itemForm.price),
+                addons: {}, // Custom addons can be added here if needed
+                addon_template_ids: selectedAddonTemplates,
+                removables: [], // Custom removables can be added here if needed
+                removable_template_ids: selectedRemovableTemplates
+              }
+            };
+
+            formData.append("data", JSON.stringify(itemData));
+
+            if (fileInputRef.current && fileInputRef.current.files[0]) {
+              formData.append("file", fileInputRef.current.files[0]);
+            }
+
+            const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
+              method: "POST",
+              body: formData,
+            });
+
+            if (response.ok) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (error) {
+            console.error(`Error creating item for restaurant ${restaurantId}:`, error);
+            failCount++;
+          }
+        }
+
+        // Show appropriate success/error message
+        if (successCount > 0 && failCount === 0) {
+          toast.success(`Продуктът "${itemForm.name}" е създаден успешно за ${successCount} ресторант${successCount > 1 ? 'а' : ''}`);
+        } else if (successCount > 0 && failCount > 0) {
+          toast.warning(`Продуктът е създаден за ${successCount} ресторант${successCount > 1 ? 'а' : ''}, но неуспешен за ${failCount}`);
+        } else {
+          toast.error("Неуспешно създаване на продукт");
+        }
+
         // Refresh items after successful save
         refreshData();
         setShowItemModal(false);
         setSelectedAddonTemplates([]);
         setSelectedRemovableTemplates([]);
+        setAddToMultipleRestaurants(false);
+        setSelectedRestaurantsForCreation([]);
       } catch (error) {
         console.error('Error creating item:', error);
         toast.error("Неуспешно създаване на продукт");
       }
     } else {
+      const formData = new FormData();
       // For edit, use the existing API
       const data = {
         item_id: itemForm.id,
@@ -1490,6 +1592,92 @@ export default function RestaurantDetailsAdminComponent() {
                                     Добави добавка
                                   </Button>
                                 </div>
+
+                                {/* Multi-restaurant selection */}
+                                <div className="space-y-3 border-t pt-4">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="multi-restaurant-addon"
+                                      checked={addToMultipleRestaurants}
+                                      onCheckedChange={setAddToMultipleRestaurants}
+                                    />
+                                    <Label htmlFor="multi-restaurant-addon" className="text-sm font-medium">
+                                      Добави към други ресторанти
+                                    </Label>
+                                  </div>
+                                  {addToMultipleRestaurants && (
+                                    <div className="ml-6 space-y-2">
+                                      <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                                      <Popover open={restaurantSelectionOpen} onOpenChange={setRestaurantSelectionOpen}>
+                                        <PopoverTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className="w-full justify-between text-sm"
+                                          >
+                                            {selectedRestaurantsForCreation.length > 0
+                                              ? `Избрани ${selectedRestaurantsForCreation.length} ресторанта`
+                                              : "Изберете ресторанти..."}
+                                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0">
+                                          <Command>
+                                            <CommandInput placeholder="Търси ресторант..." />
+                                            <CommandList>
+                                              <CommandEmpty>Не са намерени ресторанти.</CommandEmpty>
+                                              <CommandGroup>
+                                                {restaurants.map((r) => (
+                                                  <CommandItem
+                                                    key={r.restaurant_id}
+                                                    value={r.name}
+                                                    onSelect={() => {
+                                                      setSelectedRestaurantsForCreation(prev =>
+                                                        prev.includes(r.restaurant_id)
+                                                          ? prev.filter(id => id !== r.restaurant_id)
+                                                          : [...prev, r.restaurant_id]
+                                                      );
+                                                    }}
+                                                  >
+                                                    <CheckIcon
+                                                      className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedRestaurantsForCreation.includes(r.restaurant_id)
+                                                          ? "opacity-100"
+                                                          : "opacity-0"
+                                                      )}
+                                                    />
+                                                    {r.name}
+                                                  </CommandItem>
+                                                ))}
+                                              </CommandGroup>
+                                            </CommandList>
+                                          </Command>
+                                        </PopoverContent>
+                                      </Popover>
+                                      {selectedRestaurantsForCreation.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                          {selectedRestaurantsForCreation.map(restaurantId => {
+                                            const r = restaurants.find(rest => rest.restaurant_id === restaurantId);
+                                            return r ? (
+                                              <Badge key={restaurantId} variant="outline" className="text-xs">
+                                                {r.name}
+                                                <button
+                                                  onClick={() => setSelectedRestaurantsForCreation(prev => 
+                                                    prev.filter(id => id !== restaurantId)
+                                                  )}
+                                                  className="ml-1 hover:text-red-500"
+                                                >
+                                                  ×
+                                                </button>
+                                              </Badge>
+                                            ) : null;
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <DrawerFooter>
                                 <Button onClick={createAddonTemplate}>Създай шаблон</Button>
@@ -1667,6 +1855,92 @@ export default function RestaurantDetailsAdminComponent() {
                                     Добави елемент
                                   </Button>
                                 </div>
+
+                                {/* Multi-restaurant selection */}
+                                <div className="space-y-3 border-t pt-4">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="multi-restaurant-removable"
+                                      checked={addToMultipleRestaurants}
+                                      onCheckedChange={setAddToMultipleRestaurants}
+                                    />
+                                    <Label htmlFor="multi-restaurant-removable" className="text-sm font-medium">
+                                      Добави към други ресторанти
+                                    </Label>
+                                  </div>
+                                  {addToMultipleRestaurants && (
+                                    <div className="ml-6 space-y-2">
+                                      <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                                      <Popover open={restaurantSelectionOpen} onOpenChange={setRestaurantSelectionOpen}>
+                                        <PopoverTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className="w-full justify-between text-sm"
+                                          >
+                                            {selectedRestaurantsForCreation.length > 0
+                                              ? `Избрани ${selectedRestaurantsForCreation.length} ресторанта`
+                                              : "Изберете ресторанти..."}
+                                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0">
+                                          <Command>
+                                            <CommandInput placeholder="Търси ресторант..." />
+                                            <CommandList>
+                                              <CommandEmpty>Не са намерени ресторанти.</CommandEmpty>
+                                              <CommandGroup>
+                                                {restaurants.map((r) => (
+                                                  <CommandItem
+                                                    key={r.restaurant_id}
+                                                    value={r.name}
+                                                    onSelect={() => {
+                                                      setSelectedRestaurantsForCreation(prev =>
+                                                        prev.includes(r.restaurant_id)
+                                                          ? prev.filter(id => id !== r.restaurant_id)
+                                                          : [...prev, r.restaurant_id]
+                                                      );
+                                                    }}
+                                                  >
+                                                    <CheckIcon
+                                                      className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedRestaurantsForCreation.includes(r.restaurant_id)
+                                                          ? "opacity-100"
+                                                          : "opacity-0"
+                                                      )}
+                                                    />
+                                                    {r.name}
+                                                  </CommandItem>
+                                                ))}
+                                              </CommandGroup>
+                                            </CommandList>
+                                          </Command>
+                                        </PopoverContent>
+                                      </Popover>
+                                      {selectedRestaurantsForCreation.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                          {selectedRestaurantsForCreation.map(restaurantId => {
+                                            const r = restaurants.find(rest => rest.restaurant_id === restaurantId);
+                                            return r ? (
+                                              <Badge key={restaurantId} variant="outline" className="text-xs">
+                                                {r.name}
+                                                <button
+                                                  onClick={() => setSelectedRestaurantsForCreation(prev => 
+                                                    prev.filter(id => id !== restaurantId)
+                                                  )}
+                                                  className="ml-1 hover:text-red-500"
+                                                >
+                                                  ×
+                                                </button>
+                                              </Badge>
+                                            ) : null;
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <DrawerFooter>
                                 <Button onClick={createRemovableTemplate}>Създай шаблон</Button>
@@ -1696,6 +1970,92 @@ export default function RestaurantDetailsAdminComponent() {
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* Multi-restaurant selection for items */}
+                    <div className="space-y-3 border-t pt-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="multi-restaurant-item"
+                          checked={addToMultipleRestaurants}
+                          onCheckedChange={setAddToMultipleRestaurants}
+                        />
+                        <Label htmlFor="multi-restaurant-item" className="text-sm font-medium">
+                          Добави към други ресторанти
+                        </Label>
+                      </div>
+                      {addToMultipleRestaurants && (
+                        <div className="ml-6 space-y-2">
+                          <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                          <Popover open={restaurantSelectionOpen} onOpenChange={setRestaurantSelectionOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between text-sm"
+                              >
+                                {selectedRestaurantsForCreation.length > 0
+                                  ? `Избрани ${selectedRestaurantsForCreation.length} ресторанта`
+                                  : "Изберете ресторанти..."}
+                                <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0">
+                              <Command>
+                                <CommandInput placeholder="Търси ресторант..." />
+                                <CommandList>
+                                  <CommandEmpty>Не са намерени ресторанти.</CommandEmpty>
+                                  <CommandGroup>
+                                    {restaurants.map((r) => (
+                                      <CommandItem
+                                        key={r.restaurant_id}
+                                        value={r.name}
+                                        onSelect={() => {
+                                          setSelectedRestaurantsForCreation(prev =>
+                                            prev.includes(r.restaurant_id)
+                                              ? prev.filter(id => id !== r.restaurant_id)
+                                              : [...prev, r.restaurant_id]
+                                          );
+                                        }}
+                                      >
+                                        <CheckIcon
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedRestaurantsForCreation.includes(r.restaurant_id)
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        {r.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          {selectedRestaurantsForCreation.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {selectedRestaurantsForCreation.map(restaurantId => {
+                                const r = restaurants.find(rest => rest.restaurant_id === restaurantId);
+                                return r ? (
+                                  <Badge key={restaurantId} variant="outline" className="text-xs">
+                                    {r.name}
+                                    <button
+                                      onClick={() => setSelectedRestaurantsForCreation(prev => 
+                                        prev.filter(id => id !== restaurantId)
+                                      )}
+                                      className="ml-1 hover:text-red-500"
+                                    >
+                                      ×
+                                    </button>
+                                  </Badge>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

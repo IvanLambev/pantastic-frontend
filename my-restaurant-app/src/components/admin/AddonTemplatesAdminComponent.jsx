@@ -49,9 +49,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Pencil, Trash2, Save } from "lucide-react"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Plus, MoreVertical, Pencil, Trash2, Save, CheckIcon, ChevronsUpDownIcon } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { cn } from "@/lib/utils"
 
 // Zod schemas for form validation - Updated to match new API structure
 const templateSchema = z.object({
@@ -74,6 +88,12 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Multi-restaurant support
+  const [restaurants, setRestaurants] = useState([])
+  const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false)
+  const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([])
+  const [restaurantSelectionOpen, setRestaurantSelectionOpen] = useState(false)
 
   // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
@@ -108,6 +128,21 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
       fetchAddonTemplates()
     }
   }, [restaurantId, fetchAddonTemplates])
+
+  // Fetch all restaurants for multi-restaurant selection
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/restaurants`)
+        if (!response.ok) throw new Error('Failed to fetch restaurants')
+        const data = await response.json()
+        setRestaurants(Array.isArray(data) ? data : [])
+      } catch (error) {
+        console.error('Error fetching restaurants:', error)
+      }
+    }
+    fetchRestaurants()
+  }, [])
 
   // Open dialog for adding new template - Updated for new API structure
   const handleAddTemplate = () => {
@@ -155,29 +190,58 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
         if (!response.ok) throw new Error('Failed to update addon template')
         toast.success('Addon template updated successfully')
       } else {
-        // Create new template
-        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            restaurant_id: restaurantId,
-            template: {
-              name: data.name,
-              description: data.description,
-              addons: data.addons,
-              is_predefined: data.is_predefined,
-            },
-          }),
-        })
+        // Determine which restaurants to create the template for
+        const targetRestaurants = addToMultipleRestaurants && selectedRestaurantsForCreation.length > 0
+          ? selectedRestaurantsForCreation
+          : [restaurantId]
 
-        if (!response.ok) throw new Error('Failed to create addon template')
-        toast.success('Addon template created successfully')
+        let successCount = 0
+        let failCount = 0
+
+        // Loop through each selected restaurant
+        for (const targetRestaurantId of targetRestaurants) {
+          try {
+            const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                restaurant_id: targetRestaurantId,
+                template: {
+                  name: data.name,
+                  description: data.description,
+                  addons: data.addons,
+                  is_predefined: data.is_predefined,
+                },
+              }),
+            })
+
+            if (response.ok) {
+              successCount++
+            } else {
+              failCount++
+            }
+          } catch (error) {
+            console.error(`Error creating addon template for restaurant ${targetRestaurantId}:`, error)
+            failCount++
+          }
+        }
+
+        // Show appropriate success/error message
+        if (successCount > 0 && failCount === 0) {
+          toast.success(`Addon template created successfully for ${successCount} restaurant${successCount > 1 ? 's' : ''}`)
+        } else if (successCount > 0 && failCount > 0) {
+          toast.warning(`Template created for ${successCount} restaurant${successCount > 1 ? 's' : ''}, but failed for ${failCount}`)
+        } else {
+          toast.error('Failed to create addon template')
+        }
       }
 
       // Close dialog and refresh data
       setOpenDialog(false)
+      setAddToMultipleRestaurants(false)
+      setSelectedRestaurantsForCreation([])
       fetchAddonTemplates()
     } catch (error) {
       console.error('Error saving addon template:', error)
@@ -450,6 +514,94 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                   </div>
                 ))}
               </div>
+
+              {/* Multi-restaurant selection - only show for new templates */}
+              {!editingTemplate && (
+                <div className="space-y-3 border-t pt-4 mt-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="multi-restaurant"
+                      checked={addToMultipleRestaurants}
+                      onCheckedChange={setAddToMultipleRestaurants}
+                    />
+                    <Label htmlFor="multi-restaurant" className="text-sm font-medium cursor-pointer">
+                      Add to multiple restaurants
+                    </Label>
+                  </div>
+                  {addToMultipleRestaurants && (
+                    <div className="ml-6 space-y-2">
+                      <Label className="text-sm text-muted-foreground">Select restaurants:</Label>
+                      <Popover open={restaurantSelectionOpen} onOpenChange={setRestaurantSelectionOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between text-sm"
+                          >
+                            {selectedRestaurantsForCreation.length > 0
+                              ? `Selected ${selectedRestaurantsForCreation.length} restaurant${selectedRestaurantsForCreation.length > 1 ? 's' : ''}`
+                              : "Select restaurants..."}
+                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search restaurant..." />
+                            <CommandList>
+                              <CommandEmpty>No restaurants found.</CommandEmpty>
+                              <CommandGroup>
+                                {restaurants.map((r) => (
+                                  <CommandItem
+                                    key={r.restaurant_id}
+                                    value={r.name}
+                                    onSelect={() => {
+                                      setSelectedRestaurantsForCreation(prev =>
+                                        prev.includes(r.restaurant_id)
+                                          ? prev.filter(id => id !== r.restaurant_id)
+                                          : [...prev, r.restaurant_id]
+                                      );
+                                    }}
+                                  >
+                                    <CheckIcon
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedRestaurantsForCreation.includes(r.restaurant_id)
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {r.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {selectedRestaurantsForCreation.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {selectedRestaurantsForCreation.map(restaurantId => {
+                            const r = restaurants.find(rest => rest.restaurant_id === restaurantId);
+                            return r ? (
+                              <Badge key={restaurantId} variant="outline" className="text-xs">
+                                {r.name}
+                                <button
+                                  onClick={() => setSelectedRestaurantsForCreation(prev => 
+                                    prev.filter(id => id !== restaurantId)
+                                  )}
+                                  className="ml-1 hover:text-red-500"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <DialogFooter>
                 <DialogClose asChild>
