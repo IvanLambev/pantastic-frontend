@@ -6,7 +6,6 @@ import { AdminProvider } from "@/context/AdminContext"
 import AdminProtectedRoute from "@/components/AdminProtectedRoute"
 import AdminLogin from "./admin/AdminLogin"
 import Dashboard from "./admin/Dashboard"
-import Analytics from "./admin/Analytics"
 import Projects from "./admin/Projects"
 import Team from "./admin/Team"
 import Restaurant from "./admin/Restaurant"
@@ -25,7 +24,6 @@ function AdminDashboard() {
             <main className="flex-1 space-y-4 p-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/analytics" element={<Analytics />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/team" element={<Team />} />
                 <Route path="/restaurant" element={<Restaurant />} />

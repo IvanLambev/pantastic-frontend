@@ -48,11 +48,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: IconDashboard,
       },
       {
-        title: "Analytics",
-        url: "/admin/analytics",
-        icon: IconChartBar,
-      },
-      {
         title: "Restaurant Management",
         url: "/admin/restaurant",
         icon: IconDatabase,

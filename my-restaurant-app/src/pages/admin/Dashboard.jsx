@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react"
 import { useAdminAuth } from "@/context/AdminContext"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Download } from "lucide-react"
 import AdminStats from "@/components/admin/AdminStats"
 import RevenueChart from "@/components/admin/RevenueChart"
 import { fetchDataAvailability, fetchRevenueByPeriod, fetchRestaurants } from "@/services/adminApi"
+import { fetchWithAdminAuth } from "@/utils/adminAuth"
+import { API_URL } from "@/config/api"
 
 export default function Dashboard() {
   const { adminToken, verifyAdminToken } = useAdminAuth()
@@ -17,6 +22,70 @@ export default function Dashboard() {
   const [restaurants, setRestaurants] = useState([])
   const [selectedRestaurant, setSelectedRestaurant] = useState("all")
   const [restaurantsLoading, setRestaurantsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  // Generate month options for the last 12 months
+  const generateMonthOptions = () => {
+    const options = []
+    const currentDate = new Date()
+
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const value = `${year}-${month}`
+      const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      options.push({ value, label })
+    }
+
+    return options
+  }
+
+  const monthOptions = generateMonthOptions()
+
+  const handleDownloadReport = async () => {
+    if (!selectedMonth) {
+      return
+    }
+
+    setIsDownloading(true)
+
+    try {
+      const response = await fetchWithAdminAuth(
+        `${API_URL}/restaurant/admin/reports/monthly?month=${selectedMonth}`
+      )
+
+      if (!response.ok) {
+        throw new Error(`Failed to download report: ${response.status}`)
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob()
+
+      // Create a download link and trigger it
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `monthly-report-${selectedMonth}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+
+      // Cleanup
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      // Close dialog
+      setIsDialogOpen(false)
+      setSelectedMonth("")
+    } catch (error) {
+      console.error('Error downloading report:', error)
+      alert('Failed to download report. Please try again.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   useEffect(() => {
     const loadAdminInfo = async () => {
@@ -128,6 +197,12 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Download Report Button */}
+          <Button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+
           {/* Restaurant Selector */}
           <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant} disabled={restaurantsLoading}>
             <SelectTrigger className="w-[200px]">
@@ -184,6 +259,52 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Download Report Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Download Monthly Report</DialogTitle>
+            <DialogDescription>
+              Select a month to download the .xlsx report
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a month" />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDialogOpen(false)
+                setSelectedMonth("")
+              }}
+              disabled={isDownloading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDownloadReport}
+              disabled={!selectedMonth || isDownloading}
+            >
+              {isDownloading ? "Downloading..." : "Download"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
