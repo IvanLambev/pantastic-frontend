@@ -93,7 +93,6 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [restaurants, setRestaurants] = useState([])
   const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false)
   const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([])
-  const [restaurantSelectionOpen, setRestaurantSelectionOpen] = useState(false)
 
   // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
@@ -531,73 +530,26 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                   {addToMultipleRestaurants && (
                     <div className="ml-6 space-y-2">
                       <Label className="text-sm text-muted-foreground">Select restaurants:</Label>
-                      <Popover open={restaurantSelectionOpen} onOpenChange={setRestaurantSelectionOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between text-sm"
-                          >
-                            {selectedRestaurantsForCreation.length > 0
-                              ? `Selected ${selectedRestaurantsForCreation.length} restaurant${selectedRestaurantsForCreation.length > 1 ? 's' : ''}`
-                              : "Select restaurants..."}
-                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search restaurant..." />
-                            <CommandList>
-                              <CommandEmpty>No restaurants found.</CommandEmpty>
-                              <CommandGroup>
-                                {restaurants.map((r) => (
-                                  <CommandItem
-                                    key={r.restaurant_id}
-                                    value={r.name}
-                                    onSelect={() => {
-                                      setSelectedRestaurantsForCreation(prev =>
-                                        prev.includes(r.restaurant_id)
-                                          ? prev.filter(id => id !== r.restaurant_id)
-                                          : [...prev, r.restaurant_id]
-                                      );
-                                    }}
-                                  >
-                                    <CheckIcon
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedRestaurantsForCreation.includes(r.restaurant_id)
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                    {r.name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      {selectedRestaurantsForCreation.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {selectedRestaurantsForCreation.map(restaurantId => {
-                            const r = restaurants.find(rest => rest.restaurant_id === restaurantId);
-                            return r ? (
-                              <Badge key={restaurantId} variant="outline" className="text-xs">
-                                {r.name}
-                                <button
-                                  onClick={() => setSelectedRestaurantsForCreation(prev => 
-                                    prev.filter(id => id !== restaurantId)
-                                  )}
-                                  className="ml-1 hover:text-red-500"
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        {restaurants.map((r) => (
+                          <div key={r.restaurant_id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`addon-restaurant-${r.restaurant_id}`}
+                              checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
+                                } else {
+                                  setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`addon-restaurant-${r.restaurant_id}`} className="text-sm cursor-pointer">
+                              {r.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

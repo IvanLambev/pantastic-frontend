@@ -261,7 +261,12 @@ export default function CheckoutV2() {
         setDiscountError("")
         toast.success(data.message)
       } else {
-        setDiscountError(data.message || t('checkout.invalidDiscountCode'))
+        // Translate common backend error messages
+        let errorMessage = data.message || t('checkout.invalidDiscountCode')
+        if (errorMessage === 'Discount code has expired') {
+          errorMessage = t('checkout.discountExpired')
+        }
+        setDiscountError(errorMessage)
         setDiscountInfo(null)
       }
     } catch (error) {

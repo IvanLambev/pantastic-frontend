@@ -4,7 +4,8 @@ import {
     fetchOrdersByRestaurant,
     fetchRestaurants,
     fetchUserDetails,
-    fetchOrderById
+    fetchOrderById,
+    updateWorkingHours
 } from '@/services/adminApi';
 import {
     Table,
@@ -28,12 +29,23 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown } from "lucide-react";
+import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Orders() {
@@ -52,6 +64,20 @@ export default function Orders() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [customerDetails, setCustomerDetails] = useState(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
+
+    // Working Hours Dialog State
+    const [isWorkingHoursDialogOpen, setIsWorkingHoursDialogOpen] = useState(false);
+    const [selectedRestaurants, setSelectedRestaurants] = useState([]);
+    const [workingHours, setWorkingHours] = useState({
+        Monday: '9:00-22:00',
+        Tuesday: '9:00-22:00',
+        Wednesday: '9:00-22:00',
+        Thursday: '9:00-22:00',
+        Friday: '9:00-23:00',
+        Saturday: '10:00-23:00',
+        Sunday: '10:00-21:00'
+    });
+    const [updatingWorkingHours, setUpdatingWorkingHours] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -180,11 +206,77 @@ export default function Orders() {
         }
     };
 
+    const handleRestaurantCheckboxChange = (restaurantId, checked) => {
+        if (checked) {
+            setSelectedRestaurants(prev => [...prev, restaurantId]);
+        } else {
+            setSelectedRestaurants(prev => prev.filter(id => id !== restaurantId));
+        }
+    };
+
+    const handleSelectAllRestaurants = (checked) => {
+        if (checked) {
+            setSelectedRestaurants(restaurants.map(r => r.restaurant_id));
+        } else {
+            setSelectedRestaurants([]);
+        }
+    };
+
+    const handleWorkingHoursChange = (day, value) => {
+        setWorkingHours(prev => ({
+            ...prev,
+            [day]: value
+        }));
+    };
+
+    const handleUpdateWorkingHours = async () => {
+        if (selectedRestaurants.length === 0) {
+            toast.error('Please select at least one restaurant');
+            return;
+        }
+
+        setUpdatingWorkingHours(true);
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const restaurantId of selectedRestaurants) {
+            try {
+                await updateWorkingHours(restaurantId, workingHours);
+                successCount++;
+            } catch (error) {
+                console.error(`Failed to update working hours for restaurant ${restaurantId}:`, error);
+                errorCount++;
+            }
+        }
+
+        setUpdatingWorkingHours(false);
+
+        if (successCount > 0) {
+            toast.success(`Successfully updated working hours for ${successCount} restaurant(s)`);
+        }
+        if (errorCount > 0) {
+            toast.error(`Failed to update ${errorCount} restaurant(s)`);
+        }
+
+        if (errorCount === 0) {
+            setIsWorkingHoursDialogOpen(false);
+            setSelectedRestaurants([]);
+        }
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
                 <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setIsWorkingHoursDialogOpen(true)}
+                        className="flex items-center gap-2"
+                    >
+                        <Clock className="h-4 w-4" />
+                        Working Hours
+                    </Button>
                     <Select value={selectedRestaurant} onValueChange={setSelectedRestaurant}>
                         <SelectTrigger className="w-[250px]">
                             <SelectValue placeholder="Filter by Restaurant" />
@@ -523,6 +615,105 @@ export default function Orders() {
                     )}
                 </SheetContent>
             </Sheet >
+
+            {/* Working Hours Dialog */}
+            <Dialog open={isWorkingHoursDialogOpen} onOpenChange={setIsWorkingHoursDialogOpen}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Restaurant Working Hours</DialogTitle>
+                        <DialogDescription>
+                            Select restaurants and set their working hours for each day of the week.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                        {/* Restaurant Selection */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-medium">Select Restaurants</h3>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleSelectAllRestaurants(selectedRestaurants.length !== restaurants.length);
+                                    }}
+                                >
+                                    {selectedRestaurants.length === restaurants.length ? 'Deselect All' : 'Select All'}
+                                </Button>
+                            </div>
+                            <div className="border rounded-lg p-4 max-h-48 overflow-y-auto space-y-2">
+                                {restaurants.map((restaurant) => (
+                                    <div key={restaurant.restaurant_id} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`restaurant-${restaurant.restaurant_id}`}
+                                            checked={selectedRestaurants.includes(restaurant.restaurant_id)}
+                                            onCheckedChange={(checked) => 
+                                                handleRestaurantCheckboxChange(restaurant.restaurant_id, checked)
+                                            }
+                                        />
+                                        <label
+                                            htmlFor={`restaurant-${restaurant.restaurant_id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            {restaurant.name}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                            {selectedRestaurants.length > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    {selectedRestaurants.length} restaurant(s) selected
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Working Hours Inputs */}
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-medium">Working Hours</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.keys(workingHours).map((day) => (
+                                    <div key={day} className="space-y-2">
+                                        <Label htmlFor={`hours-${day}`}>{day}</Label>
+                                        <Input
+                                            id={`hours-${day}`}
+                                            value={workingHours[day]}
+                                            onChange={(e) => handleWorkingHoursChange(day, e.target.value)}
+                                            placeholder="9:00-22:00"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Format: HH:MM-HH:MM (e.g., 9:00-22:00)
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsWorkingHoursDialogOpen(false)}
+                            disabled={updatingWorkingHours}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleUpdateWorkingHours}
+                            disabled={updatingWorkingHours || selectedRestaurants.length === 0}
+                        >
+                            {updatingWorkingHours ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Updating...
+                                </>
+                            ) : (
+                                'Update Working Hours'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }

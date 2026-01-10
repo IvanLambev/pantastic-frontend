@@ -256,3 +256,46 @@ export async function fetchOrdersByCustomer(customerId) {
         throw error;
     }
 }
+
+/**
+ * Update working hours for a restaurant
+ * @param {string} restaurantId - The ID of the restaurant
+ * @param {Object} openingHours - Opening hours object with day names as keys (e.g., {"Monday": "9:00-22:00"})
+ * @returns {Promise<Object>} Response data
+ */
+export async function updateWorkingHours(restaurantId, openingHours) {
+    try {
+        console.log('⏰ [ADMIN] Updating working hours for restaurant:', restaurantId);
+        console.log('⏰ [ADMIN] Opening hours:', openingHours);
+
+        const response = await fetchWithAdminAuth(
+            `${API_URL}/restaurant/restaurants/working-hours`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    restaurant_id: restaurantId,
+                    opening_hours: openingHours
+                })
+            }
+        );
+
+        console.log('📡 [ADMIN] Update working hours response status:', response.status, response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [ADMIN] Failed to update working hours. Status:', response.status);
+            console.error('❌ [ADMIN] Error response:', errorText);
+            throw new Error(`Failed to update working hours: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ [ADMIN] Working hours updated successfully:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ [ADMIN] Error updating working hours:', error);
+        throw error;
+    }
+}

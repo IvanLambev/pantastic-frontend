@@ -212,6 +212,7 @@ export const translations = {
     loginToApplyDiscount: "Моля, влезте, за да приложите отстъпка",
     invalidDiscountCode: "Невалиден код за отстъпка",
     discountValidationError: "Грешка при проверка на кода за отстъпка",
+    discountExpired: "Кодът за отстъпка е изтекъл",
 
     // Delivery/Pickup address editing
     editDeliveryAddress: "Редактирай адрес за доставка",
