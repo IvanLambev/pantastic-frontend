@@ -170,7 +170,7 @@ export default function RestaurantDetailsAdminComponent() {
         const dataRaw = await res.json();
         console.log('✅ [ADMIN DEBUG] Restaurants data received:', dataRaw);
         console.log('📊 [ADMIN DEBUG] Restaurants data type:', typeof dataRaw, 'Is Array:', Array.isArray(dataRaw));
-        
+
         // Ensure data is an array (API might return object with data property)
         let data = dataRaw;
         if (!Array.isArray(data)) {
@@ -552,22 +552,42 @@ export default function RestaurantDetailsAdminComponent() {
 
       // Parse each line
       const parsedAddons = [];
-      const regex = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*лв\.([\d,]+)\s*€\)$/;
+      // Support both formats: "Name (weight) (price €price лв.)" and "Name (weight) (price лв.price €)"
+      const regex1 = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*€([\d,]+)\s*лв\.\)$/;  // price € first
+      const regex2 = /^(.*?)\s*\((.*?)\)\s*\(([\d,]+)\s*лв\.([\d,]+)\s*€\)$/;  // price лв. first
 
       for (const line of lines) {
-        const match = line.trim().match(regex);
+        let match = line.trim().match(regex1);
+        let name, weight, priceBGN, fullName;
+        
         if (match) {
-          const name = match[1].trim();
-          const weight = match[2].trim();
-          const priceBGN = match[3].replace(',', '.');
+          name = match[1].trim();
+          weight = match[2].trim();
+          priceBGN = match[4].replace(',', '.');  // BGN is second in format 1
 
           // Combine name and weight
-          const fullName = `${name} (${weight})`;
+          fullName = `${name} (${weight})`;
 
           parsedAddons.push({
             name: fullName,
             price: priceBGN
           });
+        } else {
+          // Try second format
+          match = line.trim().match(regex2);
+          if (match) {
+            name = match[1].trim();
+            weight = match[2].trim();
+            priceBGN = match[3].replace(',', '.');  // BGN is first in format 2
+
+            // Combine name and weight
+            fullName = `${name} (${weight})`;
+
+            parsedAddons.push({
+              name: fullName,
+              price: priceBGN
+            });
+          }
         }
       }
 
@@ -891,7 +911,7 @@ export default function RestaurantDetailsAdminComponent() {
         for (const restaurantId of targetRestaurants) {
           try {
             const formData = new FormData();
-            
+
             // Use template-based API for new items
             const itemData = {
               restaurant_id: restaurantId,
@@ -1669,7 +1689,7 @@ export default function RestaurantDetailsAdminComponent() {
                                 {/* Multi-restaurant selection */}
                                 <div className="space-y-3 border-t pt-4">
                                   <div className="flex items-center space-x-2">
-                                    <Checkbox 
+                                    <Checkbox
                                       id="multi-restaurant-addon"
                                       checked={addToMultipleRestaurants}
                                       onCheckedChange={setAddToMultipleRestaurants}
@@ -1885,7 +1905,7 @@ export default function RestaurantDetailsAdminComponent() {
                                 {/* Multi-restaurant selection */}
                                 <div className="space-y-3 border-t pt-4">
                                   <div className="flex items-center space-x-2">
-                                    <Checkbox 
+                                    <Checkbox
                                       id="multi-restaurant-removable"
                                       checked={addToMultipleRestaurants}
                                       onCheckedChange={setAddToMultipleRestaurants}
@@ -1954,7 +1974,7 @@ export default function RestaurantDetailsAdminComponent() {
                     {/* Multi-restaurant selection for items */}
                     <div className="space-y-3 border-t pt-4">
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
+                        <Checkbox
                           id="multi-restaurant-item"
                           checked={addToMultipleRestaurants}
                           onCheckedChange={setAddToMultipleRestaurants}
@@ -2091,8 +2111,8 @@ export default function RestaurantDetailsAdminComponent() {
                 <p className="text-sm text-gray-500">{menuItems.length} items</p>
               </div>
               <div className="flex gap-2 mt-4 md:mt-0">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsWorkingHoursDialogOpen(true)}
                   className="flex items-center gap-2"
                 >
@@ -2349,7 +2369,7 @@ export default function RestaurantDetailsAdminComponent() {
             <DialogHeader>
               <DialogTitle>Импорт на добавки от текст</DialogTitle>
               <DialogDescription>
-                Поставете текст във формат: "Име (грамаж) (цена лв.цена €)" на всеки ред
+                Поставете текст във формат: "Име (грамаж) (цена €цена лв.)" или "Име (грамаж) (цена лв.цена €)" на всеки ред
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -2593,7 +2613,7 @@ export default function RestaurantDetailsAdminComponent() {
                     <Checkbox
                       id={`restaurant-hours-${restaurant.restaurant_id}`}
                       checked={selectedRestaurantsForHours.includes(restaurant.restaurant_id)}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleRestaurantCheckboxChangeForHours(restaurant.restaurant_id, checked)
                       }
                     />

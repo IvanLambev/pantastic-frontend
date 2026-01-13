@@ -752,28 +752,28 @@ export const translateLabel = (label) => {
 // Helper function to translate dynamic labels (Buy again, Personalized for you, etc.)
 export const translateDynamicLabel = (label) => {
   if (!label) return label;
-  
+
   // Normalize the label (trim whitespace)
   const normalizedLabel = String(label).trim();
-  
+
   // Check if we have a direct translation in dynamicLabels
   if (translations.menu && translations.menu.dynamicLabels) {
     // First try exact match
     if (translations.menu.dynamicLabels[normalizedLabel]) {
       return translations.menu.dynamicLabels[normalizedLabel];
     }
-    
+
     // Try case-insensitive match
     const lowerLabel = normalizedLabel.toLowerCase();
     const matchingKey = Object.keys(translations.menu.dynamicLabels).find(
       key => key.toLowerCase() === lowerLabel
     );
-    
+
     if (matchingKey) {
       return translations.menu.dynamicLabels[matchingKey];
     }
   }
-  
+
   // Return original label if no translation found
   return normalizedLabel;
 };

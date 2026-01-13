@@ -336,7 +336,7 @@ export default function CheckoutV2() {
       console.error('Order creation failed:', error)
       setIsProcessing(false)
       setShowOrderConfirmation(false)
-      
+
       // Check if error is due to missing phone number
       const errorMessage = error.message || error.detail || error.toString()
       if (errorMessage.includes('Phone number required') || errorMessage.includes('phone number') || errorMessage.includes('phone')) {
@@ -424,7 +424,7 @@ export default function CheckoutV2() {
     setDiscountCode("");
     setDiscountInfo(null);
     setDiscountError("");
-    
+
     // Clean up guest checkout data if this was a guest order
     if (user.is_guest) {
       sessionStorage.removeItem('guest_checkout_data')
@@ -470,7 +470,7 @@ export default function CheckoutV2() {
   // Handle phone number submission
   const handlePhoneSubmit = async () => {
     setPhoneError("")
-    
+
     // Validate phone format
     const phoneRegex = /^\+359\d{9}$/
     if (!phoneRegex.test(phoneNumber)) {
@@ -482,21 +482,21 @@ export default function CheckoutV2() {
     try {
       // Update user phone number
       await api.put('/user/update-phone', { phone: phoneNumber })
-      
+
       // Update local user data
       const user = JSON.parse(localStorage.getItem('user') || '{}')
       user.phone = phoneNumber
       localStorage.setItem('user', JSON.stringify(user))
-      
+
       // Close modal
       setShowPhoneModal(false)
       setPhoneNumber("")
-      
+
       // Retry order creation
       toast.info(t('checkout.retryingOrder'))
       setIsProcessing(true)
       setShowOrderConfirmation(true)
-      
+
       await createOrder()
     } catch (error) {
       console.error('Failed to update phone:', error)

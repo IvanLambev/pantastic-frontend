@@ -269,8 +269,8 @@ export default function Orders() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
                 <div className="flex items-center gap-2">
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         onClick={() => setIsWorkingHoursDialogOpen(true)}
                         className="flex items-center gap-2"
                     >
@@ -648,7 +648,7 @@ export default function Orders() {
                                         <Checkbox
                                             id={`restaurant-${restaurant.restaurant_id}`}
                                             checked={selectedRestaurants.includes(restaurant.restaurant_id)}
-                                            onCheckedChange={(checked) => 
+                                            onCheckedChange={(checked) =>
                                                 handleRestaurantCheckboxChange(restaurant.restaurant_id, checked)
                                             }
                                         />
