@@ -936,25 +936,15 @@ export default function CheckoutV2() {
                       </div>
                     )}
                     {deliveryMethod === 'delivery' && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span>{t('cart.deliveryFee')}</span>
-                          <span>
-                            {estimatingDelivery ? (
-                              <span className="text-muted-foreground text-sm">{t('checkout.calculating')}...</span>
-                            ) : (
-                              formatDualCurrencyCompact(getDeliveryFee())
-                            )}
-                          </span>
-                        </div>
-                        {deliveryEstimate && deliveryEstimate.distance_km && (
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{t('checkout.distance')}: {deliveryEstimate.distance_km.toFixed(2)} km</span>
-                            {deliveryEstimate.estimated_delivery_minutes && (
-                              <span>{t('checkout.estimatedTime')}: ~{deliveryEstimate.estimated_delivery_minutes} {t('checkout.minutes')}</span>
-                            )}
-                          </div>
-                        )}
+                      <div className="flex justify-between">
+                        <span>{t('cart.deliveryFee')}</span>
+                        <span>
+                          {estimatingDelivery ? (
+                            <span className="text-muted-foreground text-sm">{t('checkout.calculating')}...</span>
+                          ) : (
+                            formatDualCurrencyCompact(getDeliveryFee())
+                          )}
+                        </span>
                       </div>
                     )}
                     <Separator />
