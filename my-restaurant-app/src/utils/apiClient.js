@@ -205,6 +205,21 @@ export const api = {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`)
     }
     return await response.json()
+  },
+
+  // Estimate delivery cost
+  estimateDelivery: async (restaurantId, customerLocation) => {
+    const response = await makeAuthenticatedRequest('/order/estimate-delivery', {
+      method: 'POST',
+      body: JSON.stringify({
+        restaurant_id: restaurantId,
+        customer_location: customerLocation
+      })
+    })
+    if (!response.ok) {
+      throw new Error(`Delivery estimation failed: ${response.status} ${response.statusText}`)
+    }
+    return await response.json()
   }
 }
 

@@ -43,6 +43,10 @@ export default function CheckoutV2() {
   const [discountValidating, setDiscountValidating] = useState(false)
   const [discountError, setDiscountError] = useState("")
 
+  // Delivery estimation states
+  const [deliveryEstimate, setDeliveryEstimate] = useState(null)
+  const [estimatingDelivery, setEstimatingDelivery] = useState(false)
+
   // Scheduling states
   const [isScheduled, setIsScheduled] = useState(false)
   const [selectedDate, setSelectedDate] = useState(undefined)
@@ -95,6 +99,62 @@ export default function CheckoutV2() {
 
     fetchRestaurantDetails();
   }, []); // Run once on mount
+
+  // Fetch delivery estimate when coordinates and restaurant are available
+  useEffect(() => {
+    const fetchDeliveryEstimate = async () => {
+      // Only estimate for delivery orders
+      const method = sessionStorage.getItem('delivery_method') || 'pickup';
+      if (method !== 'delivery') {
+        setDeliveryEstimate(null);
+        return;
+      }
+
+      // Get coordinates from sessionStorage
+      const coordsString = sessionStorage.getItem('delivery_coordinates');
+      if (!coordsString) {
+        console.log('No delivery coordinates available');
+        return;
+      }
+
+      try {
+        const coords = JSON.parse(coordsString);
+        
+        // Get restaurant ID
+        const restaurantId = Array.isArray(selectedRestaurant)
+          ? selectedRestaurant[0]
+          : selectedRestaurant.restaurant_id;
+
+        if (!restaurantId || !coords.latitude || !coords.longitude) {
+          console.log('Missing required data for delivery estimate');
+          return;
+        }
+
+        console.log('Fetching delivery estimate for:', { restaurantId, coords });
+        setEstimatingDelivery(true);
+
+        const estimate = await api.estimateDelivery(restaurantId, {
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        });
+
+        console.log('Delivery estimate received:', estimate);
+        setDeliveryEstimate(estimate);
+      } catch (error) {
+        console.error('Failed to fetch delivery estimate:', error);
+        // Fallback to default delivery fee if estimation fails
+        setDeliveryEstimate({
+          delivery_fee: 9.78,
+          distance_km: null,
+          estimated_delivery_minutes: null
+        });
+      } finally {
+        setEstimatingDelivery(false);
+      }
+    };
+
+    fetchDeliveryEstimate();
+  }, [selectedRestaurant, deliveryMethod]); // Re-run when restaurant or delivery method changes
 
   // Memoized callback to prevent infinite re-renders
   const handleScheduleSelect = useCallback((schedule) => {
@@ -178,8 +238,14 @@ export default function CheckoutV2() {
   const calculateTotalBGN = () => {
     const subtotal = calculateSubtotalBGN();
     const discountAmount = calculateDiscountAmountBGN();
-    const deliveryFee = deliveryMethod === 'delivery' ? 9.78 : 0; // ~5 EUR in BGN
+    const deliveryFee = deliveryMethod === 'delivery' ? (deliveryEstimate?.delivery_fee || 0) : 0;
     return subtotal - discountAmount + deliveryFee;
+  };
+
+  // Get delivery fee for display
+  const getDeliveryFee = () => {
+    if (deliveryMethod !== 'delivery') return 0;
+    return deliveryEstimate?.delivery_fee || 0;
   };
 
   // Handle address editing
@@ -870,9 +936,25 @@ export default function CheckoutV2() {
                       </div>
                     )}
                     {deliveryMethod === 'delivery' && (
-                      <div className="flex justify-between">
-                        <span>{t('cart.deliveryFee')}</span>
-                        <span>{formatDualCurrencyCompact(9.78)}</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span>{t('cart.deliveryFee')}</span>
+                          <span>
+                            {estimatingDelivery ? (
+                              <span className="text-muted-foreground text-sm">{t('checkout.calculating')}...</span>
+                            ) : (
+                              formatDualCurrencyCompact(getDeliveryFee())
+                            )}
+                          </span>
+                        </div>
+                        {deliveryEstimate && deliveryEstimate.distance_km && (
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{t('checkout.distance')}: {deliveryEstimate.distance_km.toFixed(2)} km</span>
+                            {deliveryEstimate.estimated_delivery_minutes && (
+                              <span>{t('checkout.estimatedTime')}: ~{deliveryEstimate.estimated_delivery_minutes} {t('checkout.minutes')}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                     <Separator />
@@ -1018,7 +1100,8 @@ export default function CheckoutV2() {
             discountInfo={discountInfo}
             discountAmount={calculateDiscountAmountBGN()}
             total={calculateTotalBGN()}
-            deliveryFee={deliveryMethod === 'delivery' ? 9.78 : 0}
+            deliveryFee={getDeliveryFee()}
+            deliveryEstimate={deliveryEstimate}
             isLoading={isProcessing}
           />
         </div>

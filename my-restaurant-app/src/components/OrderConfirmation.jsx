@@ -28,6 +28,7 @@ export default function OrderConfirmation({
   discountAmount,
   total, 
   deliveryFee,
+  deliveryEstimate,
   isLoading 
 }) {
   const [orderDetails, setOrderDetails] = useState(null);
@@ -150,9 +151,19 @@ export default function OrderConfirmation({
                   </div>
                 )}
                 {deliveryFee > 0 && (
-                  <div className="flex justify-between">
-                    <span>{t('cart.deliveryFee')}</span>
-                    <span>{formatDualCurrencyCompact(deliveryFee)}</span>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span>{t('cart.deliveryFee')}</span>
+                      <span>{formatDualCurrencyCompact(deliveryFee)}</span>
+                    </div>
+                    {deliveryEstimate && deliveryEstimate.distance_km && (
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{t('checkout.distance')}: {deliveryEstimate.distance_km.toFixed(2)} km</span>
+                        {deliveryEstimate.estimated_delivery_minutes && (
+                          <span>{t('checkout.estimatedTime')}: ~{deliveryEstimate.estimated_delivery_minutes} {t('checkout.minutes')}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 <Separator />

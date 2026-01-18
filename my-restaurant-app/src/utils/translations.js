@@ -242,6 +242,8 @@ export const translations = {
     deliveryToAddress: "Доставка до този адрес",
     edit: "Редактирай",
     pickupLocation: "Място за вземане",
+    calculating: "Изчисляване",
+    distance: "Разстояние",
 
     // Scheduling
     scheduleDelivery: "Планирай доставка",
