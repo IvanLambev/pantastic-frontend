@@ -66,6 +66,11 @@ export default function CheckoutV2() {
     JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
   )
 
+  // Get delivery information from sessionStorage - MOVED HERE to avoid initialization errors
+  const deliveryAddress = sessionStorage.getItem('delivery_address')
+  const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
+  const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
+
   // Fetch restaurant details if hours are missing
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
@@ -187,11 +192,6 @@ export default function CheckoutV2() {
       }
     }, 100); // 100ms debounce
   }, []);
-
-  // Get delivery information from sessionStorage
-  const deliveryAddress = sessionStorage.getItem('delivery_address')
-  const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
-  const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
 
   // Check if user is logged in
   const user = JSON.parse(localStorage.getItem('user') || '{}')
