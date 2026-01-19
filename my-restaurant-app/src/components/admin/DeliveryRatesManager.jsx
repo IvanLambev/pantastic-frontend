@@ -18,8 +18,17 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
   const [isLoading, setIsLoading] = useState(false);
   const [mapCenter, setMapCenter] = useState([42.6977, 23.3219]); // Sofia, Bulgaria default
 
-  // Colors for different zones
-  const zoneColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  // Enhanced colors for different zones with better visibility
+  const zoneColors = [
+    { border: '#3b82f6', fill: '#3b82f6', name: 'Blue' },      // Blue
+    { border: '#10b981', fill: '#10b981', name: 'Green' },     // Green
+    { border: '#f59e0b', fill: '#f59e0b', name: 'Orange' },    // Orange
+    { border: '#ef4444', fill: '#ef4444', name: 'Red' },       // Red
+    { border: '#8b5cf6', fill: '#8b5cf6', name: 'Purple' },    // Purple
+    { border: '#06b6d4', fill: '#06b6d4', name: 'Cyan' },      // Cyan
+    { border: '#ec4899', fill: '#ec4899', name: 'Pink' },      // Pink
+    { border: '#14b8a6', fill: '#14b8a6', name: 'Teal' },      // Teal
+  ];
 
   useEffect(() => {
     if (isOpen && restaurant) {
@@ -163,39 +172,47 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
                   {/* Restaurant marker */}
                   <MapMarker position={mapCenter} />
                   
-                  {/* Delivery zone circles */}
-                  {deliveryRates.map((rate, index) => (
-                    <MapCircle
-                      key={index}
-                      center={mapCenter}
-                      radius={rate.distance * 1000} // Convert km to meters
-                      pathOptions={{
-                        color: zoneColors[index % zoneColors.length],
-                        fillColor: zoneColors[index % zoneColors.length],
-                        fillOpacity: 0.1,
-                        weight: 2
-                      }}
-                    />
-                  ))}
+                  {/* Delivery zone circles - sorted from largest to smallest for proper layering */}
+                  {[...deliveryRates].reverse().map((rate, reverseIndex) => {
+                    const index = deliveryRates.length - 1 - reverseIndex;
+                    const colorScheme = zoneColors[index % zoneColors.length];
+                    return (
+                      <MapCircle
+                        key={index}
+                        center={mapCenter}
+                        radius={rate.distance * 1000} // Convert km to meters
+                        pathOptions={{
+                          color: colorScheme.border,
+                          fillColor: colorScheme.fill,
+                          fillOpacity: 0.15,
+                          weight: 3,
+                          opacity: 0.8
+                        }}
+                      />
+                    );
+                  })}
                 </Map>
               </div>
 
               {/* Legend */}
-              <div className="mt-4 flex flex-wrap gap-4">
-                {deliveryRates.map((rate, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div 
-                      className="w-4 h-4 rounded-full border-2"
-                      style={{ 
-                        borderColor: zoneColors[index % zoneColors.length],
-                        backgroundColor: zoneColors[index % zoneColors.length] + '20'
-                      }}
-                    />
-                    <span className="text-sm">
-                      {rate.distance} km - ${rate.price.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+              <div className="mt-4 flex flex-wrap gap-3">
+                {deliveryRates.map((rate, index) => {
+                  const colorScheme = zoneColors[index % zoneColors.length];
+                  return (
+                    <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-md border" style={{ borderColor: colorScheme.border + '40' }}>
+                      <div 
+                        className="w-5 h-5 rounded-full border-2 flex-shrink-0"
+                        style={{ 
+                          borderColor: colorScheme.border,
+                          backgroundColor: colorScheme.fill + '30'
+                        }}
+                      />
+                      <span className="text-sm font-medium">
+                        <span className="text-muted-foreground">{colorScheme.name}:</span> {rate.distance} km - ${rate.price.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -213,12 +230,20 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {deliveryRates.map((rate, index) => (
-                  <div key={index} className="flex items-end gap-4 p-4 border rounded-lg">
-                    <div 
-                      className="w-1 h-full rounded"
-                      style={{ backgroundColor: zoneColors[index % zoneColors.length] }}
-                    />
+                {deliveryRates.map((rate, index) => {
+                  const colorScheme = zoneColors[index % zoneColors.length];
+                  return (
+                    <div key={index} className="flex items-end gap-4 p-4 border-2 rounded-lg" style={{ borderColor: colorScheme.border + '40' }}>
+                      <div className="flex flex-col items-center gap-1">
+                        <div 
+                          className="w-6 h-6 rounded-full border-2"
+                          style={{ 
+                            borderColor: colorScheme.border,
+                            backgroundColor: colorScheme.fill + '30'
+                          }}
+                        />
+                        <span className="text-xs font-medium text-muted-foreground">{colorScheme.name}</span>
+                      </div>
                     
                     <div className="flex-1 grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -261,7 +286,8 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

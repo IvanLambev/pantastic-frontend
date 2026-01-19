@@ -1,14 +1,17 @@
 # Delivery Rates Manager Implementation
 
 ## Summary
+
 Successfully implemented a delivery rates management system for the restaurant admin panel.
 
 ## Features Implemented
 
 ### 1. DeliveryRatesManager Component
+
 **Location:** `src/components/admin/DeliveryRatesManager.jsx`
 
 #### Features:
+
 - **Interactive Map Visualization**
   - Displays restaurant location with a marker
   - Shows delivery zones as concentric circles
@@ -35,9 +38,11 @@ Successfully implemented a delivery rates management system for the restaurant a
   - Auto-refreshes page after successful update
 
 ### 2. Integration with RestaurantDetailsAdminComponent
+
 **Location:** `src/components/admin/RestaurantDetailsAdminComponent.jsx`
 
 #### Changes:
+
 - Added "Delivery Rates" button next to "Working Hours" button
 - Button uses MapPin icon for visual consistency
 - Opens modal dialog with delivery rates manager
@@ -58,18 +63,21 @@ Successfully implemented a delivery rates management system for the restaurant a
 ## Technical Details
 
 ### Map Components Used
+
 - `Map` - Main map container
 - `MapTileLayer` - OpenStreetMap tiles
 - `MapMarker` - Restaurant location marker
 - `MapCircle` - Delivery zone circles
 
 ### Default Values
+
 - Default center: Sofia, Bulgaria [42.6977, 23.3219]
 - Centers on restaurant coordinates if available
 - Default zoom: 13
 - Default rates: 1km/$1.69, 2.5km/$3.0, 5km/$5.0
 
 ### Styling
+
 - Responsive dialog (max-width: 6xl)
 - Scrollable restaurant selection list
 - Color-coded zones for easy identification
@@ -78,6 +86,7 @@ Successfully implemented a delivery rates management system for the restaurant a
 ## API Format
 
 **Request:**
+
 ```json
 {
   "restaurant_id": "uuid",
@@ -90,6 +99,7 @@ Successfully implemented a delivery rates management system for the restaurant a
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Delivery rates updated successfully",
@@ -103,13 +113,16 @@ Successfully implemented a delivery rates management system for the restaurant a
 ```
 
 ## Dependencies
+
 All required dependencies are already installed:
+
 - @shadcn-map/map (installed via `npx shadcn@latest add @shadcn-map/map`)
 - leaflet
 - react-leaflet
 - UI components: Dialog, Button, Card, Input, Checkbox, ScrollArea
 
 ## Future Enhancements (Optional)
+
 - Fetch existing delivery rates when loading
 - Show delivery area on a real map with actual restaurant address
 - Add validation for overlapping zones
