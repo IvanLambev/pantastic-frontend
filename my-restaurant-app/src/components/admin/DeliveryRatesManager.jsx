@@ -20,14 +20,14 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
 
   // Enhanced colors for different zones with better visibility
   const zoneColors = [
-    { border: '#3b82f6', fill: '#3b82f6', name: 'Blue' },      // Blue
-    { border: '#10b981', fill: '#10b981', name: 'Green' },     // Green
-    { border: '#f59e0b', fill: '#f59e0b', name: 'Orange' },    // Orange
-    { border: '#ef4444', fill: '#ef4444', name: 'Red' },       // Red
-    { border: '#8b5cf6', fill: '#8b5cf6', name: 'Purple' },    // Purple
-    { border: '#06b6d4', fill: '#06b6d4', name: 'Cyan' },      // Cyan
-    { border: '#ec4899', fill: '#ec4899', name: 'Pink' },      // Pink
-    { border: '#14b8a6', fill: '#14b8a6', name: 'Teal' },      // Teal
+    { className: 'fill-blue-500/15 stroke-blue-500 stroke-[3]', border: '#3b82f6', fill: '#3b82f6', name: 'Blue' },
+    { className: 'fill-green-500/15 stroke-green-500 stroke-[3]', border: '#10b981', fill: '#10b981', name: 'Green' },
+    { className: 'fill-orange-500/15 stroke-orange-500 stroke-[3]', border: '#f59e0b', fill: '#f59e0b', name: 'Orange' },
+    { className: 'fill-red-500/15 stroke-red-500 stroke-[3]', border: '#ef4444', fill: '#ef4444', name: 'Red' },
+    { className: 'fill-purple-500/15 stroke-purple-500 stroke-[3]', border: '#8b5cf6', fill: '#8b5cf6', name: 'Purple' },
+    { className: 'fill-cyan-500/15 stroke-cyan-500 stroke-[3]', border: '#06b6d4', fill: '#06b6d4', name: 'Cyan' },
+    { className: 'fill-pink-500/15 stroke-pink-500 stroke-[3]', border: '#ec4899', fill: '#ec4899', name: 'Pink' },
+    { className: 'fill-teal-500/15 stroke-teal-500 stroke-[3]', border: '#14b8a6', fill: '#14b8a6', name: 'Teal' },
   ];
 
   useEffect(() => {
@@ -181,13 +181,7 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
                         key={index}
                         center={mapCenter}
                         radius={rate.distance * 1000} // Convert km to meters
-                        pathOptions={{
-                          color: colorScheme.border,
-                          fillColor: colorScheme.fill,
-                          fillOpacity: 0.15,
-                          weight: 3,
-                          opacity: 0.8
-                        }}
+                        className={colorScheme.className}
                       />
                     );
                   })}
