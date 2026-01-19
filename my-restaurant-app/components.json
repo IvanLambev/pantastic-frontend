@@ -20,6 +20,7 @@
   },
   "registries": {
     "@blocks": "https://blocks.so/r/{name}.json",
-    "@animate-ui": "https://animate-ui.com/r/{name}.json"
+    "@animate-ui": "https://animate-ui.com/r/{name}.json",
+    "@shadcn-map": "http://shadcn-map.vercel.app/r/{name}.json"
   }
 }

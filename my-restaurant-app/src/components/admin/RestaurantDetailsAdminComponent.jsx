@@ -4,6 +4,7 @@ import { API_URL } from '@/config/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
+import { DeliveryRatesManager } from "@/components/admin/DeliveryRatesManager";
 import AddonTemplatesAdminComponent from "@/components/admin/AddonTemplatesAdminComponent";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { toast } from "sonner";
@@ -150,6 +151,9 @@ export default function RestaurantDetailsAdminComponent() {
     Sunday: '10:00-21:00'
   });
   const [updatingWorkingHours, setUpdatingWorkingHours] = useState(false);
+
+  // Delivery Rates Dialog State
+  const [isDeliveryRatesDialogOpen, setIsDeliveryRatesDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -2110,7 +2114,7 @@ export default function RestaurantDetailsAdminComponent() {
                 <h3 className="text-lg font-semibold">Menu Items</h3>
                 <p className="text-sm text-gray-500">{menuItems.length} items</p>
               </div>
-              <div className="flex gap-2 mt-4 md:mt-0">
+              <div className="flex gap-2 mt-4 md:mt-0 flex-wrap">
                 <Button
                   variant="outline"
                   onClick={() => setIsWorkingHoursDialogOpen(true)}
@@ -2118,6 +2122,14 @@ export default function RestaurantDetailsAdminComponent() {
                 >
                   <Clock className="h-4 w-4" />
                   Working Hours
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeliveryRatesDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Delivery Rates
                 </Button>
                 <Button onClick={handleAddItem}>
                   Add Menu Item
@@ -2679,6 +2691,14 @@ export default function RestaurantDetailsAdminComponent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delivery Rates Dialog */}
+      <DeliveryRatesManager
+        isOpen={isDeliveryRatesDialogOpen}
+        onClose={() => setIsDeliveryRatesDialogOpen(false)}
+        restaurant={restaurant}
+        allRestaurants={restaurants}
+      />
     </TooltipProvider>
   );
 }
