@@ -290,6 +290,15 @@ export default function OrderTrackingV2() {
                 <span className="font-bold">{order.total_price ? formatDualCurrencyCompact(order.total_price) : '0.00 лв / €0.00'}</span>
               </div>
 
+              {order.cutlery_requested !== undefined && order.cutlery_requested !== null && (
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Прибори</span>
+                  <span className={order.cutlery_requested ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                    {order.cutlery_requested ? '✓ Заявени' : 'Не са заявени'}
+                  </span>
+                </div>
+              )}
+
               <Separator />
 
               <div>

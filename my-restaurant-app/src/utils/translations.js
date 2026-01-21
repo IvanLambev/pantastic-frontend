@@ -236,6 +236,10 @@ export const translations = {
       cashDesc: "Платете в брой когато пристигне поръчката ви"
     },
 
+    // Cutlery request
+    requestCutlery: "Искам прибори",
+    requestCutleryDesc: "Добавете прибори към вашата поръчка",
+
     // Delivery info
     deliveryAddress: "Адрес за доставка",
     deliveryTo: "Доставка до този адрес",

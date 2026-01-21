@@ -29,7 +29,8 @@ export default function OrderConfirmation({
   total, 
   deliveryFee,
   deliveryEstimate,
-  isLoading 
+  isLoading,
+  cutleryRequested 
 }) {
   const [orderDetails, setOrderDetails] = useState(null);
 
@@ -171,6 +172,15 @@ export default function OrderConfirmation({
                   <span>{t('cart.total')}</span>
                   <span>{formatDualCurrencyCompact(total)}</span>
                 </div>
+                {cutleryRequested && (
+                  <>
+                    <Separator />
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <span>✓</span>
+                      <span>{t('checkout.requestCutlery')}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

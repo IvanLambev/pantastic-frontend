@@ -61,6 +61,9 @@ export default function CheckoutV2() {
   const [, setDeliverySchedule] = useState(null)
   const debounceTimeoutRef = useRef(null)
 
+  // Cutlery request state
+  const [cutleryRequested, setCutleryRequested] = useState(false)
+
   // Restaurant state
   const [selectedRestaurant, setSelectedRestaurant] = useState(() =>
     JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
@@ -471,6 +474,7 @@ export default function CheckoutV2() {
       latitude: deliveryMethod === 'delivery' && coordinates.latitude ? coordinates.latitude : null,
       longitude: deliveryMethod === 'delivery' && coordinates.longitude ? coordinates.longitude : null,
       scheduled_delivery_time: getScheduledDeliveryTime(),
+      cutlery_requested: cutleryRequested,
       success_url: `${FRONTEND_BASE_URL}/payment-success`,
       cancel_url: `${FRONTEND_BASE_URL}/cart`
     }
@@ -634,6 +638,23 @@ export default function CheckoutV2() {
                       })}
                     </div>
                   </RadioGroup>
+                  
+                  {/* Cutlery Request */}
+                  <div className="mt-6 pt-6 border-t">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="cutlery-request"
+                        checked={cutleryRequested}
+                        onCheckedChange={setCutleryRequested}
+                      />
+                      <Label htmlFor="cutlery-request" className="cursor-pointer">
+                        {t('checkout.requestCutlery')}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 ml-6">
+                      {t('checkout.requestCutleryDesc')}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1093,6 +1114,7 @@ export default function CheckoutV2() {
             deliveryFee={getDeliveryFee()}
             deliveryEstimate={deliveryEstimate}
             isLoading={isProcessing}
+            cutleryRequested={cutleryRequested}
           />
         </div>
       </div>

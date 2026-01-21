@@ -549,6 +549,19 @@ export default function Orders() {
                                                     <span>{format(new Date(selectedOrder.delivery_time), 'PPpp')}</span>
                                                 </>
                                             )}
+
+                                            {selectedOrder.cutlery_requested !== undefined && selectedOrder.cutlery_requested !== null && (
+                                                <>
+                                                    <span className="text-muted-foreground">Cutlery Requested:</span>
+                                                    <span className="font-medium">
+                                                        {selectedOrder.cutlery_requested ? (
+                                                            <Badge variant="secondary" className="text-xs">Yes</Badge>
+                                                        ) : (
+                                                            <span className="text-xs">No</span>
+                                                        )}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </CardContent>
                                 </Card>
