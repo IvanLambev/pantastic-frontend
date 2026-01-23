@@ -96,6 +96,7 @@ export const translations = {
     },
     // Dynamic labels (personalized recommendations)
     dynamicLabels: {
+      "Buy it again": "Купи отново",
       "Buy again": "Купи отново",
       "Personalized for you": "Персонализирано за теб",
       "You might like": "Може да ти хареса",
