@@ -22,6 +22,7 @@ export const translations = {
     heroSubtitle: "Автентични български палачинки направени с любов",
     orderNow: "Поръчай сега",
     viewMenu: "Виж менюто",
+    lookAtOurMenu: "Разгледай нашето меню",
     howItWorks: "Как работи",
     step1Title: "Избери",
     step1Desc: "Разгледай нашето меню и избери любимите си палачинки",

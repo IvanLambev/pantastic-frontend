@@ -12,10 +12,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Plus, ChevronRight } from "lucide-react"
+import { Plus, ChevronRight, ArrowRight } from "lucide-react"
 
 // @ts-ignore - fetchWithAuth is exported from AuthContext.jsx
 import { fetchWithAuth } from "@/context/AuthContext"
+import { t } from "@/utils/translations"
 
 interface MenuItem {
   item_id: string
@@ -234,14 +235,12 @@ export function CollectionSection({
               </div>
               <Button
                 size="default"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddToCart(item)
-                }}
+                onClick={() => navigate('/food')}
+                variant="outline"
                 className="w-full gap-2"
               >
-                <Plus className="h-4 w-4" />
-                Добави в количката
+                {t('home.lookAtOurMenu')}
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
