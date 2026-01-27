@@ -250,6 +250,16 @@ export const translations = {
     calculating: "Изчисляване",
     distance: "Разстояние",
 
+    // Restaurant selection
+    selectedRestaurant: "Избран ресторант",
+    changeRestaurant: "Промени",
+    changeRestaurantTitle: "Промяна на ресторант?",
+    changeRestaurantWarning: "Промяната на ресторанта ще изчисти текущата ви количка. Ще трябва да изберете артикули отново от новия ресторант.",
+    changeRestaurantConfirm: "Сигурни ли сте, че искате да продължите?",
+    yesChangeRestaurant: "Да, промени ресторанта",
+    cartWillBeCleared: "Количката е изчистена. Моля, изберете нов ресторант.",
+    changeAddressWarning: "Промяната на адреса за доставка може да изисква избор на друг ресторант и ще изчисти количката ви.",
+
     // Scheduling
     scheduleDelivery: "Планирай доставка",
     scheduleDesc: "Искате да получите поръчката си по-късно?",

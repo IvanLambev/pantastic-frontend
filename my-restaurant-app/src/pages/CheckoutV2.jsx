@@ -229,7 +229,7 @@ export default function CheckoutV2() {
     sessionStorage.removeItem('delivery_method')
     sessionStorage.removeItem('scheduled_order')
     sessionStorage.removeItem('order_scheduled_delivery')
-    toast.success('Cart cleared. Please select a new restaurant.')
+    toast.success(t('checkout.cartWillBeCleared'))
     navigate('/')
   }
 
@@ -701,7 +701,7 @@ export default function CheckoutV2() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleAddressEdit}
+                        onClick={() => setShowRestaurantChangeWarning(true)}
                         className="flex items-center gap-2"
                       >
                         <Edit className="h-4 w-4" />
@@ -836,7 +836,7 @@ export default function CheckoutV2() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Store className="h-4 w-4" />
-                    Selected Restaurant
+                    {t('checkout.selectedRestaurant')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -855,7 +855,7 @@ export default function CheckoutV2() {
                       onClick={() => setShowRestaurantChangeWarning(true)}
                       className="shrink-0"
                     >
-                      Change
+                      {t('checkout.changeRestaurant')}
                     </Button>
                   </div>
                 </CardContent>
@@ -1171,18 +1171,18 @@ export default function CheckoutV2() {
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-orange-500" />
-                  Change Restaurant?
+                  {t('checkout.changeRestaurantTitle')}
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-left">
-                  Changing the restaurant will clear your current cart. You will need to select items again from the new restaurant.
+                  {t('checkout.changeRestaurantWarning')}
                   <br /><br />
-                  Are you sure you want to continue?
+                  {t('checkout.changeRestaurantConfirm')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleChangeRestaurant} className="bg-orange-500 hover:bg-orange-600">
-                  Yes, Change Restaurant
+                  {t('checkout.yesChangeRestaurant')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
