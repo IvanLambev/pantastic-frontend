@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useCart } from "@/hooks/use-cart"
 import { API_URL, FRONTEND_BASE_URL } from "@/config/api"
 import { toast } from "sonner"
-import { CreditCard, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, Edit, MapPin, Store, X, Calendar as CalendarIcon, Clock } from "lucide-react"
+import { CreditCard, DollarSign, ArrowLeft, Check, Minus, Plus, Trash2, Edit, MapPin, Store, X, Calendar as CalendarIcon, Clock, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -68,6 +69,9 @@ export default function CheckoutV2() {
   const [selectedRestaurant, setSelectedRestaurant] = useState(() =>
     JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
   )
+
+  // Restaurant change warning state
+  const [showRestaurantChangeWarning, setShowRestaurantChangeWarning] = useState(false)
 
   // Get delivery information from sessionStorage - MOVED HERE to avoid initialization errors
   const deliveryAddress = sessionStorage.getItem('delivery_address')
@@ -214,6 +218,20 @@ export default function CheckoutV2() {
   // Check if restaurant is currently open
   const isOpen = isRestaurantOpen(selectedRestaurant)
   const nextOpenTime = !isOpen ? getNextOpenTime(selectedRestaurant) : null
+
+  // Handle restaurant change
+  const handleChangeRestaurant = () => {
+    // Clear cart and navigate back to home/restaurant selection
+    clearCart()
+    localStorage.removeItem('selectedRestaurant')
+    sessionStorage.removeItem('delivery_address')
+    sessionStorage.removeItem('delivery_coordinates')
+    sessionStorage.removeItem('delivery_method')
+    sessionStorage.removeItem('scheduled_order')
+    sessionStorage.removeItem('order_scheduled_delivery')
+    toast.success('Cart cleared. Please select a new restaurant.')
+    navigate('/')
+  }
 
   // Get delivery coordinates from sessionStorage
   const getDeliveryCoordinates = () => {
@@ -813,6 +831,36 @@ export default function CheckoutV2() {
 
             {/* Order Summary */}
             <div>
+              {/* Selected Restaurant Box */}
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Store className="h-4 w-4" />
+                    Selected Restaurant
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {Array.isArray(selectedRestaurant) ? selectedRestaurant[8] : selectedRestaurant.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowRestaurantChangeWarning(true)}
+                      className="shrink-0"
+                    >
+                      Change
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>{t('cart.orderSummary')}</CardTitle>
@@ -1116,6 +1164,29 @@ export default function CheckoutV2() {
             isLoading={isProcessing}
             cutleryRequested={cutleryRequested}
           />
+
+          {/* Restaurant Change Warning Dialog */}
+          <AlertDialog open={showRestaurantChangeWarning} onOpenChange={setShowRestaurantChangeWarning}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-500" />
+                  Change Restaurant?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-left">
+                  Changing the restaurant will clear your current cart. You will need to select items again from the new restaurant.
+                  <br /><br />
+                  Are you sure you want to continue?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleChangeRestaurant} className="bg-orange-500 hover:bg-orange-600">
+                  Yes, Change Restaurant
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
