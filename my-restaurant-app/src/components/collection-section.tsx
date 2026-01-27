@@ -227,24 +227,27 @@ export function CollectionSection({
               )}
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-3 p-4 pt-0 mt-auto">
+            <CardContent className="p-4 pt-0">
               <div className="flex items-center justify-between">
                 <span className="text-xl font-bold text-primary">
                   {item.price.toFixed(2)} лв
                 </span>
               </div>
-              <Button
-                size="default"
-                onClick={() => navigate('/food')}
-                variant="outline"
-                className="w-full gap-2"
-              >
-                {t('home.lookAtOurMenu')}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Single centered button to view full menu */}
+      <div className="text-center mt-8">
+        <Button
+          size="lg"
+          onClick={() => navigate('/food')}
+          className="gap-2"
+        >
+          {t('home.lookAtOurMenu')}
+          <ArrowRight className="h-5 w-5" />
+        </Button>
       </div>
 
       {collection.item_count > items.length && (
