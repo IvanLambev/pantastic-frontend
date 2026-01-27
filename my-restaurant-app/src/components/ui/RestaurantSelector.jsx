@@ -641,7 +641,7 @@ export default function RestaurantSelector({
         restaurant: closest.restaurant,
         distance: closest.distance,
         isOpen: false,
-        message: `No restaurants are currently open within ${MAX_RADIUS_KM}km of your location. ${nextOpenTime ? `Next opening: ${nextOpenTime}` : 'Check back later for availability.'}`,
+        message: t('restaurantSelector.noRestaurantsOpenInRadius', { radius: MAX_RADIUS_KM }) + ' ' + (nextOpenTime ? `${t('restaurantSelector.nextOpening')} ${nextOpenTime}` : t('restaurantSelector.checkBackLater')),
         allowBrowsing: true,
         estimatedDistance: closest.estimatedDistance
       };
@@ -687,11 +687,11 @@ export default function RestaurantSelector({
             if (dayOffset === 0 && openTime <= gmt3) continue;
 
             if (dayOffset === 0) {
-              return `Today at ${open}`;
+              return t('restaurantSelector.todayAt', { time: open });
             } else if (dayOffset === 1) {
-              return `Tomorrow at ${open}`;
+              return t('restaurantSelector.tomorrowAt', { time: open });
             } else {
-              return `${dayName} at ${open}`;
+              return t('restaurantSelector.dayAt', { day: dayName, time: open });
             }
           } catch {
             continue;

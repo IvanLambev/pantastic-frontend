@@ -410,6 +410,12 @@ export const translations = {
 
     noRestaurantsOpen: "В момента няма отворени ресторанти",
     noRestaurantsOpenDesc: "Няма отворени ресторанти за поръчка в момента, но можете да разгледате менюто на най-близкия ресторант.",
+    noRestaurantsOpenInRadius: "В момента няма отворени ресторанти в радиус от {radius} км от вашето местоположение.",
+    nextOpening: "Следващо отваряне:",
+    checkBackLater: "Проверете по-късно за наличност.",
+    todayAt: "Днес в {time}",
+    tomorrowAt: "Утре в {time}",
+    dayAt: "{day} в {time}",
     nearestRestaurant: "Най-близък ресторант",
     browseMenu: "Разгледай менюто",
     closedRestaurantWarning: "Този ресторант е затворен в момента. Можете да разгледате менюто, но не можете да направите поръчка, докато не отвори.",
