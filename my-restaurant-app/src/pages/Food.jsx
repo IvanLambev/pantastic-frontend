@@ -714,8 +714,8 @@ const Food = () => {
               variant={category === "american" ? "default" : "outline"}
               onClick={() => setCategory("american")}
             >
-              <span className="hidden sm:inline">American</span>
-              <span className="sm:hidden">American</span>
+              <span className="hidden sm:inline">{t('menu.americanPancakes')}</span>
+              <span className="sm:hidden">{t('menu.american')}</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
@@ -725,9 +725,9 @@ const Food = () => {
               {t('menu.promo')}
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 text-white border-0"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 hover:bg-orange-500 text-white border-0"
               style={{ letterSpacing: 1 }}
-              onClick={() => setCategory("deluxe")}
+              onClick={() => navigate('/deluxe-box')}
             >
               DELUXE BOX
             </Button>

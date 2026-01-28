@@ -43,6 +43,7 @@ const BOX_INFO = {
 
 export default function DeluxeBox() {
   const navigate = useNavigate()
+  const { addToCart } = useCart()
   const [boxSize, setBoxSize] = useState(2) // 2 or 4
   const [toppings, setToppings] = useState([null, null, null, null])
   const [imageError, setImageError] = useState(false)
@@ -61,7 +62,30 @@ export default function DeluxeBox() {
       toast.error("Please select all toppings.")
       return
     }
-    console.log({ boxSize, toppings: selectedToppings })
+    
+    const boxInfo = BOX_INFO[boxSize]
+    
+    // Add deluxe box to cart with selected toppings as addons
+    const deluxeBoxItem = {
+      id: boxSize === 2 ? 'deluxe-box-2' : 'deluxe-box-4',
+      name: boxInfo.name,
+      price: boxInfo.price,
+      quantity: 1,
+      description: boxInfo.description,
+      image: boxSize === 2 
+        ? '/pantastic-deluxe-box-za-dvama.jpeg' 
+        : '/pantastic-deluxe-box-za-trima.jpeg',
+      selectedAddons: selectedToppings.map((topping, idx) => {
+        const toppingLabel = TOPPING_OPTIONS.find(opt => opt.value === topping)?.label || topping
+        return {
+          name: `Topping ${idx + 1}: ${toppingLabel}`,
+          price: 0 // Toppings are included in the box price
+        }
+      })
+    }
+    
+    addToCart(deluxeBoxItem)
+    toast.success(`${boxInfo.name} added to cart!`)
     navigate("/food")
   }
 

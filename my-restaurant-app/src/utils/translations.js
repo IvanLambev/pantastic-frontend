@@ -61,6 +61,8 @@ export const translations = {
     sweet: "Сладки",
     sourPancakes: "Солени палачинки",
     sour: "Солени",
+    americanPancakes: "Американски палачинки",
+    american: "Американски",
     promo: "Промо",
     search: "Търсене",
     options: "Добавки",
