@@ -138,6 +138,13 @@ export default function RestaurantDetailsAdminComponent() {
   const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false);
   const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([]);
 
+  // Deluxe box specific states
+  const [deluxeBoxConfig, setDeluxeBoxConfig] = useState({
+    free_toppings_count: 3,
+    topping_template_id: "",
+    pancake_type_template_id: "" // Optional
+  });
+
   // Working Hours Dialog State
   const [isWorkingHoursDialogOpen, setIsWorkingHoursDialogOpen] = useState(false);
   const [selectedRestaurantsForHours, setSelectedRestaurantsForHours] = useState([]);
@@ -894,6 +901,11 @@ export default function RestaurantDetailsAdminComponent() {
     setItemForm({ id: "", name: "", description: "", image: "", price: "", item_type: "sweet-american", addon_templates: [] });
     setSelectedAddonTemplates([]);
     setSelectedRemovableTemplates([]);
+    setDeluxeBoxConfig({
+      free_toppings_count: 3,
+      topping_template_id: "",
+      pancake_type_template_id: ""
+    });
     setShowItemModal(true);
   };
 
@@ -916,36 +928,75 @@ export default function RestaurantDetailsAdminComponent() {
           try {
             const formData = new FormData();
 
-            // Use template-based API for new items
-            const itemData = {
-              restaurant_id: restaurantId,
-              item: {
+            // Check if this is a deluxe box
+            if (itemForm.item_type === "deluxe_box") {
+              // Use deluxe box specific API
+              const deluxeBoxData = {
+                restaurant_id: restaurantId,
                 name: itemForm.name,
                 description: itemForm.description,
-                item_type: itemForm.item_type,
                 price: parseFloat(itemForm.price),
-                addons: {}, // Custom addons can be added here if needed
-                addon_template_ids: selectedAddonTemplates,
-                removables: [], // Custom removables can be added here if needed
-                removable_template_ids: selectedRemovableTemplates
+                deluxe_box_config: {
+                  free_toppings_count: parseInt(deluxeBoxConfig.free_toppings_count),
+                  topping_template_id: deluxeBoxConfig.topping_template_id
+                }
+              };
+
+              // Add optional pancake type template if provided
+              if (deluxeBoxConfig.pancake_type_template_id) {
+                deluxeBoxData.deluxe_box_config.pancake_type_template_id = deluxeBoxConfig.pancake_type_template_id;
               }
-            };
 
-            formData.append("data", JSON.stringify(itemData));
+              formData.append("data", JSON.stringify(deluxeBoxData));
 
-            if (fileInputRef.current && fileInputRef.current.files[0]) {
-              formData.append("file", fileInputRef.current.files[0]);
-            }
+              if (fileInputRef.current && fileInputRef.current.files[0]) {
+                formData.append("file", fileInputRef.current.files[0]);
+              }
 
-            const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
-              method: "POST",
-              body: formData,
-            });
+              const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items/deluxe-box`, {
+                method: "POST",
+                body: formData,
+              });
 
-            if (response.ok) {
-              successCount++;
+              if (response.ok) {
+                successCount++;
+              } else {
+                const errorData = await response.json();
+                console.error(`Deluxe box creation error for restaurant ${restaurantId}:`, errorData);
+                failCount++;
+              }
             } else {
-              failCount++;
+              // Use template-based API for regular items
+              const itemData = {
+                restaurant_id: restaurantId,
+                item: {
+                  name: itemForm.name,
+                  description: itemForm.description,
+                  item_type: itemForm.item_type,
+                  price: parseFloat(itemForm.price),
+                  addons: {}, // Custom addons can be added here if needed
+                  addon_template_ids: selectedAddonTemplates,
+                  removables: [], // Custom removables can be added here if needed
+                  removable_template_ids: selectedRemovableTemplates
+                }
+              };
+
+              formData.append("data", JSON.stringify(itemData));
+
+              if (fileInputRef.current && fileInputRef.current.files[0]) {
+                formData.append("file", fileInputRef.current.files[0]);
+              }
+
+              const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
+                method: "POST",
+                body: formData,
+              });
+
+              if (response.ok) {
+                successCount++;
+              } else {
+                failCount++;
+              }
             }
           } catch (error) {
             console.error(`Error creating item for restaurant ${restaurantId}:`, error);
@@ -969,6 +1020,11 @@ export default function RestaurantDetailsAdminComponent() {
         setSelectedRemovableTemplates([]);
         setAddToMultipleRestaurants(false);
         setSelectedRestaurantsForCreation([]);
+        setDeluxeBoxConfig({
+          free_toppings_count: 3,
+          topping_template_id: "",
+          pancake_type_template_id: ""
+        });
       } catch (error) {
         console.error('Error creating item:', error);
         toast.error("Неуспешно създаване на продукт");
@@ -1529,8 +1585,145 @@ export default function RestaurantDetailsAdminComponent() {
                   </div>
                 </div>
 
-                {/* Template Selection Section */}
-                {modalMode === "add" && (
+                {/* Deluxe Box Configuration - Only show when item_type is deluxe_box */}
+                {modalMode === "add" && itemForm.item_type === "deluxe_box" && (
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-lg font-medium">Deluxe Box Configuration</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Configure the number of free toppings and select addon templates for this deluxe box.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="free_toppings_count">Брой безплатни добавки *</Label>
+                        <Input
+                          id="free_toppings_count"
+                          type="number"
+                          min="0"
+                          value={deluxeBoxConfig.free_toppings_count}
+                          onChange={(e) => setDeluxeBoxConfig({ 
+                            ...deluxeBoxConfig, 
+                            free_toppings_count: e.target.value 
+                          })}
+                          required
+                          placeholder="3"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Брой добавки включени в цената
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="topping_template_id">Шаблон за добавки *</Label>
+                        <Select
+                          value={deluxeBoxConfig.topping_template_id}
+                          onValueChange={(value) => setDeluxeBoxConfig({ 
+                            ...deluxeBoxConfig, 
+                            topping_template_id: value 
+                          })}
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Изберете шаблон за добавки..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableAddonTemplates.map((template) => (
+                              <SelectItem 
+                                key={template.id || template.template_id} 
+                                value={template.id || template.template_id}
+                              >
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Опции за добавки за избор
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="pancake_type_template_id">Шаблон за тип палачинка (Опционално)</Label>
+                        <Select
+                          value={deluxeBoxConfig.pancake_type_template_id}
+                          onValueChange={(value) => setDeluxeBoxConfig({ 
+                            ...deluxeBoxConfig, 
+                            pancake_type_template_id: value 
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Изберете шаблон..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Без избор на палачинка</SelectItem>
+                            {availableAddonTemplates.map((template) => (
+                              <SelectItem 
+                                key={template.id || template.template_id} 
+                                value={template.id || template.template_id}
+                              >
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Позволява избор на тип палачинка
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium mb-2">ℹ️ Deluxe Box Pricing Info</h4>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>• Първите {deluxeBoxConfig.free_toppings_count || 0} добавки са включени в базовата цена</li>
+                        <li>• Допълнителни добавки се таксуват с индивидуалните им цени</li>
+                        <li>• Типът палачинка може да има допълнителна такса ако е зададена</li>
+                      </ul>
+                    </div>
+
+                    {/* Multi-restaurant selection for deluxe boxes */}
+                    <div className="space-y-3 border-t pt-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="multi-restaurant-deluxe"
+                          checked={addToMultipleRestaurants}
+                          onCheckedChange={setAddToMultipleRestaurants}
+                        />
+                        <Label htmlFor="multi-restaurant-deluxe" className="text-sm font-medium">
+                          Добави към други ресторанти
+                        </Label>
+                      </div>
+                      {addToMultipleRestaurants && (
+                        <div className="ml-6 space-y-2">
+                          <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                          <div className="space-y-2">
+                            {restaurants.map((r) => (
+                              <div key={r.restaurant_id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`restaurant-deluxe-${r.restaurant_id}`}
+                                  checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
+                                    } else {
+                                      setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={`restaurant-deluxe-${r.restaurant_id}`} className="text-sm cursor-pointer">
+                                  {r.name}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Template Selection Section - Hide for deluxe boxes */}
+                {modalMode === "add" && itemForm.item_type !== "deluxe_box" && (
                   <div className="space-y-8">
                     {/* Addon Templates */}
                     <div className="space-y-4">
