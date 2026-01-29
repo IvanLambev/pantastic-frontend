@@ -1882,7 +1882,6 @@ export default function RestaurantDetailsAdminComponent() {
                             </Button>
                           )}
                         </div>
-                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           Позволява избор на тип палачинка
                         </p>
