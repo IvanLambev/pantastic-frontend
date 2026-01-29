@@ -1644,28 +1644,42 @@ export default function RestaurantDetailsAdminComponent() {
 
                       <div>
                         <Label htmlFor="pancake_type_template_id">Шаблон за тип палачинка (Опционално)</Label>
-                        <Select
-                          value={deluxeBoxConfig.pancake_type_template_id}
-                          onValueChange={(value) => setDeluxeBoxConfig({ 
-                            ...deluxeBoxConfig, 
-                            pancake_type_template_id: value 
-                          })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Изберете шаблон..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Без избор на палачинка</SelectItem>
-                            {availableAddonTemplates.map((template) => (
-                              <SelectItem 
-                                key={template.id || template.template_id} 
-                                value={template.id || template.template_id}
-                              >
-                                {template.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex gap-2">
+                          <Select
+                            value={deluxeBoxConfig.pancake_type_template_id || undefined}
+                            onValueChange={(value) => setDeluxeBoxConfig({ 
+                              ...deluxeBoxConfig, 
+                              pancake_type_template_id: value 
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Без избор на палачинка" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableAddonTemplates.map((template) => (
+                                <SelectItem 
+                                  key={template.id || template.template_id} 
+                                  value={template.id || template.template_id}
+                                >
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {deluxeBoxConfig.pancake_type_template_id && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setDeluxeBoxConfig({ 
+                                ...deluxeBoxConfig, 
+                                pancake_type_template_id: "" 
+                              })}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           Позволява избор на тип палачинка
                         </p>
