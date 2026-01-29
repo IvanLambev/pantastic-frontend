@@ -41,6 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { DeluxeBoxModal } from "@/components/DeluxeBoxModal"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -62,6 +63,8 @@ const Food = () => {
   const [canFavorite, setCanFavorite] = useState(false)
   const [nearestOpenRestaurant, setNearestOpenRestaurant] = useState(null)
   const [searchingForOpen, setSearchingForOpen] = useState(false)
+  const [showDeluxeBoxModal, setShowDeluxeBoxModal] = useState(false)
+  const [selectedDeluxeBoxItem, setSelectedDeluxeBoxItem] = useState(null)
 
   // Helper to calculate distance between two coordinates (Haversine formula)
   function getDistance(lat1, lon1, lat2, lon2) {
@@ -365,6 +368,16 @@ const Food = () => {
   }
 
   const handleItemNavigation = (item) => {
+    const itemType = getItemType(item);
+    
+    // If it's a deluxe box, show the modal instead of navigating
+    if (itemType === 'deluxe_box') {
+      setSelectedDeluxeBoxItem(item);
+      setShowDeluxeBoxModal(true);
+      return;
+    }
+    
+    // For regular items, navigate to item details
     const itemId = getItemId(item);
     navigate(`/restaurants/${Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}/items/${itemId}`);
   };
@@ -472,7 +485,7 @@ const Food = () => {
     const matchesPrice = priceInEur >= priceRange[0] && priceInEur <= priceRange[1];
 
     // Category filtering based on item_type
-    const isDeluxe = item.item_id === "5de9bf5b-cf0a-4a8c-b6c7-fc87e957acfd" || name === "Deluxe Pancake";
+    const isDeluxe = itemType === 'deluxe_box';
 
     // Deluxe items should ONLY appear in the deluxe category
     if (isDeluxe && category !== "deluxe") return false;
@@ -1226,6 +1239,20 @@ const Food = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Deluxe Box Modal */}
+      {selectedDeluxeBoxItem && (
+        <DeluxeBoxModal
+          isOpen={showDeluxeBoxModal}
+          onClose={() => {
+            setShowDeluxeBoxModal(false);
+            setSelectedDeluxeBoxItem(null);
+          }}
+          item={selectedDeluxeBoxItem}
+          restaurantId={Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}
+          onAddToCart={addToCart}
+        />
       )}
     </div>
   )
