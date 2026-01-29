@@ -1615,28 +1615,130 @@ export default function RestaurantDetailsAdminComponent() {
 
                       <div>
                         <Label htmlFor="topping_template_id">Шаблон за добавки *</Label>
-                        <Select
-                          value={deluxeBoxConfig.topping_template_id}
-                          onValueChange={(value) => setDeluxeBoxConfig({ 
-                            ...deluxeBoxConfig, 
-                            topping_template_id: value 
-                          })}
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Изберете шаблон за добавки..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableAddonTemplates.map((template) => (
-                              <SelectItem 
-                                key={template.id || template.template_id} 
-                                value={template.id || template.template_id}
+                        <div className="flex gap-2">
+                          <Select
+                            value={deluxeBoxConfig.topping_template_id}
+                            onValueChange={(value) => setDeluxeBoxConfig({ 
+                              ...deluxeBoxConfig, 
+                              topping_template_id: value 
+                            })}
+                            required
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Изберете шаблон за добавки..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableAddonTemplates.map((template) => (
+                                <SelectItem 
+                                  key={template.id || template.template_id} 
+                                  value={template.id || template.template_id}
+                                >
+                                  {template.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Drawer>
+                            <DrawerTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setNewAddonTemplate({
+                                    name: "deluxebox-addon",
+                                    description: "",
+                                    addons: [{ name: "", price: "" }]
+                                  });
+                                }}
                               >
-                                {template.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </DrawerTrigger>
+                            <DrawerContent className="max-h-[90vh]">
+                              <DrawerHeader>
+                                <DrawerTitle>Създаване на шаблон за добавки към Deluxe Box</DrawerTitle>
+                                <DrawerDescription>
+                                  Създайте нов шаблон за добавки (тoppingи) за deluxe box.
+                                </DrawerDescription>
+                              </DrawerHeader>
+                              <div className="px-4 pb-4 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+                                <div>
+                                  <Label htmlFor="deluxe-addon-name">Име на шаблона</Label>
+                                  <Input
+                                    id="deluxe-addon-name"
+                                    value={newAddonTemplate.name}
+                                    onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, name: e.target.value })}
+                                    placeholder="deluxebox-addon"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="deluxe-addon-description">Описание</Label>
+                                  <Textarea
+                                    id="deluxe-addon-description"
+                                    value={newAddonTemplate.description}
+                                    onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, description: e.target.value })}
+                                    placeholder="Добавки за deluxe box..."
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex justify-between items-center mb-2">
+                                    <Label>Добавки (Toppings)</Label>
+                                  </div>
+                                  {newAddonTemplate.addons.map((addon, index) => (
+                                    <div key={index} className="flex gap-2 mt-2">
+                                      <Input
+                                        placeholder="Име на добавката"
+                                        value={addon.name}
+                                        onChange={(e) => {
+                                          const newAddons = [...newAddonTemplate.addons];
+                                          newAddons[index].name = e.target.value;
+                                          setNewAddonTemplate({ ...newAddonTemplate, addons: newAddons });
+                                        }}
+                                      />
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Цена"
+                                        value={addon.price}
+                                        onChange={(e) => {
+                                          const newAddons = [...newAddonTemplate.addons];
+                                          newAddons[index].price = e.target.value;
+                                          setNewAddonTemplate({ ...newAddonTemplate, addons: newAddons });
+                                        }}
+                                      />
+                                      {newAddonTemplate.addons.length > 1 && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={() => removeAddonField(index)}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addAddonField}
+                                    className="mt-2"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Добави добавка
+                                  </Button>
+                                </div>
+                              </div>
+                              <DrawerFooter>
+                                <Button onClick={createAddonTemplate}>Създай шаблон</Button>
+                                <DrawerClose asChild>
+                                  <Button variant="outline">Отказ</Button>
+                                </DrawerClose>
+                              </DrawerFooter>
+                            </DrawerContent>
+                          </Drawer>
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           Опции за добавки за избор
                         </p>
@@ -1652,7 +1754,7 @@ export default function RestaurantDetailsAdminComponent() {
                               pancake_type_template_id: value 
                             })}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="flex-1">
                               <SelectValue placeholder="Без избор на палачинка" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1666,6 +1768,106 @@ export default function RestaurantDetailsAdminComponent() {
                               ))}
                             </SelectContent>
                           </Select>
+                          <Drawer>
+                            <DrawerTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  setNewAddonTemplate({
+                                    name: "deluxebox-pancake-type",
+                                    description: "",
+                                    addons: [{ name: "", price: "" }]
+                                  });
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </DrawerTrigger>
+                            <DrawerContent className="max-h-[90vh]">
+                              <DrawerHeader>
+                                <DrawerTitle>Създаване на шаблон за тип палачинка</DrawerTitle>
+                                <DrawerDescription>
+                                  Създайте шаблон за избор на тип палачинка в deluxe box.
+                                </DrawerDescription>
+                              </DrawerHeader>
+                              <div className="px-4 pb-4 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
+                                <div>
+                                  <Label htmlFor="pancake-type-name">Име на шаблона</Label>
+                                  <Input
+                                    id="pancake-type-name"
+                                    value={newAddonTemplate.name}
+                                    onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, name: e.target.value })}
+                                    placeholder="deluxebox-pancake-type"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="pancake-type-description">Описание</Label>
+                                  <Textarea
+                                    id="pancake-type-description"
+                                    value={newAddonTemplate.description}
+                                    onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, description: e.target.value })}
+                                    placeholder="Типове палачинки за избор..."
+                                  />
+                                </div>
+                                <div>
+                                  <div className="flex justify-between items-center mb-2">
+                                    <Label>Типове палачинки</Label>
+                                  </div>
+                                  {newAddonTemplate.addons.map((addon, index) => (
+                                    <div key={index} className="flex gap-2 mt-2">
+                                      <Input
+                                        placeholder="Тип палачинка"
+                                        value={addon.name}
+                                        onChange={(e) => {
+                                          const newAddons = [...newAddonTemplate.addons];
+                                          newAddons[index].name = e.target.value;
+                                          setNewAddonTemplate({ ...newAddonTemplate, addons: newAddons });
+                                        }}
+                                      />
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Цена (0 за безплатно)"
+                                        value={addon.price}
+                                        onChange={(e) => {
+                                          const newAddons = [...newAddonTemplate.addons];
+                                          newAddons[index].price = e.target.value;
+                                          setNewAddonTemplate({ ...newAddonTemplate, addons: newAddons });
+                                        }}
+                                      />
+                                      {newAddonTemplate.addons.length > 1 && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="icon"
+                                          onClick={() => removeAddonField(index)}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addAddonField}
+                                    className="mt-2"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Добави тип
+                                  </Button>
+                                </div>
+                              </div>
+                              <DrawerFooter>
+                                <Button onClick={createAddonTemplate}>Създай шаблон</Button>
+                                <DrawerClose asChild>
+                                  <Button variant="outline">Отказ</Button>
+                                </DrawerClose>
+                              </DrawerFooter>
+                            </DrawerContent>
+                          </Drawer>
                           {deluxeBoxConfig.pancake_type_template_id && (
                             <Button
                               type="button"
@@ -1679,6 +1881,7 @@ export default function RestaurantDetailsAdminComponent() {
                               <X className="h-4 w-4" />
                             </Button>
                           )}
+                        </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           Позволява избор на тип палачинка
