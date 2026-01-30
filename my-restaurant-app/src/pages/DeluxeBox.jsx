@@ -211,7 +211,7 @@ export default function DeluxeBox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <Button
         variant="ghost"
         className="mb-6"
@@ -244,7 +244,7 @@ export default function DeluxeBox() {
           {/* Right: Item Info and Selection Controls */}
           <div className="space-y-6">
             {/* Item Name and Description */}
-            <div className="space-y-2">
+            <div className="space-y-2 text-left">
               <h1 className="text-3xl font-bold">{item.name}</h1>
               <p className="text-muted-foreground">{item.description}</p>
             </div>
@@ -253,18 +253,12 @@ export default function DeluxeBox() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label className="text-lg font-semibold">Изберете вашите добавки</Label>
-                <span className="text-sm text-muted-foreground">
-                  {freeToppingsCount} включени безплатно
-                </span>
               </div>
               
               {selectedToppings.map((_, index) => (
                 <div key={index} className="space-y-2">
                   <Label htmlFor={`topping-${index}`} className="text-sm">
                     Добавка {index + 1}
-                    {index < freeToppingsCount && (
-                      <span className="text-green-600 ml-2">(Безплатно)</span>
-                    )}
                     {index >= freeToppingsCount && toppingTemplate?.addons?.[selectedToppings[index]] && (
                       <span className="text-muted-foreground ml-2">
                         +{formatDualCurrencyCompact(toppingTemplate.addons[selectedToppings[index]])}
