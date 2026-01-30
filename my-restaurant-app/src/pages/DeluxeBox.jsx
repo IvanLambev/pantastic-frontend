@@ -65,7 +65,7 @@ export default function DeluxeBox() {
       }
     } catch (error) {
       console.error('Error fetching templates:', error)
-      toast.error('Failed to load deluxe box options')
+      toast.error('Неуспешно зареждане на опциите за делукс кутия')
     } finally {
       setLoading(false)
     }
@@ -132,13 +132,13 @@ export default function DeluxeBox() {
     // Validate all required toppings are selected
     const requiredToppings = selectedToppings.slice(0, freeToppingsCount)
     if (requiredToppings.some(t => !t)) {
-      toast.error(`Please select all ${freeToppingsCount} toppings`)
+      toast.error(`Моля, изберете всичките ${freeToppingsCount} добавки`)
       return
     }
 
     // Validate pancake type if required
     if (pancakeTypeTemplate && !selectedPancakeType) {
-      toast.error('Please select a pancake type')
+      toast.error('Моля, изберете тип палачинка')
       return
     }
 
@@ -152,7 +152,7 @@ export default function DeluxeBox() {
           ? 0 
           : (toppingTemplate?.addons?.[topping] || 0)
         cartAddons.push({
-          name: `${index < freeToppingsCount ? 'Free ' : ''}Topping ${index + 1}: ${topping}`,
+          name: `${index < freeToppingsCount ? 'Безплатна ' : ''}Добавка ${index + 1}: ${topping}`,
           price: Number(price)
         })
       }
@@ -162,7 +162,7 @@ export default function DeluxeBox() {
     if (selectedPancakeType) {
       const pancakePrice = pancakeTypeTemplate?.addons?.[selectedPancakeType] || 0
       cartAddons.push({
-        name: `Pancake Type: ${selectedPancakeType}`,
+        name: `Тип палачинка: ${selectedPancakeType}`,
         price: Number(pancakePrice)
       })
     }
@@ -178,7 +178,7 @@ export default function DeluxeBox() {
     }
 
     addToCart(cartItem)
-    toast.success(`${item.name} added to cart!`)
+    toast.success(`${item.name} добавен в количката!`)
     navigate("/food")
   }
 
@@ -204,7 +204,7 @@ export default function DeluxeBox() {
           Back to Menu
         </Button>
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No deluxe box item selected. Please select an item from the menu.</p>
+          <p className="text-muted-foreground">Няма избрана делукс кутия. Моля, изберете артикул от менюто.</p>
         </div>
       </div>
     )
@@ -218,7 +218,7 @@ export default function DeluxeBox() {
         onClick={() => navigate("/food")}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Menu
+        Назад към Меню
       </Button>
 
       {loading ? (
@@ -227,7 +227,7 @@ export default function DeluxeBox() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Left: Image and Info */}
+          {/* Left: Image Only */}
           <div className="space-y-4">
             {item.image_url && (
               <div className="relative aspect-square">
@@ -239,33 +239,31 @@ export default function DeluxeBox() {
                 />
               </div>
             )}
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{item.name}</h1>
-              <p className="text-muted-foreground mb-4">{item.description}</p>
-              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">Base Price</span>
-                <span className="font-semibold text-lg">{formatDualCurrencyCompact(item.price)}</span>
-              </div>
-            </div>
           </div>
 
-          {/* Right: Selection Controls */}
+          {/* Right: Item Info and Selection Controls */}
           <div className="space-y-6">
+            {/* Item Name and Description */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">{item.name}</h1>
+              <p className="text-muted-foreground">{item.description}</p>
+            </div>
+            
             {/* Topping Selectors */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-lg font-semibold">Select Your Toppings</Label>
+                <Label className="text-lg font-semibold">Изберете вашите добавки</Label>
                 <span className="text-sm text-muted-foreground">
-                  {freeToppingsCount} included free
+                  {freeToppingsCount} включени безплатно
                 </span>
               </div>
               
               {selectedToppings.map((_, index) => (
                 <div key={index} className="space-y-2">
                   <Label htmlFor={`topping-${index}`} className="text-sm">
-                    Topping {index + 1}
+                    Добавка {index + 1}
                     {index < freeToppingsCount && (
-                      <span className="text-green-600 ml-2">(Free)</span>
+                      <span className="text-green-600 ml-2">(Безплатно)</span>
                     )}
                     {index >= freeToppingsCount && toppingTemplate?.addons?.[selectedToppings[index]] && (
                       <span className="text-muted-foreground ml-2">
@@ -278,7 +276,7 @@ export default function DeluxeBox() {
                     onValueChange={(value) => handleToppingChange(index, value)}
                   >
                     <SelectTrigger id={`topping-${index}`}>
-                      <SelectValue placeholder="Select a topping..." />
+                      <SelectValue placeholder="Изберете добавка..." />
                     </SelectTrigger>
                     <SelectContent>
                       {getToppingOptions().map((topping) => (
@@ -301,7 +299,7 @@ export default function DeluxeBox() {
             {pancakeTypeTemplate && (
               <div className="space-y-2 pt-4 border-t">
                 <Label htmlFor="pancake-type" className="text-lg font-semibold">
-                  Select Pancake Type
+                  Изберете тип палачинка
                   {selectedPancakeType && pancakeTypeTemplate.addons[selectedPancakeType] > 0 && (
                     <span className="text-muted-foreground ml-2 text-sm font-normal">
                       +{formatDualCurrencyCompact(pancakeTypeTemplate.addons[selectedPancakeType])}
@@ -313,7 +311,7 @@ export default function DeluxeBox() {
                   onValueChange={handlePancakeTypeChange}
                 >
                   <SelectTrigger id="pancake-type">
-                    <SelectValue placeholder="Select a pancake type..." />
+                    <SelectValue placeholder="Изберете тип палачинка..." />
                   </SelectTrigger>
                   <SelectContent>
                     {getPancakeTypeOptions().map((pancakeType) => (
@@ -333,7 +331,7 @@ export default function DeluxeBox() {
 
             {/* Total Price */}
             <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
-              <span className="text-lg font-semibold">Total Price</span>
+              <span className="text-lg font-semibold">Обща Цена</span>
               <span className="text-2xl font-bold text-primary">
                 {formatDualCurrencyCompact(totalPrice)}
               </span>
@@ -346,7 +344,7 @@ export default function DeluxeBox() {
               onClick={handleAddToCart}
               disabled={loading}
             >
-              Add to Cart
+              Добави в количка
             </Button>
           </div>
         </div>
