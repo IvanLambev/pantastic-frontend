@@ -41,7 +41,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { DeluxeBoxModal } from "@/components/DeluxeBoxModal"
 
 const Food = () => {
   const navigate = useNavigate()
@@ -63,8 +62,6 @@ const Food = () => {
   const [canFavorite, setCanFavorite] = useState(false)
   const [nearestOpenRestaurant, setNearestOpenRestaurant] = useState(null)
   const [searchingForOpen, setSearchingForOpen] = useState(false)
-  const [showDeluxeBoxModal, setShowDeluxeBoxModal] = useState(false)
-  const [selectedDeluxeBoxItem, setSelectedDeluxeBoxItem] = useState(null)
 
   // Helper to calculate distance between two coordinates (Haversine formula)
   function getDistance(lat1, lon1, lat2, lon2) {
@@ -370,10 +367,11 @@ const Food = () => {
   const handleItemNavigation = (item) => {
     const itemType = getItemType(item);
     
-    // If it's a deluxe box, show the modal instead of navigating
+    // If it's a deluxe box, navigate to the deluxe box page
     if (itemType === 'deluxe_box') {
-      setSelectedDeluxeBoxItem(item);
-      setShowDeluxeBoxModal(true);
+      const restaurantId = Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id;
+      const itemData = encodeURIComponent(JSON.stringify(item));
+      navigate(`/deluxe-box?restaurantId=${restaurantId}&item=${itemData}`);
       return;
     }
     
@@ -1241,19 +1239,6 @@ const Food = () => {
         </>
       )}
 
-      {/* Deluxe Box Modal */}
-      {selectedDeluxeBoxItem && (
-        <DeluxeBoxModal
-          isOpen={showDeluxeBoxModal}
-          onClose={() => {
-            setShowDeluxeBoxModal(false);
-            setSelectedDeluxeBoxItem(null);
-          }}
-          item={selectedDeluxeBoxItem}
-          restaurantId={Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}
-          onAddToCart={addToCart}
-        />
-      )}
     </div>
   )
 }
