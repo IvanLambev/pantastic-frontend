@@ -226,7 +226,7 @@ export default function DeluxeBox() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="grid md:grid-cols-[1fr,2fr] gap-12">
+        <div className="grid grid-cols-[1fr,2fr] gap-6 lg:gap-12">
           {/* Left: Image Only */}
           <div className="space-y-4">
             {item.image_url && (
