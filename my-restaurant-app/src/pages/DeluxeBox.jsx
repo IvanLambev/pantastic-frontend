@@ -211,7 +211,7 @@ export default function DeluxeBox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-screen-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Button
         variant="ghost"
         className="mb-6"
@@ -226,44 +226,44 @@ export default function DeluxeBox() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Item Image */}
-          {item.image_url && (
-            <img
-              src={imageError ? '/elementor-placeholder-image.webp' : item.image_url}
-              alt={item.name}
-              className="w-full h-48 object-cover rounded-lg"
-              onError={() => setImageError(true)}
-            />
-          )}
-
-          {/* Item Name and Description */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">{item.name}</h1>
-            <p className="text-muted-foreground">{item.description}</p>
-          </div>
-
-          {/* Base Price */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Основна Цена</span>
-            <span className="font-semibold">{formatDualCurrencyCompact(item.price)}</span>
-          </div>
-
-          {/* Topping Selectors */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Left: Image Only */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-semibold">Изберете вашите добавки</Label>
-              <span className="text-sm text-muted-foreground">
-                {freeToppingsCount} включени безплатно
-              </span>
+            {item.image_url && (
+              <div className="relative aspect-square">
+                <img
+                  src={imageError ? '/elementor-placeholder-image.webp' : item.image_url}
+                  alt={item.name}
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={() => setImageError(true)}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Right: Item Info and Selection Controls */}
+          <div className="space-y-6">
+            {/* Item Name and Description */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">{item.name}</h1>
+              <p className="text-muted-foreground">{item.description}</p>
             </div>
+            
+            {/* Topping Selectors */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-lg font-semibold">Изберете вашите добавки</Label>
+                <span className="text-sm text-muted-foreground">
+                  {freeToppingsCount} включени безплатно
+                </span>
+              </div>
               
               {selectedToppings.map((_, index) => (
                 <div key={index} className="space-y-2">
                   <Label htmlFor={`topping-${index}`} className="text-sm">
                     Добавка {index + 1}
                     {index < freeToppingsCount && (
-                      <span className="text-green-600 ml-2">(Безплатна)</span>
+                      <span className="text-green-600 ml-2">(Безплатно)</span>
                     )}
                     {index >= freeToppingsCount && toppingTemplate?.addons?.[selectedToppings[index]] && (
                       <span className="text-muted-foreground ml-2">
@@ -298,7 +298,7 @@ export default function DeluxeBox() {
             {/* Pancake Type Selector (if applicable) */}
             {pancakeTypeTemplate && (
               <div className="space-y-2 pt-4 border-t">
-                <Label htmlFor="pancake-type" className="text-base font-semibold">
+                <Label htmlFor="pancake-type" className="text-lg font-semibold">
                   Изберете тип палачинка
                   {selectedPancakeType && pancakeTypeTemplate.addons[selectedPancakeType] > 0 && (
                     <span className="text-muted-foreground ml-2 text-sm font-normal">
@@ -330,9 +330,9 @@ export default function DeluxeBox() {
             )}
 
             {/* Total Price */}
-            <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
               <span className="text-lg font-semibold">Обща Цена</span>
-              <span className="text-xl font-bold text-primary">
+              <span className="text-2xl font-bold text-primary">
                 {formatDualCurrencyCompact(totalPrice)}
               </span>
             </div>
@@ -346,6 +346,7 @@ export default function DeluxeBox() {
             >
               Добави в количка
             </Button>
+          </div>
         </div>
       )}
     </div>
