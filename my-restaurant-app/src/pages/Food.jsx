@@ -736,9 +736,10 @@ const Food = () => {
               {t('menu.promo')}
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl bg-orange-400 hover:bg-orange-500 text-white border-0"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              variant={category === "deluxe" ? "default" : "outline"}
               style={{ letterSpacing: 1 }}
-              onClick={() => navigate('/deluxe-box')}
+              onClick={() => setCategory("deluxe")}
             >
               DELUXE BOX
             </Button>

@@ -211,7 +211,7 @@ export default function DeluxeBox() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto px-4 py-8 max-w-screen-2xl">
       <Button
         variant="ghost"
         className="mb-6"
@@ -226,7 +226,7 @@ export default function DeluxeBox() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-[1fr,2fr] gap-12">
           {/* Left: Image Only */}
           <div className="space-y-4">
             {item.image_url && (
