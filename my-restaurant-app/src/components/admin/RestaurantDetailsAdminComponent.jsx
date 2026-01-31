@@ -1620,6 +1620,7 @@ export default function RestaurantDetailsAdminComponent() {
                           <SelectItem value="deluxe_box">Deluxe Box</SelectItem>
                           <SelectItem value="desserts">Desserts</SelectItem>
                           <SelectItem value="drinks">Drinks</SelectItem>
+                          <SelectItem value="misc">Misc</SelectItem>
                           <SelectItem value="promo">Promo</SelectItem>
                         </SelectContent>
                       </Select>

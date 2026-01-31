@@ -143,6 +143,12 @@ export const translations = {
     cancelOrder: "Отказ на поръчка"
   },
 
+  // Misc items suggestions
+  misc: {
+    suggestTitle: "Може би ще харесате?",
+    suggestSubtitle: "Добавете напитки или други артикули към поръчката си"
+  },
+
   // Checkout
   checkout: {
     title: "Поръчка",

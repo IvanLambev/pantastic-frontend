@@ -18,6 +18,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
+import MiscItemsSuggestion from "@/components/MiscItemsSuggestion"
 import { api } from "@/utils/apiClient"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
@@ -745,6 +746,14 @@ export default function CheckoutV2() {
                   restaurant={selectedRestaurant}
                   onScheduleSelect={handleScheduleSelect}
                   className="mb-4"
+                />
+              )}
+
+              {/* Misc Items Suggestions */}
+              {selectedRestaurant.length > 0 && (
+                <MiscItemsSuggestion 
+                  restaurantId={Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id}
+                  limit={4}
                 />
               )}
 

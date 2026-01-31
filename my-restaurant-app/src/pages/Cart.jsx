@@ -15,6 +15,7 @@ import { API_URL } from "@/config/api"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
+import MiscItemsSuggestion from "@/components/MiscItemsSuggestion"
 
 const Cart = () => {
   const {
@@ -181,6 +182,16 @@ const Cart = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Misc Items Suggestions */}
+        {selectedRestaurant?.length > 0 && (
+          <div className="mb-6">
+            <MiscItemsSuggestion 
+              restaurantId={selectedRestaurant[0]}
+              limit={4}
+            />
+          </div>
         )}
 
         <div className="flex flex-col lg:flex-row gap-8">
