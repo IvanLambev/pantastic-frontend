@@ -226,15 +226,15 @@ export default function DeluxeBox() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="grid grid-cols-[1fr,2fr] gap-6 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6 lg:gap-8">
           {/* Left: Image Only */}
           <div className="space-y-4">
             {item.image_url && (
-              <div className="relative aspect-square">
+              <div className="relative w-full max-w-[300px] mx-auto lg:mx-0">
                 <img
                   src={imageError ? '/elementor-placeholder-image.webp' : item.image_url}
                   alt={item.name}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-auto aspect-square object-cover rounded-lg"
                   onError={() => setImageError(true)}
                 />
               </div>
