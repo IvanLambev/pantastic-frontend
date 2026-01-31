@@ -102,19 +102,30 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
     }, 2000)
   }
 
-  if (loading || miscItems.length === 0) {
-    console.log('[MiscItems] Not rendering - loading:', loading, 'items count:', miscItems.length)
-    
-    // Show temporary debug info during loading
-    if (loading) {
-      return (
-        <div className="p-4 bg-yellow-100 border border-yellow-300 rounded">
-          <p className="text-sm">Loading misc items for restaurant: {restaurantId}...</p>
-        </div>
-      )
-    }
-    
-    return null
+  // Always show the component container for debugging
+  console.log('[MiscItems] Render check - loading:', loading, 'items count:', miscItems.length)
+  
+  if (loading) {
+    return (
+      <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+        <CardContent className="p-6">
+          <div className="text-sm text-muted-foreground">Loading misc items...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (miscItems.length === 0) {
+    return (
+      <Card className="border-dashed border-2 border-orange-300 bg-orange-50">
+        <CardContent className="p-6">
+          <div className="text-sm">
+            <p className="font-medium">Debug: No misc items found</p>
+            <p className="text-xs text-muted-foreground mt-1">Restaurant ID: {restaurantId}</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   console.log('[MiscItems] Rendering with', miscItems.length, 'items')
@@ -131,7 +142,7 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {miscItems.map((item) => {
             const isAdded = addedItems.has(item.item_id)
             
@@ -140,11 +151,11 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                 key={item.item_id}
                 className="relative"
               >
-                <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardContent className="p-3">
+                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
                     {/* Image */}
                     {item.image_url && (
-                      <div className="aspect-square relative mb-2 rounded-md overflow-hidden bg-gray-100">
+                      <div className="aspect-square relative mb-3 rounded-lg overflow-hidden bg-gray-100">
                         <img
                           src={item.image_url}
                           alt={item.name}
@@ -158,12 +169,12 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
 
                     {/* Item Info */}
                     <div className="space-y-2">
-                      <h4 className="font-medium text-sm line-clamp-1">
+                      <h4 className="font-semibold text-base line-clamp-2 min-h-[2.5rem]">
                         {item.name}
                       </h4>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-primary">
+                        <span className="text-base font-bold text-primary">
                           {formatDualCurrencyCompact(item.price)}
                         </span>
 
@@ -175,10 +186,10 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                             >
                               <Button
                                 size="sm"
-                                className="bg-green-500 hover:bg-green-600 h-8 w-8 p-0"
+                                className="bg-green-500 hover:bg-green-600 h-9 w-9 p-0"
                                 disabled
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-5 w-5" />
                               </Button>
                             </div>
                           ) : (
@@ -189,9 +200,9 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                               <Button
                                 size="sm"
                                 onClick={() => handleAddToCart(item)}
-                                className="h-8 w-8 p-0"
+                                className="h-9 w-9 p-0"
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-5 w-5" />
                               </Button>
                             </div>
                           )}
