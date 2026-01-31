@@ -92,14 +92,14 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
     // Show toast notification
     toast.success(t('menu.addedToCart', { name: item.name }))
 
-    // Reset the animation after 2 seconds
+    // Reset the animation after 1 second
     setTimeout(() => {
       setAddedItems(prev => {
         const newSet = new Set(prev)
         newSet.delete(item.item_id)
         return newSet
       })
-    }, 2000)
+    }, 1000)
   }
 
   // Always show the component container for debugging
@@ -152,8 +152,41 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                 className="relative"
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.02]">
-                  <CardContent className="p-5">
-                    {/* Image */}
+                  <CardContent className="p-5 relative">
+                    {/* Add to Cart Button - Top Right */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <AnimatePresence mode="wait">
+                        {isAdded ? (
+                          <div
+                            key="check"
+                            className="animate-in zoom-in duration-300"
+                          >
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600 h-8 w-8 p-0 shadow-md"
+                              disabled
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div
+                            key="plus"
+                            className="animate-in zoom-in duration-300"
+                          >
+                            <Button
+                              size="sm"
+                              onClick={() => handleAddToCart(item)}
+                              className="h-8 w-8 p-0 shadow-md"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Image */}}
                     {item.image_url && (
                       <div className="aspect-[4/3] relative mb-4 rounded-xl overflow-hidden bg-gray-100">
                         <img
@@ -177,36 +210,6 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                         <span className="text-xl font-bold text-primary">
                           {formatDualCurrencyCompact(item.price)}
                         </span>
-
-                        <AnimatePresence mode="wait">
-                          {isAdded ? (
-                            <div
-                              key="check"
-                              className="animate-in zoom-in"
-                            >
-                              <Button
-                                size="default"
-                                className="bg-green-500 hover:bg-green-600 h-11 w-11 p-0"
-                                disabled
-                              >
-                                <Check className="h-6 w-6" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div
-                              key="plus"
-                              className="animate-in zoom-in"
-                            >
-                              <Button
-                                size="default"
-                                onClick={() => handleAddToCart(item)}
-                                className="h-11 w-11 p-0"
-                              >
-                                <Plus className="h-6 w-6" />
-                              </Button>
-                            </div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     </div>
                   </CardContent>
