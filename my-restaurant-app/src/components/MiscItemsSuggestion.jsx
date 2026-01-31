@@ -15,19 +15,35 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
   const [addedItems, setAddedItems] = useState(new Set())
   const { addToCart } = useCart()
 
+  console.log('[MiscItems] Component rendered with restaurantId:', restaurantId)
+
   useEffect(() => {
     const fetchMiscItems = async () => {
-      if (!restaurantId) return
+      if (!restaurantId) {
+        console.log('[MiscItems] No restaurant ID provided')
+        return
+      }
 
       try {
         setLoading(true)
-        const response = await fetch(`${API_URL}/restaurant/${restaurantId}/items/misc`)
+        const url = `${API_URL}/restaurant/${restaurantId}/items/misc`
+        console.log('[MiscItems] Fetching from:', url)
+        
+        // Public endpoint - no authentication required
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
         
         if (!response.ok) {
+          console.error('[MiscItems] Response not OK:', response.status, await response.text())
           throw new Error('Failed to fetch misc items')
         }
 
         const data = await response.json()
+        console.log('[MiscItems] Response data:', data)
         
         // Handle different response formats
         let items = []
@@ -39,10 +55,12 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
           items = data.data
         }
 
+        console.log('[MiscItems] Parsed items:', items)
+        
         // Limit the number of items displayed
         setMiscItems(items.slice(0, limit))
       } catch (error) {
-        console.error('Error fetching misc items:', error)
+        console.error('[MiscItems] Error fetching misc items:', error)
         setMiscItems([])
       } finally {
         setLoading(false)
@@ -85,8 +103,21 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
   }
 
   if (loading || miscItems.length === 0) {
+    console.log('[MiscItems] Not rendering - loading:', loading, 'items count:', miscItems.length)
+    
+    // Show temporary debug info during loading
+    if (loading) {
+      return (
+        <div className="p-4 bg-yellow-100 border border-yellow-300 rounded">
+          <p className="text-sm">Loading misc items for restaurant: {restaurantId}...</p>
+        </div>
+      )
+    }
+    
     return null
   }
+
+  console.log('[MiscItems] Rendering with', miscItems.length, 'items')
 
   return (
     <Card className="border-dashed border-2 border-primary/30 bg-primary/5">

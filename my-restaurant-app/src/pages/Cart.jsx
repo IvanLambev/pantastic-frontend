@@ -34,8 +34,10 @@ const Cart = () => {
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryCoords = sessionStorage.getItem('delivery_coords')
-  const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '{}')
+  const selectedRestaurant = JSON.parse(localStorage.getItem('selectedRestaurant') || '[]')
   const isDelivery = deliveryAddress && deliveryCoords
+
+  console.log('[Cart] Selected restaurant:', selectedRestaurant)
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
@@ -185,7 +187,7 @@ const Cart = () => {
         )}
 
         {/* Misc Items Suggestions */}
-        {selectedRestaurant?.length > 0 && (
+        {selectedRestaurant && Array.isArray(selectedRestaurant) && selectedRestaurant.length > 0 && selectedRestaurant[0] && (
           <div className="mb-6">
             <MiscItemsSuggestion 
               restaurantId={selectedRestaurant[0]}
