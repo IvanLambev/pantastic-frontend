@@ -1,11 +1,13 @@
 # Misc Items Feature Implementation Summary
 
 ## Overview
+
 Successfully implemented the "misc items" feature across the admin panel, cart, and checkout pages. This allows restaurants to add miscellaneous items (like Coca Cola, water, etc.) and suggest them to customers during checkout.
 
 ## Changes Made
 
 ### 1. Admin Panel - Item Creation
+
 **File:** `src/components/admin/RestaurantDetailsAdminComponent.jsx`
 
 - ✅ Added "Misc" as a new item type option in the item creation dropdown
@@ -13,9 +15,11 @@ Successfully implemented the "misc items" feature across the admin panel, cart, 
 - Location: Item type selector in the item creation modal (line ~1623)
 
 ### 2. MiscItemsSuggestion Component
+
 **File:** `src/components/MiscItemsSuggestion.jsx`
 
 Created a new reusable component that:
+
 - Fetches misc items from the API endpoint: `GET /{restaurant_id}/items/misc`
 - Displays up to 4 misc items in a responsive grid (1-2-4 columns based on screen size)
 - Shows item images, names, and prices
@@ -28,6 +32,7 @@ Created a new reusable component that:
 - Shows a dashed border card design to distinguish from main items
 
 ### 3. Checkout Page Integration
+
 **File:** `src/pages/CheckoutV2.jsx`
 
 - ✅ Added MiscItemsSuggestion component after the delivery scheduling banner
@@ -36,6 +41,7 @@ Created a new reusable component that:
 - Limit set to 4 items maximum
 
 ### 4. Cart Page Integration
+
 **File:** `src/pages/Cart.jsx`
 
 - ✅ Added MiscItemsSuggestion component after delivery/pickup information
@@ -44,9 +50,11 @@ Created a new reusable component that:
 - Limit set to 4 items maximum
 
 ### 5. Translations
+
 **File:** `src/utils/translations.js`
 
 Added new translation keys:
+
 ```javascript
 misc: {
   suggestTitle: "Може би ще харесате?",
@@ -59,9 +67,11 @@ misc: {
 The component utilizes the following backend endpoints:
 
 1. **Get Misc Items Only:**
+
    ```
    GET /{restaurant_id}/items/misc
    ```
+
    - Returns all items with `item_type='misc'` for a specific restaurant
    - No authentication required
    - Response includes count and full item details
@@ -70,12 +80,14 @@ The component utilizes the following backend endpoints:
    ```
    GET /{restaurant_id}/items/category/misc
    ```
+
    - Can also be used to fetch misc items
    - More flexible for future category additions
 
 ## Features
 
 ### User Experience
+
 - **Seamless Integration:** Misc items appear naturally in the checkout flow
 - **Visual Feedback:** Clear animations when adding items to cart
 - **Responsive Design:** Works on mobile, tablet, and desktop
@@ -83,11 +95,13 @@ The component utilizes the following backend endpoints:
 - **Non-Intrusive:** Suggestions are optional and don't block the checkout flow
 
 ### Admin Capabilities
+
 - Create misc items (drinks, snacks, extras) through the admin panel
 - Support for multi-restaurant item creation
 - All standard item features available (images, prices, addons, removables)
 
 ### Technical Details
+
 - Uses framer-motion for smooth animations (AnimatePresence)
 - Handles various API response formats gracefully
 - Error handling for failed API calls
@@ -97,6 +111,7 @@ The component utilizes the following backend endpoints:
 ## Example Usage
 
 ### For Admins:
+
 1. Go to Restaurant Management page
 2. Click "Add Item"
 3. Select "Misc" from the item type dropdown
@@ -105,6 +120,7 @@ The component utilizes the following backend endpoints:
 6. Save
 
 ### For Customers:
+
 1. Add items to cart
 2. Go to cart or checkout page
 3. See "Maybe you'll like?" section with 3-4 misc items

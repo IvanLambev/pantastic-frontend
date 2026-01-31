@@ -755,7 +755,7 @@ export default function CheckoutV2() {
               {selectedRestaurant && (Array.isArray(selectedRestaurant) ? selectedRestaurant.length > 0 : selectedRestaurant.restaurant_id) && (
                 <MiscItemsSuggestion 
                   restaurantId={Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id}
-                  limit={3}
+                  limit={2}
                 />
               )}
 

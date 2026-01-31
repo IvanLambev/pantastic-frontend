@@ -191,7 +191,7 @@ const Cart = () => {
           <div className="mb-6">
             <MiscItemsSuggestion 
               restaurantId={selectedRestaurant[0]}
-              limit={3}
+              limit={2}
             />
           </div>
         )}

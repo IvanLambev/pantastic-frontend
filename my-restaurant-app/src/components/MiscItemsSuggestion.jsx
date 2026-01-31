@@ -132,9 +132,9 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
 
   return (
     <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
-      <CardContent className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-foreground">
+      <CardContent className="p-8">
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-foreground">
             {t('misc.suggestTitle')}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
@@ -142,7 +142,7 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {miscItems.map((item) => {
             const isAdded = addedItems.has(item.item_id)
             
@@ -151,11 +151,11 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                 key={item.item_id}
                 className="relative"
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4">
+                <Card className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.02]">
+                  <CardContent className="p-5">
                     {/* Image */}
                     {item.image_url && (
-                      <div className="aspect-square relative mb-3 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="aspect-[4/3] relative mb-4 rounded-xl overflow-hidden bg-gray-100">
                         <img
                           src={item.image_url}
                           alt={item.name}
@@ -168,13 +168,13 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                     )}
 
                     {/* Item Info */}
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-base line-clamp-2 min-h-[2.5rem]">
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-lg line-clamp-2 min-h-[3rem]">
                         {item.name}
                       </h4>
                       
-                      <div className="flex items-center justify-between">
-                        <span className="text-base font-bold text-primary">
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xl font-bold text-primary">
                           {formatDualCurrencyCompact(item.price)}
                         </span>
 
@@ -185,11 +185,11 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                               className="animate-in zoom-in"
                             >
                               <Button
-                                size="sm"
-                                className="bg-green-500 hover:bg-green-600 h-9 w-9 p-0"
+                                size="default"
+                                className="bg-green-500 hover:bg-green-600 h-11 w-11 p-0"
                                 disabled
                               >
-                                <Check className="h-5 w-5" />
+                                <Check className="h-6 w-6" />
                               </Button>
                             </div>
                           ) : (
@@ -198,11 +198,11 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                               className="animate-in zoom-in"
                             >
                               <Button
-                                size="sm"
+                                size="default"
                                 onClick={() => handleAddToCart(item)}
-                                className="h-9 w-9 p-0"
+                                className="h-11 w-11 p-0"
                               >
-                                <Plus className="h-5 w-5" />
+                                <Plus className="h-6 w-6" />
                               </Button>
                             </div>
                           )}
