@@ -966,7 +966,87 @@ export default function RestaurantDetailsAdminComponent() {
                 failCount++;
               }
             } else {
-              // Use template-based API for regular items
+              // Create restaurant-specific addon and removable templates
+              let restaurantAddonTemplateIds = [];
+              let restaurantRemovableTemplateIds = [];
+
+              // Step 1: Create addon templates for this restaurant if any are selected
+              if (selectedAddonTemplates.length > 0) {
+                for (const templateId of selectedAddonTemplates) {
+                  try {
+                    // Find the template details from the current restaurant
+                    const sourceTemplate = availableAddonTemplates.find(t => 
+                      (t.id || t.template_id) === templateId
+                    );
+                    
+                    if (sourceTemplate) {
+                      // Create a copy of this template for the target restaurant
+                      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          restaurant_id: restaurantId,
+                          template: {
+                            name: sourceTemplate.name,
+                            description: sourceTemplate.description || "",
+                            addons: sourceTemplate.addons || {},
+                            is_predefined: false
+                          }
+                        })
+                      });
+
+                      if (response.ok) {
+                        const result = await response.json();
+                        restaurantAddonTemplateIds.push(result.template_id);
+                      } else {
+                        console.error(`Failed to create addon template for restaurant ${restaurantId}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error creating addon template for restaurant ${restaurantId}:`, error);
+                  }
+                }
+              }
+
+              // Step 2: Create removable templates for this restaurant if any are selected
+              if (selectedRemovableTemplates.length > 0) {
+                for (const templateId of selectedRemovableTemplates) {
+                  try {
+                    // Find the template details from the current restaurant
+                    const sourceTemplate = availableRemovableTemplates.find(t => 
+                      (t.id || t.template_id) === templateId
+                    );
+                    
+                    if (sourceTemplate) {
+                      // Create a copy of this template for the target restaurant
+                      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          restaurant_id: restaurantId,
+                          template: {
+                            name: sourceTemplate.name,
+                            description: sourceTemplate.description || "",
+                            removables: sourceTemplate.removables || [],
+                            is_predefined: false
+                          }
+                        })
+                      });
+
+                      if (response.ok) {
+                        const result = await response.json();
+                        restaurantRemovableTemplateIds.push(result.template_id);
+                      } else {
+                        console.error(`Failed to create removable template for restaurant ${restaurantId}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error creating removable template for restaurant ${restaurantId}:`, error);
+                  }
+                }
+              }
+
+              // Step 3: Create the item with the restaurant-specific template IDs
               const itemData = {
                 restaurant_id: restaurantId,
                 item: {
@@ -975,9 +1055,9 @@ export default function RestaurantDetailsAdminComponent() {
                   item_type: itemForm.item_type,
                   price: parseFloat(itemForm.price),
                   addons: {}, // Custom addons can be added here if needed
-                  addon_template_ids: selectedAddonTemplates,
+                  addon_template_ids: restaurantAddonTemplateIds,
                   removables: [], // Custom removables can be added here if needed
-                  removable_template_ids: selectedRemovableTemplates
+                  removable_template_ids: restaurantRemovableTemplateIds
                 }
               };
 
