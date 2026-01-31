@@ -71,9 +71,9 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
   }, [restaurantId, limit])
 
   const handleAddToCart = (item) => {
-    // Add item to cart
+    // Add item to cart with consistent ID so quantities stack
     const cartItem = {
-      id: `${item.item_id}-${Date.now()}`,
+      id: item.item_id, // Use item_id directly so duplicates stack
       originalItemId: item.item_id,
       name: item.name,
       price: item.price,
