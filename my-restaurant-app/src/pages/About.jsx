@@ -1,113 +1,159 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Timeline, TimelineItem } from "@/components/ui/timeline"
+import { Card, CardContent } from "@/components/ui/card"
+import { Target, Lightbulb, CheckCircle2, Shield, Wrench, Sparkles } from "lucide-react"
 
 const About = () => {
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl pb-32">
-      {/* Hero Section */}
-      <div className="flex flex-col md:flex-row gap-8 items-center justify-center mb-12">
-        <div className="flex-1">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4">About Pantastic</h1>
-          <p className="text-base md:text-lg text-muted-foreground">
-            Delivering the luxury of choice, daily. At Pantastic, we've revolutionized the art of pancake making,
-            bringing you a perfect blend of traditional flavors and modern innovation.
+    <div className="bg-gradient-to-b from-orange-50 to-white pb-32">
+      <div className="container mx-auto py-16 px-4 max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Ние сме Пантастик</h1>
+        </div>
+
+        {/* Story Section with Image */}
+        <div className="mb-20">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-start">
+            <div className="space-y-6">
+              <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-6">Нашата история</h2>
+              <div className="text-gray-700 space-y-4 text-sm md:text-base leading-relaxed">
+                <p>
+                  Нашата история започва през 2009 година, когато изпълнени с ентусиазъм и множество идеи се хвърлихме в дълбините на динамичния и конкурентен Fast Food / Food To Go бранш. Първият ни обект в родния Бургас беше по-скоро скромен и импровизиран, но изграден с много желание и хъс. А скоро след това предлагането ни вече започваше да се радва на голяма популярност.
+                </p>
+                <p>
+                  Преминахме през най-различни метаморфози. Познахме моменти както на експанзия, така и на свиване. Обучихме десетки служители, адаптирахме концепцията си към общо 14 разнородни локации и пространства, сред които обекти в молове, улични търговски обекти с и без седящи места, shop in shop концепции, плажни заведения и поп-ъп събития. След извънредно предизвикателната за целия бранш Ковид ситуация, успяхме да съхраним 3 от локациите си, които работят без прекъсване до днес.
+                </p>
+                <p>
+                  Към днешна дата сме горди създатели на първия и единствен български фудбранд с фокус монопродукта палачинка, който работи с успешен скалируем бизнес модел. И нямаме търпение да изследваме неговия потенциал!
+                </p>
+                <p>
+                  Множеството сценарии, през които сме преминали през годините, ни помагат да сме гъвкави координатори на дейността на нашите франчайз партньори и да имаме готови решения за всевъзможни бизнес предизвикателства.
+                </p>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <img 
+                src="/pantastic-pancakes-manager-slavov-ivelin-683x1024.jpg" 
+                alt="Пантастик Мениджър" 
+                className="rounded-2xl shadow-2xl w-full h-auto object-cover"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Concept Section */}
+        <div className="mb-20 bg-white rounded-3xl p-6 md:p-10 shadow-lg">
+          <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-6 text-center">Пантастична концепция</h2>
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-6 text-center">
+            Фаст фууд с изискан вкус. Мит или реалност?
+          </h3>
+          
+          <div className="text-gray-700 space-y-4 text-sm md:text-base leading-relaxed max-w-4xl mx-auto">
+            <p>
+              В традиционното разбиране изисканият вкус е привилегия на високите слоеве на обществото и се приписва предимно на деликатеси, екзотичните плодове, морски дарове, скъпи вина и десерти, поднесени в сребърни блюда.
+            </p>
+            <p>
+              Противоположно обаче е нашето виждане: има далеч по-непретенциозни храни, вариации и комбинации, които умело галят небцето, а са принудени да се задоволяват с резервната скамейка на "неделната закуска".
+            </p>
+            <p className="text-lg md:text-xl font-semibold text-orange-600 text-center py-4">
+              Палачинката се завръща на трапезата!
+            </p>
+            <p className="text-center text-xs md:text-sm text-gray-600">
+              (Mакар, че не е слизала от там.) Но в неподозирано многообразие и по всяко време на деня.
+            </p>
+            <p>
+              С въображение и опит даваме заслужен нов хоризонт на това богато интерпретирано ястие в световната кухня. Защото изисканият вкус се дължи на познаване на вкусовите качества на продуктите и тяхното правилно комбиниране. Добре обмислените комбинации не претоварват сетивата, а ни оставят да усетим всички оттенъци на вкуса.
+            </p>
+          </div>
+        </div>
+
+        {/* Our Model Section */}
+        <div className="mb-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-4 text-center">Нашият модел</h2>
+          <p className="text-gray-700 text-center mb-10 text-base md:text-lg">
+            включва утвърдени работни практики, които през годините са доказали своята ефективност.
           </p>
-        </div>
-        <div className="flex-1">
-          <img 
-            src="/pancake1.jpg" 
-            alt="Delicious Pantastic Pancakes" 
-            className="rounded-lg shadow-lg w-full h-[200px] md:h-[300px] object-cover"
-          />
-        </div>
-      </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="border-orange-200 bg-gradient-to-br from-white to-orange-50 hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mx-auto w-14 h-14 md:w-16 md:h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-7 h-7 md:w-8 md:h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 text-center">
+                  Постоянен контрол на качеството
+                </h3>
+              </CardContent>
+            </Card>
 
-      {/* Mission Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>Our Mission</CardTitle>
-            <CardDescription>Making joy accessible</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm md:text-base">To bring delicious, high-quality pancakes to everyone, making every day a little more special with our unique flavors and combinations.</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Our Vision</CardTitle>
-            <CardDescription>Leading innovation</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm md:text-base">To revolutionize the pancake industry through innovative recipes, sustainable practices, and exceptional customer service.</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Our Values</CardTitle>
-            <CardDescription>Quality & Care</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm md:text-base">We believe in using premium ingredients, maintaining the highest quality standards, and treating every customer like family.</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-orange-200 bg-gradient-to-br from-white to-orange-50 hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mx-auto w-14 h-14 md:w-16 md:h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <Target className="w-7 h-7 md:w-8 md:h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 text-center">
+                  Поддържане на фирмена етика, ориентирана към индивида
+                </h3>
+              </CardContent>
+            </Card>
 
-      {/* Timeline */}
-      <Card className="mb-12">
-        <CardHeader>
-          <CardTitle className="text-xl md:text-2xl">Our Journey</CardTitle>
-          <CardDescription>From a simple idea to a pancake revolution</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Timeline>
-            <TimelineItem year="2020" title="The Beginning">
-              Started as a small local pancake shop with a vision to revolutionize breakfast.
-            </TimelineItem>
-            <TimelineItem year="2021" title="Expansion">
-              Opened three new locations and introduced our signature recipes.
-            </TimelineItem>
-            <TimelineItem year="2022" title="Sustainability">
-              Launched our eco-friendly packaging and sustainable sourcing program.
-            </TimelineItem>
-            <TimelineItem year="2023" title="Digital Transformation">
-              Introduced our new mobile app and rewards program to enhance customer experience.
-            </TimelineItem>
-          </Timeline>
-        </CardContent>
-      </Card>
+            <Card className="border-orange-200 bg-gradient-to-br from-white to-orange-50 hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mx-auto w-14 h-14 md:w-16 md:h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <Lightbulb className="w-7 h-7 md:w-8 md:h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 text-center">
+                  Оптимизация на труда
+                </h3>
+              </CardContent>
+            </Card>
 
-      {/* Image Gallery */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <img 
-            src="/pancake2.jpg" 
-            alt="Our Kitchen" 
-            className="rounded-lg shadow-lg w-full h-[200px] md:h-[250px] object-cover mb-4"
-          />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg md:text-xl">Quality Ingredients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm md:text-base">We source only the finest ingredients to ensure every pancake meets our high standards of excellence.</p>
-            </CardContent>
-          </Card>
+            <Card className="border-orange-200 bg-gradient-to-br from-white to-orange-50 hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mx-auto w-14 h-14 md:w-16 md:h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <Shield className="w-7 h-7 md:w-8 md:h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 text-center">
+                  Спазване на високи хигиенни изисквания
+                </h3>
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-200 bg-gradient-to-br from-white to-orange-50 hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mx-auto w-14 h-14 md:w-16 md:h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                  <Wrench className="w-7 h-7 md:w-8 md:h-8 text-orange-600" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 text-center">
+                  Модерно технологично оборудване
+                </h3>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        <div>
-          <img 
-            src="/pancake3.jpg" 
-            alt="Our Team" 
-            className="rounded-lg shadow-lg w-full h-[200px] md:h-[250px] object-cover mb-4"
-          />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg md:text-xl">Expert Team</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm md:text-base">Our skilled chefs and dedicated staff work together to create the perfect dining experience.</p>
-            </CardContent>
-          </Card>
+
+        {/* Mission Section */}
+        <div className="mb-20 bg-gradient-to-r from-orange-100 to-orange-50 rounded-3xl p-6 md:p-10 shadow-lg">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="mx-auto w-16 h-16 md:w-20 md:h-20 bg-orange-200 rounded-full flex items-center justify-center mb-6">
+              <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-orange-600" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-6">Нашата мисия</h2>
+            <p className="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
+              Разкошът на избора. Достъпен. Ежедневно. И по твой вкус.
+            </p>
+            <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+              Палачинковите ни специалитети предлагат пълноценно и разнообразно хранене. Прилагайки гъвкава политика, ние се стремим нашите продукти да бъдат адаптирани според финансовите специфики на пазара, без компромиси с качество и ресурси. С нас, клиентът преоткрива любими вкусове от детството и създава нови за бъдещето.
+            </p>
+          </div>
+        </div>
+
+        {/* Vision Section */}
+        <div className="text-center bg-orange-600 text-white rounded-3xl p-8 md:p-12 shadow-2xl">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Визията ни занапред</h2>
+          <p className="text-xl md:text-2xl font-semibold">
+            Сити и доволни клиенти във всеки голям български и европейски град!
+          </p>
         </div>
       </div>
     </div>
