@@ -61,7 +61,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
       }
     } catch (error) {
       console.error('Error fetching templates:', error)
-      toast.error('Failed to load deluxe box options')
+      toast.error('Неуспешно зареждане на опциите за делукс кутия')
     } finally {
       setLoading(false)
     }
@@ -115,13 +115,13 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
     // Validate all required toppings are selected
     const requiredToppings = selectedToppings.slice(0, freeToppingsCount)
     if (requiredToppings.some(t => !t)) {
-      toast.error(`Please select all ${freeToppingsCount} toppings`)
+      toast.error(`Моля, изберете всичките ${freeToppingsCount} добавки`)
       return
     }
 
     // Validate pancake type if required
     if (pancakeTypeTemplate && !selectedPancakeType) {
-      toast.error('Please select a pancake type')
+      toast.error('Моля, изберете тип палачинка')
       return
     }
 
@@ -135,7 +135,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
           ? 0 
           : (toppingTemplate?.addons?.[topping] || 0)
         cartAddons.push({
-          name: `${index < freeToppingsCount ? 'Free ' : ''}Topping ${index + 1}: ${topping}`,
+          name: `${index < freeToppingsCount ? 'Безплатна ' : ''}Добавка ${index + 1}: ${topping}`,
           price: Number(price)
         })
       }
@@ -145,7 +145,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
     if (selectedPancakeType) {
       const pancakePrice = pancakeTypeTemplate?.addons?.[selectedPancakeType] || 0
       cartAddons.push({
-        name: `Pancake Type: ${selectedPancakeType}`,
+        name: `Тип палачинка: ${selectedPancakeType}`,
         price: Number(pancakePrice)
       })
     }
@@ -161,7 +161,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
     }
 
     onAddToCart(cartItem)
-    toast.success(`${item.name} added to cart!`)
+    toast.success(`${item.name} добавен в количката!`)
     onClose()
   }
 
@@ -202,25 +202,25 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
 
             {/* Base Price */}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Base Price</span>
+              <span className="text-sm text-muted-foreground">Базова Цена</span>
               <span className="font-semibold">{formatDualCurrencyCompact(item?.price)}</span>
             </div>
 
             {/* Topping Selectors */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Select Your Toppings</Label>
+                <Label className="text-base font-semibold">Изберете Вашите Добавки</Label>
                 <span className="text-sm text-muted-foreground">
-                  {freeToppingsCount} included free
+                  {freeToppingsCount} включени безплатно
                 </span>
               </div>
               
               {selectedToppings.map((_, index) => (
                 <div key={index} className="space-y-2">
                   <Label htmlFor={`topping-${index}`} className="text-sm">
-                    Topping {index + 1}
+                    Добавка {index + 1}
                     {index < freeToppingsCount && (
-                      <span className="text-green-600 ml-2">(Free)</span>
+                      <span className="text-green-600 ml-2">(Безплатна)</span>
                     )}
                     {index >= freeToppingsCount && toppingTemplate?.addons?.[selectedToppings[index]] && (
                       <span className="text-muted-foreground ml-2">
@@ -233,7 +233,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
                     onValueChange={(value) => handleToppingChange(index, value)}
                   >
                     <SelectTrigger id={`topping-${index}`}>
-                      <SelectValue placeholder="Select a topping..." />
+                      <SelectValue placeholder="Изберете добавка..." />
                     </SelectTrigger>
                     <SelectContent>
                       {getToppingOptions().map((topping) => (
@@ -256,7 +256,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
             {pancakeTypeTemplate && (
               <div className="space-y-2 pt-4 border-t">
                 <Label htmlFor="pancake-type" className="text-base font-semibold">
-                  Select Pancake Type
+                  Изберете Тип Палачинка
                   {selectedPancakeType && pancakeTypeTemplate.addons[selectedPancakeType] > 0 && (
                     <span className="text-muted-foreground ml-2 text-sm font-normal">
                       +{formatDualCurrencyCompact(pancakeTypeTemplate.addons[selectedPancakeType])}
@@ -268,7 +268,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
                   onValueChange={handlePancakeTypeChange}
                 >
                   <SelectTrigger id="pancake-type">
-                    <SelectValue placeholder="Select a pancake type..." />
+                    <SelectValue placeholder="Изберете тип палачинка..." />
                   </SelectTrigger>
                   <SelectContent>
                     {getPancakeTypeOptions().map((pancakeType) => (
@@ -288,7 +288,7 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
 
             {/* Total Price */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-lg font-semibold">Total Price</span>
+              <span className="text-lg font-semibold">Обща Цена</span>
               <span className="text-xl font-bold text-primary">
                 {formatDualCurrencyCompact(totalPrice)}
               </span>
@@ -298,10 +298,10 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Отказ
           </Button>
           <Button onClick={handleAddToCart} disabled={loading}>
-            Add to Cart
+            Добави в количката
           </Button>
         </DialogFooter>
       </DialogContent>

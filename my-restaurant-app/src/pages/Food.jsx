@@ -30,6 +30,7 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
+import { DeluxeBoxModal } from "@/components/DeluxeBoxModal";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t, translateLabel, translateDynamicLabel } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
@@ -62,6 +63,8 @@ const Food = () => {
   const [canFavorite, setCanFavorite] = useState(false)
   const [nearestOpenRestaurant, setNearestOpenRestaurant] = useState(null)
   const [searchingForOpen, setSearchingForOpen] = useState(false)
+  const [showDeluxeBoxModal, setShowDeluxeBoxModal] = useState(false)
+  const [selectedDeluxeBoxItem, setSelectedDeluxeBoxItem] = useState(null)
 
   // Helper to calculate distance between two coordinates (Haversine formula)
   function getDistance(lat1, lon1, lat2, lon2) {
@@ -342,6 +345,15 @@ const Food = () => {
   }
 
   const handleAddToCart = (item) => {
+    // Check if it's a deluxe box item
+    const itemType = getItemType(item);
+    if (itemType === 'deluxe_box') {
+      // Open modal for deluxe box items
+      setSelectedDeluxeBoxItem(item);
+      setShowDeluxeBoxModal(true);
+      return;
+    }
+
     // Handle both old array format and new object format
     const itemData = Array.isArray(item) ? {
       id: String(item[0]),
@@ -1238,6 +1250,23 @@ const Food = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Deluxe Box Modal */}
+      {selectedDeluxeBoxItem && (
+        <DeluxeBoxModal
+          isOpen={showDeluxeBoxModal}
+          onClose={() => {
+            setShowDeluxeBoxModal(false);
+            setSelectedDeluxeBoxItem(null);
+          }}
+          item={selectedDeluxeBoxItem}
+          restaurantId={Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant?.restaurant_id}
+          onAddToCart={(cartItem) => {
+            addToCart(cartItem);
+            toast.success(t('menu.addedToCart', { name: cartItem.name }));
+          }}
+        />
       )}
 
     </div>
