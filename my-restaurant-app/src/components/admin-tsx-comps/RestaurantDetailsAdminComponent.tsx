@@ -97,6 +97,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
   const [showAddonsDialog, setShowAddonsDialog] = useState<boolean>(false);
   const [selectedItemAddons, setSelectedItemAddons] = useState<any[]>([]);
   const [selectedItemForAddons, setSelectedItemForAddons] = useState<any>(null);
+  const [visibleAddonsCount, setVisibleAddonsCount] = useState<number>(4);
 
   // Template management states
   const [addonTemplates, setAddonTemplates] = useState<any[]>([]);
@@ -1344,7 +1345,10 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       </Dialog>
 
       {/* View Addons Dialog */}
-      <Dialog open={showAddonsDialog} onOpenChange={setShowAddonsDialog}>
+      <Dialog open={showAddonsDialog} onOpenChange={(open) => {
+        setShowAddonsDialog(open);
+        if (!open) setVisibleAddonsCount(4); // Reset count when closing
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Addons for "{selectedItemForAddons?.[7]}"</DialogTitle>
@@ -1357,7 +1361,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
               <p className="text-muted-foreground text-center py-8">No addons found for this item.</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {selectedItemAddons.map((addon, index) => (
+                {selectedItemAddons.slice(0, visibleAddonsCount).map((addon, index) => (
                   <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="font-medium">{addon.name || addon.addon_name || 'Unnamed Addon'}</div>
@@ -1375,6 +1379,16 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                {visibleAddonsCount < selectedItemAddons.length && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => setVisibleAddonsCount(prev => prev + 8)}
+                      className="text-sm text-primary hover:underline font-medium"
+                    >
+                      Покажи повече ({selectedItemAddons.length - visibleAddonsCount} останали)
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
