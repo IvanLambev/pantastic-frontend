@@ -435,7 +435,7 @@ export default function ItemDetails() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 pb-28">
       <Button
         variant="ghost"
         className="mb-6"
@@ -1021,6 +1021,27 @@ export default function ItemDetails() {
             </Card>
           </Collapsible>
         )}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">{item.name}</p>
+              <p className="text-lg font-semibold text-primary">
+                {formatDualCurrencyCompact(totalPrice * quantity)}
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={handleAddToCart}
+              className="shrink-0"
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              {isEditing ? 'Обнови количката' : 'Добави в количката'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

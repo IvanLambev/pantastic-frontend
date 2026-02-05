@@ -227,13 +227,7 @@ export function CollectionSection({
               )}
             </CardHeader>
 
-            <CardContent className="p-4 pt-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-primary">
-                  {item.price.toFixed(2)} лв
-                </span>
-              </div>
-            </CardContent>
+            <CardContent className="p-4 pt-0" />
           </Card>
         ))}
       </div>

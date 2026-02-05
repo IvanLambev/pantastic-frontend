@@ -132,11 +132,11 @@ const Navbar = () => {
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <ListItem title="Делукс Кутия за Един" onClick={() => handleCategoryClick('deluxe')}>
-                      Специално лакомство само за вас.
-                    </ListItem>
-                    <ListItem title="Делукс Кутия за Двама" onClick={() => handleCategoryClick('deluxe')}>
+                    <ListItem title="Делукс бокс за двама" onClick={() => handleCategoryClick('deluxe')}>
                       Перфектно за споделяне с любим човек.
+                    </ListItem>
+                    <ListItem title="Делукс бокс за четирима" onClick={() => handleCategoryClick('deluxe')}>
+                      Подходящ за цялото семейство.
                     </ListItem>
                   </ul>
                 </NavigationMenuContent>
@@ -271,7 +271,7 @@ const Navbar = () => {
                         onClick={() => handleCategoryClick('deluxe')}
                         className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
                       >
-                        Делукс Кутия за Един
+                        Делукс бокс за двама
                       </button>
                     </SheetClose>
                     <SheetClose asChild>
@@ -279,7 +279,7 @@ const Navbar = () => {
                         onClick={() => handleCategoryClick('deluxe')}
                         className="text-left hover:bg-zinc-900 transition-colors px-4 py-2.5 rounded-lg"
                       >
-                        Делукс Кутия за Двама
+                        Делукс бокс за четирима
                       </button>
                     </SheetClose>
                   </div>
