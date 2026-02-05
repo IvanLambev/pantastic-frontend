@@ -44,7 +44,11 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
   const resolvedItemId = useMemo(() => {
     if (!cartItem) return null
     if (cartItem.originalItemId) return cartItem.originalItemId
-    if (typeof cartItem.id === 'string') return cartItem.id.split('-')[0]
+    if (cartItem.item_id) return cartItem.item_id
+    if (typeof cartItem.id === 'string') {
+      const match = cartItem.id.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)
+      return match ? match[0] : cartItem.id
+    }
     return cartItem.id
   }, [cartItem])
 

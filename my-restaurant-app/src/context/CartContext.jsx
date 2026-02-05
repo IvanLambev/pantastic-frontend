@@ -32,12 +32,21 @@ export const CartProvider = ({ children }) => {
         if (Array.isArray(item)) {
           cartItem = {
             id: item[0],
+            originalItemId: item[0],
             name: item[6],
             price: Number(item[7]) || 0,
             image: item[5],
             description: item[4],
             quantity: 1
           };
+        } else if (!cartItem.originalItemId) {
+          const idSource = cartItem.item_id || cartItem.id
+          if (typeof idSource === 'string') {
+            const match = idSource.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)
+            cartItem.originalItemId = match ? match[0] : idSource
+          } else {
+            cartItem.originalItemId = idSource
+          }
         }
         newItems = [...prevItems, cartItem]
       }
