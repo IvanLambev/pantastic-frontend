@@ -625,10 +625,8 @@ export default function Orders() {
                                                                         ))}
                                                                     </ul>
                                                                     {remainingCount > 0 && (
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            className="mt-2"
+                                                                        <button
+                                                                            className="mt-2 text-xs text-primary hover:underline font-medium block mx-auto"
                                                                             onClick={(event) => {
                                                                                 event.stopPropagation();
                                                                                 setAddonVisibleCounts(prev => ({
@@ -637,8 +635,8 @@ export default function Orders() {
                                                                                 }));
                                                                             }}
                                                                         >
-                                                                            Load more ({remainingCount})
-                                                                        </Button>
+                                                                            Покажи още ({remainingCount})
+                                                                        </button>
                                                                     )}
                                                                 </div>
                                                             );

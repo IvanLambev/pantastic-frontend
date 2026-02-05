@@ -253,7 +253,7 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{item?.name || cartItem?.name}</DialogTitle>
           <DialogDescription>
@@ -261,12 +261,13 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        ) : (
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto pr-1">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-6">
             {item?.image_url && (
               <img
                 src={item.image_url}
@@ -354,10 +355,9 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                               ))}
                             </div>
                             {remainingCount > 0 && (
-                              <div className="pt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                              <div className="pt-2 text-center">
+                                <button
+                                  className="text-xs text-primary hover:underline font-medium"
                                   onClick={() =>
                                     setAddonVisibleCounts(prev => ({
                                       ...prev,
@@ -365,8 +365,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                                     }))
                                   }
                                 >
-                                  Load more ({remainingCount})
-                                </Button>
+                                  Покажи още ({remainingCount})
+                                </button>
                               </div>
                             )}
                           </>
@@ -452,6 +452,7 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
             )}
           </div>
         )}
+        </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Отказ</Button>
