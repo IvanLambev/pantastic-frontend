@@ -219,27 +219,46 @@ export default function ItemDetails() {
   }, [restaurantId, itemId, location.state]);
 
   useEffect(() => {
-    const targets = [addToCartRefDesktop.current, addToCartRefMobile.current].filter(Boolean)
-    if (targets.length === 0) return
+    // Wait for refs to be attached to DOM elements
+    const checkAndObserve = () => {
+      const targets = [addToCartRefDesktop.current, addToCartRefMobile.current].filter(Boolean)
+      if (targets.length === 0) {
+        // If no buttons are mounted yet, show sticky by default
+        setIsStickyVisible(true)
+        return null
+      }
 
-    addToCartVisibilityMapRef.current.clear()
+      addToCartVisibilityMapRef.current.clear()
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          addToCartVisibilityMapRef.current.set(entry.target, entry.isIntersecting)
-        })
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            addToCartVisibilityMapRef.current.set(entry.target, entry.isIntersecting)
+          })
 
-        const isAnyVisible = Array.from(addToCartVisibilityMapRef.current.values()).some(Boolean)
-        setIsStickyVisible(!isAnyVisible)
-      },
-      { threshold: 0.01 }
-    )
+          const isAnyVisible = Array.from(addToCartVisibilityMapRef.current.values()).some(Boolean)
+          setIsStickyVisible(!isAnyVisible)
+        },
+        { threshold: 0.01 }
+      )
 
-    targets.forEach((target) => observer.observe(target))
+      targets.forEach((target) => observer.observe(target))
+      
+      return observer
+    }
 
-    return () => observer.disconnect()
-  }, [item])
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      const observer = checkAndObserve()
+      if (observer) {
+        return () => observer.disconnect()
+      }
+    }, 100)
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [item, loading])
 
   // Check if item is favorite on mount
   useEffect(() => {
