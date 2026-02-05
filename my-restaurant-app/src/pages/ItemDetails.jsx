@@ -43,7 +43,9 @@ export default function ItemDetails() {
   const { addToCart, updateCartItem } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
-  const addToCartRef = useRef(null)
+  const addToCartRefDesktop = useRef(null)
+  const addToCartRefMobile = useRef(null)
+  const addToCartVisibilityMapRef = useRef(new Map())
   const [isStickyVisible, setIsStickyVisible] = useState(false)
 
   // Add state for favorite
@@ -217,16 +219,24 @@ export default function ItemDetails() {
   }, [restaurantId, itemId, location.state]);
 
   useEffect(() => {
-    if (!addToCartRef.current) return
+    const targets = [addToCartRefDesktop.current, addToCartRefMobile.current].filter(Boolean)
+    if (targets.length === 0) return
+
+    addToCartVisibilityMapRef.current.clear()
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsStickyVisible(!entry.isIntersecting)
+      (entries) => {
+        entries.forEach((entry) => {
+          addToCartVisibilityMapRef.current.set(entry.target, entry.isIntersecting)
+        })
+
+        const isAnyVisible = Array.from(addToCartVisibilityMapRef.current.values()).some(Boolean)
+        setIsStickyVisible(!isAnyVisible)
       },
-      { threshold: 0.1 }
+      { threshold: 0.01 }
     )
 
-    observer.observe(addToCartRef.current)
+    targets.forEach((target) => observer.observe(target))
 
     return () => observer.disconnect()
   }, [item])
@@ -537,7 +547,7 @@ export default function ItemDetails() {
             </div>
 
             <Button
-              ref={addToCartRef}
+              ref={addToCartRefDesktop}
               size="lg"
               className="w-full"
               onClick={handleAddToCart}
@@ -834,6 +844,7 @@ export default function ItemDetails() {
             </div>
 
             <Button
+              ref={addToCartRefMobile}
               className="w-full"
               onClick={handleAddToCart}
             >
