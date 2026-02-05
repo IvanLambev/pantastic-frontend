@@ -29,6 +29,7 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
   const [selectedRemovables, setSelectedRemovables] = useState({})
   const [quantity, setQuantity] = useState(1)
   const [totalPrice, setTotalPrice] = useState(0)
+  const [addonVisibleCounts, setAddonVisibleCounts] = useState({})
 
   const resolvedRestaurantId = useMemo(() => {
     if (restaurantId) return restaurantId
@@ -150,6 +151,18 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
 
     fetchItemAndOptions()
   }, [isOpen, cartItem, resolvedRestaurantId, resolvedItemId])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setAddonVisibleCounts({})
+      return
+    }
+    const initialCounts = {}
+    addonTemplates.forEach(template => {
+      initialCounts[template.template_id] = 4
+    })
+    setAddonVisibleCounts(initialCounts)
+  }, [addonTemplates, isOpen])
 
   const updateTotalPrice = (selectedAddonObj) => {
     if (!item) return
@@ -309,29 +322,56 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                       </div>
                     </CardHeader>
                     <CardContent className="pt-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {Object.entries(template.addons || {}).map(([addonName, price]) => (
-                          <div
-                            key={`${template.template_id}-${addonName}`}
-                            className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border bg-background hover:bg-muted/50'
-                              }`}
-                            onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
-                          >
-                            <div className="flex items-center flex-1">
-                              <Checkbox
-                                checked={isAddonSelected(template.template_id, addonName)}
-                                onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
-                                className="mr-3"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <span className="font-medium">{addonName}</span>
+                      {(() => {
+                        const addonEntries = Object.entries(template.addons || {})
+                        const visibleCount = addonVisibleCounts[template.template_id] || 4
+                        const visibleEntries = addonEntries.slice(0, visibleCount)
+                        const remainingCount = addonEntries.length - visibleEntries.length
+
+                        return (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {visibleEntries.map(([addonName, price]) => (
+                                <div
+                                  key={`${template.template_id}-${addonName}`}
+                                  className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
+                                    ? 'border-primary bg-primary/10'
+                                    : 'border-border bg-background hover:bg-muted/50'
+                                    }`}
+                                  onClick={() => handleAddonChange(template.template_id, { name: addonName, price }, !isAddonSelected(template.template_id, addonName))}
+                                >
+                                  <div className="flex items-center flex-1">
+                                    <Checkbox
+                                      checked={isAddonSelected(template.template_id, addonName)}
+                                      onCheckedChange={(checked) => handleAddonChange(template.template_id, { name: addonName, price }, checked)}
+                                      className="mr-3"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                    <span className="font-medium">{addonName}</span>
+                                  </div>
+                                  <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
+                                </div>
+                              ))}
                             </div>
-                            <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
-                          </div>
-                        ))}
-                      </div>
+                            {remainingCount > 0 && (
+                              <div className="pt-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    setAddonVisibleCounts(prev => ({
+                                      ...prev,
+                                      [template.template_id]: (prev[template.template_id] || 4) + 10
+                                    }))
+                                  }
+                                >
+                                  Load more ({remainingCount})
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
                     </CardContent>
                   </Card>
                 ))}

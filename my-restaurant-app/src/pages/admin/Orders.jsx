@@ -64,6 +64,7 @@ export default function Orders() {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [customerDetails, setCustomerDetails] = useState(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
+    const [addonVisibleCounts, setAddonVisibleCounts] = useState({});
 
     // Working Hours Dialog State
     const [isWorkingHoursDialogOpen, setIsWorkingHoursDialogOpen] = useState(false);
@@ -92,6 +93,10 @@ export default function Orders() {
         setCurrentPageToken(null);
         loadOrders(null, selectedRestaurant);
     }, [selectedRestaurant]);
+
+    useEffect(() => {
+        setAddonVisibleCounts({});
+    }, [selectedOrder?.order_id]);
 
     const loadRestaurants = async () => {
         try {
@@ -204,6 +209,21 @@ export default function Orders() {
             case 'out for delivery': return 'bg-purple-500 hover:bg-purple-600 text-white border-transparent';
             default: return 'bg-gray-500 hover:bg-gray-600 text-white border-transparent';
         }
+    };
+
+    const getItemAddonsList = (item) => {
+        const list = [];
+        if (item?.selected_addons && Object.keys(item.selected_addons).length > 0) {
+            Object.entries(item.selected_addons).forEach(([key, value]) => {
+                list.push(`${key}: ${value}`);
+            });
+        }
+        if (Array.isArray(item?.applied_addons) && item.applied_addons.length > 0) {
+            item.applied_addons.forEach((addon) => {
+                list.push(`${addon.addon_name} (x${addon.addon_quantity})`);
+            });
+        }
+        return list;
     };
 
     const handleRestaurantCheckboxChange = (restaurantId, checked) => {
@@ -588,19 +608,41 @@ export default function Orders() {
                                                         </p>
 
                                                         {/* Addons */}
-                                                        {((item.selected_addons && Object.keys(item.selected_addons).length > 0) || (item.applied_addons && item.applied_addons.length > 0)) && (
-                                                            <div className="mt-1 text-xs text-muted-foreground">
-                                                                <p className="font-semibold">Addons:</p>
-                                                                <ul className="list-disc list-inside">
-                                                                    {item.selected_addons && Object.entries(item.selected_addons).map(([key, value], aIdx) => (
-                                                                        <li key={`sel-${aIdx}`}>{key}: {value}</li>
-                                                                    ))}
-                                                                    {item.applied_addons?.map((addon, aIdx) => (
-                                                                        <li key={`app-${aIdx}`}>{addon.addon_name} (x{addon.addon_quantity})</li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
+                                                        {(() => {
+                                                            const addonsList = getItemAddonsList(item);
+                                                            if (addonsList.length === 0) return null;
+                                                            const itemKey = item.item_id || item.id || idx;
+                                                            const visibleCount = addonVisibleCounts[itemKey] || 4;
+                                                            const visibleAddons = addonsList.slice(0, visibleCount);
+                                                            const remainingCount = addonsList.length - visibleAddons.length;
+
+                                                            return (
+                                                                <div className="mt-1 text-xs text-muted-foreground">
+                                                                    <p className="font-semibold">Addons:</p>
+                                                                    <ul className="list-disc list-inside">
+                                                                        {visibleAddons.map((addonLabel, aIdx) => (
+                                                                            <li key={`addon-${itemKey}-${aIdx}`}>{addonLabel}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                    {remainingCount > 0 && (
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            className="mt-2"
+                                                                            onClick={(event) => {
+                                                                                event.stopPropagation();
+                                                                                setAddonVisibleCounts(prev => ({
+                                                                                    ...prev,
+                                                                                    [itemKey]: (prev[itemKey] || 4) + 10
+                                                                                }));
+                                                                            }}
+                                                                        >
+                                                                            Load more ({remainingCount})
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
 
                                                         {/* Removed Ingredients */}
                                                         {item.removed_ingredients?.length > 0 && (

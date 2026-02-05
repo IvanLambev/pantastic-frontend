@@ -256,6 +256,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
       const addons = await response.json();
       console.log('🧩 Item addons:', addons);
       setSelectedItemAddons(addons);
+      setVisibleAddonsCount(4);
       setSelectedItemForAddons(item);
       setShowAddonsDialog(true);
     } catch (error) {
@@ -1382,7 +1383,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
                 {visibleAddonsCount < selectedItemAddons.length && (
                   <div className="text-center pt-2">
                     <button
-                      onClick={() => setVisibleAddonsCount(prev => prev + 8)}
+                      onClick={() => setVisibleAddonsCount(prev => prev + 10)}
                       className="text-sm text-primary hover:underline font-medium"
                     >
                       Покажи повече ({selectedItemAddons.length - visibleAddonsCount} останали)
