@@ -38,6 +38,7 @@ export default function ItemDetails() {
   const [removableData, setRemovableData] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState({})
   const [selectedRemovables, setSelectedRemovables] = useState({})
+  const [addonVisibleCounts, setAddonVisibleCounts] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
   const { addToCart, updateCartItem } = useCart()
   const [quantity, setQuantity] = useState(1)
@@ -112,6 +113,14 @@ export default function ItemDetails() {
         if (!addonsRes.ok) throw new Error('Failed to fetch addons');
         const templates = await addonsRes.json();
         setAddonTemplates(templates);
+
+        const initialAddonVisibleCounts = {};
+        templates.forEach(template => {
+          if (template.addons && Object.keys(template.addons).length > 0) {
+            initialAddonVisibleCounts[template.template_id] = 4;
+          }
+        });
+        setAddonVisibleCounts(initialAddonVisibleCounts);
 
         // Fetch removables for this item
         const removablesRes = await fetchWithAuth(`${API_URL}/restaurant/removables/item/${itemId}`);
@@ -561,7 +570,15 @@ export default function ItemDetails() {
 
                         <CardContent className="pt-2">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {Object.entries(template.addons || {}).map(([addonName, price]) => (
+                            {(() => {
+                              const addonEntries = Object.entries(template.addons || {});
+                              const visibleCount = addonVisibleCounts[template.template_id] || 4;
+                              const visibleAddons = addonEntries.slice(0, visibleCount);
+                              const remainingCount = addonEntries.length - visibleAddons.length;
+
+                              return (
+                                <>
+                                  {visibleAddons.map(([addonName, price]) => (
                               <div
                                 key={`${template.template_id}-${addonName}`}
                                 className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
@@ -580,7 +597,25 @@ export default function ItemDetails() {
                                 </div>
                                 <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
                               </div>
-                            ))}
+                                  ))}
+                                  {remainingCount > 0 && (
+                                    <button
+                                      className="mt-3 text-xs text-primary hover:underline font-medium block mx-auto"
+                                      onClick={(event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        setAddonVisibleCounts(prev => ({
+                                          ...prev,
+                                          [template.template_id]: (prev[template.template_id] || 4) + 10
+                                        }));
+                                      }}
+                                    >
+                                      Покажи още ({remainingCount})
+                                    </button>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </CardContent>
                       </Card>
@@ -830,7 +865,15 @@ export default function ItemDetails() {
                         </span>
                       </div>
                       <div className="space-y-2">
-                        {Object.entries(template.addons || {}).map(([addonName, price]) => (
+                        {(() => {
+                          const addonEntries = Object.entries(template.addons || {});
+                          const visibleCount = addonVisibleCounts[template.template_id] || 4;
+                          const visibleAddons = addonEntries.slice(0, visibleCount);
+                          const remainingCount = addonEntries.length - visibleAddons.length;
+
+                          return (
+                            <>
+                              {visibleAddons.map(([addonName, price]) => (
                           <div
                             key={`${template.template_id}-${addonName}`}
                             className={`p-3 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${isAddonSelected(template.template_id, addonName)
@@ -850,7 +893,25 @@ export default function ItemDetails() {
                             </div>
                             <span className="text-sm font-semibold ml-2">+{formatDualCurrencyCompact(price)}</span>
                           </div>
-                        ))}
+                              ))}
+                              {remainingCount > 0 && (
+                                <button
+                                  className="mt-2 text-xs text-primary hover:underline font-medium block mx-auto"
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    setAddonVisibleCounts(prev => ({
+                                      ...prev,
+                                      [template.template_id]: (prev[template.template_id] || 4) + 10
+                                    }));
+                                  }}
+                                >
+                                  Покажи още ({remainingCount})
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
