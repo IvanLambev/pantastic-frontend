@@ -16,6 +16,7 @@ import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
 import MiscItemsSuggestion from "@/components/MiscItemsSuggestion"
+import CartItemEditModal from "@/components/CartItemEditModal"
 
 const Cart = () => {
   const {
@@ -30,6 +31,8 @@ const Cart = () => {
     error: null,
   })
   const [expandedItems, setExpandedItems] = useState(new Set())
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false)
+  const [selectedCartItem, setSelectedCartItem] = useState(null)
 
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
@@ -53,21 +56,8 @@ const Cart = () => {
   }
 
   const handleEditItem = (item) => {
-    // Handle both array format [id, ...] and object format { restaurant_id: id, ... }
-    const restaurantId = Array.isArray(selectedRestaurant)
-      ? selectedRestaurant[0]
-      : (selectedRestaurant?.restaurant_id || selectedRestaurant?.id || item.restaurant_id)
-
-    if (!restaurantId) {
-      console.error("Could not determine restaurant ID for item", item)
-      return
-    }
-
-    navigate(`/restaurants/${restaurantId}/items/${item.originalItemId}`, {
-      state: {
-        cartItem: item
-      }
-    })
+    setSelectedCartItem(item)
+    setIsItemModalOpen(true)
   }
 
   const handleRemoveFromCart = (itemId, itemName) => {
@@ -116,6 +106,10 @@ const Cart = () => {
       </div>
     )
   }
+
+  const restaurantIdForModal = Array.isArray(selectedRestaurant)
+    ? selectedRestaurant[0]
+    : (selectedRestaurant?.restaurant_id || selectedRestaurant?.id)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
@@ -460,6 +454,13 @@ const Cart = () => {
           </div>
         </div>
       </div>
+
+      <CartItemEditModal
+        isOpen={isItemModalOpen}
+        onClose={() => setIsItemModalOpen(false)}
+        cartItem={selectedCartItem}
+        restaurantId={restaurantIdForModal}
+      />
     </div>
   )
 }

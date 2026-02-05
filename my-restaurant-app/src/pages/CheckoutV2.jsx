@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 import MiscItemsSuggestion from "@/components/MiscItemsSuggestion"
+import CartItemEditModal from "@/components/CartItemEditModal"
 import { api } from "@/utils/apiClient"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { t } from "@/utils/translations"
@@ -38,6 +39,8 @@ export default function CheckoutV2() {
   const [showAddressEdit, setShowAddressEdit] = useState(false)
   const [newAddress, setNewAddress] = useState("")
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false)
+  const [selectedCartItem, setSelectedCartItem] = useState(null)
 
   // Discount states
   const [discountCode, setDiscountCode] = useState("")
@@ -80,6 +83,11 @@ export default function CheckoutV2() {
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryMethod = sessionStorage.getItem('delivery_method') || 'pickup'
   const isScheduledOrder = sessionStorage.getItem('scheduled_order') === 'true'
+
+  const handleEditItem = (item) => {
+    setSelectedCartItem(item)
+    setIsItemModalOpen(true)
+  }
 
   // Fetch restaurant details if hours are missing
   useEffect(() => {
@@ -879,7 +887,10 @@ export default function CheckoutV2() {
                 <CardContent className="space-y-4">
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex flex-col gap-2">
-                      <div className="flex justify-between items-start">
+                      <div
+                        className="flex justify-between items-start cursor-pointer hover:bg-muted/40 rounded-md p-2 -m-2"
+                        onClick={() => handleEditItem(item)}
+                      >
                         <div className="flex-1">
                           <div className="font-medium">{item.name}</div>
 
@@ -925,7 +936,10 @@ export default function CheckoutV2() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateQuantity(item.id, item.quantity - 1)
+                            }}
                             disabled={item.quantity <= 1}
                           >
                             <Minus className="h-4 w-4" />
@@ -935,7 +949,10 @@ export default function CheckoutV2() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateQuantity(item.id, item.quantity + 1)
+                            }}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -944,7 +961,8 @@ export default function CheckoutV2() {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             sessionStorage.removeItem(`item-instructions-${item.id}`);
                             removeFromCart(item.id);
                             toast.success(t('cart.removedFromCart', { name: item.name }));
@@ -1067,6 +1085,16 @@ export default function CheckoutV2() {
                 </CardFooter>
               </Card>
             </div>
+
+            <CartItemEditModal
+              isOpen={isItemModalOpen}
+              onClose={() => setIsItemModalOpen(false)}
+              cartItem={selectedCartItem}
+              restaurantId={Array.isArray(selectedRestaurant)
+                ? selectedRestaurant[0]
+                : (selectedRestaurant?.restaurant_id || selectedRestaurant?.id)
+              }
+            />
           </div>
 
           {/* Address Edit Dialog */}
