@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
@@ -43,6 +43,8 @@ export default function ItemDetails() {
   const { addToCart, updateCartItem } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
+  const addToCartRef = useRef(null)
+  const [isStickyVisible, setIsStickyVisible] = useState(false)
 
   // Add state for favorite
   const [isFavorite, setIsFavorite] = useState(false)
@@ -213,6 +215,21 @@ export default function ItemDetails() {
     };
     fetchItemAndAddons();
   }, [restaurantId, itemId, location.state]);
+
+  useEffect(() => {
+    if (!addToCartRef.current) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsStickyVisible(!entry.isIntersecting)
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(addToCartRef.current)
+
+    return () => observer.disconnect()
+  }, [item])
 
   // Check if item is favorite on mount
   useEffect(() => {
@@ -520,6 +537,7 @@ export default function ItemDetails() {
             </div>
 
             <Button
+              ref={addToCartRef}
               size="lg"
               className="w-full"
               onClick={handleAddToCart}
@@ -1023,26 +1041,49 @@ export default function ItemDetails() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">{item.name}</p>
-              <p className="text-lg font-semibold text-primary">
-                {formatDualCurrencyCompact(totalPrice * quantity)}
-              </p>
+      {isStickyVisible && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 text-left">
+                <p className="text-sm text-muted-foreground line-clamp-1">{item.name}</p>
+                <p className="text-lg font-semibold text-primary">
+                  {formatDualCurrencyCompact(totalPrice * quantity)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  aria-label="Намали количеството"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-base font-semibold w-10 text-center">{quantity}</span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                  disabled={quantity >= 10}
+                  aria-label="Увеличи количеството"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  onClick={handleAddToCart}
+                  aria-label={isEditing ? 'Обнови количката' : 'Добави в количката'}
+                  className="shrink-0"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
-            <Button
-              size="lg"
-              onClick={handleAddToCart}
-              className="shrink-0"
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              {isEditing ? 'Обнови количката' : 'Добави в количката'}
-            </Button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
