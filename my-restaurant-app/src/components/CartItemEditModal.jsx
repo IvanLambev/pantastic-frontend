@@ -325,9 +325,16 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                     <CardContent className="pt-2">
                       {(() => {
                         const addonEntries = Object.entries(template.addons || {})
-                        const visibleCount = addonVisibleCounts[template.template_id] || 4
-                        const visibleEntries = addonEntries.slice(0, visibleCount)
-                        const remainingCount = addonEntries.length - visibleEntries.length
+                        const selectedNames = new Set(
+                          (selectedAddons[template.template_id] || []).map(addon => addon.name)
+                        )
+                        const selectedEntries = addonEntries.filter(([addonName]) => selectedNames.has(addonName))
+                        const unselectedEntries = addonEntries.filter(([addonName]) => !selectedNames.has(addonName))
+                        const orderedEntries = [...selectedEntries, ...unselectedEntries]
+                        const baseVisibleCount = addonVisibleCounts[template.template_id] || 4
+                        const visibleCount = Math.max(baseVisibleCount, selectedEntries.length)
+                        const visibleEntries = orderedEntries.slice(0, visibleCount)
+                        const remainingCount = orderedEntries.length - visibleEntries.length
 
                         return (
                           <>
@@ -355,7 +362,7 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                               ))}
                             </div>
                             {remainingCount > 0 && (
-                              <div className="pt-2 text-center">
+                              <div className="pt-2 flex justify-center">
                                 <button
                                   className="text-xs text-primary hover:underline font-medium"
                                   onClick={() =>
