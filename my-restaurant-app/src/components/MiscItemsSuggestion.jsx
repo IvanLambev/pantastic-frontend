@@ -142,52 +142,20 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-3">
           {miscItems.map((item) => {
             const isAdded = addedItems.has(item.item_id)
             
             return (
-              <div
+              <Card 
                 key={item.item_id}
-                className="relative"
+                className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.01]"
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-all hover:scale-[1.02]">
-                  <CardContent className="p-3">
-                    {/* Image */}
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-4">
+                    {/* Image on the left */}
                     {item.image_url && (
-                      <div className="aspect-[4/3] relative mb-3 rounded-xl overflow-hidden bg-gray-100">
-                        {/* Add to Cart Button - Over Image */}
-                        <div className="absolute top-2 right-2 z-10">
-                          <AnimatePresence mode="wait">
-                            {isAdded ? (
-                              <div
-                                key="check"
-                                className="animate-in zoom-in duration-300"
-                              >
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600 h-8 w-8 p-0 shadow-md"
-                                  disabled
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div
-                                key="plus"
-                                className="animate-in zoom-in duration-300"
-                              >
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleAddToCart(item)}
-                                  className="h-8 w-8 p-0 shadow-md"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                      <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
                         <img
                           src={item.image_url}
                           alt={item.name}
@@ -199,21 +167,53 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
                       </div>
                     )}
 
-                    {/* Item Info */}
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-lg line-clamp-2 min-h-[3rem]">
-                        {item.name}
-                      </h4>
-                      
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-xl font-bold text-primary">
+                    {/* Item Info on the right */}
+                    <div className="flex-1 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-base line-clamp-1">
+                          {item.name}
+                        </h4>
+                        <span className="text-lg font-bold text-primary">
                           {formatDualCurrencyCompact(item.price)}
                         </span>
                       </div>
+
+                      {/* Add to Cart Button on the right */}
+                      <div className="flex-shrink-0">
+                        <AnimatePresence mode="wait">
+                          {isAdded ? (
+                            <div
+                              key="check"
+                              className="animate-in zoom-in duration-300"
+                            >
+                              <Button
+                                size="sm"
+                                className="bg-green-500 hover:bg-green-600 h-9 w-9 p-0 shadow-md"
+                                disabled
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              key="plus"
+                              className="animate-in zoom-in duration-300"
+                            >
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddToCart(item)}
+                                className="h-9 w-9 p-0 shadow-md"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
             )
           })}
         </div>
