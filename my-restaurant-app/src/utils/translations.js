@@ -743,7 +743,9 @@ export const translations = {
     deleteSuccess: "Изтрито успешно",
     deleteFailed: "Неуспешно изтриване",
     errorOccurred: "Възникна грешка",
-    tryAgain: "Моля, опитайте отново"
+    tryAgain: "Моля, опитайте отново",
+    paymentVerified: "Плащането е потвърдено успешно!",
+    paymentVerificationFailed: "Неуспешна проверка на плащането"
   }
 };
 

@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { t } from '@/utils/translations'
 
 export default function PaymentSuccess() {
   const navigate = useNavigate()
@@ -66,7 +67,7 @@ export default function PaymentSuccess() {
           sessionStorage.removeItem('pending_order_id')
           sessionStorage.removeItem('pending_payment_id')
           
-          toast.success('Payment verified successfully!')
+          toast.success(t('notifications.paymentVerified'))
           
           // Auto-redirect after 3 seconds
           setTimeout(() => {
@@ -74,12 +75,12 @@ export default function PaymentSuccess() {
           }, 3000)
         } else {
           setVerificationStatus('failed')
-          toast.error('Payment verification failed')
+          toast.error(t('notifications.paymentVerificationFailed'))
         }
       } catch (error) {
         console.error('Payment verification error:', error)
         setVerificationStatus('failed')
-        toast.error(error.message || 'Payment verification failed')
+        toast.error(error.message || t('notifications.paymentVerificationFailed'))
       }
     }
 
