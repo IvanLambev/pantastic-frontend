@@ -299,3 +299,71 @@ export async function updateWorkingHours(restaurantId, openingHours) {
         throw error;
     }
 }
+
+/**
+ * Autocomplete orders by UUID prefix (searches last 24 hours)
+ * @param {string} prefix - Order UUID prefix (1-6 characters)
+ * @returns {Promise<Object>} Autocomplete results with order previews
+ */
+export async function autocompleteOrders(prefix) {
+    try {
+        if (!prefix || prefix.length === 0) {
+            return { prefix: '', count: 0, orders: [] };
+        }
+
+        console.log('🔍 [ADMIN] Autocompleting orders with prefix:', prefix);
+
+        const response = await fetchWithAdminAuth(
+            `${API_URL}/order/admin/orders/autocomplete?prefix=${encodeURIComponent(prefix)}`
+        );
+
+        console.log('📡 [ADMIN] Autocomplete response status:', response.status, response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [ADMIN] Failed to autocomplete orders. Status:', response.status);
+            console.error('❌ [ADMIN] Error response:', errorText);
+            throw new Error(`Failed to autocomplete orders: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ [ADMIN] Autocomplete results:', data.count, 'orders found');
+        console.log('⚡ [ADMIN] Cache status:', data.source);
+        return data;
+    } catch (error) {
+        console.error('❌ [ADMIN] Error autocompleting orders:', error);
+        throw error;
+    }
+}
+
+/**
+ * Fetch full order details (optimized with caching and prefetch)
+ * @param {string} orderUuid - Order UUID
+ * @returns {Promise<Object>} Complete order details
+ */
+export async function fetchFullOrderDetails(orderUuid) {
+    try {
+        console.log('📦 [ADMIN] Fetching full order details for:', orderUuid);
+
+        const response = await fetchWithAdminAuth(
+            `${API_URL}/order/admin/orders/${orderUuid}/full`
+        );
+
+        console.log('📡 [ADMIN] Full order response status:', response.status, response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [ADMIN] Failed to fetch full order. Status:', response.status);
+            console.error('❌ [ADMIN] Error response:', errorText);
+            throw new Error(`Failed to fetch full order: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ [ADMIN] Full order loaded');
+        console.log('⚡ [ADMIN] Cache status:', data.source);
+        return data.order;
+    } catch (error) {
+        console.error('❌ [ADMIN] Error fetching full order:', error);
+        throw error;
+    }
+}

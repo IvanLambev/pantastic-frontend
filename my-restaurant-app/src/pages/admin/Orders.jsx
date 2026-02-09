@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     fetchAllOrders,
     fetchOrdersByRestaurant,
     fetchRestaurants,
     fetchUserDetails,
-    fetchOrderById,
-    updateWorkingHours
+    updateWorkingHours,
+    autocompleteOrders,
+    fetchFullOrderDetails
 } from '@/services/adminApi';
 import {
     Table,
@@ -45,7 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown, Clock } from "lucide-react";
+import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown, Clock, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Orders() {
@@ -79,6 +80,15 @@ export default function Orders() {
         Sunday: '10:00-21:00'
     });
     const [updatingWorkingHours, setUpdatingWorkingHours] = useState(false);
+
+    // Order Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+    const searchTimeoutRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const searchDropdownRef = useRef(null);
 
     // Initial Load
     useEffect(() => {
@@ -179,7 +189,8 @@ export default function Orders() {
         setLoadingDetails(true);
 
         try {
-            const fullOrder = await fetchOrderById(order.order_id);
+            // Use the optimized full order endpoint with caching
+            const fullOrder = await fetchFullOrderDetails(order.order_id || order.uuid);
             setSelectedOrder(fullOrder);
 
             if (fullOrder.customer) {
@@ -195,6 +206,66 @@ export default function Orders() {
             setLoadingDetails(false);
         }
     };
+
+    // Debounced search function
+    const handleSearchChange = (value) => {
+        setSearchQuery(value);
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        if (!value || value.trim().length === 0) {
+            setSearchResults([]);
+            setShowSearchDropdown(false);
+            return;
+        }
+
+        setIsSearching(true);
+        searchTimeoutRef.current = setTimeout(async () => {
+            try {
+                const results = await autocompleteOrders(value.trim());
+                setSearchResults(results.orders || []);
+                setShowSearchDropdown(true);
+            } catch (error) {
+                console.error('Search failed:', error);
+                toast.error('Failed to search orders');
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+    };
+
+    const handleSearchResultClick = (order) => {
+        setShowSearchDropdown(false);
+        setSearchQuery('');
+        setSearchResults([]);
+        handleOrderClick(order);
+    };
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSearchResults([]);
+        setShowSearchDropdown(false);
+    };
+
+    // Click outside handler for search dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                searchDropdownRef.current &&
+                !searchDropdownRef.current.contains(event.target) &&
+                searchInputRef.current &&
+                !searchInputRef.current.contains(event.target)
+            ) {
+                setShowSearchDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
@@ -288,7 +359,82 @@ export default function Orders() {
         <div className="p-6 space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {/* Search Input */}
+                    <div className="relative" ref={searchInputRef}>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search by Order ID (first 6 digits)..."
+                                value={searchQuery}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="pl-10 pr-10 w-[300px]"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={clearSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                            {isSearching && (
+                                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                        </div>
+                        
+                        {/* Search Dropdown */}
+                        {showSearchDropdown && searchResults.length > 0 && (
+                            <div
+                                ref={searchDropdownRef}
+                                className="absolute z-50 w-full mt-2 bg-popover border rounded-lg shadow-lg max-h-[400px] overflow-y-auto"
+                            >
+                                <div className="p-2 space-y-1">
+                                    {searchResults.map((order) => (
+                                        <button
+                                            key={order.uuid}
+                                            onClick={() => handleSearchResultClick(order)}
+                                            className="w-full text-left p-3 hover:bg-accent rounded-md transition-colors"
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-sm truncate">
+                                                        Order: {order.display || order.uuid?.slice(0, 8)}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                        {order.customer_name || 'Unknown Customer'}
+                                                    </p>
+                                                    {order.address && (
+                                                        <p className="text-xs text-muted-foreground truncate mt-1">
+                                                            {order.address}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="ml-3 text-right flex-shrink-0">
+                                                    <p className="text-sm font-medium">
+                                                        {order.total_amount?.toFixed(2)} BGN
+                                                    </p>
+                                                    <Badge className={`mt-1 text-xs ${getStatusColor(order.status)}`}>
+                                                        {order.status}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {showSearchDropdown && searchResults.length === 0 && !isSearching && searchQuery.trim().length > 0 && (
+                            <div
+                                ref={searchDropdownRef}
+                                className="absolute z-50 w-full mt-2 bg-popover border rounded-lg shadow-lg p-4 text-center text-sm text-muted-foreground"
+                            >
+                                No orders found
+                            </div>
+                        )}
+                    </div>
                     <Button
                         variant="outline"
                         onClick={() => setIsWorkingHoursDialogOpen(true)}
