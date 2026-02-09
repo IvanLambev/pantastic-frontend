@@ -746,6 +746,19 @@ export const translations = {
     tryAgain: "Моля, опитайте отново",
     paymentVerified: "Плащането е потвърдено успешно!",
     paymentVerificationFailed: "Неуспешна проверка на плащането"
+  },
+
+  // Payment Success Page
+  paymentSuccess: {
+    verifyingTitle: "Проверка на плащането...",
+    successTitle: "Плащането е успешно!",
+    failedTitle: "Неуспешно плащане",
+    verifyingMessage: "Моля, изчакайте, докато проверяваме вашето плащане.",
+    successMessage: "Вашето плащане е обработено успешно. Скоро ще бъдете пренасочени към проследяване на поръчката.",
+    failedMessage: "Възникна проблем при обработката на вашето плащане. Моля, опитайте отново.",
+    viewOrder: "Виж поръчка",
+    backToCart: "Обратно към количката",
+    redirecting: "Автоматично пренасочване след 3 секунди..."
   }
 };
 

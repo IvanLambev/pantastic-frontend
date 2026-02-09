@@ -120,15 +120,15 @@ export default function PaymentSuccess() {
               </div>
               
               <CardTitle className="text-2xl">
-                {verificationStatus === 'verifying' && 'Verifying Payment...'}
-                {verificationStatus === 'success' && 'Payment Successful!'}
-                {verificationStatus === 'failed' && 'Payment Failed'}
+                {verificationStatus === 'verifying' && t('paymentSuccess.verifyingTitle')}
+                {verificationStatus === 'success' && t('paymentSuccess.successTitle')}
+                {verificationStatus === 'failed' && t('paymentSuccess.failedTitle')}
               </CardTitle>
               
               <CardDescription>
-                {verificationStatus === 'verifying' && 'Please wait while we verify your payment.'}
-                {verificationStatus === 'success' && 'Your payment has been processed successfully. You will be redirected to order tracking shortly.'}
-                {verificationStatus === 'failed' && 'There was an issue processing your payment. Please try again.'}
+                {verificationStatus === 'verifying' && t('paymentSuccess.verifyingMessage')}
+                {verificationStatus === 'success' && t('paymentSuccess.successMessage')}
+                {verificationStatus === 'failed' && t('paymentSuccess.failedMessage')}
               </CardDescription>
             </CardHeader>
             
@@ -139,12 +139,12 @@ export default function PaymentSuccess() {
                   className="w-full"
                   variant={verificationStatus === 'success' ? 'default' : 'outline'}
                 >
-                  {verificationStatus === 'success' ? 'View Order' : 'Back to Cart'}
+                  {verificationStatus === 'success' ? t('paymentSuccess.viewOrder') : t('paymentSuccess.backToCart')}
                 </Button>
                 
                 {verificationStatus === 'success' && (
                   <p className="text-sm text-muted-foreground mt-4">
-                    Redirecting automatically in 3 seconds...
+                    {t('paymentSuccess.redirecting')}
                   </p>
                 )}
               </CardContent>
