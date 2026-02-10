@@ -1247,16 +1247,10 @@ export default function RestaurantSelector({
                           {restaurant.address.split(',')[0]}, {restaurant.city}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto flex flex-col gap-1">
-                        {Object.entries(hours).map(([day, h]) => (
-                          <div key={day} className={`whitespace-nowrap ${day === currentDay ? 'bg-gray-200/60 rounded-lg px-2 py-1 font-semibold' : ''}`}>
-                            {day === currentDay ? (
-                              <span>{day}: <span className="text-black">{todayHours ? timeText : "No hours"}</span></span>
-                            ) : (
-                              <span>{day}: {h}</span>
-                            )}
-                          </div>
-                        ))}
+                      <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
+                        <div className="whitespace-nowrap bg-gray-200/60 rounded-lg px-2 py-1 font-semibold">
+                          <span>{currentDay}: <span className="text-black">{todayHours ? timeText : "No hours"}</span></span>
+                        </div>
                       </div>
                     </div>
                   </Button>

@@ -18,6 +18,7 @@ export function Footer() {
               <Link to="/" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.home')}</Link>
               <Link to="/food" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.food')}</Link>
               <Link to="/about" className="text-gray-300 font-medium hover:text-white transition-colors">{t('nav.about')}</Link>
+              <Link to="/restaurants" className="text-gray-300 font-medium hover:text-white transition-colors">Ресторанти</Link>
             </nav>
             <nav className="flex flex-wrap justify-center gap-4 text-sm">
               <Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Политика за поверителност</Link>

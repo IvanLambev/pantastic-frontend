@@ -32,6 +32,7 @@ import DeluxeBox from '@/pages/DeluxeBox'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import TermsOfService from '@/pages/TermsOfService'
 import EULA from '@/pages/EULA'
+import Restaurants from '@/pages/Restaurants'
 import 'leaflet/dist/leaflet.css';
 
 
@@ -127,6 +128,7 @@ export default function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/eula" element={<EULA />} />
+          <Route path="/restaurants" element={<Restaurants />} />
           <Route path="*" element={<NotFound />} />
         </Route>
         <Route path="/admin/*" element={<Admin />} />
