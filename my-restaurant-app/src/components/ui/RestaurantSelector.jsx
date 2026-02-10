@@ -1161,7 +1161,7 @@ export default function RestaurantSelector({
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
         <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl">
-          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pr-10">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
@@ -1185,7 +1185,9 @@ export default function RestaurantSelector({
                 const utc = now.getTime() + now.getTimezoneOffset() * 60000;
                 const gmt3 = new Date(utc + 3 * 3600000);
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const daysBG = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
                 const currentDay = days[gmt3.getDay()];
+                const currentDayBG = daysBG[gmt3.getDay()];
                 // Parse opening hours properly (handles both string and object formats)
                 const hours = parseOpeningHours(restaurant.opening_hours);
                 const todayHours = hours[currentDay];
@@ -1249,7 +1251,7 @@ export default function RestaurantSelector({
                       </div>
                       <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
                         <div className="whitespace-nowrap bg-gray-200/60 rounded-lg px-2 py-1 font-semibold">
-                          <span>{currentDay}: <span className="text-black">{todayHours ? timeText : "No hours"}</span></span>
+                          <span>{currentDayBG}: <span className="text-black">{todayHours ? timeText : "Затворено"}</span></span>
                         </div>
                       </div>
                     </div>

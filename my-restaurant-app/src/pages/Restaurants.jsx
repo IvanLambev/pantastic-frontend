@@ -41,6 +41,15 @@ const translateDay = (day) => {
   return dayTranslations[day] || day;
 };
 
+// Helper function to get current day
+const getCurrentDay = () => {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const gmt3 = new Date(utc + 3 * 3600000);
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return days[gmt3.getDay()];
+};
+
 // Helper function to check if restaurant is open now
 const isRestaurantOpen = (openingHours) => {
   const now = new Date();
@@ -138,6 +147,9 @@ export default function Restaurants() {
           {restaurants.map((restaurant) => {
             const hours = parseOpeningHours(restaurant.opening_hours);
             const isOpen = isRestaurantOpen(restaurant.opening_hours);
+            const currentDay = getCurrentDay();
+            const currentDayBG = translateDay(currentDay);
+            const todayHours = hours[currentDay];
 
             return (
               <Card key={restaurant.restaurant_id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -173,20 +185,32 @@ export default function Restaurants() {
                     </div>
                   </div>
 
-                  {/* Working Hours */}
+                  {/* Today's Hours - Prominent Display */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Clock className="h-5 w-5 text-gray-400" />
+                      <p className="font-semibold text-gray-900">Днес ({currentDayBG})</p>
+                    </div>
+                    <div className="ml-8">
+                      <div className={`inline-block px-4 py-2 rounded-lg font-semibold ${
+                        isOpen 
+                          ? 'bg-green-100/60 text-green-700' 
+                          : 'bg-gray-200/60 text-gray-700'
+                      }`}>
+                        {todayHours || 'Затворено'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Full Week Working Hours */}
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <Clock className="h-5 w-5 text-gray-400" />
-                      <p className="font-semibold text-gray-900">Работно време</p>
+                      <p className="font-semibold text-gray-900">Пълно работно време</p>
                     </div>
                     <div className="ml-8 space-y-2">
                       {daysOrder.map((day) => {
                         const dayHours = hours[day];
-                        const now = new Date();
-                        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-                        const gmt3 = new Date(utc + 3 * 3600000);
-                        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-                        const currentDay = days[gmt3.getDay()];
                         const isToday = day === currentDay;
 
                         return (
