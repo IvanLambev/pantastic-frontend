@@ -57,8 +57,8 @@ function GoogleMap_Component({ onLocationSelect }) {
     // Remove quotes and special brackets, but preserve Unicode letters (including Cyrillic), numbers, spaces, commas, dots, hyphens
     // Note: \p{L} matches any Unicode letter, \p{N} matches any Unicode number
     return address
-      .replace(/['"„"«»]/g, '')  // Remove various types of quotes
-      .replace(/[^\p{L}\p{N}\s,.\-–—/]/gu, '')  // Keep Unicode letters, numbers, spaces, commas, dots, hyphens, slashes
+      .replace(/['"ΓÇ₧"┬½┬╗]/g, '')  // Remove various types of quotes
+      .replace(/[^\p{L}\p{N}\s,.\-ΓÇôΓÇö/]/gu, '')  // Keep Unicode letters, numbers, spaces, commas, dots, hyphens, slashes
       .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
       .trim();
   };
@@ -99,169 +99,42 @@ function GoogleMap_Component({ onLocationSelect }) {
           if (status === "OK" && results[0]) {
             const lat = results[0].geometry.location.lat();
             const lng = results[0].geometry.location.lng();
+            const address = results[0].formatted_address;
 
-            const locationData = {
-              lat,
-              lng,
-              address: inputValue
-            };
-
-            saveLocationToSession(locationData);
-            setSelected({ lat, lng, address: inputValue });
+            const location = { lat, lng, address };
+            saveLocationToSession(location);
+            setSelected(location);
+            setPendingLocation(null);
             setShowPickButton(false);
           } else {
-            console.error("Geocoder failed due to:", status);
+            console.error("Geocode failed:", status);
+            toast.error("Could not find location. Please try searching for a specific address.");
           }
         });
       }
     }
   };
 
-  // Handle map clicks
-  const handleMapClick = async (e) => {
-    const lat = e.latLng.lat();
-    const lng = e.latLng.lng();
-
-    console.log("Dropped pin at:", { lat, lng });
-
-    // Reverse geocode to get address
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        const rawAddress = results[0].formatted_address;
-        console.log("Raw address for dropped pin:", rawAddress);
-
-        const locationData = {
-          lat,
-          lng,
-          address: rawAddress
-        };
-
-        // Set pending location and show pick button instead of saving immediately
-        setPendingLocation(locationData);
-        setSelected({ lat, lng, address: rawAddress });
-        setInputValue(rawAddress);
-        setShowPickButton(true);
-      } else {
-        console.error("Geocoder failed due to:", status);
-      }
-    });
-  };
-
-  // Handle scroll on map to show hint
-  const handleMapScroll = (e) => {
-    if (!isDesktop) return;
-
-    // Check if Ctrl key is pressed
-    if (e.ctrlKey || e.metaKey) {
-      // User is zooming correctly, hide hint
-      setShowScrollHint(false);
-    } else {
-      // User is scrolling without Ctrl, show hint
-      setShowScrollHint(true);
-      // Auto-hide after 2 seconds
-      setTimeout(() => setShowScrollHint(false), 2000);
-    }
-  };
-
-  return (
-    <div className="w-full max-w-full overflow-hidden">
-      <div className="places-container relative w-full max-w-full">
-        <PlacesAutocomplete
-          setSelected={setSelected}
-          setPendingLocation={setPendingLocation}
-          setShowPickButton={setShowPickButton}
-          pendingLocation={pendingLocation}
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-        />
-        {/* Pick Address Button with fade animation */}
-        <div className={`absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 transition-all duration-300 ease-in-out z-10 ${showPickButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
-          }`}>
-          <Button
-            onClick={handlePickAddress}
-            size="default"
-            className="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-base font-medium shadow-lg whitespace-nowrap"
-          >
-            {t('common.select') || 'Избери'}
-          </Button>
-        </div>
-      </div>
-
-      <div
-        className="w-full max-w-full overflow-hidden border border-t-0 relative"
-        onWheel={handleMapScroll}
-      >
-        <GoogleMap
-          zoom={12}
-          center={selected || center}
-          mapContainerClassName="w-full max-w-full h-[250px] sm:h-[400px] touch-pan-y"
-          onClick={handleMapClick}
-          options={{
-            gestureHandling: 'cooperative', // Enable Ctrl+scroll zoom with tooltip
-            scrollwheel: true, // Allow scrolling when Ctrl is held
-            disableDefaultUI: true,
-            zoomControl: true,
-            mapTypeControl: false,
-            scaleControl: false,
-            streetViewControl: false,
-            rotateControl: false,
-            fullscreenControl: false,
-            keyboardShortcuts: false,
-            language: "bg", // Bulgarian language for map labels
-            region: "BG", // Bulgarian region preference
-            restriction: {
-              latLngBounds: {
-                north: 44.5, // Northern Bulgaria border
-                south: 41.2, // Southern Bulgaria border  
-                west: 22.3, // Western Bulgaria border
-                east: 28.6, // Eastern Bulgaria border
-              },
-              strictBounds: false, // Allow some flexibility
-            }
-          }}
-        >
-          {selected && <GoogleMarker position={selected} />}
-        </GoogleMap>
-        {/* Map scroll hint - only on desktop when scrolling without Ctrl */}
-        {isDesktop && showScrollHint && (
-          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-sm px-4 py-2 rounded-md pointer-events-none animate-in fade-in duration-200 z-10">
-            Задръжте Ctrl + скролване за увеличаване
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton, pendingLocation, inputValue, setInputValue }) => {
   const {
     ready,
     value,
-    setValue,
     suggestions: { status, data },
+    setValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
-    defaultValue: "",
     requestOptions: {
       componentRestrictions: { country: "bg" }, // Restrict to Bulgaria
-      language: "bg", // Request results in Bulgarian
     },
+    debounce: 300,
   });
 
-  // Sync internal value with external inputValue state
-  useEffect(() => {
-    if (inputValue !== value) {
-      setValue(inputValue, false);
-    }
-  }, [inputValue, setValue, value]);
-
-  // Update input value when pendingLocation changes (from map clicks)
-  useEffect(() => {
-    if (pendingLocation?.address && inputValue !== pendingLocation.address) {
-      setInputValue(pendingLocation.address);
-    }
-  }, [pendingLocation, setInputValue, inputValue]);
+  const handleInput = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    setValue(newValue);
+    setPendingLocation(null); // Clear pending location when typing
+    setShowPickButton(false);
+  };
 
   const handleSelect = async (address) => {
     setValue(address, false);
@@ -272,137 +145,160 @@ const PlacesAutocomplete = ({ setSelected, setPendingLocation, setShowPickButton
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
 
-      console.log("Raw selected address:", address);
-
-      const locationData = {
-        lat,
-        lng,
-        address
-      };
-
-      // Set pending location and show pick button instead of saving immediately
-      setPendingLocation(locationData);
-      setSelected({ lat, lng, address });
-      setShowPickButton(true);
+      const location = { lat, lng, address };
+      saveLocationToSession(location);
+      setSelected(location);
+      setPendingLocation(null);
+      setShowPickButton(false);
     } catch (error) {
-      console.error("Error getting location:", error);
+      console.error("Error: ", error);
+      toast.error("Error finding location. Please try again.");
     }
   };
 
-  // Handle manual typing in the input
-  const handleInputChange = (e) => {
-    const newValue = e.target.value;
-    setValue(newValue);
-    setInputValue(newValue);
+  // Handle map click
+  const handleMapClick = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
 
-    // Show pick button if there's text
-    if (newValue.trim()) {
-      setShowPickButton(true);
-      // Clear pending location if user is typing something different
-      if (pendingLocation && newValue !== pendingLocation.address) {
-        setPendingLocation(null);
+    // Reverse geocode to get address
+    const geocoder = new window.google.maps.Geocoder();
+    const latlng = { lat, lng };
+
+    geocoder.geocode({ location: latlng }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const address = results[0].formatted_address;
+        const location = { lat, lng, address };
+
+        // For mobile, show pick button; for desktop, save immediately
+        if (isDesktop) {
+          saveLocationToSession(location);
+          setSelected(location);
+          setPendingLocation(null);
+          setShowPickButton(false);
+        } else {
+          setPendingLocation(location);
+          setInputValue(address);
+          setShowPickButton(true);
+          setShowScrollHint(true);
+          setTimeout(() => setShowScrollHint(false), 3000);
+        }
+      } else {
+        console.error("Geocoder failed:", status);
+        toast.error("Could not find address for this location.");
       }
-    } else {
-      setShowPickButton(false);
-      setPendingLocation(null);
-    }
+    });
   };
 
   return (
-    <Combobox onSelect={handleSelect} className="relative w-full max-w-full">
-      <ComboboxInput
-        value={value}
-        onChange={handleInputChange}
-        disabled={!ready}
-        className="w-full max-w-full p-2 sm:p-4 pr-16 sm:pr-24 text-sm sm:text-lg border border-gray-300 rounded-t-lg 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 
-                   focus:border-transparent bg-white shadow-sm overflow-x-auto whitespace-nowrap box-border"
-        placeholder={t('restaurantSelector.searchAddress') || 'Търсете адрес в България...'}
-      />
-      <ComboboxPopover
-        className="absolute z-50 w-full max-w-full bg-white 
-                   border border-gray-300 rounded-lg shadow-lg mt-2"
-        portal={false}
-      >
-        <ComboboxList
-          className="max-h-64 overflow-auto"
-          style={{
-            maxHeight: "200px",
-            overflowY: "auto",
-            overscrollBehavior: "contain",
+    <div className="w-full max-w-full space-y-2 sm:space-y-3">
+      {/* Autocomplete search */}
+      <Combobox onSelect={handleSelect} className="w-full max-w-full">
+        <ComboboxInput
+          value={inputValue || value}
+          onChange={handleInput}
+          disabled={!ready}
+          placeholder={t('restaurantSelector.searchPlaceholder') || "Търси адрес..."}
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg text-sm sm:text-base max-w-full"
+        />
+        {status === "OK" && (
+          <ComboboxPopover>
+            <ComboboxList className="w-full max-w-full">
+              {data.map(({ place_id, description }) => (
+                <ComboboxOption key={place_id} value={description} />
+              ))}
+            </ComboboxList>
+          </ComboboxPopover>
+        )}
+      </Combobox>
+
+      {/* Pick Address Button - appears after clicking on map (mobile only) */}
+      {showPickButton && !isDesktop && (
+        <div className="pb-2">
+          <Button
+            onClick={handlePickAddress}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold shadow-lg animate-bounce"
+          >
+            ✓ {t('restaurantSelector.pickAddress') || 'Избери този адрес'}
+          </Button>
+          {showScrollHint && (
+            <p className="text-xs text-gray-600 text-center mt-2 animate-pulse">
+              👆 Кликнете бутона за да потвърдите адреса
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Google Map */}
+      <div className="w-full max-w-full overflow-hidden rounded-lg shadow-sm" style={{ height: "250px", maxHeight: "40vh" }}>
+        <GoogleMap
+          zoom={13}
+          center={selected || center}
+          mapContainerClassName="w-full h-full"
+          onClick={handleMapClick}
+          options={{
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: false,
           }}
         >
-          {status === "OK" &&
-            data.map(({ place_id, description }) => (
-              <ComboboxOption
-                key={place_id}
-                value={description}
-                className="p-4 text-base cursor-pointer hover:bg-gray-100 
-                           border-b border-gray-100 last:border-b-0 transition-colors"
-              />
-            ))}
-        </ComboboxList>
-      </ComboboxPopover>
-    </Combobox>
+          {(selected || pendingLocation) && (
+            <GoogleMarker
+              position={{
+                lat: (selected || pendingLocation).lat,
+                lng: (selected || pendingLocation).lng,
+              }}
+            />
+          )}
+        </GoogleMap>
+      </div>
+    </div>
   );
-};
+}
 
-export default function RestaurantSelector({
-  open,
-  onClose,
-  onSelect,
-}) {
-  // Restaurant data state
+// Main RestaurantSelector Component
+export default function RestaurantSelector({ open, onClose, onSelect }) {
+  const [currentStep, setCurrentStep] = useState('delivery-method');
+  const [deliveryMethod, setDeliveryMethod] = useState('');
   const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Main flow states
-  const [currentStep, setCurrentStep] = useState('delivery-method'); // 'delivery-method', 'address-input', 'city-selection', 'restaurant-selection'
-  const [deliveryMethod, setDeliveryMethod] = useState(''); // 'pickup' or 'delivery'
+  const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
-
-  // Address and location states
-  const [addressError, setAddressError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
-
-  // Confirmation dialog state for distance warning
+  const [addressError, setAddressError] = useState('');
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [showDistanceWarning, setShowDistanceWarning] = useState(false);
   const [pendingRestaurantSelection, setPendingRestaurantSelection] = useState(null);
   const [pendingDistance, setPendingDistance] = useState(null);
 
-  // Location permission pre-prompt
-  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-
-  // Fetch restaurants when component mounts
+  // Fetch restaurants on mount
   useEffect(() => {
-    const fetchRestaurants = async () => {
+    async function fetchRestaurants() {
+      setLoading(true);
       try {
-        const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
-        if (!response.ok) {
-          throw new Error('Failed to fetch restaurants')
+        const response = await fetchWithAuth(`${API_URL}/general_restaurants`);
+        if (response.ok) {
+          const data = await response.json();
+          setRestaurants(data);
+
+          // Extract unique cities
+          const uniqueCities = [...new Set(data.map(r => r.city))];
+          setCities(uniqueCities.sort());
+        } else {
+          throw new Error('Failed to fetch restaurants');
         }
-        const data = await response.json()
-        setRestaurants(data)
       } catch (err) {
-        setError(err.message)
-        console.error('Error fetching restaurants:', err)
+        console.error('Error fetching restaurants:', err);
+        setError(err.message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    // Check if restaurant is already selected
-    const selectedRestaurant = localStorage.getItem('selectedRestaurant')
-    if (!selectedRestaurant && open) {
-      fetchRestaurants()
-    } else if (selectedRestaurant) {
-      setLoading(false)
-    }
-  }, [open])
+    fetchRestaurants();
+  }, []);
 
-  // Get unique cities from restaurants
-  const cities = [...new Set(restaurants.map(restaurant => restaurant.city))].sort();
   // Filter restaurants by selected city
   const filteredRestaurants = selectedCity
     ? restaurants.filter(restaurant => restaurant.city === selectedCity)
@@ -537,7 +433,7 @@ export default function RestaurantSelector({
       const rLat = parseFloat(r.latitude);
       const rLng = parseFloat(r.longitude);
       const hasCoords = !isNaN(rLat) && !isNaN(rLng);
-      const isSameCity = userCity && r.city && 
+      const isSameCity = userCity && r.city &&
         normalizeCityName(userCity) === normalizeCityName(r.city);
 
       if (hasCoords) {
@@ -545,12 +441,12 @@ export default function RestaurantSelector({
         restaurantsWithDistance.push({ restaurant: r, distance: dist, hasCoords: true, isSameCity });
       } else if (isSameCity) {
         // Restaurant is in the same city but no coordinates - assume it could be close
-        restaurantsWithDistance.push({ 
-          restaurant: r, 
-          distance: SAME_CITY_ASSUMED_DISTANCE, 
-          hasCoords: false, 
+        restaurantsWithDistance.push({
+          restaurant: r,
+          distance: SAME_CITY_ASSUMED_DISTANCE,
+          hasCoords: false,
           isSameCity: true,
-          estimatedDistance: true 
+          estimatedDistance: true
         });
         console.log(`[findClosestRestaurant] Same-city restaurant without coords: ${r.name} (${r.city}) - estimated at ${SAME_CITY_ASSUMED_DISTANCE}km`);
       }
@@ -559,7 +455,7 @@ export default function RestaurantSelector({
     // Sort by distance (closest first)
     restaurantsWithDistance.sort((a, b) => a.distance - b.distance);
 
-    console.log(`[findClosestRestaurant] Restaurants with distance:`, 
+    console.log(`[findClosestRestaurant] Restaurants with distance:`,
       restaurantsWithDistance.map(r => `${r.restaurant.name}: ${r.distance.toFixed(2)}km (coords: ${r.hasCoords}, sameCity: ${r.isSameCity})`));
 
     // Find the closest open restaurant
@@ -573,10 +469,10 @@ export default function RestaurantSelector({
         const sameCityRestaurant = restaurantsWithDistance.find(r => r.isSameCity && !r.hasCoords);
         if (sameCityRestaurant) {
           console.log(`[Restaurant Selection] Found same-city restaurant without coords that might be closer: ${sameCityRestaurant.restaurant.name}`);
-          return { 
-            restaurant: sameCityRestaurant.restaurant, 
-            distance: sameCityRestaurant.distance, 
-            message: null, 
+          return {
+            restaurant: sameCityRestaurant.restaurant,
+            distance: sameCityRestaurant.distance,
+            message: null,
             isOpen: true,
             estimatedDistance: true
           };
@@ -585,11 +481,11 @@ export default function RestaurantSelector({
 
       // If closest is within MAX_RADIUS_KM, select it
       if (closest.distance <= MAX_RADIUS_KM) {
-        console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km (coords: ${closest.hasCoords})`);
+        console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.restaurant.name} at ${closest.distance.toFixed(2)}km (coords: ${closest.hasCoords})`);
         return { restaurant: closest.restaurant, distance: closest.distance, message: null, isOpen: true, estimatedDistance: closest.estimatedDistance };
       } else if (closest.distance > MAX_RADIUS_KM && closest.distance <= 15) {
         // Warn about distant restaurant (between MAX_RADIUS_KM and 15 km)
-        console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.restaurant.name} at ${closest.distance.toFixed(2)}km`);
         return {
           restaurant: closest.restaurant,
           distance: closest.distance,
@@ -598,7 +494,7 @@ export default function RestaurantSelector({
         };
       } else {
         // Closest open restaurant is too far (> 15 km)
-        console.log(`[Restaurant Selection] CLOSEST open restaurant is TOO FAR: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
+        console.log(`[Restaurant Selection] CLOSEST open restaurant is TOO FAR: ${closest.restaurant.name} at ${closest.distance.toFixed(2)}km`);
       }
     }
 
@@ -609,7 +505,7 @@ export default function RestaurantSelector({
       const rLat = parseFloat(r.latitude);
       const rLng = parseFloat(r.longitude);
       const hasCoords = !isNaN(rLat) && !isNaN(rLng);
-      const isSameCity = userCity && r.city && 
+      const isSameCity = userCity && r.city &&
         normalizeCityName(userCity) === normalizeCityName(r.city);
 
       if (hasCoords) {
@@ -619,12 +515,12 @@ export default function RestaurantSelector({
         }
       } else if (isSameCity) {
         // Same city without coords - include as potential option
-        allRestaurantsWithDistance.push({ 
-          restaurant: r, 
-          distance: SAME_CITY_ASSUMED_DISTANCE, 
-          hasCoords: false, 
+        allRestaurantsWithDistance.push({
+          restaurant: r,
+          distance: SAME_CITY_ASSUMED_DISTANCE,
+          hasCoords: false,
           isSameCity: true,
-          estimatedDistance: true 
+          estimatedDistance: true
         });
       }
     }
@@ -636,7 +532,7 @@ export default function RestaurantSelector({
     if (allRestaurantsWithDistance.length > 0) {
       const closest = allRestaurantsWithDistance[0];
       const nextOpenTime = getNextOpenTime();
-      console.log(`[Restaurant Selection] All restaurants closed. Selected CLOSEST: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
+      console.log(`[Restaurant Selection] All restaurants closed. Selected CLOSEST: ${closest.restaurant.name} at ${closest.distance.toFixed(2)}km`);
       return {
         restaurant: closest.restaurant,
         distance: closest.distance,
@@ -856,7 +752,7 @@ export default function RestaurantSelector({
     }
 
     setAddressError(""); // Clear any previous errors
-    
+
     // Try to get the user's city from reverse geocoding for better restaurant matching
     let userCity = sessionStorage.getItem('user_city');
     if (!userCity) {
@@ -874,7 +770,7 @@ export default function RestaurantSelector({
         console.log('Error getting user city from coords:', error);
       }
     }
-    
+
     const result = findClosestRestaurant(coords[0], coords[1], userCity);
     if (result.restaurant) {
       if (result.message) {
