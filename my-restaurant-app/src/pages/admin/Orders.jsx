@@ -295,7 +295,7 @@ export default function Orders() {
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'delivered': return 'bg-green-500 hover:bg-green-600 text-white border-transparent';
-            case 'ready': return 'bg-yellow-500 hover:bg-yellow-600 text-white border-transparent';
+            case 'ready': return 'bg-green-500 hover:bg-green-600 text-white border-transparent';
             case 'pending': return 'bg-amber-500 hover:bg-amber-600 text-white border-transparent';
             case 'canceled':
             case 'cancelled': return 'bg-red-500 hover:bg-red-600 text-white border-transparent';
