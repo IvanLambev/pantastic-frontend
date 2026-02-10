@@ -176,8 +176,8 @@ export default function Restaurants() {
                 <CardContent className="pt-6">
                   {/* Location */}
                   <div className="mb-6">
-                    <div className="flex items-start gap-3 mb-2">
-                      <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                    <div className="flex items-center gap-3 mb-2">
+                      <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
                       <div className="text-left">
                         <p className="font-semibold text-gray-900 text-left">Адрес</p>
                         <p 
@@ -213,13 +213,15 @@ export default function Restaurants() {
                               <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                                 {translateDay(day)}
                               </span>
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                isDayOpen 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-red-100 text-red-700'
-                              }`}>
-                                {isDayOpen ? 'Отворено' : 'Затворено'}
-                              </span>
+                              {isToday && (
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                  isDayOpen 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {isDayOpen ? 'Отворено' : 'Затворено'}
+                                </span>
+                              )}
                             </div>
                             <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
                               {dayHours || 'Затворено'}
