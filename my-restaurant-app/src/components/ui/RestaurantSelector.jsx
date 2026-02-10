@@ -658,6 +658,20 @@ export default function RestaurantSelector({
     };
   }
 
+  // Helper function to translate day names to Bulgarian
+  function translateDay(englishDay) {
+    const dayMap = {
+      'Sunday': t('time.sunday') || 'Неделя',
+      'Monday': t('time.monday') || 'Понеделник',
+      'Tuesday': t('time.tuesday') || 'Вторник',
+      'Wednesday': t('time.wednesday') || 'Сряда',
+      'Thursday': t('time.thursday') || 'Четвъртък',
+      'Friday': t('time.friday') || 'Петък',
+      'Saturday': t('time.saturday') || 'Събота'
+    };
+    return dayMap[englishDay] || englishDay;
+  }
+
   // Helper function to get next opening time
   function getNextOpenTime() {
     const now = new Date();
@@ -1229,11 +1243,12 @@ export default function RestaurantSelector({
                       toast.success(t('home.restaurantSelected', { name: restaurantName }));
                     }}
                   >
-                    <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
-                      <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                        <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
+                    <div className="flex flex-col w-full gap-3">
+                      {/* Restaurant Name and Status - Always Visible */}
+                      <div className="flex flex-col items-start gap-2 w-full">
+                        <span className="text-lg sm:text-xl font-bold text-left flex flex-wrap items-center gap-2">
                           {restaurant.name}
-                          <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
+                          <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
                             {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
                           </span>
                         </span>
@@ -1247,16 +1262,26 @@ export default function RestaurantSelector({
                           {restaurant.address.split(',')[0]}, {restaurant.city}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto flex flex-col gap-1">
-                        {Object.entries(hours).map(([day, h]) => (
-                          <div key={day} className={`whitespace-nowrap ${day === currentDay ? 'bg-gray-200/60 rounded-lg px-2 py-1 font-semibold' : ''}`}>
-                            {day === currentDay ? (
-                              <span>{day}: <span className="text-black">{todayHours ? timeText : "No hours"}</span></span>
-                            ) : (
-                              <span>{day}: {h}</span>
-                            )}
+                      
+                      {/* Opening Hours - Mobile: Today only, Desktop: All days */}
+                      <div className="text-sm text-gray-600 w-full">
+                        {/* Mobile: Show only today's hours */}
+                        <div className="sm:hidden">
+                          <div className={`px-3 py-2 bg-gray-100 rounded-lg font-medium`}>
+                            <span className="font-semibold">{translateDay(currentDay)}:</span>{' '}
+                            <span className="text-black">{todayHours || t('restaurantSelector.closed')}</span>
                           </div>
-                        ))}
+                        </div>
+                        
+                        {/* Desktop: Show all days */}
+                        <div className="hidden sm:flex sm:flex-col gap-1">
+                          {Object.entries(hours).map(([day, h]) => (
+                            <div key={day} className={`whitespace-nowrap ${day === currentDay ? 'bg-gray-200/60 rounded-lg px-2 py-1 font-semibold' : ''}`}>
+                              <span className="font-medium">{translateDay(day)}:</span>{' '}
+                              <span className={day === currentDay ? 'text-black' : ''}>{h}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </Button>
