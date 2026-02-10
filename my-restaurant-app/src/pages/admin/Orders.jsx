@@ -6,7 +6,8 @@ import {
     fetchUserDetails,
     updateWorkingHours,
     autocompleteOrders,
-    fetchOrderById
+    fetchOrderById,
+    updateOrderStatus
 } from '@/services/adminApi';
 import {
     Table,
@@ -89,6 +90,9 @@ export default function Orders() {
     const searchTimeoutRef = useRef(null);
     const searchInputRef = useRef(null);
     const searchDropdownRef = useRef(null);
+    
+    // Order Status Update State
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -181,6 +185,27 @@ export default function Orders() {
     };
 
     const sortedOrders = getSortedOrders();
+
+    // Helper function to get restaurant name from restaurant list
+    const getRestaurantName = (order) => {
+        // First try the order's restaurant_name or restaurant.name
+        if (order.restaurant_name) return order.restaurant_name;
+        if (order.restaurant?.name) return order.restaurant.name;
+        
+        // If filtering by a specific restaurant, look it up in the restaurants list
+        if (selectedRestaurant !== "all") {
+            const restaurant = restaurants.find(r => r.restaurant_id === selectedRestaurant);
+            if (restaurant) return restaurant.name;
+        }
+        
+        // Try to find restaurant by ID in the order
+        if (order.restaurant_id) {
+            const restaurant = restaurants.find(r => r.restaurant_id === order.restaurant_id);
+            if (restaurant) return restaurant.name;
+        }
+        
+        return 'Unknown';
+    };
 
     const handleOrderClick = async (order) => {
         setSelectedOrder(order);
@@ -519,7 +544,7 @@ export default function Orders() {
                                             {order.created_at ? format(new Date(order.created_at), 'MMM d, yyyy HH:mm') : 'N/A'}
                                         </TableCell>
                                         <TableCell>
-                                            {order.restaurant_name || order.restaurant?.name || 'Unknown'}
+                                            {getRestaurantName(order)}
                                         </TableCell>
                                         <TableCell>
                                             {order.total_price?.toFixed(2)} BGN
@@ -588,11 +613,41 @@ export default function Orders() {
                             {/* Status Section */}
                             <div className="flex flex-col gap-4 p-4 bg-muted/30 rounded-lg">
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
-                                        <Badge className={`mt-1 ${getStatusColor(selectedOrder.status)}`}>
-                                            {selectedOrder.status}
-                                        </Badge>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">Status</p>
+                                        <Select 
+                                            value={selectedOrder.status} 
+                                            onValueChange={async (newStatus) => {
+                                                if (isUpdatingStatus) return;
+                                                setIsUpdatingStatus(true);
+                                                try {
+                                                    const result = await updateOrderStatus(selectedOrder.order_id, newStatus);
+                                                    toast.success(result.message || `Order status updated to ${newStatus}`);
+                                                    // Update the local order state
+                                                    setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+                                                    // Reload orders to update the table
+                                                    loadOrders(currentPageToken, selectedRestaurant);
+                                                } catch (error) {
+                                                    console.error('Failed to update order status:', error);
+                                                    toast.error('Failed to update order status');
+                                                } finally {
+                                                    setIsUpdatingStatus(false);
+                                                }
+                                            }}
+                                            disabled={isUpdatingStatus}
+                                        >
+                                            <SelectTrigger className="w-[200px]">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Pending">Pending</SelectItem>
+                                                <SelectItem value="Accepted">Accepted</SelectItem>
+                                                <SelectItem value="In Progress">In Progress</SelectItem>
+                                                <SelectItem value="Ready">Ready</SelectItem>
+                                                <SelectItem value="Delivered">Delivered</SelectItem>
+                                                <SelectItem value="Canceled">Canceled</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-muted-foreground">Total Amount</p>

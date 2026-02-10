@@ -367,3 +367,45 @@ export async function fetchFullOrderDetails(orderUuid) {
         throw error;
     }
 }
+
+/**
+ * Update order status (admin function)
+ * @param {string} orderId - Order UUID
+ * @param {string} status - New status (Pending, Accepted, In Progress, Ready, Delivered, Canceled)
+ * @returns {Promise<Object>} Response with updated order status
+ */
+export async function updateOrderStatus(orderId, status) {
+    try {
+        console.log('🔄 [ADMIN] Updating order status:', orderId, 'to', status);
+
+        const response = await fetchWithAdminAuth(
+            `${API_URL}/admin/orders/status`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    status: status
+                })
+            }
+        );
+
+        console.log('📡 [ADMIN] Update order status response:', response.status, response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [ADMIN] Failed to update order status. Status:', response.status);
+            console.error('❌ [ADMIN] Error response:', errorText);
+            throw new Error(`Failed to update order status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ [ADMIN] Order status updated successfully:', data);
+        return data;
+    } catch (error) {
+        console.error('❌ [ADMIN] Error updating order status:', error);
+        throw error;
+    }
+}
