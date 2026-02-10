@@ -6,7 +6,7 @@ import {
     fetchUserDetails,
     updateWorkingHours,
     autocompleteOrders,
-    fetchFullOrderDetails
+    fetchOrderById
 } from '@/services/adminApi';
 import {
     Table,
@@ -189,8 +189,8 @@ export default function Orders() {
         setLoadingDetails(true);
 
         try {
-            // Use the optimized full order endpoint with caching
-            const fullOrder = await fetchFullOrderDetails(order.order_id || order.uuid);
+            // Fetch full order details using the admin endpoint
+            const fullOrder = await fetchOrderById(order.order_id || order.uuid);
             setSelectedOrder(fullOrder);
 
             if (fullOrder.customer) {
