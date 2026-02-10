@@ -251,6 +251,10 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
     onClose()
   }
 
+  const handleScroll = (e) => {
+    e.stopPropagation()
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-hidden flex flex-col">
@@ -261,7 +265,11 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1">
+        <div 
+          className="flex-1 overflow-y-auto pr-1" 
+          onWheel={handleScroll}
+          style={{ overscrollBehavior: 'contain' }}
+        >
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-8 w-8 animate-spin" />
