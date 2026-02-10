@@ -619,16 +619,9 @@ export default function ItemDetails() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {(() => {
                               const addonEntries = Object.entries(template.addons || {});
-                              const selectedNames = new Set(
-                                (selectedAddons[template.template_id] || []).map(addon => addon.name)
-                              );
-                              const selectedEntries = addonEntries.filter(([addonName]) => selectedNames.has(addonName));
-                              const unselectedEntries = addonEntries.filter(([addonName]) => !selectedNames.has(addonName));
-                              const orderedEntries = [...selectedEntries, ...unselectedEntries];
-                              const baseVisibleCount = addonVisibleCounts[template.template_id] || 4;
-                              const visibleCount = Math.max(baseVisibleCount, selectedEntries.length);
-                              const visibleAddons = orderedEntries.slice(0, visibleCount);
-                              const remainingCount = orderedEntries.length - visibleAddons.length;
+                              const visibleCount = addonVisibleCounts[template.template_id] || 4;
+                              const visibleAddons = addonEntries.slice(0, visibleCount);
+                              const remainingCount = addonEntries.length - visibleAddons.length;
 
                               return (
                                 <>
