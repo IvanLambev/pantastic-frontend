@@ -1074,35 +1074,13 @@ export default function ItemDetails() {
                   {formatDualCurrencyCompact(totalPrice * quantity)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  aria-label="Намали количеството"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="text-base font-semibold w-10 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                  disabled={quantity >= 10}
-                  aria-label="Увеличи количеството"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  onClick={handleAddToCart}
-                  aria-label={isEditing ? 'Обнови количката' : 'Добави в количката'}
-                  className="shrink-0"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                </Button>
-              </div>
+              <Button
+                onClick={handleAddToCart}
+                className="shrink-0"
+              >
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                Добави в количката
+              </Button>
             </div>
           </div>
         </div>
