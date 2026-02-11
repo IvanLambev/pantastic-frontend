@@ -1123,8 +1123,8 @@ export default function RestaurantSelector({
 
       {/* City Selection Modal */}
       <Dialog open={open && currentStep === 'city-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[85vh] flex flex-col">
-          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 flex-shrink-0">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">{t('restaurantSelector.selectCity')}</DialogTitle>
             <Button
               variant="outline"
@@ -1134,7 +1134,7 @@ export default function RestaurantSelector({
               {t('restaurantSelector.backToAddress')}
             </Button>
           </DialogHeader>
-          <div className="grid gap-4 py-4 overflow-y-auto flex-1">
+          <div className="grid gap-4 py-4">
             {loading ? (
               <p className="text-center">{t('common.loading')}</p>
             ) : error ? (
@@ -1160,8 +1160,8 @@ export default function RestaurantSelector({
 
       {/* Restaurant Selection Modal */}
       <Dialog open={open && currentStep === 'restaurant-selection'} onOpenChange={handleClose}>
-        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl max-h-[85vh] flex flex-col">
-          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pr-10 flex-shrink-0">
+        <DialogContent className="w-[85vw] sm:w-auto sm:max-w-4xl">
+          <DialogHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pr-10">
             <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold">
               {t('restaurantSelector.selectRestaurant')} {selectedCity}
             </DialogTitle>
@@ -1173,7 +1173,7 @@ export default function RestaurantSelector({
               {t('restaurantSelector.changeCity')}
             </Button>
           </DialogHeader>
-          <div className="grid gap-4 py-4 overflow-y-auto flex-1">
+          <div className="grid gap-4 py-4">
             {loading ? (
               <p className="text-center">{t('common.loading')}</p>
             ) : error ? (
