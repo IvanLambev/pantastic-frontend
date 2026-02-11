@@ -1,11 +1,11 @@
 import * as React from "react"
-import { useLocation } from "react-router-dom"
 import {
   IconDashboard,
   IconDatabase,
   IconInnerShadowTop,
   IconListDetails,
   IconUsers,
+  IconChartBar,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -21,8 +21,6 @@ import {
 } from "@/components/ui/sidebar"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const location = useLocation()
-
   const data = {
     user: {
       name: "Admin User",
@@ -34,6 +32,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Dashboard",
         url: "/admin",
         icon: IconDashboard,
+      },
+      {
+        title: "Analytics",
+        url: "/admin/analytics",
+        icon: IconChartBar,
       },
       {
         title: "Restaurant Management",

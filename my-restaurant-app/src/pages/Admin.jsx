@@ -12,6 +12,7 @@ import Restaurant from "./admin/Restaurant"
 import Orders from "./admin/Orders"
 import RestaurantDetailsAdmin from "./admin/RestaurantDetailsAdmin"
 import Customers from "./admin/Customers"
+import AdminAnalyticsDashboard from "./AdminAnalyticsDashboard"
 
 function AdminDashboard() {
   return (
@@ -24,6 +25,7 @@ function AdminDashboard() {
             <main className="flex-1 space-y-4 p-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/analytics" element={<AdminAnalyticsDashboard />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/team" element={<Team />} />
                 <Route path="/restaurant" element={<Restaurant />} />
