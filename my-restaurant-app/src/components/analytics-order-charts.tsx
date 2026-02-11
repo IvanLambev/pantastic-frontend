@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend } from "recharts";
 import { Activity } from "lucide-react";
 import { safeToFixed } from "@/lib/utils";
 
@@ -157,7 +157,7 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ChartContainer config={chartConfig} className="h-[300px]">
             <PieChart>
               <Pie
                 data={statusData}
@@ -165,7 +165,6 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
                 cy="50%"
                 innerRadius={60}
                 outerRadius={80}
-                fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
                 label={({ name, percent }) => 
@@ -196,7 +195,7 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
               />
               <Legend />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartContainer>
           <div className="mt-4 flex items-center gap-2">
             <Activity className="h-4 w-4" />
             <div className="text-sm">

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell } from "recharts";
 import { Users, TrendingUp } from "lucide-react";
 import { safeToFixed, formatCurrency, formatCurrencyBGN } from "@/lib/utils";
 
@@ -122,7 +122,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
+          <ChartContainer config={chartConfig} className="h-[200px]">
             <PieChart>
               <Pie
                 data={guestData}
@@ -131,7 +131,6 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
                 labelLine={false}
                 label={({ name, percent }) => `${name.split(' ')[0]}: ${safeToFixed((percent || 0) * 100, 0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
                 dataKey="value"
               >
                 {guestData.map((_, index) => (
@@ -154,7 +153,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
                 }}
               />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartContainer>
           <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <div>
               <div className="text-muted-foreground">Guest Orders</div>

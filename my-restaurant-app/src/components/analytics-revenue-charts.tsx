@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend } from "recharts";
 import { TrendingUp } from "lucide-react";
 import { safeToFixed, formatCurrency, formatCurrencyBGN } from "@/lib/utils";
 
@@ -138,7 +138,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ChartContainer config={chartConfig} className="h-[300px]">
             <PieChart>
               <Pie
                 data={paymentData}
@@ -147,7 +147,6 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${safeToFixed((percent || 0) * 100, 0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
                 dataKey="value"
               >
                 {paymentData.map((_, index) => (
@@ -173,7 +172,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
               />
               <Legend />
             </PieChart>
-          </ResponsiveContainer>
+          </ChartContainer>
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-medium">Cash</div>
