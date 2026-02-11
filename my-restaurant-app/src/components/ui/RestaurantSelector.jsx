@@ -1233,11 +1233,8 @@ export default function RestaurantSelector({
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                        <span className="text-lg sm:text-xl font-bold text-left flex items-center gap-2">
+                        <span className="text-lg sm:text-xl font-bold text-left">
                           {restaurant.name}
-                          <span className={`ml-2 px-2 py-1 rounded-lg text-xs font-semibold ${stateBg}`}>
-                            {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
-                          </span>
                         </span>
                         <span
                           className="text-sm text-gray-500 text-left hover:text-blue-600 hover:underline cursor-pointer"
@@ -1250,8 +1247,11 @@ export default function RestaurantSelector({
                         </span>
                       </div>
                       <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
-                        <div className="whitespace-nowrap bg-gray-200/60 rounded-lg px-2 py-1 font-semibold">
-                          <span>{currentDayBG}: <span className="text-black">{todayHours ? timeText : "Затворено"}</span></span>
+                        <div className="bg-gray-200/60 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 justify-between sm:justify-end">
+                          <span className="whitespace-nowrap">{currentDayBG}: <span className="text-black">{todayHours ? timeText : "Затворено"}</span></span>
+                          <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${stateBg} whitespace-nowrap`}>
+                            {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
+                          </span>
                         </div>
                       </div>
                     </div>
