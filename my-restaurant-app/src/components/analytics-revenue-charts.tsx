@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
-import { safeToFixed } from "@/lib/utils";
+import { safeToFixed, formatCurrency, formatCurrencyBGN } from "@/lib/utils";
 
 interface RevenueBreakdownData {
   total_revenue: number;
@@ -98,7 +98,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) => `${value} лв`}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
@@ -121,10 +121,10 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
           </ChartContainer>
           <div className="mt-4 flex items-center gap-2 font-medium leading-none">
             <TrendingUp className="h-4 w-4" />
-            Total: ${safeToFixed(data.total_revenue, 2)}
+            Total: {formatCurrency(data.total_revenue)}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
-            After discounts: ${safeToFixed(data.revenue_after_discounts, 2)}
+            After discounts: {formatCurrency(data.revenue_after_discounts)}
           </div>
         </CardContent>
       </Card>
@@ -163,7 +163,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                       <div className="rounded-lg border bg-background p-2 shadow-sm">
                         <div className="grid grid-cols-2 gap-2">
                           <span className="font-medium">{payload[0].name}:</span>
-                          <span className="font-bold">${safeToFixed(numValue, 2)}</span>
+                          <span className="font-bold">{formatCurrencyBGN(numValue)}</span>
                         </div>
                       </div>
                     );
@@ -177,12 +177,12 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-medium">Cash</div>
-              <div className="text-2xl font-bold">${safeToFixed(data.payment_method_distribution.cash, 2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(data.payment_method_distribution.cash)}</div>
               <div className="text-muted-foreground">{safeToFixed(data.payment_method_distribution.cash_percentage, 1)}%</div>
             </div>
             <div>
               <div className="font-medium">Card</div>
-              <div className="text-2xl font-bold">${safeToFixed(data.payment_method_distribution.card, 2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(data.payment_method_distribution.card)}</div>
               <div className="text-muted-foreground">{safeToFixed(data.payment_method_distribution.card_percentage, 1)}%</div>
             </div>
           </div>

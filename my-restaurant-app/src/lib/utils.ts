@@ -56,3 +56,21 @@ export function safeNumber(value: number | undefined | null): number {
   }
   return value;
 }
+
+/**
+ * Formats currency in BGN (Bulgarian Lev) with EUR equivalent
+ * Exchange rate: 1 EUR = 1.955 BGN (official fixed rate)
+ */
+export function formatCurrency(value: number | undefined | null, decimals: number = 2): string {
+  const bgn = safeToFixed(value, decimals);
+  const eurValue = (value || 0) / 1.955;
+  const eur = safeToFixed(eurValue, decimals);
+  return `${bgn} лв (€${eur})`;
+}
+
+/**
+ * Formats currency in BGN (Bulgarian Lev) only, without EUR
+ */
+export function formatCurrencyBGN(value: number | undefined | null, decimals: number = 2): string {
+  return `${safeToFixed(value, decimals)} лв`;
+}

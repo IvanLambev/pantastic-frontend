@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { analyticsService } from "@/services/analyticsService";
-import { safeToFixed } from "@/lib/utils";
+import { safeToFixed, formatCurrency } from "@/lib/utils";
 import { AnalyticsKPICards } from "@/components/analytics-kpi-cards";
 import { RevenueCharts } from "@/components/analytics-revenue-charts";
 import { OrderCharts } from "@/components/analytics-order-charts";
@@ -239,7 +239,7 @@ export default function AdminAnalyticsDashboard() {
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">Avg Delivery Fee</div>
-              <div className="text-2xl font-bold">${safeToFixed(data.deliveryStats.avg_delivery_fee, 2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(data.deliveryStats.avg_delivery_fee)}</div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">Success Rate</div>
@@ -269,7 +269,7 @@ export default function AdminAnalyticsDashboard() {
             </div>
             <div className="flex justify-between border-t pt-2">
               <span className="font-medium">Total Delivery Revenue:</span>
-              <span className="font-bold">${safeToFixed(data.deliveryStats.total_delivery_revenue, 2)}</span>
+              <span className="font-bold">{formatCurrency(data.deliveryStats.total_delivery_revenue)}</span>
             </div>
           </div>
         </CardContent>

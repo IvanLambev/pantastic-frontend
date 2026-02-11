@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { formatDualCurrency } from "@/utils/currency";
 
 export default function AdminStats({ data, loading }) {
     if (loading) {
@@ -24,7 +25,7 @@ export default function AdminStats({ data, loading }) {
     const stats = [
         {
             name: "Total Revenue",
-            value: `€${data.total_revenue?.toFixed(2) || '0.00'}`,
+            value: formatDualCurrency(data.total_revenue || 0),
             change: data.comparison?.revenue_change_percent
                 ? `${data.comparison.revenue_change_percent > 0 ? '+' : ''}${data.comparison.revenue_change_percent.toFixed(2)}%`
                 : "N/A",
@@ -40,7 +41,7 @@ export default function AdminStats({ data, loading }) {
         },
         {
             name: "Avg Order Value",
-            value: `€${data.average_order_value?.toFixed(2) || '0.00'}`,
+            value: formatDualCurrency(data.average_order_value || 0),
             change: "N/A", // We don't have comparison for this in the API response
             changeType: "neutral",
         },

@@ -1,7 +1,7 @@
 // Currency conversion utility
-// EUR = BGN ÷ 1.95583
+// EUR = BGN ÷ 1.955 (Official fixed rate)
 
-export const BGN_TO_EUR_RATE = 1.95583;
+export const BGN_TO_EUR_RATE = 1.955;
 
 /**
  * Converts Bulgarian Lev (BGN) to Euro (EUR)

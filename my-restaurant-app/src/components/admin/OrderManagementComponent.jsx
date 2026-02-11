@@ -7,7 +7,7 @@ import { API_URL } from '@/config/api';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
-import { formatDualCurrencyCompact } from "@/utils/currency";
+import { formatDualCurrencyCompact, formatDualCurrency } from "@/utils/currency";
 import { Loader2 } from "lucide-react";
 
 // Helper function to get color classes and tooltip for order status
@@ -500,12 +500,12 @@ export default function OrderManagementComponent() {
                 <div>
                   <p className="text-sm font-medium">Total</p>
                   <p className="text-sm text-muted-foreground">
-                    ${order.total_price ? order.total_price.toFixed(2) : '0.00'}
+                    {formatDualCurrency(order.total_price || 0)}
                   </p>
                   {order.items && order.items.length > 0 && (
                     <div className="text-xs text-muted-foreground mt-1">
-                      <div>Items: ${order.items.reduce((sum, item) => sum + (item.item_base_total || 0), 0).toFixed(2)}</div>
-                      <div>Addons: ${order.items.reduce((sum, item) => sum + (item.item_addon_total || 0), 0).toFixed(2)}</div>
+                      <div>Items: {formatDualCurrency(order.items.reduce((sum, item) => sum + (item.item_base_total || 0), 0))}</div>
+                      <div>Addons: {formatDualCurrency(order.items.reduce((sum, item) => sum + (item.item_addon_total || 0), 0))}</div>
                     </div>
                   )}
                 </div>

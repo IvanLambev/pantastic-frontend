@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Users, TrendingUp } from "lucide-react";
-import { safeToFixed } from "@/lib/utils";
+import { safeToFixed, formatCurrency, formatCurrencyBGN } from "@/lib/utils";
 
 interface TopCustomer {
   customer_id: string;
@@ -66,7 +66,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
 
   // CLV Distribution data
   const clvData = Object.entries(data.customer_lifetime_value_distribution).map(([range, count]) => ({
-    range: `$${range}`,
+    range: `${range} лв`,
     count,
   }));
 
@@ -208,7 +208,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
             <TrendingUp className="h-4 w-4" />
             <div className="text-sm">
               <span className="font-medium">Avg Order Value: </span>
-              <span className="text-muted-foreground">${safeToFixed(data.avg_order_value, 2)}</span>
+              <span className="text-muted-foreground">{formatCurrency(data.avg_order_value)}</span>
             </div>
           </div>
         </CardContent>
@@ -242,14 +242,14 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <div className="text-xl font-bold">
-                      ${safeToFixed(customer.spend_in_period, 2)}
+                      {formatCurrency(customer.spend_in_period)}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       this period
                     </div>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Lifetime: ${safeToFixed(customer.lifetime_spent, 2)}
+                    Lifetime: {formatCurrency(customer.lifetime_spent)}
                   </div>
                 </div>
               </div>

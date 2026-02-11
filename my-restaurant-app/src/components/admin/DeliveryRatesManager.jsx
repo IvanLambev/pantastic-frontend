@@ -11,6 +11,7 @@ import { fetchWithAdminAuth } from "@/utils/adminAuth";
 import { toast } from "sonner";
 import { MapPin, Plus, Trash2, Save } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDualCurrency } from "@/utils/currency";
 
 export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestaurants }) {
   const [deliveryRates, setDeliveryRates] = useState([]);
@@ -202,7 +203,7 @@ export function DeliveryRatesManager({ isOpen, onClose, restaurant, allRestauran
                         }}
                       />
                       <span className="text-sm font-medium">
-                        <span className="text-muted-foreground">{colorScheme.name}:</span> {rate.distance} km - ${rate.price.toFixed(2)}
+                        <span className="text-muted-foreground">{colorScheme.name}:</span> {rate.distance} km - {formatDualCurrency(rate.price)}
                       </span>
                     </div>
                   );

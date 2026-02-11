@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DeliveryPeopleManager } from "@/components/delivery-people-manager";
 import { fetchWithAdminAuth } from "@/utils/adminAuth";
+import { formatDualCurrencyCompact } from "@/utils/currency";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1372,7 +1373,7 @@ const RestaurantDetailsAdminComponent: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">
-                        ${(addon.price || 0).toFixed(2)}
+                        {formatDualCurrencyCompact(addon.price || 0)}
                       </Badge>
                       <Badge variant={addon.available !== false ? "default" : "secondary"}>
                         {addon.available !== false ? "Available" : "Unavailable"}
