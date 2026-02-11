@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { analyticsService } from "@/services/analyticsService";
+import { safeToFixed } from "@/lib/utils";
 import { AnalyticsKPICards } from "@/components/analytics-kpi-cards";
 import { RevenueCharts } from "@/components/analytics-revenue-charts";
 import { OrderCharts } from "@/components/analytics-order-charts";
@@ -238,18 +239,18 @@ export default function AdminAnalyticsDashboard() {
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">Avg Delivery Fee</div>
-              <div className="text-2xl font-bold">${data.deliveryStats.avg_delivery_fee.toFixed(2)}</div>
+              <div className="text-2xl font-bold">${safeToFixed(data.deliveryStats.avg_delivery_fee, 2)}</div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">Success Rate</div>
               <div className="text-2xl font-bold text-green-600">
-                {data.deliveryStats.delivery_success_rate_percent.toFixed(1)}%
+                {safeToFixed(data.deliveryStats.delivery_success_rate_percent, 1)}%
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">On-Time Rate</div>
               <div className="text-2xl font-bold text-blue-600">
-                {data.deliveryStats.on_time_delivery_rate_percent.toFixed(1)}%
+                {safeToFixed(data.deliveryStats.on_time_delivery_rate_percent, 1)}%
               </div>
             </div>
           </div>
@@ -268,7 +269,7 @@ export default function AdminAnalyticsDashboard() {
             </div>
             <div className="flex justify-between border-t pt-2">
               <span className="font-medium">Total Delivery Revenue:</span>
-              <span className="font-bold">${data.deliveryStats.total_delivery_revenue.toFixed(2)}</span>
+              <span className="font-bold">${safeToFixed(data.deliveryStats.total_delivery_revenue, 2)}</span>
             </div>
           </div>
         </CardContent>
@@ -286,7 +287,7 @@ export default function AdminAnalyticsDashboard() {
               <div>
                 <div className="text-sm font-medium text-muted-foreground">System Health Score</div>
                 <div className="text-3xl font-bold text-green-600">
-                  {data.realTime.system_health_score.toFixed(1)}%
+                  {safeToFixed(data.realTime.system_health_score, 1)}%
                 </div>
               </div>
               {data.realTime.cache_statistics && (
@@ -294,13 +295,13 @@ export default function AdminAnalyticsDashboard() {
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">Cache Hit Rate</div>
                     <div className="text-3xl font-bold">
-                      {data.realTime.cache_statistics.hit_rate.toFixed(1)}%
+                      {safeToFixed(data.realTime.cache_statistics.hit_rate, 1)}%
                     </div>
                   </div>
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">Orders Per Hour</div>
                     <div className="text-3xl font-bold">
-                      {data.realTime.orders_per_hour.toFixed(1)}
+                      {safeToFixed(data.realTime.orders_per_hour, 1)}
                     </div>
                   </div>
                 </>

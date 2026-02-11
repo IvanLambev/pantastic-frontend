@@ -35,3 +35,24 @@ export async function handle401Logout() {
 //   }
 //   return response;
 // }
+
+/**
+ * Safely formats a number with decimal places
+ * Returns "0" if value is undefined, null, or NaN
+ */
+export function safeToFixed(value: number | undefined | null, decimals: number = 2): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "0." + "0".repeat(decimals);
+  }
+  return value.toFixed(decimals);
+}
+
+/**
+ * Safely gets a numeric value, returning 0 if undefined or null
+ */
+export function safeNumber(value: number | undefined | null): number {
+  if (value === undefined || value === null || isNaN(value)) {
+    return 0;
+  }
+  return value;
+}

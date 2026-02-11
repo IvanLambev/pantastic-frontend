@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { Users, TrendingUp } from "lucide-react";
+import { safeToFixed } from "@/lib/utils";
 
 interface TopCustomer {
   customer_id: string;
@@ -106,7 +107,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
             </div>
           </div>
           <div className="mt-2 text-sm text-muted-foreground">
-            {((data.returning_customers / (data.new_customers + data.returning_customers)) * 100).toFixed(1)}% 
+            {safeToFixed(((data.returning_customers / (data.new_customers + data.returning_customers)) * 100), 1)}% 
             are returning customers
           </div>
         </CardContent>
@@ -128,7 +129,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name.split(' ')[0]}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name.split(' ')[0]}: ${safeToFixed((percent || 0) * 100, 0)}%`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -159,14 +160,14 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
               <div className="text-muted-foreground">Guest Orders</div>
               <div className="text-xl font-bold">{data.guest_vs_registered.guest_orders}</div>
               <div className="text-xs text-muted-foreground">
-                {data.guest_vs_registered.guest_percentage.toFixed(1)}%
+                {safeToFixed(data.guest_vs_registered.guest_percentage, 1)}%
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Registered</div>
               <div className="text-xl font-bold">{data.guest_vs_registered.registered_orders}</div>
               <div className="text-xs text-muted-foreground">
-                {(100 - data.guest_vs_registered.guest_percentage).toFixed(1)}%
+                {safeToFixed((100 - data.guest_vs_registered.guest_percentage), 1)}%
               </div>
             </div>
           </div>
@@ -207,7 +208,7 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
             <TrendingUp className="h-4 w-4" />
             <div className="text-sm">
               <span className="font-medium">Avg Order Value: </span>
-              <span className="text-muted-foreground">${data.avg_order_value.toFixed(2)}</span>
+              <span className="text-muted-foreground">${safeToFixed(data.avg_order_value, 2)}</span>
             </div>
           </div>
         </CardContent>
@@ -241,14 +242,14 @@ export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <div className="text-xl font-bold">
-                      ${customer.spend_in_period.toFixed(2)}
+                      ${safeToFixed(customer.spend_in_period, 2)}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       this period
                     </div>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Lifetime: ${customer.lifetime_spent.toFixed(2)}
+                    Lifetime: ${safeToFixed(customer.lifetime_spent, 2)}
                   </div>
                 </div>
               </div>

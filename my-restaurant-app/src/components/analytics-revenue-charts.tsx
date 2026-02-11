@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
+import { safeToFixed } from "@/lib/utils";
 
 interface RevenueBreakdownData {
   total_revenue: number;
@@ -120,10 +121,10 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
           </ChartContainer>
           <div className="mt-4 flex items-center gap-2 font-medium leading-none">
             <TrendingUp className="h-4 w-4" />
-            Total: ${data.total_revenue.toFixed(2)}
+            Total: ${safeToFixed(data.total_revenue, 2)}
           </div>
           <div className="text-sm text-muted-foreground mt-1">
-            After discounts: ${data.revenue_after_discounts.toFixed(2)}
+            After discounts: ${safeToFixed(data.revenue_after_discounts, 2)}
           </div>
         </CardContent>
       </Card>
@@ -144,7 +145,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name}: ${safeToFixed((percent || 0) * 100, 0)}%`}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -162,7 +163,7 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                       <div className="rounded-lg border bg-background p-2 shadow-sm">
                         <div className="grid grid-cols-2 gap-2">
                           <span className="font-medium">{payload[0].name}:</span>
-                          <span className="font-bold">${numValue.toFixed(2)}</span>
+                          <span className="font-bold">${safeToFixed(numValue, 2)}</span>
                         </div>
                       </div>
                     );
@@ -176,13 +177,13 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-medium">Cash</div>
-              <div className="text-2xl font-bold">${data.payment_method_distribution.cash.toFixed(2)}</div>
-              <div className="text-muted-foreground">{data.payment_method_distribution.cash_percentage.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">${safeToFixed(data.payment_method_distribution.cash, 2)}</div>
+              <div className="text-muted-foreground">{safeToFixed(data.payment_method_distribution.cash_percentage, 1)}%</div>
             </div>
             <div>
               <div className="font-medium">Card</div>
-              <div className="text-2xl font-bold">${data.payment_method_distribution.card.toFixed(2)}</div>
-              <div className="text-muted-foreground">{data.payment_method_distribution.card_percentage.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">${safeToFixed(data.payment_method_distribution.card, 2)}</div>
+              <div className="text-muted-foreground">{safeToFixed(data.payment_method_distribution.card_percentage, 1)}%</div>
             </div>
           </div>
         </CardContent>

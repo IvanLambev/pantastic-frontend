@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
 import { Activity } from "lucide-react";
+import { safeToFixed } from "@/lib/utils";
 
 interface OrderMetricsData {
   period: string;
@@ -141,7 +142,7 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
             </div>
             <div>
               <div className="font-medium">Avg Prep Time</div>
-              <div className="text-2xl font-bold">{data.avg_preparation_time_minutes.toFixed(1)} min</div>
+              <div className="text-2xl font-bold">{safeToFixed(data.avg_preparation_time_minutes, 1)} min</div>
             </div>
           </div>
         </CardContent>
@@ -168,7 +169,7 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
                 paddingAngle={5}
                 dataKey="value"
                 label={({ name, percent }) => 
-                  percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                  percent > 0.05 ? `${name}: ${safeToFixed((percent || 0) * 100, 0)}%` : ''
                 }
               >
                 {statusData.map((entry, index) => (
@@ -201,7 +202,7 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
             <div className="text-sm">
               <span className="font-medium">Cancellation Rate: </span>
               <span className={data.cancellation_rate_percent > 5 ? "text-destructive" : "text-muted-foreground"}>
-                {data.cancellation_rate_percent.toFixed(2)}%
+                {safeToFixed(data.cancellation_rate_percent, 2)}%
               </span>
             </div>
           </div>

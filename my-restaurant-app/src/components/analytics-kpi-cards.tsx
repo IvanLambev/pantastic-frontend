@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Clock, TrendingUp } from "lucide-react";
+import { safeToFixed } from "@/lib/utils";
 
 interface KPICardsProps {
   revenueToday: number;
@@ -22,7 +23,7 @@ export function AnalyticsKPICards({
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${revenueToday.toFixed(2)}</div>
+          <div className="text-2xl font-bold">${safeToFixed(revenueToday, 2)}</div>
           <p className="text-xs text-muted-foreground">
             Total revenue for today
           </p>
@@ -61,7 +62,7 @@ export function AnalyticsKPICards({
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${averageOrderValue.toFixed(2)}</div>
+          <div className="text-2xl font-bold">${safeToFixed(averageOrderValue, 2)}</div>
           <p className="text-xs text-muted-foreground">
             Average per order
           </p>

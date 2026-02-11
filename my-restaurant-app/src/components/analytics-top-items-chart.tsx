@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { Crown } from "lucide-react";
+import { safeToFixed } from "@/lib/utils";
 
 interface TopItem {
   item_id: string;
@@ -94,7 +95,7 @@ export function TopItemsChart({ data }: TopItemsChartProps) {
                           </div>
                           <div className="flex justify-between gap-4">
                             <span className="text-muted-foreground">Revenue:</span>
-                            <span className="font-bold">${item.revenue.toFixed(2)}</span>
+                            <span className="font-bold">${safeToFixed(item.revenue, 2)}</span>
                           </div>
                         </div>
                       </div>
@@ -140,7 +141,7 @@ export function TopItemsChart({ data }: TopItemsChartProps) {
                   <div className="text-xs text-muted-foreground">{item.category}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold">${item.revenue.toFixed(0)}</div>
+                  <div className="font-bold">${safeToFixed(item.revenue, 0)}</div>
                   <div className="text-xs text-muted-foreground">{item.quantity_sold} sold</div>
                 </div>
               </div>
