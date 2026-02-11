@@ -39,21 +39,21 @@ interface OrderChartsProps {
 }
 
 const STATUS_COLORS = {
-  'Pending': 'hsl(var(--chart-1))',
-  'In Progress': 'hsl(var(--chart-2))',
-  'Ready': 'hsl(var(--chart-3))',
-  'Delivered': 'hsl(var(--chart-4))',
-  'Canceled': 'hsl(var(--chart-5))',
+  'Pending': 'var(--chart-1)',
+  'In Progress': 'var(--chart-2)',
+  'Ready': 'var(--chart-3)',
+  'Delivered': 'var(--chart-4)',
+  'Canceled': 'var(--chart-5)',
 };
 
 const chartConfig = {
   total_orders: {
     label: "Total Orders",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   avg_preparation_time: {
     label: "Avg Prep Time (min)",
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
   },
 };
 
@@ -121,17 +121,17 @@ export function OrderCharts({ data, timeSeriesData }: OrderChartsProps) {
                 yAxisId="left"
                 type="monotone"
                 dataKey="total_orders"
-                stroke="hsl(var(--chart-1))"
+                stroke="var(--chart-1)"
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-1))" }}
+                dot={{ fill: "var(--chart-1)" }}
               />
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="avg_preparation_time"
-                stroke="hsl(var(--chart-2))"
+                stroke="var(--chart-2)"
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-2))" }}
+                dot={{ fill: "var(--chart-2)" }}
               />
             </LineChart>
           </ChartContainer>

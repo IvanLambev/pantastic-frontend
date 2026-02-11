@@ -31,31 +31,31 @@ interface CustomerInsightsChartProps {
   data: CustomerInsightsData;
 }
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)'];
 const CLV_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ];
 
 const chartConfig = {
   new_customers: {
     label: "New Customers",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   returning_customers: {
     label: "Returning Customers",
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
   },
 };
 
 export function CustomerInsightsChart({ data }: CustomerInsightsChartProps) {
   // Customer type data
   const customerTypeData = [
-    { name: 'New', value: data.new_customers, fill: 'hsl(var(--chart-1))' },
-    { name: 'Returning', value: data.returning_customers, fill: 'hsl(var(--chart-2))' },
+    { name: 'New', value: data.new_customers, fill: 'var(--chart-1)' },
+    { name: 'Returning', value: data.returning_customers, fill: 'var(--chart-2)' },
   ];
 
   // Guest vs Registered data

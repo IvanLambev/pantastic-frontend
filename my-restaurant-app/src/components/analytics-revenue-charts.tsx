@@ -33,19 +33,19 @@ interface RevenueChartsProps {
 const chartConfig = {
   total_revenue: {
     label: "Total Revenue",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
   },
   subtotal: {
     label: "Subtotal",
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
   },
   delivery_fees: {
     label: "Delivery Fees",
-    color: "hsl(var(--chart-3))",
+    color: "var(--chart-3)",
   },
 };
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+const COLORS = ['var(--chart-1)', 'var(--chart-2)'];
 
 export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
   // Format payment method data for pie chart
@@ -105,16 +105,16 @@ export function RevenueCharts({ data, timeSeriesData }: RevenueChartsProps) {
                 type="monotone"
                 dataKey="subtotal"
                 stackId="1"
-                stroke="hsl(var(--chart-2))"
-                fill="hsl(var(--chart-2))"
+                stroke="var(--chart-2)"
+                fill="var(--chart-2)"
                 fillOpacity={0.6}
               />
               <Area
                 type="monotone"
                 dataKey="delivery_fees"
                 stackId="1"
-                stroke="hsl(var(--chart-3))"
-                fill="hsl(var(--chart-3))"
+                stroke="var(--chart-3)"
+                fill="var(--chart-3)"
                 fillOpacity={0.6}
               />
             </AreaChart>
