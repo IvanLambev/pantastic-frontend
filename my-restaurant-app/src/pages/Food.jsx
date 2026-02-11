@@ -792,7 +792,7 @@ const Food = () => {
                     <div key={itemId} className="relative">
                       {/* Dynamic Label Text on Top */}
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 bg-background px-1">
-                        <span className="text-xs font-semibold text-gray-700 transition-colors group-hover:text-orange-500">
+                        <span className="text-xs font-semibold text-gray-700 transition-colors group-hover:text-orange-500 whitespace-nowrap">
                           {translateDynamicLabel(dynamicLabels[0])}
                         </span>
                       </div>
