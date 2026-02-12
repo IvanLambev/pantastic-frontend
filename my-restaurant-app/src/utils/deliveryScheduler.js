@@ -1,13 +1,13 @@
 // Utility functions for delivery scheduling based on restaurant working hours
 
 /**
- * Get the current time in GMT+3 (restaurant timezone)
- * @returns {Date} Current date/time in GMT+3
+ * Get the current time in GMT+2 (Eastern European Time - restaurant timezone)
+ * @returns {Date} Current date/time in GMT+2
  */
-export function getCurrentGMT3Time() {
+export function getCurrentRestaurantTime() {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  return new Date(utc + 3 * 3600000);
+  return new Date(utc + 2 * 3600000);
 }
 
 /**
@@ -60,15 +60,15 @@ function getRestaurantHours(restaurant) {
  * @returns {boolean} Whether the restaurant is open
  */
 export function isRestaurantOpen(restaurant) {
-  const gmt3 = getCurrentGMT3Time();
+  const currentTime = getCurrentRestaurantTime();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = days[gmt3.getDay()];
+  const currentDay = days[currentTime.getDay()];
 
   const hours = getRestaurantHours(restaurant);
   const todayHours = hours[currentDay];
 
   // Debug logging
-  console.log(`[DeliveryScheduler] Checking if open: ${currentDay}, Time: ${gmt3.toLocaleTimeString()}`);
+  console.log(`[DeliveryScheduler] Checking if open: ${currentDay}, Time: ${currentTime.toLocaleTimeString()}`);
   console.log(`[DeliveryScheduler] Restaurant hours for today:`, todayHours);
 
   if (!todayHours) {
@@ -81,7 +81,7 @@ export function isRestaurantOpen(restaurant) {
     const [openH, openM] = open.split(":").map(Number);
     const [closeH, closeM] = close.split(":").map(Number);
 
-    const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes();
+    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
     const openTime = openH * 60 + openM;
     const closeTime = closeH * 60 + closeM;
 
@@ -96,13 +96,13 @@ export function isRestaurantOpen(restaurant) {
     // Check if the restaurant closes the next day (e.g., 20:00-03:00)
     if (closeTime < openTime) {
       // Restaurant is open if current time is after opening OR before closing (next day)
-      const isOpen = currentTime >= openTime || currentTime <= closeTime;
-      console.log(`[DeliveryScheduler] Next day closing. Open? ${isOpen} (Current: ${currentTime}, Open: ${openTime}, Close: ${closeTime})`);
+      const isOpen = currentMinutes >= openTime || currentMinutes <= closeTime;
+      console.log(`[DeliveryScheduler] Next day closing. Open? ${isOpen} (Current: ${currentMinutes}, Open: ${openTime}, Close: ${closeTime})`);
       return isOpen;
     } else {
       // Normal case: restaurant opens and closes on the same day
-      const isOpen = currentTime >= openTime && currentTime <= closeTime;
-      console.log(`[DeliveryScheduler] Same day closing. Open? ${isOpen} (Current: ${currentTime}, Open: ${openTime}, Close: ${closeTime})`);
+      const isOpen = currentMinutes >= openTime && currentMinutes <= closeTime;
+      console.log(`[DeliveryScheduler] Same day closing. Open? ${isOpen} (Current: ${currentMinutes}, Open: ${openTime}, Close: ${closeTime})`);
       return isOpen;
     }
   } catch (error) {
@@ -114,18 +114,18 @@ export function isRestaurantOpen(restaurant) {
 /**
  * Get available delivery time slots for a restaurant
  * @param {Array|Object} restaurant - Restaurant data
- * @param {number} preparationTimeMinutes - Time needed to prepare the order (default: 60 minutes)
+ * @param {number} preparationTimeMinutes - Time needed to prepare the order (default: 30 minutes)
  * @returns {Array} Array of available delivery time slots
  */
-export function getAvailableDeliverySlots(restaurant, preparationTimeMinutes = 60) {
-  const gmt3 = getCurrentGMT3Time();
+export function getAvailableDeliverySlots(restaurant, preparationTimeMinutes = 30) {
+  const currentTime = getCurrentRestaurantTime();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const hours = getRestaurantHours(restaurant);
   const slots = [];
 
   // Check today and next 7 days
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDate = new Date(gmt3);
+    const checkDate = new Date(currentTime);
     checkDate.setDate(checkDate.getDate() + dayOffset);
     const dayName = days[checkDate.getDay()];
     const dayHours = hours[dayName];
@@ -162,7 +162,7 @@ export function getAvailableDeliverySlots(restaurant, preparationTimeMinutes = 6
 
       // If it's today, make sure delivery time is in the future and accounts for preparation time
       if (dayOffset === 0) {
-        const earliestDelivery = new Date(gmt3);
+        const earliestDelivery = new Date(currentTime);
         earliestDelivery.setMinutes(earliestDelivery.getMinutes() + preparationTimeMinutes);
 
         if (earliestDelivery > deliveryStart) {
@@ -238,13 +238,13 @@ export function formatTime(date) {
  * @returns {string|null} Next opening time description
  */
 export function getNextOpenTime(restaurant) {
-  const gmt3 = getCurrentGMT3Time();
+  const currentTime = getCurrentRestaurantTime();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const hours = getRestaurantHours(restaurant);
 
   // Check today and next 7 days
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDate = new Date(gmt3);
+    const checkDate = new Date(currentTime);
     checkDate.setDate(checkDate.getDate() + dayOffset);
     const dayName = days[checkDate.getDay()];
     const dayHours = hours[dayName];
@@ -257,7 +257,7 @@ export function getNextOpenTime(restaurant) {
         openTime.setHours(openH, openM, 0, 0);
 
         // If it's today, make sure the opening time is in the future
-        if (dayOffset === 0 && openTime <= gmt3) continue;
+        if (dayOffset === 0 && openTime <= currentTime) continue;
 
         if (dayOffset === 0) {
           return `Today at ${open}`;
@@ -280,7 +280,7 @@ export function getNextOpenTime(restaurant) {
  * @param {number} preparationTimeMinutes - Time needed to prepare the order
  * @returns {Object} Scheduling information
  */
-export function checkOrderScheduling(restaurant, preparationTimeMinutes = 60) {
+export function checkOrderScheduling(restaurant, preparationTimeMinutes = 30) {
   // Debug input
   console.log("[DeliveryScheduler] Checking scheduling for:", restaurant?.name || (Array.isArray(restaurant) ? restaurant[8] : 'Unknown'));
 

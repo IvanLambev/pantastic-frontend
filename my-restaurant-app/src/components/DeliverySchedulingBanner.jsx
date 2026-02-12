@@ -40,7 +40,7 @@ export default function DeliverySchedulingBanner({
       return;
     }
 
-    const info = checkOrderScheduling(restaurant, 60); // 60 minutes preparation time
+    const info = checkOrderScheduling(restaurant, 30); // 30 minutes preparation time
     setSchedulingInfo(info);
 
     if (info.needsScheduling && info.availableSlots.length > 0) {

@@ -37,9 +37,9 @@ export function parseOpeningHours(openingHoursData) {
 export function isRestaurantOpen(restaurant) {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
+  const eetTime = new Date(utc + 2 * 3600000);
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = days[gmt3.getDay()];
+  const currentDay = days[eetTime.getDay()];
   
   const hours = parseOpeningHours(restaurant.opening_hours || restaurant[6]);
   const todayHours = hours[currentDay];
@@ -51,7 +51,7 @@ export function isRestaurantOpen(restaurant) {
     const [openHour, openMin] = openTime.split(':').map(Number);
     const [closeHour, closeMin] = closeTime.split(':').map(Number);
     
-    const currentMinutes = gmt3.getHours() * 60 + gmt3.getMinutes();
+    const currentMinutes = eetTime.getHours() * 60 + eetTime.getMinutes();
     const openMinutes = openHour * 60 + openMin;
     let closeMinutes = closeHour * 60 + closeMin;
     
@@ -75,12 +75,12 @@ export function isRestaurantOpen(restaurant) {
 export function getNextOpenTime(restaurants) {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
+  const eetTime = new Date(utc + 2 * 3600000);
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const daysInBulgarian = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
   
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const checkDate = new Date(gmt3.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+    const checkDate = new Date(eetTime.getTime() + dayOffset * 24 * 60 * 60 * 1000);
     const checkDay = days[checkDate.getDay()];
     const checkDayBulgarian = daysInBulgarian[checkDate.getDay()];
     
@@ -93,7 +93,7 @@ export function getNextOpenTime(restaurants) {
         if (dayOffset === 0) {
           const [openHour, openMin] = openTime.split(':').map(Number);
           const openMinutes = openHour * 60 + openMin;
-          const currentMinutes = gmt3.getHours() * 60 + gmt3.getMinutes();
+          const currentMinutes = eetTime.getHours() * 60 + eetTime.getMinutes();
           if (openMinutes > currentMinutes) {
             return `${checkDayBulgarian} в ${openTime}`;
           }

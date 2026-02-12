@@ -126,11 +126,11 @@ const Food = () => {
     
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const gmt3 = new Date(utc + 3 * 3600000);
+    const eetTime = new Date(utc + 2 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const daysInBulgarian = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
-    const currentDay = days[gmt3.getDay()];
-    const currentDayBulgarian = daysInBulgarian[gmt3.getDay()];
+    const currentDay = days[eetTime.getDay()];
+    const currentDayBulgarian = daysInBulgarian[eetTime.getDay()];
     
     const hours = parseOpeningHours(Array.isArray(selectedRestaurant) ? selectedRestaurant[6] : selectedRestaurant.opening_hours);
     const todayHours = hours[currentDay];

@@ -45,18 +45,18 @@ const translateDay = (day) => {
 const getCurrentDay = () => {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
+  const eetTime = new Date(utc + 2 * 3600000);
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  return days[gmt3.getDay()];
+  return days[eetTime.getDay()];
 };
 
 // Helper function to check if restaurant is open now
 const isRestaurantOpen = (openingHours) => {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const gmt3 = new Date(utc + 3 * 3600000);
+  const eetTime = new Date(utc + 2 * 3600000);
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDay = days[gmt3.getDay()];
+  const currentDay = days[eetTime.getDay()];
   
   const hours = parseOpeningHours(openingHours);
   const todayHours = hours[currentDay];
@@ -67,7 +67,7 @@ const isRestaurantOpen = (openingHours) => {
   const [openH, openM] = open.split(":").map(Number);
   const [closeH, closeM] = close.split(":").map(Number);
   
-  const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes();
+  const currentTime = eetTime.getHours() * 60 + eetTime.getMinutes();
   const openTime = openH * 60 + openM;
   const closeTime = closeH * 60 + closeM;
   

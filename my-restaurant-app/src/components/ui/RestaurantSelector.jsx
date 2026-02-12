@@ -466,12 +466,12 @@ export default function RestaurantSelector({
 
   // Check if restaurant is currently open
   function isRestaurantOpen(restaurant) {
-    // Get current time in GMT+3
+    // Get current time in GMT+2 (Eastern European Time)
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const gmt3 = new Date(utc + 3 * 3600000);
+    const eetTime = new Date(utc + 2 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const currentDay = days[gmt3.getDay()];
+    const currentDay = days[eetTime.getDay()];
 
     // Parse opening hours (handles both object and string formats)
     const hours = parseOpeningHours(restaurant.opening_hours);
@@ -487,7 +487,7 @@ export default function RestaurantSelector({
       const [openH, openM] = open.split(":").map(Number);
       const [closeH, closeM] = close.split(":").map(Number);
 
-      const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
+      const currentTime = eetTime.getHours() * 60 + eetTime.getMinutes(); // Current time in minutes
       const openTime = openH * 60 + openM; // Opening time in minutes
       const closeTime = closeH * 60 + closeM; // Closing time in minutes
 
@@ -662,12 +662,12 @@ export default function RestaurantSelector({
   function getNextOpenTime() {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const gmt3 = new Date(utc + 3 * 3600000);
+    const eetTime = new Date(utc + 2 * 3600000);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
     // Check today and next few days
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-      const checkDate = new Date(gmt3);
+      const checkDate = new Date(eetTime);
       checkDate.setDate(checkDate.getDate() + dayOffset);
       const dayName = days[checkDate.getDay()];
 
@@ -684,7 +684,7 @@ export default function RestaurantSelector({
             openTime.setHours(openH, openM, 0, 0);
 
             // If it's today, make sure the opening time is in the future
-            if (dayOffset === 0 && openTime <= gmt3) continue;
+            if (dayOffset === 0 && openTime <= eetTime) continue;
 
             if (dayOffset === 0) {
               return t('restaurantSelector.todayAt', { time: open });
@@ -1180,14 +1180,14 @@ export default function RestaurantSelector({
               <p className="text-red-500 text-center">{error}</p>
             ) : (
               filteredRestaurants.map((restaurant) => {
-                // Get current time in GMT+3
+                // Get current time in GMT+2 (Eastern European Time)
                 const now = new Date();
                 const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-                const gmt3 = new Date(utc + 3 * 3600000);
+                const eetTime = new Date(utc + 2 * 3600000);
                 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
                 const daysBG = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
-                const currentDay = days[gmt3.getDay()];
-                const currentDayBG = daysBG[gmt3.getDay()];
+                const currentDay = days[eetTime.getDay()];
+                const currentDayBG = daysBG[eetTime.getDay()];
                 // Parse opening hours properly (handles both string and object formats)
                 const hours = parseOpeningHours(restaurant.opening_hours);
                 const todayHours = hours[currentDay];
@@ -1200,7 +1200,7 @@ export default function RestaurantSelector({
                   const [openH, openM] = open.split(":").map(Number);
                   const [closeH, closeM] = close.split(":").map(Number);
 
-                  const currentTime = gmt3.getHours() * 60 + gmt3.getMinutes(); // Current time in minutes
+                  const currentTime = eetTime.getHours() * 60 + eetTime.getMinutes(); // Current time in minutes
                   const openTime = openH * 60 + openM; // Opening time in minutes
                   const closeTime = closeH * 60 + closeM; // Closing time in minutes
 
