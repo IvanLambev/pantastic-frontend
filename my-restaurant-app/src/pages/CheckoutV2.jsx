@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
+import { PhoneInput } from "@/components/ui/phone-input"
 import OrderConfirmation from "@/components/OrderConfirmation"
 import DeliverySchedulingBanner from "@/components/DeliverySchedulingBanner"
 import MiscItemsSuggestion from "@/components/MiscItemsSuggestion"
@@ -454,7 +455,7 @@ export default function CheckoutV2() {
     // Check authentication (works for both regular users and guest users)
     // Guest users have customer_id set during CheckoutLogin authentication
     if (!user?.customer_id) {
-      throw new Error('User not logged in. Please restart checkout process.')
+      throw new Error(t('checkout.userNotLoggedIn'))
     }
 
     // Check if restaurant is selected
@@ -1139,15 +1140,14 @@ export default function CheckoutV2() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t('checkout.phone')}</Label>
-                  <Input
+                  <PhoneInput
                     id="phone"
-                    type="tel"
-                    placeholder={t('checkout.phonePlaceholder')}
                     value={phoneNumber}
-                    onChange={(e) => {
-                      setPhoneNumber(e.target.value)
+                    onChange={(value) => {
+                      setPhoneNumber(value || "")
                       setPhoneError("")
                     }}
+                    defaultCountry="BG"
                     disabled={isUpdatingPhone}
                   />
                   <p className="text-xs text-muted-foreground">{t('checkout.phoneFormat')}</p>

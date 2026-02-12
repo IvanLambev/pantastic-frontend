@@ -407,7 +407,7 @@ export default function OrderTrackingV2() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4
-                            className={`font-medium ${
+                            className={`font-medium text-left ${
                               isCancelled
                                 ? "text-red-600"
                                 : isCompleted
@@ -435,7 +435,7 @@ export default function OrderTrackingV2() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-1">{step.description}</p>
+                        <p className="text-sm text-muted-foreground mb-1 text-left">{step.description}</p>
                         {order.estimated_delivery_time && step.status === 'Delivered' && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />

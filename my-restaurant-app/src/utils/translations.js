@@ -333,9 +333,11 @@ export const translations = {
     retryingOrder: "Повторен опит за поръчване...",
     cancel: "Отказ",
     orderError: "Грешка при поръчване",
+    minutes: "минути",
 
     // Errors
-    pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите"
+    pleaseSignIn: "Моля, влезте или създайте акаунт, за да продължите",
+    userNotLoggedIn: "Потребителят не е влязъл. Моля, рестартирайте процеса на поръчване."
   },
 
   // Order Tracking
