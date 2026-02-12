@@ -72,4 +72,13 @@ export const analyticsService = {
     if (!response.ok) throw new Error('Failed to fetch delivery stats');
     return response.json();
   },
+
+  // Sunmi device heartbeats
+  getSunmiHeartbeats: async () => {
+    const response = await fetchWithAdminAuth(
+      `${API_URL}/order/admin/sunmi/heartbeats`
+    );
+    if (!response.ok) throw new Error('Failed to fetch Sunmi heartbeats');
+    return response.json();
+  },
 };

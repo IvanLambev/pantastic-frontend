@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { analyticsService } from "@/services/analyticsService";
 import { safeToFixed, formatCurrency } from "@/lib/utils";
 import { AnalyticsKPICards } from "@/components/analytics-kpi-cards";
@@ -9,7 +10,7 @@ import { RevenueCharts } from "@/components/analytics-revenue-charts";
 import { OrderCharts } from "@/components/analytics-order-charts";
 import { TopItemsChart } from "@/components/analytics-top-items-chart";
 import { CustomerInsightsChart } from "@/components/analytics-customer-insights-chart";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Activity, AlertCircle, CheckCircle2 } from "lucide-react";
 
 
 type TimeRange = "today" | "week" | "month" | "year";
@@ -29,6 +30,12 @@ export default function AdminAnalyticsDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AnalyticsDashboardData | null>(null);
+
+  // Sunmi device status state
+  const [sunmiData, setSunmiData] = useState<any>(null);
+  const [sunmiLoading, setSunmiLoading] = useState(false);
+  const [sunmiError, setSunmiError] = useState<string | null>(null);
+  const [sunmiPollingInterval, setSunmiPollingInterval] = useState<string>("manual");
 
   // Calculate date range based on selection
   const getDateRange = (range: TimeRange) => {
@@ -105,6 +112,49 @@ export default function AdminAnalyticsDashboard() {
     setRefreshing(true);
     fetchAnalyticsData(timeRange);
   };
+
+  // Fetch Sunmi device heartbeats
+  const fetchSunmiData = async () => {
+    try {
+      setSunmiLoading(true);
+      setSunmiError(null);
+      const data = await analyticsService.getSunmiHeartbeats();
+      setSunmiData(data);
+    } catch (err) {
+      setSunmiError(err instanceof Error ? err.message : "Failed to fetch Sunmi data");
+      console.error("Sunmi fetch error:", err);
+    } finally {
+      setSunmiLoading(false);
+    }
+  };
+
+  // Initial Sunmi data fetch
+  useEffect(() => {
+    fetchSunmiData();
+  }, []);
+
+  // Sunmi polling effect
+  useEffect(() => {
+    if (sunmiPollingInterval === "manual") {
+      return;
+    }
+
+    const intervalMs = {
+      "5s": 5000,
+      "10s": 10000,
+      "30s": 30000,
+      "1min": 60000,
+      "5min": 300000,
+    }[sunmiPollingInterval];
+
+    if (!intervalMs) return;
+
+    const interval = setInterval(() => {
+      fetchSunmiData();
+    }, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [sunmiPollingInterval]);
 
   // Auto-refresh real-time data every 60 seconds
   useEffect(() => {
@@ -310,6 +360,144 @@ export default function AdminAnalyticsDashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Sunmi Device Status */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Sunmi Device Status
+              </CardTitle>
+              <CardDescription>
+                Real-time monitoring of restaurant POS devices
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={sunmiPollingInterval} onValueChange={setSunmiPollingInterval}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Refresh" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="5s">Every 5s</SelectItem>
+                  <SelectItem value="10s">Every 10s</SelectItem>
+                  <SelectItem value="30s">Every 30s</SelectItem>
+                  <SelectItem value="1min">Every 1min</SelectItem>
+                  <SelectItem value="5min">Every 5min</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchSunmiData}
+                disabled={sunmiLoading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${sunmiLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {sunmiLoading && !sunmiData ? (
+            <div className="flex h-32 items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : sunmiError ? (
+            <div className="flex h-32 items-center justify-center text-destructive">
+              <AlertCircle className="mr-2 h-5 w-5" />
+              {sunmiError}
+            </div>
+          ) : sunmiData ? (
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm font-medium text-muted-foreground">Total Devices</div>
+                  <div className="text-2xl font-bold">{sunmiData.summary?.total_devices || 0}</div>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm font-medium text-muted-foreground">Active Devices</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {sunmiData.summary?.active_devices || 0}
+                  </div>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm font-medium text-muted-foreground">Inactive Devices</div>
+                  <div className="text-2xl font-bold text-destructive">
+                    {sunmiData.summary?.inactive_devices || 0}
+                  </div>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <div className="text-sm font-medium text-muted-foreground">Timeout Threshold</div>
+                  <div className="text-2xl font-bold">
+                    {sunmiData.summary?.timeout_threshold_minutes || 0}m
+                  </div>
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              <div className="text-xs text-muted-foreground">
+                Last updated: {sunmiData.timestamp ? new Date(sunmiData.timestamp).toLocaleString() : 'N/A'}
+              </div>
+
+              {/* Device List */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Device Details</h4>
+                {sunmiData.all_devices && sunmiData.all_devices.length > 0 ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {sunmiData.all_devices.map((device: any, idx: number) => (
+                      <div
+                        key={device.restaurant_id || idx}
+                        className={`rounded-lg border p-4 ${
+                          device.is_active
+                            ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+                            : "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              {device.is_active ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                              )}
+                              <span className="font-semibold">{device.restaurant_name}</span>
+                            </div>
+                            <div className="space-y-0.5 text-xs text-muted-foreground">
+                              <div>Last heartbeat: {device.last_heartbeat_formatted}</div>
+                              <div>{device.seconds_since_last_heartbeat}s ago</div>
+                              <div>Orders: {device.order_count}</div>
+                              <div>Requests: {device.total_requests}</div>
+                              <div className="font-mono">{device.client_ip}</div>
+                            </div>
+                          </div>
+                          <div
+                            className={`rounded-full px-2 py-1 text-xs font-medium ${
+                              device.is_active
+                                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100"
+                                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100"
+                            }`}
+                          >
+                            {device.is_active ? "Active" : "Inactive"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-sm text-muted-foreground py-8">
+                    No devices found
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }
