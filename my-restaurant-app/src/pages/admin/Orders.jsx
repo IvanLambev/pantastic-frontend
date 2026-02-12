@@ -47,7 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown, Clock, Search, X } from "lucide-react";
+import { Loader2, User, MapPin, CreditCard, ShoppingBag, ArrowUpDown, Clock, Search, X, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Orders() {
@@ -93,6 +93,9 @@ export default function Orders() {
     
     // Order Status Update State
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    
+    // Copy UUID State
+    const [copiedUuid, setCopiedUuid] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -212,6 +215,7 @@ export default function Orders() {
         setIsSheetOpen(true);
         setCustomerDetails(null);
         setLoadingDetails(true);
+        setCopiedUuid(false); // Reset copy state when opening new order
 
         try {
             // Fetch full order details using the admin endpoint
@@ -588,7 +592,29 @@ export default function Orders() {
                     <SheetHeader>
                         <SheetTitle>Order Details</SheetTitle>
                         <SheetDescription>
-                            <span className="block">ID: {selectedOrder?.order_id}</span>
+                            <div 
+                                className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group"
+                                onClick={async () => {
+                                    if (selectedOrder?.order_id) {
+                                        try {
+                                            await navigator.clipboard.writeText(selectedOrder.order_id);
+                                            setCopiedUuid(true);
+                                            toast.success('Order UUID copied to clipboard!');
+                                            setTimeout(() => setCopiedUuid(false), 2000);
+                                        } catch (error) {
+                                            console.error('Failed to copy UUID:', error);
+                                            toast.error('Failed to copy UUID');
+                                        }
+                                    }
+                                }}
+                            >
+                                <span className="block">ID: {selectedOrder?.order_id}</span>
+                                {copiedUuid ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                ) : (
+                                    <Copy className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                )}
+                            </div>
                             {(selectedOrder?.restaurant || selectedOrder?.restaurant_name) && (
                                 <div className="mt-2 space-y-1">
                                     <span className="block font-medium text-foreground">

@@ -34,6 +34,21 @@ export default function OrderConfirmation({
 }) {
   const [orderDetails, setOrderDetails] = useState(null);
 
+  // Lock body scroll when dialog is open
+  useEffect(() => {
+    if (open) {
+      // Store original overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup: restore original overflow when dialog closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [open]);
+
   useEffect(() => {
     if (open) {
       // Get order details from sessionStorage

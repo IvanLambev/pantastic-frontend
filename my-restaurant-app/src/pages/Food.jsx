@@ -733,12 +733,12 @@ const Food = () => {
               <span className="sm:hidden">{t('menu.sour')}</span>
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "american" ? "default" : "outline"}
               onClick={() => setCategory("american")}
             >
-              <span className="hidden sm:inline">{t('menu.americanPancakes')}</span>
-              <span className="sm:hidden">{t('menu.american')}</span>
+              <span className="hidden lg:inline">{t('menu.americanPancakes')}</span>
+              <span className="lg:hidden">{t('menu.american')}</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
