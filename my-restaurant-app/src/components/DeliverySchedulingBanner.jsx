@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Clock, Calendar, AlertCircle, CheckCircle } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, CheckCircle, Clock2Icon } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { 
-  generateTimeSlots, 
   checkOrderScheduling
 } from '@/utils/deliveryScheduler';
 import { t } from '@/utils/translations';
@@ -16,10 +21,18 @@ export default function DeliverySchedulingBanner({
   className = "" 
 }) {
   const [schedulingInfo, setSchedulingInfo] = useState(null);
-  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [selectedDay, setSelectedDay] = useState('');
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [initialized, setInitialized] = useState(false);
+
+  // Get time 30 minutes from now
+  const getDefaultTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
   // Initialize scheduling info and auto-select first available options
   useEffect(() => {
     if (!restaurant) {
@@ -35,17 +48,9 @@ export default function DeliverySchedulingBanner({
       const firstSlot = info.availableSlots[0];
       setSelectedDay(firstSlot.date);
       
-      // Generate time slots for the first day
-      const timeSlots = generateTimeSlots(firstSlot, 30); // 30-minute intervals
-      setAvailableTimeSlots(timeSlots);
-      
-      // Auto-select first available time slot
-      if (timeSlots.length > 0) {
-        setSelectedTimeSlot(timeSlots[0].value);
-        
-        // DO NOT call onScheduleSelect here - it causes infinite loops
-        // Let the user manually trigger the selection or use a separate effect
-      }
+      // Set default time to 30 minutes from now
+      const defaultTime = getDefaultTime();
+      setSelectedTime(defaultTime);
     }
     setInitialized(true);
   }, [restaurant]); // Remove onScheduleSelect dependency
@@ -54,49 +59,48 @@ export default function DeliverySchedulingBanner({
   useEffect(() => {
     if (!schedulingInfo || !selectedDay || !initialized) return;
 
-    // Find the selected day's delivery window
-    const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
-    if (daySlot) {
-      const timeSlots = generateTimeSlots(daySlot, 30);
-      setAvailableTimeSlots(timeSlots);
-      
-      // Reset time slot selection when day changes
-      if (timeSlots.length > 0) {
-        setSelectedTimeSlot(timeSlots[0].value);
-      }
-    }
+    // Reset time to default when day changes
+    const defaultTime = getDefaultTime();
+    setSelectedTime(defaultTime);
   }, [selectedDay, schedulingInfo, initialized]);
 
   // Notify parent when both day and time are selected
   useEffect(() => {
-    if (!initialized || !schedulingInfo?.needsScheduling || !selectedDay || !selectedTimeSlot) return;
+    if (!initialized || !schedulingInfo?.needsScheduling || !selectedDay || !selectedTime) return;
     
     const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
-    const timeSlot = availableTimeSlots.find(slot => slot.value === selectedTimeSlot);
     
-    if (daySlot && timeSlot && onScheduleSelect) {
+    if (daySlot && onScheduleSelect) {
       onScheduleSelect({
         date: selectedDay,
         dayName: daySlot.dayName,
-        timeSlot: timeSlot,
+        timeSlot: {
+          startString: selectedTime,
+          endString: selectedTime,
+          value: selectedTime
+        },
         isScheduled: true
       });
     }
-  }, [selectedDay, selectedTimeSlot, initialized]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDay, selectedTime, initialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
-  const handleTimeSlotChange = (timeSlotValue) => {
-    setSelectedTimeSlot(timeSlotValue);
+  const handleTimeChange = (e) => {
+    const time = e.target.value;
+    setSelectedTime(time);
     
     // Notify parent component immediately for user interactions
-    const selectedSlot = availableTimeSlots.find(slot => slot.value === timeSlotValue);
     const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === selectedDay);
     
-    if (selectedSlot && daySlot && onScheduleSelect) {
+    if (daySlot && onScheduleSelect) {
       onScheduleSelect({
         date: selectedDay,
         dayName: daySlot.dayName,
-        timeSlot: selectedSlot,
+        timeSlot: {
+          startString: time,
+          endString: time,
+          value: time
+        },
         isScheduled: true
       });
     }
@@ -105,25 +109,24 @@ export default function DeliverySchedulingBanner({
   const handleDayChange = (dayValue) => {
     setSelectedDay(dayValue);
     
-    // Find the new day's delivery window and auto-select first time slot
+    // Find the new day's delivery window
     const daySlot = schedulingInfo.availableSlots.find(slot => slot.date === dayValue);
     if (daySlot) {
-      const timeSlots = generateTimeSlots(daySlot, 30);
-      setAvailableTimeSlots(timeSlots);
+      // Maintain the selected time or use default
+      const currentTime = selectedTime || getDefaultTime();
       
-      if (timeSlots.length > 0) {
-        const firstTimeSlot = timeSlots[0];
-        setSelectedTimeSlot(firstTimeSlot.value);
-        
-        // Notify parent component
-        if (onScheduleSelect) {
-          onScheduleSelect({
-            date: dayValue,
-            dayName: daySlot.dayName,
-            timeSlot: firstTimeSlot,
-            isScheduled: true
-          });
-        }
+      // Notify parent component
+      if (onScheduleSelect) {
+        onScheduleSelect({
+          date: dayValue,
+          dayName: daySlot.dayName,
+          timeSlot: {
+            startString: currentTime,
+            endString: currentTime,
+            value: currentTime
+          },
+          isScheduled: true
+        });
       }
     }
   };
@@ -176,54 +179,53 @@ export default function DeliverySchedulingBanner({
           </AlertDescription>
         </Alert>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Day Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-orange-800">{t('checkout.selectDay')}</label>
-            <Select value={selectedDay} onValueChange={handleDayChange}>
-              <SelectTrigger className="border-orange-300">
-                <SelectValue placeholder={t('checkout.chooseDay')} />
-              </SelectTrigger>
-              <SelectContent>
-                {schedulingInfo.availableSlots.map((slot) => (
-                  <SelectItem key={slot.date} value={slot.date}>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {slot.isToday ? t('checkout.today') : slot.isTomorrow ? t('checkout.tomorrow') : slot.dayName}
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({slot.startTimeString} - {slot.endTimeString})
-                        </span>
+        {/* Day Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-orange-800">{t('checkout.selectDay')}</label>
+          <Select value={selectedDay} onValueChange={handleDayChange}>
+            <SelectTrigger className="border-orange-300">
+              <SelectValue placeholder={t('checkout.chooseDay')} />
+            </SelectTrigger>
+            <SelectContent>
+              {schedulingInfo.availableSlots.map((slot) => (
+                <SelectItem key={slot.date} value={slot.date}>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>
+                      {slot.isToday ? t('checkout.today') : slot.isTomorrow ? t('checkout.tomorrow') : slot.dayName}
+                      <span className="text-xs text-gray-500 ml-1">
+                        ({slot.startTimeString} - {slot.endTimeString})
                       </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Slot Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-orange-800">{t('checkout.selectTimeSlot')}</label>
-            <Select value={selectedTimeSlot} onValueChange={handleTimeSlotChange}>
-              <SelectTrigger className="border-orange-300">
-                <SelectValue placeholder={t('checkout.chooseTime')} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTimeSlots.map((slot) => (
-                  <SelectItem key={slot.value} value={slot.value}>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{slot.startString} - {slot.endString}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+      </CardContent>
+      <CardFooter className="bg-card border-t">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="delivery-time">{t('checkout.selectTimeSlot')}</FieldLabel>
+            <InputGroup>
+              <InputGroupInput
+                id="delivery-time"
+                type="time"
+                value={selectedTime}
+                onChange={handleTimeChange}
+                className="appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+              />
+              <InputGroupAddon>
+                <Clock2Icon className="text-muted-foreground" />
+              </InputGroupAddon>
+            </InputGroup>
+          </Field>
+        </FieldGroup>
+      </CardFooter>
+      <CardContent className="pt-0">
 
-        {selectedDay && selectedTimeSlot && (
+        {selectedDay && selectedTime && (
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
@@ -231,8 +233,7 @@ export default function DeliverySchedulingBanner({
               {schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isToday ? t('checkout.today') : 
                schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.isTomorrow ? t('checkout.tomorrow') :
                schedulingInfo.availableSlots.find(s => s.date === selectedDay)?.dayName} {t('checkout.at')}{' '}
-              {availableTimeSlots.find(s => s.value === selectedTimeSlot)?.startString} - {' '}
-              {availableTimeSlots.find(s => s.value === selectedTimeSlot)?.endString}.
+              {selectedTime}.
             </AlertDescription>
           </Alert>
         )}
