@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { fetchWithAuth } from "@/context/AuthContext"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { PancakeInfoText } from "@/components/PancakeInfoText"
 
 export default function DeluxeBox() {
   const navigate = useNavigate()
@@ -239,6 +240,8 @@ export default function DeluxeBox() {
                 />
               </div>
             )}
+            {/* Info text below image */}
+            <PancakeInfoText className="px-2" />
           </div>
 
           {/* Right: Item Info and Selection Controls */}

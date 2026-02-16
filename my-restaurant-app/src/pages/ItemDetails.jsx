@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { PancakeInfoText } from "@/components/PancakeInfoText"
 import {
   Collapsible,
   CollapsibleContent,
@@ -493,42 +494,47 @@ export default function ItemDetails() {
 
       {/* Desktop Layout */}
       <div className="hidden md:grid md:grid-cols-2 gap-8">
-        <div className="relative aspect-video md:aspect-square">
-          <img
-            src={item.image_url || '/elementor-placeholder-image.webp'}
-            alt={item.name}
-            className="w-full h-full object-cover rounded-lg"
-          />
+        <div className="space-y-4">
+          <div className="relative aspect-video md:aspect-square">
+            <img
+              src={item.image_url || '/elementor-placeholder-image.webp'}
+              alt={item.name}
+              className="w-full h-full object-cover rounded-lg"
+            />
 
-          {/* Labels/Badges */}
-          <div className="absolute top-2 left-2 z-10 flex flex-col gap-2">
-            {(item.labels || []).map((label, index) => (
-              <Badge
-                key={index}
-                variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
-                className="shadow-md capitalize"
+            {/* Labels/Badges */}
+            <div className="absolute top-2 left-2 z-10 flex flex-col gap-2">
+              {(item.labels || []).map((label, index) => (
+                <Badge
+                  key={index}
+                  variant={label === 'new' ? 'default' : label === 'popular' ? 'destructive' : 'secondary'}
+                  className="shadow-md capitalize"
+                >
+                  {label}
+                </Badge>
+              ))}
+            </div>
+
+            {isLoggedIn && (
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
+                )}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
-                {label}
-              </Badge>
-            ))}
+                <Heart
+                  className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
+                  fill={isFavorite ? 'red' : 'none'}
+                />
+              </button>
+            )}
           </div>
-
-          {isLoggedIn && (
-            <button
-              type="button"
-              onClick={handleToggleFavorite}
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "icon" }),
-                "absolute top-2 right-2 z-30 bg-white/90 text-gray-400 hover:text-red-500/80 rounded-full border border-white/70 shadow-md transition-colors p-1.5 pointer-events-auto"
-              )}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart
-                className={`h-6 w-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`}
-                fill={isFavorite ? 'red' : 'none'}
-              />
-            </button>
-          )}
+          
+          {/* Info text below image on the left */}
+          <PancakeInfoText className="px-2" />
         </div>
 
         <div className="space-y-6">
@@ -814,6 +820,9 @@ export default function ItemDetails() {
             </button>
           )}
         </div>
+
+        {/* Info text below image */}
+        <PancakeInfoText className="mb-4" />
 
         {/* Price and Quantity Selector */}
         <Card>

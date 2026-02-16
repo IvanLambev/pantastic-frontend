@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchWithAuth } from "@/context/AuthContext";
 import RestaurantSelector from "@/components/ui/RestaurantSelector";
 import { DeluxeBoxModal } from "@/components/DeluxeBoxModal";
+import { PancakeInfoText } from "@/components/PancakeInfoText";
 import { convertBgnToEur, formatDualCurrencyCompact } from "@/utils/currency"
 import { t, translateLabel, translateDynamicLabel } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
@@ -858,6 +859,7 @@ const Food = () => {
                           </div>
 
                           <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
+                            <PancakeInfoText className="mb-2 px-1" />
                             <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 leading-tight">{itemName}</h3>
                             <span className="font-bold text-sm sm:text-base text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
 
@@ -937,6 +939,7 @@ const Food = () => {
                     </div>
 
                     <CardContent className="flex flex-1 flex-col p-2.5 sm:p-3 gap-2">
+                      <PancakeInfoText className="mb-2 px-1" />
                       <h3 className="font-semibold text-xs sm:text-sm line-clamp-3 leading-tight text-left">{itemName}</h3>
                       <span className="font-bold text-sm sm:text-base text-primary">{formatDualCurrencyCompact(itemPrice)}</span>
 
@@ -1126,6 +1129,7 @@ const Food = () => {
                               </div>
                               
                               <CardContent className="flex flex-col flex-grow p-4">
+                                <PancakeInfoText className="mb-3" />
                                 <h3 className="font-semibold mb-2 text-lg line-clamp-3 text-left">{itemName}</h3>
 
                                 <div className="flex flex-col gap-3 mt-auto">
@@ -1212,6 +1216,7 @@ const Food = () => {
 
                         </div>
                         <CardContent className="flex flex-col flex-grow p-4">
+                          <PancakeInfoText className="mb-3" />
                           <h3 className="font-semibold mb-2 text-lg line-clamp-3 text-left">{itemName}</h3>
 
                           <div className="flex flex-col gap-3 mt-auto">

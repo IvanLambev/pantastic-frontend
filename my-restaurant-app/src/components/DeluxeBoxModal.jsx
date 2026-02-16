@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { formatDualCurrencyCompact } from "@/utils/currency"
+import { PancakeInfoText } from "@/components/PancakeInfoText"
 import { Loader2 } from "lucide-react"
 
 export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCart }) {
@@ -193,11 +194,15 @@ export function DeluxeBoxModal({ isOpen, onClose, item, restaurantId, onAddToCar
           <div className="space-y-6 py-4">
             {/* Item Image */}
             {item?.image_url && (
-              <img
-                src={item.image_url}
-                alt={item.name}
-                className="w-full h-48 object-cover rounded-lg"
-              />
+              <div>
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                {/* Info text below image */}
+                <PancakeInfoText className="mt-3" />
+              </div>
             )}
 
             {/* Base Price */}
