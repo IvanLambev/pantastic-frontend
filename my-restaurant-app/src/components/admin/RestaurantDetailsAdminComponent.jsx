@@ -125,6 +125,12 @@ export default function RestaurantDetailsAdminComponent() {
   const [addonTemplateOpen, setAddonTemplateOpen] = useState(false);
   const [removableTemplateOpen, setRemovableTemplateOpen] = useState(false);
 
+  const getTemplateId = (template) => String(
+    template?.template_id ?? template?.id ?? template?.addon_template_id ?? template?.removable_template_id ?? ""
+  );
+
+  const normalizeTemplateIds = (ids = []) => ids.map(id => String(id));
+
   // Import dialog states
   const [showImportAddonDialog, setShowImportAddonDialog] = useState(false);
   const [showImportRemovableDialog, setShowImportRemovableDialog] = useState(false);
@@ -415,7 +421,10 @@ export default function RestaurantDetailsAdminComponent() {
 
       // Auto-select the new template if created for current restaurant
       if (lastTemplateId) {
-        setSelectedAddonTemplates(prev => [...prev, lastTemplateId]);
+        const normalizedId = String(lastTemplateId);
+        setSelectedAddonTemplates(prev => (
+          prev.includes(normalizedId) ? prev : [...prev, normalizedId]
+        ));
       }
     } catch (error) {
       console.error('Error creating addon template:', error);
@@ -507,7 +516,10 @@ export default function RestaurantDetailsAdminComponent() {
 
       // Auto-select the new template if created for current restaurant
       if (lastTemplateId) {
-        setSelectedRemovableTemplates(prev => [...prev, lastTemplateId]);
+        const normalizedId = String(lastTemplateId);
+        setSelectedRemovableTemplates(prev => (
+          prev.includes(normalizedId) ? prev : [...prev, normalizedId]
+        ));
       }
     } catch (error) {
       console.error('Error creating removable template:', error);
@@ -881,8 +893,8 @@ export default function RestaurantDetailsAdminComponent() {
     }
 
     // Set selected templates for editing
-    setSelectedAddonTemplates(item.addon_template_ids || []);
-    setSelectedRemovableTemplates(item.removable_template_ids || []);
+    setSelectedAddonTemplates(normalizeTemplateIds(item.addon_template_ids || []));
+    setSelectedRemovableTemplates(normalizeTemplateIds(item.removable_template_ids || []));
 
     setItemForm({
       id: item.item_id || item[0],
@@ -978,7 +990,7 @@ export default function RestaurantDetailsAdminComponent() {
                   try {
                     // Find the template details from the current restaurant
                     const sourceTemplate = availableAddonTemplates.find(t => 
-                      (t.id || t.template_id) === templateId
+                      getTemplateId(t) === String(templateId)
                     );
                     
                     if (sourceTemplate) {
@@ -1025,7 +1037,7 @@ export default function RestaurantDetailsAdminComponent() {
                   try {
                     // Find the template details from the current restaurant
                     const sourceTemplate = availableRemovableTemplates.find(t => 
-                      (t.id || t.template_id) === templateId
+                      getTemplateId(t) === String(templateId)
                     );
                     
                     if (sourceTemplate) {
@@ -2067,6 +2079,7 @@ export default function RestaurantDetailsAdminComponent() {
                           <Popover open={addonTemplateOpen} onOpenChange={setAddonTemplateOpen}>
                             <PopoverTrigger asChild>
                               <Button
+                                type="button"
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={addonTemplateOpen}
@@ -2086,10 +2099,11 @@ export default function RestaurantDetailsAdminComponent() {
                                   <CommandGroup>
                                     {availableAddonTemplates.map((template) => (
                                       <CommandItem
-                                        key={template.id || template.template_id}
+                                        key={getTemplateId(template)}
                                         value={template.name}
                                         onSelect={() => {
-                                          const templateId = template.id || template.template_id;
+                                          const templateId = getTemplateId(template);
+                                          if (!templateId) return;
                                           setSelectedAddonTemplates(prev =>
                                             prev.includes(templateId)
                                               ? prev.filter(id => id !== templateId)
@@ -2100,7 +2114,7 @@ export default function RestaurantDetailsAdminComponent() {
                                         <CheckIcon
                                           className={cn(
                                             "mr-2 h-4 w-4",
-                                            selectedAddonTemplates.includes(template.id || template.template_id)
+                                            selectedAddonTemplates.includes(getTemplateId(template))
                                               ? "opacity-100" : "opacity-0"
                                           )}
                                         />
@@ -2115,6 +2129,7 @@ export default function RestaurantDetailsAdminComponent() {
                           <Drawer>
                             <DrawerTrigger asChild>
                               <Button
+                                type="button"
                                 variant="outline"
                                 size="icon"
                                 onClick={() => {
@@ -2283,11 +2298,12 @@ export default function RestaurantDetailsAdminComponent() {
                         {selectedAddonTemplates.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
                             {selectedAddonTemplates.map(templateId => {
-                              const template = availableAddonTemplates.find(t => (t.id || t.template_id) === templateId);
+                              const template = availableAddonTemplates.find(t => getTemplateId(t) === String(templateId));
                               return template ? (
                                 <Badge key={templateId} variant="secondary">
                                   {template.name}
                                   <button
+                                    type="button"
                                     onClick={() => setSelectedAddonTemplates(prev => prev.filter(id => id !== templateId))}
                                     className="ml-2 hover:text-red-500"
                                   >
@@ -2310,6 +2326,7 @@ export default function RestaurantDetailsAdminComponent() {
                           <Popover open={removableTemplateOpen} onOpenChange={setRemovableTemplateOpen}>
                             <PopoverTrigger asChild>
                               <Button
+                                type="button"
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={removableTemplateOpen}
@@ -2329,10 +2346,11 @@ export default function RestaurantDetailsAdminComponent() {
                                   <CommandGroup>
                                     {availableRemovableTemplates.map((template) => (
                                       <CommandItem
-                                        key={template.id || template.template_id}
+                                        key={getTemplateId(template)}
                                         value={template.name}
                                         onSelect={() => {
-                                          const templateId = template.id || template.template_id;
+                                          const templateId = getTemplateId(template);
+                                          if (!templateId) return;
                                           setSelectedRemovableTemplates(prev =>
                                             prev.includes(templateId)
                                               ? prev.filter(id => id !== templateId)
@@ -2343,7 +2361,7 @@ export default function RestaurantDetailsAdminComponent() {
                                         <CheckIcon
                                           className={cn(
                                             "mr-2 h-4 w-4",
-                                            selectedRemovableTemplates.includes(template.id || template.template_id)
+                                            selectedRemovableTemplates.includes(getTemplateId(template))
                                               ? "opacity-100" : "opacity-0"
                                           )}
                                         />
@@ -2358,6 +2376,7 @@ export default function RestaurantDetailsAdminComponent() {
                           <Drawer>
                             <DrawerTrigger asChild>
                               <Button
+                                type="button"
                                 variant="outline"
                                 size="icon"
                                 onClick={() => {
@@ -2499,11 +2518,12 @@ export default function RestaurantDetailsAdminComponent() {
                         {selectedRemovableTemplates.length > 0 && (
                           <div className="flex flex-wrap gap-2 mt-2">
                             {selectedRemovableTemplates.map(templateId => {
-                              const template = availableRemovableTemplates.find(t => (t.id || t.template_id) === templateId);
+                              const template = availableRemovableTemplates.find(t => getTemplateId(t) === String(templateId));
                               return template ? (
                                 <Badge key={templateId} variant="secondary">
                                   {template.name}
                                   <button
+                                    type="button"
                                     onClick={() => setSelectedRemovableTemplates(prev => prev.filter(id => id !== templateId))}
                                     className="ml-2 hover:text-red-500"
                                   >
