@@ -968,11 +968,11 @@ export default function RestaurantDetailsAdminComponent() {
                 failCount++;
               }
             } else {
-              // Create restaurant-specific addon and removable templates
+              // Handle addon and removable templates (reuse global templates, create copies for non-global)
               let restaurantAddonTemplateIds = [];
               let restaurantRemovableTemplateIds = [];
 
-              // Step 1: Create addon templates for this restaurant if any are selected
+              // Step 1: Handle addon templates - reuse global templates, create copies for non-global ones
               if (selectedAddonTemplates.length > 0) {
                 for (const templateId of selectedAddonTemplates) {
                   try {
@@ -982,35 +982,44 @@ export default function RestaurantDetailsAdminComponent() {
                     );
                     
                     if (sourceTemplate) {
-                      // Create a copy of this template for the target restaurant
-                      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          restaurant_id: restaurantId,
-                          template: {
-                            name: sourceTemplate.name,
-                            description: sourceTemplate.description || "",
-                            addons: sourceTemplate.addons || {},
-                            is_predefined: false
-                          }
-                        })
-                      });
-
-                      if (response.ok) {
-                        const result = await response.json();
-                        restaurantAddonTemplateIds.push(result.template_id);
+                      // Check if the template is global
+                      if (sourceTemplate.is_global) {
+                        // If global, reuse the same template ID for all restaurants
+                        console.log(`✅ Using global addon template: ${sourceTemplate.name} (${templateId})`);
+                        restaurantAddonTemplateIds.push(templateId);
                       } else {
-                        console.error(`Failed to create addon template for restaurant ${restaurantId}`);
+                        // If not global, create a copy of this template for the target restaurant
+                        console.log(`📋 Creating copy of non-global addon template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
+                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            restaurant_id: restaurantId,
+                            template: {
+                              name: sourceTemplate.name,
+                              description: sourceTemplate.description || "",
+                              addons: sourceTemplate.addons || {},
+                              is_predefined: false,
+                              is_global: false
+                            }
+                          })
+                        });
+
+                        if (response.ok) {
+                          const result = await response.json();
+                          restaurantAddonTemplateIds.push(result.template_id);
+                        } else {
+                          console.error(`Failed to create addon template for restaurant ${restaurantId}`);
+                        }
                       }
                     }
                   } catch (error) {
-                    console.error(`Error creating addon template for restaurant ${restaurantId}:`, error);
+                    console.error(`Error handling addon template for restaurant ${restaurantId}:`, error);
                   }
                 }
               }
 
-              // Step 2: Create removable templates for this restaurant if any are selected
+              // Step 2: Handle removable templates - reuse global templates, create copies for non-global ones
               if (selectedRemovableTemplates.length > 0) {
                 for (const templateId of selectedRemovableTemplates) {
                   try {
@@ -1020,30 +1029,39 @@ export default function RestaurantDetailsAdminComponent() {
                     );
                     
                     if (sourceTemplate) {
-                      // Create a copy of this template for the target restaurant
-                      const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          restaurant_id: restaurantId,
-                          template: {
-                            name: sourceTemplate.name,
-                            description: sourceTemplate.description || "",
-                            removables: sourceTemplate.removables || [],
-                            is_predefined: false
-                          }
-                        })
-                      });
-
-                      if (response.ok) {
-                        const result = await response.json();
-                        restaurantRemovableTemplateIds.push(result.template_id);
+                      // Check if the template is global
+                      if (sourceTemplate.is_global) {
+                        // If global, reuse the same template ID for all restaurants
+                        console.log(`✅ Using global removable template: ${sourceTemplate.name} (${templateId})`);
+                        restaurantRemovableTemplateIds.push(templateId);
                       } else {
-                        console.error(`Failed to create removable template for restaurant ${restaurantId}`);
+                        // If not global, create a copy of this template for the target restaurant
+                        console.log(`📋 Creating copy of non-global removable template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
+                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            restaurant_id: restaurantId,
+                            template: {
+                              name: sourceTemplate.name,
+                              description: sourceTemplate.description || "",
+                              removables: sourceTemplate.removables || [],
+                              is_predefined: false,
+                              is_global: false
+                            }
+                          })
+                        });
+
+                        if (response.ok) {
+                          const result = await response.json();
+                          restaurantRemovableTemplateIds.push(result.template_id);
+                        } else {
+                          console.error(`Failed to create removable template for restaurant ${restaurantId}`);
+                        }
                       }
                     }
                   } catch (error) {
-                    console.error(`Error creating removable template for restaurant ${restaurantId}:`, error);
+                    console.error(`Error handling removable template for restaurant ${restaurantId}:`, error);
                   }
                 }
               }
