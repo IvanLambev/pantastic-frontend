@@ -60,6 +60,13 @@ const Navbar = () => {
     navigate('/food');
   };
 
+  const handleParentClick = () => {
+    // Navigate to food page without selecting a category
+    sessionStorage.removeItem('selectedCategory');
+    window.dispatchEvent(new Event('category-change'));
+    navigate('/food');
+  };
+
   const hasItems = cartItems.length > 0;
   const totalQuantity = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
@@ -92,7 +99,10 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
+                <NavigationMenuTrigger 
+                  onClick={handleParentClick}
+                  className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black"
+                >
                   Сладки Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -111,7 +121,10 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
+                <NavigationMenuTrigger 
+                  onClick={handleParentClick}
+                  className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black"
+                >
                   Солени Палачинки
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -127,7 +140,10 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black">
+                <NavigationMenuTrigger 
+                  onClick={handleParentClick}
+                  className="bg-black text-white hover:bg-white hover:text-black focus:bg-zinc-900 focus:text-white data-[active]:bg-zinc-900 data-[state=open]:bg-white data-[state=open]:text-black"
+                >
                   Делукс Кутии
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -227,7 +243,14 @@ const Navbar = () => {
                 </SheetClose>
 
                 <div className="space-y-2 pt-1 border-t border-zinc-800">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Сладки Палачинки</h3>
+                  <SheetClose asChild>
+                    <button
+                      onClick={handleParentClick}
+                      className="w-full text-left text-sm font-semibold text-gray-400 uppercase tracking-wider px-2 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Сладки Палачинки
+                    </button>
+                  </SheetClose>
                   <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
@@ -249,7 +272,14 @@ const Navbar = () => {
                 </div>
 
                 <div className="space-y-2 pt-1 border-t border-zinc-800">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Солени Палачинки</h3>
+                  <SheetClose asChild>
+                    <button
+                      onClick={handleParentClick}
+                      className="w-full text-left text-sm font-semibold text-gray-400 uppercase tracking-wider px-2 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Солени Палачинки
+                    </button>
+                  </SheetClose>
                   <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
@@ -264,7 +294,14 @@ const Navbar = () => {
                 </div>
 
                 <div className="space-y-2 pt-1 border-t border-zinc-800">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-2">Делукс Кутии</h3>
+                  <SheetClose asChild>
+                    <button
+                      onClick={handleParentClick}
+                      className="w-full text-left text-sm font-semibold text-gray-400 uppercase tracking-wider px-2 hover:text-white transition-colors cursor-pointer"
+                    >
+                      Делукс Кутии
+                    </button>
+                  </SheetClose>
                   <div className="flex flex-col gap-1.5">
                     <SheetClose asChild>
                       <button
