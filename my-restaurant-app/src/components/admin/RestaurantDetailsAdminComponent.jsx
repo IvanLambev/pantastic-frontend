@@ -165,6 +165,38 @@ export default function RestaurantDetailsAdminComponent() {
   const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false);
   const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([]);
 
+  const allRestaurantIdsForCreation = restaurants
+    .map((restaurant) => restaurant.restaurant_id)
+    .filter(Boolean);
+
+  const areAllRestaurantsSelectedForCreation =
+    allRestaurantIdsForCreation.length > 0 &&
+    allRestaurantIdsForCreation.every((restaurantId) =>
+      selectedRestaurantsForCreation.includes(restaurantId)
+    );
+
+  const handleAddToMultipleRestaurantsChange = (checked) => {
+    setAddToMultipleRestaurants(checked === true);
+  };
+
+  const toggleRestaurantForCreation = (restaurantId, checked) => {
+    if (!restaurantId) return;
+
+    setSelectedRestaurantsForCreation((prev) => {
+      if (checked) {
+        if (prev.includes(restaurantId)) return prev;
+        return [...prev, restaurantId];
+      }
+      return prev.filter((id) => id !== restaurantId);
+    });
+  };
+
+  const toggleSelectAllRestaurantsForCreation = () => {
+    setSelectedRestaurantsForCreation(
+      areAllRestaurantsSelectedForCreation ? [] : allRestaurantIdsForCreation
+    );
+  };
+
   // Deluxe box specific states
   const [deluxeBoxConfig, setDeluxeBoxConfig] = useState({
     free_toppings_count: 3,
@@ -2059,7 +2091,7 @@ export default function RestaurantDetailsAdminComponent() {
                         <Checkbox
                           id="multi-restaurant-deluxe"
                           checked={addToMultipleRestaurants}
-                          onCheckedChange={setAddToMultipleRestaurants}
+                          onCheckedChange={handleAddToMultipleRestaurantsChange}
                         />
                         <Label htmlFor="multi-restaurant-deluxe" className="text-sm font-medium">
                           Добави към други ресторанти
@@ -2068,6 +2100,20 @@ export default function RestaurantDetailsAdminComponent() {
                       {addToMultipleRestaurants && (
                         <div className="ml-6 space-y-2">
                           <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                          <div className="flex items-center justify-between gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={toggleSelectAllRestaurantsForCreation}
+                              disabled={restaurants.length === 0}
+                            >
+                              {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
+                            </Button>
+                            <span className="text-xs text-muted-foreground">
+                              {selectedRestaurantsForCreation.length} selected
+                            </span>
+                          </div>
                           <div className="space-y-2">
                             {restaurants.map((r) => (
                               <div key={r.restaurant_id} className="flex items-center space-x-2">
@@ -2075,11 +2121,7 @@ export default function RestaurantDetailsAdminComponent() {
                                   id={`restaurant-deluxe-${r.restaurant_id}`}
                                   checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
                                   onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
-                                    } else {
-                                      setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
-                                    }
+                                    toggleRestaurantForCreation(r.restaurant_id, checked === true);
                                   }}
                                 />
                                 <Label htmlFor={`restaurant-deluxe-${r.restaurant_id}`} className="text-sm cursor-pointer">
@@ -2279,7 +2321,7 @@ export default function RestaurantDetailsAdminComponent() {
                                     <Checkbox
                                       id="multi-restaurant-addon"
                                       checked={addToMultipleRestaurants}
-                                      onCheckedChange={setAddToMultipleRestaurants}
+                                      onCheckedChange={handleAddToMultipleRestaurantsChange}
                                     />
                                     <Label htmlFor="multi-restaurant-addon" className="text-sm font-medium">
                                       Добави към други ресторанти
@@ -2288,6 +2330,20 @@ export default function RestaurantDetailsAdminComponent() {
                                   {addToMultipleRestaurants && (
                                     <div className="ml-6 space-y-2">
                                       <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                                      <div className="flex items-center justify-between gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={toggleSelectAllRestaurantsForCreation}
+                                          disabled={restaurants.length === 0}
+                                        >
+                                          {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
+                                        </Button>
+                                        <span className="text-xs text-muted-foreground">
+                                          {selectedRestaurantsForCreation.length} selected
+                                        </span>
+                                      </div>
                                       <div className="space-y-2">
                                         {restaurants.map((r) => (
                                           <div key={r.restaurant_id} className="flex items-center space-x-2">
@@ -2295,11 +2351,7 @@ export default function RestaurantDetailsAdminComponent() {
                                               id={`restaurant-${r.restaurant_id}`}
                                               checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
                                               onCheckedChange={(checked) => {
-                                                if (checked) {
-                                                  setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
-                                                } else {
-                                                  setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
-                                                }
+                                                toggleRestaurantForCreation(r.restaurant_id, checked === true);
                                               }}
                                             />
                                             <Label htmlFor={`restaurant-${r.restaurant_id}`} className="text-sm cursor-pointer">
@@ -2498,7 +2550,7 @@ export default function RestaurantDetailsAdminComponent() {
                                     <Checkbox
                                       id="multi-restaurant-removable"
                                       checked={addToMultipleRestaurants}
-                                      onCheckedChange={setAddToMultipleRestaurants}
+                                      onCheckedChange={handleAddToMultipleRestaurantsChange}
                                     />
                                     <Label htmlFor="multi-restaurant-removable" className="text-sm font-medium">
                                       Добави към други ресторанти
@@ -2507,6 +2559,20 @@ export default function RestaurantDetailsAdminComponent() {
                                   {addToMultipleRestaurants && (
                                     <div className="ml-6 space-y-2">
                                       <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                                      <div className="flex items-center justify-between gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={toggleSelectAllRestaurantsForCreation}
+                                          disabled={restaurants.length === 0}
+                                        >
+                                          {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
+                                        </Button>
+                                        <span className="text-xs text-muted-foreground">
+                                          {selectedRestaurantsForCreation.length} selected
+                                        </span>
+                                      </div>
                                       <div className="space-y-2">
                                         {restaurants.map((r) => (
                                           <div key={r.restaurant_id} className="flex items-center space-x-2">
@@ -2514,11 +2580,7 @@ export default function RestaurantDetailsAdminComponent() {
                                               id={`restaurant-removable-${r.restaurant_id}`}
                                               checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
                                               onCheckedChange={(checked) => {
-                                                if (checked) {
-                                                  setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
-                                                } else {
-                                                  setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
-                                                }
+                                                toggleRestaurantForCreation(r.restaurant_id, checked === true);
                                               }}
                                             />
                                             <Label htmlFor={`restaurant-removable-${r.restaurant_id}`} className="text-sm cursor-pointer">
@@ -2568,7 +2630,7 @@ export default function RestaurantDetailsAdminComponent() {
                         <Checkbox
                           id="multi-restaurant-item"
                           checked={addToMultipleRestaurants}
-                          onCheckedChange={setAddToMultipleRestaurants}
+                          onCheckedChange={handleAddToMultipleRestaurantsChange}
                         />
                         <Label htmlFor="multi-restaurant-item" className="text-sm font-medium">
                           Добави към други ресторанти
@@ -2577,6 +2639,20 @@ export default function RestaurantDetailsAdminComponent() {
                       {addToMultipleRestaurants && (
                         <div className="ml-6 space-y-2">
                           <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                          <div className="flex items-center justify-between gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={toggleSelectAllRestaurantsForCreation}
+                              disabled={restaurants.length === 0}
+                            >
+                              {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
+                            </Button>
+                            <span className="text-xs text-muted-foreground">
+                              {selectedRestaurantsForCreation.length} selected
+                            </span>
+                          </div>
                           <div className="space-y-2">
                             {restaurants.map((r) => (
                               <div key={r.restaurant_id} className="flex items-center space-x-2">
@@ -2584,11 +2660,7 @@ export default function RestaurantDetailsAdminComponent() {
                                   id={`restaurant-item-${r.restaurant_id}`}
                                   checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
                                   onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedRestaurantsForCreation(prev => [...prev, r.restaurant_id]);
-                                    } else {
-                                      setSelectedRestaurantsForCreation(prev => prev.filter(id => id !== r.restaurant_id));
-                                    }
+                                    toggleRestaurantForCreation(r.restaurant_id, checked === true);
                                   }}
                                 />
                                 <Label htmlFor={`restaurant-item-${r.restaurant_id}`} className="text-sm cursor-pointer">
