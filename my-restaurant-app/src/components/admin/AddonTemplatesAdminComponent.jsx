@@ -95,6 +95,10 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
   const [addToMultipleRestaurants, setAddToMultipleRestaurants] = useState(false)
   const [selectedRestaurantsForCreation, setSelectedRestaurantsForCreation] = useState([])
 
+  // Import dialog states
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importText, setImportText] = useState("")
+
   // Initialize the form with react-hook-form - Updated for new API structure
   const form = useForm({
     resolver: zodResolver(templateSchema),
@@ -313,6 +317,75 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
     });
   };
 
+  // Handle importing addons from text
+  const handleImportAddons = () => {
+    if (!importText.trim()) {
+      toast.error("Please enter text to import");
+      return;
+    }
+
+    try {
+      const lines = importText.split('\n').filter(line => line.trim());
+      const parsedAddons = {};
+
+      for (const line of lines) {
+        let name, priceBGN;
+        
+        // Try format: "Name (weight) (price лв.price €)" or "Name (weight) (price €price лв.)"
+        const match1 = line.match(/^(.+?)\s*\(([^)]+)\)\s*\((\d+[.,]\d+)\s*лв\./i);
+        const match2 = line.match(/^(.+?)\s*\(([^)]+)\)\s*\((\d+[.,]\d+)\s*€/i);
+        
+        if (match1) {
+          name = match1[1].trim();
+          const weight = match1[2].trim();
+          priceBGN = match1[3].replace(',', '.');
+          
+          // Combine name and weight
+          const fullName = `${name} (${weight})`;
+          parsedAddons[fullName] = parseFloat(priceBGN);
+        } else if (match2) {
+          name = match2[1].trim();
+          const weight = match2[2].trim();
+          priceBGN = match2[3].replace(',', '.');
+          
+          // Combine name and weight
+          const fullName = `${name} (${weight})`;
+          parsedAddons[fullName] = parseFloat(priceBGN);
+        } else {
+          // Try simple format: "Name - Price"
+          const simpleMatch = line.match(/^(.+?)\s*[-:]\s*(\d+[.,]\d+)/);
+          if (simpleMatch) {
+            parsedAddons[simpleMatch[1].trim()] = parseFloat(simpleMatch[2].replace(',', '.'));
+          }
+        }
+      }
+
+      if (Object.keys(parsedAddons).length === 0) {
+        toast.error("No valid addons found in text");
+        return;
+      }
+
+      // Merge with existing addons
+      const currentAddons = form.getValues("addons") || {};
+      const filteredCurrent = Object.fromEntries(
+        Object.entries(currentAddons).filter(([key, val]) => key && val !== 0)
+      );
+      
+      form.setValue("addons", {
+        ...filteredCurrent,
+        ...parsedAddons
+      });
+
+      toast.success(`Imported ${Object.keys(parsedAddons).length} addons`);
+      setShowImportDialog(false);
+      setImportText("");
+
+    } catch (error) {
+      console.error('Error importing addons:', error);
+      toast.error("Error importing addons");
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Loading addon templates...</div>
   }
@@ -491,9 +564,14 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label>Addons</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addAddon}>
-                    <Plus className="h-4 w-4 mr-2" /> Add Addon
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+                      <Plus className="h-4 w-4 mr-2" /> Import from Text
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={addAddon}>
+                      <Plus className="h-4 w-4 mr-2" /> Add Addon
+                    </Button>
+                  </div>
                 </div>
 
                 {Object.entries(form.watch('addons') || {}).map(([addonKey, price], index) => (
@@ -648,7 +726,59 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Addons Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Addons from Text</DialogTitle>
+            <DialogDescription>
+              Paste text in format: "Name (weight) (price лв.price €)" or "Name - Price" on each line
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="import-text">Text to Import</Label>
+              <Textarea
+                id="import-text"
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="Choose toppings:\nChocolate (70g) (1.80 лв.0.92 €)\nBanana (80g) (2.00 лв.1.02 €)\n..."
+                rows={10}
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-2">Example format:</p>
+              <pre className="text-xs">
+{`Choose toppings:
+Chocolate (70g) (1.80 лв.0.92 €)
+White Chocolate (70g) (1.80 лв.0.92 €)
+Banana (80g) (2.00 лв.1.02 €)
+
+Or simple format:
+Cheese - 2.50
+Bacon - 3.00`}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowImportDialog(false);
+                setImportText("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleImportAddons}>
+              Import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

@@ -109,7 +109,8 @@ export default function RestaurantDetailsAdminComponent() {
   const [newAddonTemplate, setNewAddonTemplate] = useState({
     name: "",
     description: "",
-    addons: [{ name: "", price: "" }]
+    addons: [{ name: "", price: "" }],
+    is_global: false
   });
 
   // Removable template creation
@@ -371,7 +372,8 @@ export default function RestaurantDetailsAdminComponent() {
                 name: newAddonTemplate.name,
                 description: newAddonTemplate.description,
                 addons: addonsObject,
-                is_predefined: false
+                is_predefined: false,
+                is_global: newAddonTemplate.is_global || false
               }
             })
           });
@@ -401,7 +403,7 @@ export default function RestaurantDetailsAdminComponent() {
       }
 
       setShowCreateAddonTemplate(false);
-      setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }] });
+      setNewAddonTemplate({ name: "", description: "", addons: [{ name: "", price: "" }], is_global: false });
       setAddonTemplateOpen(false);
       setAddToMultipleRestaurants(false);
       setSelectedRestaurantsForCreation([]);
@@ -1728,7 +1730,8 @@ export default function RestaurantDetailsAdminComponent() {
                                   setNewAddonTemplate({
                                     name: "deluxebox-addon",
                                     description: "",
-                                    addons: [{ name: "", price: "" }]
+                                    addons: [{ name: "", price: "" }],
+                                    is_global: false
                                   });
                                 }}
                               >
@@ -1760,6 +1763,21 @@ export default function RestaurantDetailsAdminComponent() {
                                     onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, description: e.target.value })}
                                     placeholder="Добавки за deluxe box..."
                                   />
+                                </div>
+                                <div className="flex items-center space-x-2 rounded-md border p-3">
+                                  <Checkbox
+                                    id="deluxe-is-global"
+                                    checked={newAddonTemplate.is_global}
+                                    onCheckedChange={(checked) => setNewAddonTemplate({ ...newAddonTemplate, is_global: checked })}
+                                  />
+                                  <div className="space-y-0.5">
+                                    <Label htmlFor="deluxe-is-global" className="font-medium">
+                                      Глобален шаблон
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                      Маркирайте като глобален, за да бъде достъпен във всички ресторанти
+                                    </p>
+                                  </div>
                                 </div>
                                 <div>
                                   <div className="flex justify-between items-center mb-2">
@@ -2085,7 +2103,8 @@ export default function RestaurantDetailsAdminComponent() {
                                   setNewAddonTemplate({
                                     name: itemForm.name ? `${itemForm.name} - addon` : "",
                                     description: "",
-                                    addons: [{ name: "", price: "" }]
+                                    addons: [{ name: "", price: "" }],
+                                    is_global: false
                                   });
                                 }}
                               >
@@ -2120,6 +2139,21 @@ export default function RestaurantDetailsAdminComponent() {
                                     onChange={(e) => setNewAddonTemplate({ ...newAddonTemplate, description: e.target.value })}
                                     placeholder="Кратко описание на шаблона..."
                                   />
+                                </div>
+                                <div className="flex items-center space-x-2 rounded-md border p-3">
+                                  <Checkbox
+                                    id="item-is-global"
+                                    checked={newAddonTemplate.is_global}
+                                    onCheckedChange={(checked) => setNewAddonTemplate({ ...newAddonTemplate, is_global: checked })}
+                                  />
+                                  <div className="space-y-0.5">
+                                    <Label htmlFor="item-is-global" className="font-medium">
+                                      Глобален шаблон
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                      Маркирайте като глобален, за да бъде достъпен във всички ресторанти
+                                    </p>
+                                  </div>
                                 </div>
                                 <div>
                                   <div className="flex justify-between items-center mb-2">
