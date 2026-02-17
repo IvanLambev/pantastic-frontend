@@ -131,6 +131,26 @@ export default function RestaurantDetailsAdminComponent() {
 
   const normalizeTemplateIds = (ids = []) => ids.map(id => String(id));
 
+  const toggleAddonTemplate = (template) => {
+    const templateId = getTemplateId(template);
+    if (!templateId) return;
+    setSelectedAddonTemplates(prev =>
+      prev.includes(templateId)
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
+  };
+
+  const toggleRemovableTemplate = (template) => {
+    const templateId = getTemplateId(template);
+    if (!templateId) return;
+    setSelectedRemovableTemplates(prev =>
+      prev.includes(templateId)
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
+  };
+
   // Import dialog states
   const [showImportAddonDialog, setShowImportAddonDialog] = useState(false);
   const [showImportRemovableDialog, setShowImportRemovableDialog] = useState(false);
@@ -1591,7 +1611,14 @@ export default function RestaurantDetailsAdminComponent() {
       <div className="w-full px-4 py-4 md:py-8">
         {/* Add/Edit Item Dialog */}
         <Dialog open={showItemModal} onOpenChange={setShowItemModal}>
-          <DialogContent className="w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto"
+            onInteractOutside={(event) => {
+              if (event.target?.closest?.('[data-slot="popover-content"]')) {
+                event.preventDefault();
+              }
+            }}
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <span>{modalMode === "add" ? "Добавяне на продукт" : "Редактиране на продукт"}</span>
@@ -2076,7 +2103,7 @@ export default function RestaurantDetailsAdminComponent() {
                       <div className="space-y-2">
                         <Label>Изберете шаблони за добавки</Label>
                         <div className="flex gap-2">
-                          <Popover open={addonTemplateOpen} onOpenChange={setAddonTemplateOpen}>
+                          <Popover modal open={addonTemplateOpen} onOpenChange={setAddonTemplateOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 type="button"
@@ -2091,7 +2118,7 @@ export default function RestaurantDetailsAdminComponent() {
                                 <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0">
+                            <PopoverContent className="w-[400px] p-0 z-[60]">
                               <Command>
                                 <CommandInput placeholder="Търсете шаблон..." />
                                 <CommandList>
@@ -2101,14 +2128,13 @@ export default function RestaurantDetailsAdminComponent() {
                                       <CommandItem
                                         key={getTemplateId(template)}
                                         value={template.name}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                        }}
                                         onSelect={() => {
-                                          const templateId = getTemplateId(template);
-                                          if (!templateId) return;
-                                          setSelectedAddonTemplates(prev =>
-                                            prev.includes(templateId)
-                                              ? prev.filter(id => id !== templateId)
-                                              : [...prev, templateId]
-                                          );
+                                          toggleAddonTemplate(template);
+                                          setAddonTemplateOpen(true);
                                         }}
                                       >
                                         <CheckIcon
@@ -2323,7 +2349,7 @@ export default function RestaurantDetailsAdminComponent() {
                       <div className="space-y-2">
                         <Label>Изберете шаблони за премахвания</Label>
                         <div className="flex gap-2">
-                          <Popover open={removableTemplateOpen} onOpenChange={setRemovableTemplateOpen}>
+                          <Popover modal open={removableTemplateOpen} onOpenChange={setRemovableTemplateOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 type="button"
@@ -2338,7 +2364,7 @@ export default function RestaurantDetailsAdminComponent() {
                                 <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0">
+                            <PopoverContent className="w-[400px] p-0 z-[60]">
                               <Command>
                                 <CommandInput placeholder="Търсете шаблон..." />
                                 <CommandList>
@@ -2348,14 +2374,13 @@ export default function RestaurantDetailsAdminComponent() {
                                       <CommandItem
                                         key={getTemplateId(template)}
                                         value={template.name}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                        }}
                                         onSelect={() => {
-                                          const templateId = getTemplateId(template);
-                                          if (!templateId) return;
-                                          setSelectedRemovableTemplates(prev =>
-                                            prev.includes(templateId)
-                                              ? prev.filter(id => id !== templateId)
-                                              : [...prev, templateId]
-                                          );
+                                          toggleRemovableTemplate(template);
+                                          setRemovableTemplateOpen(true);
                                         }}
                                       >
                                         <CheckIcon
