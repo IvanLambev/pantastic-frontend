@@ -48,6 +48,8 @@ const Home = () => {
       <CollectionSection
         restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
         collectionIndex={0}
+        title={t('home.featuredItems')}
+        subtitle={t('home.featuredItemsDesc')}
         limit={4}
       />
 

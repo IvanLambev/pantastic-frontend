@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { API_URL } from '@/config/api'
-// @ts-ignore - useCart is exported from use-cart.js
-import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Plus, ChevronRight, ArrowRight } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { ChevronRight, ArrowRight } from "lucide-react"
 
 // @ts-ignore - fetchWithAuth is exported from AuthContext.jsx
 import { fetchWithAuth } from "@/context/AuthContext"
@@ -40,6 +42,7 @@ interface CollectionSectionProps {
   collectionId?: string
   collectionIndex?: number // Index of collection to display (0-based)
   title?: string
+  subtitle?: string
   limit?: number
 }
 
@@ -48,10 +51,10 @@ export function CollectionSection({
   collectionId,
   collectionIndex = 0,
   title,
+  subtitle,
   limit = 8
 }: CollectionSectionProps) {
   const navigate = useNavigate()
-  const { addToCart } = useCart()
   const [items, setItems] = useState<MenuItem[]>([])
   const [collection, setCollection] = useState<Collection | null>(null)
   const [loading, setLoading] = useState(true)
@@ -125,25 +128,6 @@ export function CollectionSection({
     fetchCollectionAndItems()
   }, [restaurantId, collectionId, collectionIndex, limit])
 
-  const handleAddToCart = (item: MenuItem) => {
-    // Store the restaurant ID in localStorage when adding to cart
-    const restaurantData = {
-      restaurant_id: restaurantId,
-      collection_id: collection?.collection_id
-    }
-    localStorage.setItem('lastViewedRestaurant', JSON.stringify(restaurantData))
-
-    addToCart({
-      id: String(item.item_id),
-      name: item.name,
-      price: Number(item.price) || 0,
-      image: item.image_url,
-      description: item.description,
-      quantity: 1
-    })
-    toast.success(`Добавено: ${item.name}`)
-  }
-
   const handleItemClick = (item: MenuItem) => {
     // Store the restaurant ID before navigation
     const restaurantData = {
@@ -179,13 +163,14 @@ export function CollectionSection({
   }
 
   const displayTitle = title || collection.name
+  const displaySubtitle = subtitle || collection.description
 
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="mb-8">
         <h2 className="text-3xl md:text-4xl font-bold mb-2">{displayTitle}</h2>
-        {collection.description && (
-          <p className="text-muted-foreground text-lg">{collection.description}</p>
+        {displaySubtitle && (
+          <p className="text-muted-foreground text-lg">{displaySubtitle}</p>
         )}
       </div>
 
@@ -213,7 +198,7 @@ export function CollectionSection({
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
             </div>
 
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-1">
               <CardTitle
                 className="text-lg line-clamp-1 cursor-pointer hover:text-primary transition-colors"
                 onClick={() => handleItemClick(item)}
@@ -221,13 +206,18 @@ export function CollectionSection({
                 {item.name}
               </CardTitle>
               {item.description && (
-                <CardDescription className="line-clamp-2 text-sm">
-                  {item.description}
-                </CardDescription>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CardDescription className="line-clamp-2 text-sm cursor-help">
+                      {item.description}
+                    </CardDescription>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p>{item.description}</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </CardHeader>
-
-            <CardContent className="p-4 pt-0" />
           </Card>
         ))}
       </div>

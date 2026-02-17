@@ -23,6 +23,8 @@ export const translations = {
     orderNow: "Поръчай сега",
     viewMenu: "Виж менюто",
     lookAtOurMenu: "Разгледай нашето меню",
+    featuredItems: "Представени артикули",
+    featuredItemsDesc: "Нашите най-популярни и препоръчани ястия",
     howItWorks: "Как работи",
     step1Title: "Избери",
     step1Desc: "Разгледай нашето меню и избери любимите си палачинки",
