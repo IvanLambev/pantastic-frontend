@@ -72,6 +72,7 @@ const templateSchema = z.object({
   name: z.string().min(2, { message: "Template name must be at least 2 characters" }),
   description: z.string().optional(),
   is_predefined: z.boolean().default(false),
+  is_global: z.boolean().default(false),
   addons: z.record(z.string(), z.coerce.number().min(0, { message: "Price must be a positive number" })).refine(
     (addons) => Object.keys(addons).length > 0,
     { message: "Add at least one addon" }
@@ -101,6 +102,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
       name: "",
       description: "",
       is_predefined: false,
+      is_global: false,
       addons: { "": 0 },
     },
   })
@@ -149,6 +151,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
       name: "",
       description: "",
       is_predefined: false,
+      is_global: false,
       addons: { "": 0 },
     })
     setEditingTemplate(null)
@@ -161,6 +164,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
       name: template.name,
       description: template.description || "",
       is_predefined: template.is_predefined || false,
+      is_global: template.is_global || false,
       addons: template.addons || { "": 0 },
     }
     form.reset(formData)
@@ -212,6 +216,7 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                   description: data.description,
                   addons: data.addons,
                   is_predefined: data.is_predefined,
+                  is_global: data.is_global,
                 },
               }),
             })
@@ -454,6 +459,29 @@ export default function AddonTemplatesAdminComponent({ restaurantId: propRestaur
                       </FormLabel>
                       <FormDescription>
                         Mark this template as predefined if it's a standard set of addons.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="is_global"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Global Template
+                      </FormLabel>
+                      <FormDescription>
+                        Mark this template as global to make it available across all restaurants.
                       </FormDescription>
                     </div>
                   </FormItem>
