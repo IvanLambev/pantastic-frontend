@@ -101,8 +101,12 @@ export default function RestaurantDetailsAdminComponent() {
   // Enhanced item creation state
   const [availableAddonTemplates, setAvailableAddonTemplates] = useState([]);
   const [availableRemovableTemplates, setAvailableRemovableTemplates] = useState([]);
+  const [availableDoughTemplates, setAvailableDoughTemplates] = useState([]);
+  const [availableChocolateTemplates, setAvailableChocolateTemplates] = useState([]);
   const [selectedAddonTemplates, setSelectedAddonTemplates] = useState([]);
   const [selectedRemovableTemplates, setSelectedRemovableTemplates] = useState([]);
+  const [selectedDoughTemplates, setSelectedDoughTemplates] = useState([]);
+  const [selectedChocolateTemplates, setSelectedChocolateTemplates] = useState([]);
 
   // Addon template creation
   const [showCreateAddonTemplate, setShowCreateAddonTemplate] = useState(false);
@@ -124,6 +128,8 @@ export default function RestaurantDetailsAdminComponent() {
   // Combobox states
   const [addonTemplateOpen, setAddonTemplateOpen] = useState(false);
   const [removableTemplateOpen, setRemovableTemplateOpen] = useState(false);
+  const [doughTemplateOpen, setDoughTemplateOpen] = useState(false);
+  const [chocolateTemplateOpen, setChocolateTemplateOpen] = useState(false);
 
   const getTemplateId = (template) => String(
     template?.template_id ?? template?.id ?? template?.addon_template_id ?? template?.removable_template_id ?? ""
@@ -145,6 +151,26 @@ export default function RestaurantDetailsAdminComponent() {
     const templateId = getTemplateId(template);
     if (!templateId) return;
     setSelectedRemovableTemplates(prev =>
+      prev.includes(templateId)
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
+  };
+
+  const toggleDoughTemplate = (template) => {
+    const templateId = getTemplateId(template);
+    if (!templateId) return;
+    setSelectedDoughTemplates(prev =>
+      prev.includes(templateId)
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
+  };
+
+  const toggleChocolateTemplate = (template) => {
+    const templateId = getTemplateId(template);
+    if (!templateId) return;
+    setSelectedChocolateTemplates(prev =>
       prev.includes(templateId)
         ? prev.filter(id => id !== templateId)
         : [...prev, templateId]
@@ -304,24 +330,32 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('🔄 [ADMIN DEBUG] Delivery URL:', `${API_URL}/restaurant/delivery-people`);
         console.log('🔄 [ADMIN DEBUG] Addon Templates URL:', `${API_URL}/restaurant/addon-templates/${idToUse}`);
         console.log('🔄 [ADMIN DEBUG] Removable Templates URL:', `${API_URL}/restaurant/removables/templates/${idToUse}`);
+        console.log('🔄 [ADMIN DEBUG] Dough Templates URL:', `${API_URL}/restaurant/admin/dough-templates/${idToUse}`);
+        console.log('🔄 [ADMIN DEBUG] Chocolate Templates URL:', `${API_URL}/restaurant/admin/chocolate-type-templates/${idToUse}`);
 
         // Fetch all data in parallel
-        const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes] = await Promise.all([
+        const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes, doughTemplatesRes, chocolateTemplatesRes] = await Promise.all([
           fetchWithAdminAuth(`${API_URL}/restaurant/${idToUse}/items`),
           fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
           fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`),
-          fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${idToUse}`)
+          fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${idToUse}`),
+          fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${idToUse}`),
+          fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${idToUse}`)
         ]);
 
         console.log('📡 [ADMIN DEBUG] Items response status:', itemsRes.status, itemsRes.ok);
         console.log('📡 [ADMIN DEBUG] Delivery response status:', deliveryRes.status, deliveryRes.ok);
         console.log('📡 [ADMIN DEBUG] Addon Templates response status:', addonTemplatesRes.status, addonTemplatesRes.ok);
         console.log('📡 [ADMIN DEBUG] Removable Templates response status:', removableTemplatesRes.status, removableTemplatesRes.ok);
+        console.log('📡 [ADMIN DEBUG] Dough Templates response status:', doughTemplatesRes.status, doughTemplatesRes.ok);
+        console.log('📡 [ADMIN DEBUG] Chocolate Templates response status:', chocolateTemplatesRes.status, chocolateTemplatesRes.ok);
 
         const itemsRaw = await itemsRes.json();
         const deliveryRaw = await deliveryRes.json();
         const addonTemplatesRaw = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
         const removableTemplatesRaw = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+        const doughTemplatesRaw = doughTemplatesRes.ok ? await doughTemplatesRes.json() : [];
+        const chocolateTemplatesRaw = chocolateTemplatesRes.ok ? await chocolateTemplatesRes.json() : [];
 
         // Helper function to ensure data is an array (defined inline for useEffect scope)
         const ensureArrayLocal = (data, name) => {
@@ -342,6 +376,8 @@ export default function RestaurantDetailsAdminComponent() {
         const delivery = ensureArrayLocal(deliveryRaw, 'delivery');
         const addonTemplates = ensureArrayLocal(addonTemplatesRaw, 'addonTemplates');
         const removableTemplates = ensureArrayLocal(removableTemplatesRaw, 'removableTemplates');
+        const doughTemplates = ensureArrayLocal(doughTemplatesRaw, 'doughTemplates');
+        const chocolateTemplates = ensureArrayLocal(chocolateTemplatesRaw, 'chocolateTemplates');
 
         console.log('✅ [ADMIN DEBUG] Items data:', items);
         console.log('📊 [ADMIN DEBUG] Items type:', typeof items, 'Is Array:', Array.isArray(items), 'Count:', items?.length);
@@ -351,12 +387,18 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('📊 [ADMIN DEBUG] Addon Templates type:', typeof addonTemplates, 'Is Array:', Array.isArray(addonTemplates), 'Count:', addonTemplates?.length);
         console.log('✅ [ADMIN DEBUG] Removable Templates data:', removableTemplates);
         console.log('📊 [ADMIN DEBUG] Removable Templates type:', typeof removableTemplates, 'Is Array:', Array.isArray(removableTemplates), 'Count:', removableTemplates?.length);
+        console.log('✅ [ADMIN DEBUG] Dough Templates data:', doughTemplates);
+        console.log('📊 [ADMIN DEBUG] Dough Templates type:', typeof doughTemplates, 'Is Array:', Array.isArray(doughTemplates), 'Count:', doughTemplates?.length);
+        console.log('✅ [ADMIN DEBUG] Chocolate Templates data:', chocolateTemplates);
+        console.log('📊 [ADMIN DEBUG] Chocolate Templates type:', typeof chocolateTemplates, 'Is Array:', Array.isArray(chocolateTemplates), 'Count:', chocolateTemplates?.length);
 
         console.log('🎯 [ADMIN DEBUG] Setting state - restaurants:', data);
         console.log('🎯 [ADMIN DEBUG] Setting state - menuItems:', items);
         console.log('🎯 [ADMIN DEBUG] Setting state - deliveryPeople:', delivery);
         console.log('🎯 [ADMIN DEBUG] Setting state - addonTemplates:', addonTemplates);
         console.log('🎯 [ADMIN DEBUG] Setting state - removableTemplates:', removableTemplates);
+        console.log('🎯 [ADMIN DEBUG] Setting state - doughTemplates:', doughTemplates);
+        console.log('🎯 [ADMIN DEBUG] Setting state - chocolateTemplates:', chocolateTemplates);
 
         // Ensure restaurants data is also an array
         const restaurantsArray = ensureArrayLocal(data, 'restaurants');
@@ -367,6 +409,8 @@ export default function RestaurantDetailsAdminComponent() {
         setAvailableTemplates(addonTemplates);
         setAvailableAddonTemplates(addonTemplates);
         setAvailableRemovableTemplates(removableTemplates);
+        setAvailableDoughTemplates(doughTemplates);
+        setAvailableChocolateTemplates(chocolateTemplates);
 
         console.log('✅ [ADMIN DEBUG] All state updated successfully');
 
@@ -947,6 +991,8 @@ export default function RestaurantDetailsAdminComponent() {
     // Set selected templates for editing
     setSelectedAddonTemplates(normalizeTemplateIds(item.addon_template_ids || []));
     setSelectedRemovableTemplates(normalizeTemplateIds(item.removable_template_ids || []));
+    setSelectedDoughTemplates(normalizeTemplateIds(item.dough_template_ids || []));
+    setSelectedChocolateTemplates(normalizeTemplateIds(item.chocolate_template_ids || []));
 
     setItemForm({
       id: item.item_id || item[0],
@@ -967,6 +1013,8 @@ export default function RestaurantDetailsAdminComponent() {
     setItemForm({ id: "", name: "", description: "", image: "", price: "", item_type: "sweet-american", addon_templates: [] });
     setSelectedAddonTemplates([]);
     setSelectedRemovableTemplates([]);
+    setSelectedDoughTemplates([]);
+    setSelectedChocolateTemplates([]);
     setDeluxeBoxConfig({
       free_toppings_count: 3,
       topping_template_id: "",
@@ -1032,9 +1080,11 @@ export default function RestaurantDetailsAdminComponent() {
                 failCount++;
               }
             } else {
-              // Handle addon and removable templates (reuse global templates, create copies for non-global)
+              // Handle template assignment for all optional template types
               let restaurantAddonTemplateIds = [];
               let restaurantRemovableTemplateIds = [];
+              let restaurantDoughTemplateIds = [];
+              let restaurantChocolateTemplateIds = [];
 
               // Step 1: Handle addon templates - reuse global templates, create copies for non-global ones
               if (selectedAddonTemplates.length > 0) {
@@ -1130,19 +1180,116 @@ export default function RestaurantDetailsAdminComponent() {
                 }
               }
 
-              // Step 3: Create the item with the restaurant-specific template IDs
+              // Step 3: Handle dough templates - reuse global templates, create copies for non-global ones
+              if (selectedDoughTemplates.length > 0) {
+                for (const templateId of selectedDoughTemplates) {
+                  try {
+                    const sourceTemplate = availableDoughTemplates.find(t =>
+                      getTemplateId(t) === String(templateId)
+                    );
+
+                    if (sourceTemplate) {
+                      if (sourceTemplate.is_global) {
+                        console.log(`✅ Using global dough template: ${sourceTemplate.name} (${templateId})`);
+                        restaurantDoughTemplateIds.push(templateId);
+                      } else {
+                        console.log(`📋 Creating copy of non-global dough template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
+                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            restaurant_id: restaurantId,
+                            template: {
+                              name: sourceTemplate.name,
+                              description: sourceTemplate.description || "",
+                              doughs: sourceTemplate.doughs || [],
+                              is_predefined: false,
+                              is_global: false
+                            }
+                          })
+                        });
+
+                        if (response.ok) {
+                          const result = await response.json();
+                          restaurantDoughTemplateIds.push(result.template_id);
+                        } else {
+                          console.error(`Failed to create dough template for restaurant ${restaurantId}`);
+                        }
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error handling dough template for restaurant ${restaurantId}:`, error);
+                  }
+                }
+              }
+
+              // Step 4: Handle chocolate templates - reuse global templates, create copies for non-global ones
+              if (selectedChocolateTemplates.length > 0) {
+                for (const templateId of selectedChocolateTemplates) {
+                  try {
+                    const sourceTemplate = availableChocolateTemplates.find(t =>
+                      getTemplateId(t) === String(templateId)
+                    );
+
+                    if (sourceTemplate) {
+                      if (sourceTemplate.is_global) {
+                        console.log(`✅ Using global chocolate template: ${sourceTemplate.name} (${templateId})`);
+                        restaurantChocolateTemplateIds.push(templateId);
+                      } else {
+                        console.log(`📋 Creating copy of non-global chocolate template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
+                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            restaurant_id: restaurantId,
+                            template: {
+                              name: sourceTemplate.name,
+                              description: sourceTemplate.description || "",
+                              chocolate_types: sourceTemplate.chocolate_types || [],
+                              is_predefined: false,
+                              is_global: false
+                            }
+                          })
+                        });
+
+                        if (response.ok) {
+                          const result = await response.json();
+                          restaurantChocolateTemplateIds.push(result.template_id);
+                        } else {
+                          console.error(`Failed to create chocolate template for restaurant ${restaurantId}`);
+                        }
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error handling chocolate template for restaurant ${restaurantId}:`, error);
+                  }
+                }
+              }
+
+              // Step 5: Create the item with the restaurant-specific template IDs
+              const itemPayload = {
+                name: itemForm.name,
+                description: itemForm.description,
+                item_type: itemForm.item_type,
+                price: parseFloat(itemForm.price),
+                addons: {},
+                addon_template_ids: restaurantAddonTemplateIds,
+                removables: [],
+                removable_template_ids: restaurantRemovableTemplateIds,
+              };
+
+              if (restaurantDoughTemplateIds.length > 0) {
+                itemPayload.has_dough_options = true;
+                itemPayload.dough_template_ids = restaurantDoughTemplateIds;
+              }
+
+              if (restaurantChocolateTemplateIds.length > 0) {
+                itemPayload.chocolate_template_ids = restaurantChocolateTemplateIds;
+              }
+
               const itemData = {
                 restaurant_id: restaurantId,
-                item: {
-                  name: itemForm.name,
-                  description: itemForm.description,
-                  item_type: itemForm.item_type,
-                  price: parseFloat(itemForm.price),
-                  addons: {}, // Custom addons can be added here if needed
-                  addon_template_ids: restaurantAddonTemplateIds,
-                  removables: [], // Custom removables can be added here if needed
-                  removable_template_ids: restaurantRemovableTemplateIds
-                }
+                items: [itemPayload]
               };
 
               formData.append("data", JSON.stringify(itemData));
@@ -1151,7 +1298,7 @@ export default function RestaurantDetailsAdminComponent() {
                 formData.append("file", fileInputRef.current.files[0]);
               }
 
-              const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items/template-based`, {
+              const response = await fetchWithAdminAuth(`${API_URL}/restaurant/items`, {
                 method: "POST",
                 body: formData,
               });
@@ -1182,6 +1329,8 @@ export default function RestaurantDetailsAdminComponent() {
         setShowItemModal(false);
         setSelectedAddonTemplates([]);
         setSelectedRemovableTemplates([]);
+        setSelectedDoughTemplates([]);
+        setSelectedChocolateTemplates([]);
         setAddToMultipleRestaurants(false);
         setSelectedRestaurantsForCreation([]);
         setDeluxeBoxConfig({
@@ -1201,7 +1350,12 @@ export default function RestaurantDetailsAdminComponent() {
         name: itemForm.name,
         description: itemForm.description,
         price: parseFloat(itemForm.price),
-        addon_templates: itemForm.addon_templates
+        item_type: itemForm.item_type,
+        addon_template_ids: selectedAddonTemplates,
+        removable_template_ids: selectedRemovableTemplates,
+        dough_template_ids: selectedDoughTemplates,
+        chocolate_template_ids: selectedChocolateTemplates,
+        has_dough_options: selectedDoughTemplates.length > 0
       };
       formData.append("data", JSON.stringify(data));
       if (fileInputRef.current && fileInputRef.current.files[0]) {
@@ -1391,16 +1545,22 @@ export default function RestaurantDetailsAdminComponent() {
     if (!resolvedRestaurantId) return;
 
     try {
-      const [itemsRes, templatesRes] = await Promise.all([
+      const [itemsRes, templatesRes, doughTemplatesRes, chocolateTemplatesRes] = await Promise.all([
         fetchWithAdminAuth(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`)
+        fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${resolvedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${resolvedRestaurantId}`)
       ]);
 
       const itemsRaw = await itemsRes.json();
       const templatesRaw = templatesRes.ok ? await templatesRes.json() : [];
+      const doughTemplatesRaw = doughTemplatesRes.ok ? await doughTemplatesRes.json() : [];
+      const chocolateTemplatesRaw = chocolateTemplatesRes.ok ? await chocolateTemplatesRes.json() : [];
 
       setMenuItems(ensureArray(itemsRaw, 'items'));
       setAvailableTemplates(ensureArray(templatesRaw, 'templates'));
+      setAvailableDoughTemplates(ensureArray(doughTemplatesRaw, 'doughTemplates'));
+      setAvailableChocolateTemplates(ensureArray(chocolateTemplatesRaw, 'chocolateTemplates'));
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -1496,21 +1656,31 @@ export default function RestaurantDetailsAdminComponent() {
   */
 
   // Get applied template names for an item
-  const getAppliedTemplateNames = (item) => {
+  const getAppliedTemplateIds = (item) => {
     let templateIds = [];
 
-    // Handle new object format
     if (item.addon_template_ids && Array.isArray(item.addon_template_ids)) {
       templateIds = [...templateIds, ...item.addon_template_ids];
     }
     if (item.removable_template_ids && Array.isArray(item.removable_template_ids)) {
       templateIds = [...templateIds, ...item.removable_template_ids];
     }
+    if (item.dough_template_ids && Array.isArray(item.dough_template_ids)) {
+      templateIds = [...templateIds, ...item.dough_template_ids];
+    }
+    if (item.chocolate_template_ids && Array.isArray(item.chocolate_template_ids)) {
+      templateIds = [...templateIds, ...item.chocolate_template_ids];
+    }
 
-    // Handle old array format (fallback)
     if (templateIds.length === 0 && item[1] && Array.isArray(item[1])) {
       templateIds = item[1];
     }
+
+    return templateIds;
+  };
+
+  const getAppliedTemplateNames = (item) => {
+    const templateIds = getAppliedTemplateIds(item);
 
     if (!templateIds || templateIds.length === 0) return [];
 
@@ -1518,9 +1688,11 @@ export default function RestaurantDetailsAdminComponent() {
       // Check both addon and removable templates
       const addonTemplate = availableAddonTemplates.find(t => t.template_id === id);
       const removableTemplate = availableRemovableTemplates.find(t => t.template_id === id);
+      const doughTemplate = availableDoughTemplates.find(t => t.template_id === id);
+      const chocolateTemplate = availableChocolateTemplates.find(t => t.template_id === id);
       const fallbackTemplate = availableTemplates && availableTemplates.find(t => t.template_id === id);
 
-      const template = addonTemplate || removableTemplate || fallbackTemplate;
+      const template = addonTemplate || removableTemplate || doughTemplate || chocolateTemplate || fallbackTemplate;
       return template ? template.name : `Template ${id.split('-')[0]}`;
     });
   };
@@ -1540,22 +1712,28 @@ export default function RestaurantDetailsAdminComponent() {
       setResolvedRestaurantId(selectedRestaurantId);
 
       // Fetch data for the selected restaurant
-      const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes] = await Promise.all([
+      const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes, doughTemplatesRes, chocolateTemplatesRes] = await Promise.all([
         fetchWithAdminAuth(`${API_URL}/restaurant/${selectedRestaurantId}/items`),
         fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
         fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${selectedRestaurantId}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${selectedRestaurantId}`)
+        fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${selectedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${selectedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${selectedRestaurantId}`)
       ]);
 
       const itemsRaw = await itemsRes.json();
       const deliveryRaw = await deliveryRes.json();
       const addonTemplatesRaw = addonTemplatesRes.ok ? await addonTemplatesRes.json() : [];
       const removableTemplatesRaw = removableTemplatesRes.ok ? await removableTemplatesRes.json() : [];
+      const doughTemplatesRaw = doughTemplatesRes.ok ? await doughTemplatesRes.json() : [];
+      const chocolateTemplatesRaw = chocolateTemplatesRes.ok ? await chocolateTemplatesRes.json() : [];
 
       const items = ensureArray(itemsRaw, 'items');
       const delivery = ensureArray(deliveryRaw, 'delivery');
       const addonTemplatesArr = ensureArray(addonTemplatesRaw, 'addonTemplates');
       const removableTemplatesArr = ensureArray(removableTemplatesRaw, 'removableTemplates');
+      const doughTemplatesArr = ensureArray(doughTemplatesRaw, 'doughTemplates');
+      const chocolateTemplatesArr = ensureArray(chocolateTemplatesRaw, 'chocolateTemplates');
 
       setMenuItems(items);
       setDeliveryPeople(delivery);
@@ -1563,6 +1741,8 @@ export default function RestaurantDetailsAdminComponent() {
       setAvailableTemplates(addonTemplatesArr);
       setAvailableAddonTemplates(addonTemplatesArr);
       setAvailableRemovableTemplates(removableTemplatesArr);
+      setAvailableDoughTemplates(doughTemplatesArr);
+      setAvailableChocolateTemplates(chocolateTemplatesArr);
 
     } catch (error) {
       setError("Failed to load restaurant data");
@@ -2137,7 +2317,7 @@ export default function RestaurantDetailsAdminComponent() {
                 )}
 
                 {/* Template Selection Section - Hide for deluxe boxes */}
-                {modalMode === "add" && itemForm.item_type !== "deluxe_box" && (
+                {itemForm.item_type !== "deluxe_box" && (
                   <div className="space-y-8">
                     {/* Addon Templates */}
                     <div className="space-y-4">
@@ -2395,6 +2575,162 @@ export default function RestaurantDetailsAdminComponent() {
                       </div>
                     </div>
 
+                    {/* Dough Templates */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Dough шаблони (опционално)</h3>
+                      <div className="space-y-2">
+                        <Label>Изберете dough шаблони</Label>
+                        <div className="flex gap-2">
+                          <Popover modal open={doughTemplateOpen} onOpenChange={setDoughTemplateOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={doughTemplateOpen}
+                                className="flex-1 justify-between"
+                              >
+                                {selectedDoughTemplates.length > 0
+                                  ? `Избрани ${selectedDoughTemplates.length} шаблона`
+                                  : "Изберете dough шаблон..."}
+                                <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0 z-[60]">
+                              <Command>
+                                <CommandInput placeholder="Търсете шаблон..." />
+                                <CommandList>
+                                  <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
+                                  <CommandGroup>
+                                    {availableDoughTemplates.map((template) => (
+                                      <CommandItem
+                                        key={getTemplateId(template)}
+                                        value={template.name}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                        }}
+                                        onSelect={() => {
+                                          toggleDoughTemplate(template);
+                                          setDoughTemplateOpen(true);
+                                        }}
+                                      >
+                                        <CheckIcon
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedDoughTemplates.includes(getTemplateId(template))
+                                              ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {template.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        {selectedDoughTemplates.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedDoughTemplates.map(templateId => {
+                              const template = availableDoughTemplates.find(t => getTemplateId(t) === String(templateId));
+                              return template ? (
+                                <Badge key={templateId} variant="secondary">
+                                  {template.name}
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedDoughTemplates(prev => prev.filter(id => id !== templateId))}
+                                    className="ml-2 hover:text-red-500"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Chocolate Templates */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Chocolate шаблони (опционално)</h3>
+                      <div className="space-y-2">
+                        <Label>Изберете chocolate шаблони</Label>
+                        <div className="flex gap-2">
+                          <Popover modal open={chocolateTemplateOpen} onOpenChange={setChocolateTemplateOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={chocolateTemplateOpen}
+                                className="flex-1 justify-between"
+                              >
+                                {selectedChocolateTemplates.length > 0
+                                  ? `Избрани ${selectedChocolateTemplates.length} шаблона`
+                                  : "Изберете chocolate шаблон..."}
+                                <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[400px] p-0 z-[60]">
+                              <Command>
+                                <CommandInput placeholder="Търсете шаблон..." />
+                                <CommandList>
+                                  <CommandEmpty>Не са намерени шаблони.</CommandEmpty>
+                                  <CommandGroup>
+                                    {availableChocolateTemplates.map((template) => (
+                                      <CommandItem
+                                        key={getTemplateId(template)}
+                                        value={template.name}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                        }}
+                                        onSelect={() => {
+                                          toggleChocolateTemplate(template);
+                                          setChocolateTemplateOpen(true);
+                                        }}
+                                      >
+                                        <CheckIcon
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedChocolateTemplates.includes(getTemplateId(template))
+                                              ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {template.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        {selectedChocolateTemplates.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedChocolateTemplates.map(templateId => {
+                              const template = availableChocolateTemplates.find(t => getTemplateId(t) === String(templateId));
+                              return template ? (
+                                <Badge key={templateId} variant="secondary">
+                                  {template.name}
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedChocolateTemplates(prev => prev.filter(id => id !== templateId))}
+                                    className="ml-2 hover:text-red-500"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Removable Templates */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Шаблони за премахвания</h3>
@@ -2625,53 +2961,55 @@ export default function RestaurantDetailsAdminComponent() {
                     </div>
 
                     {/* Multi-restaurant selection for items */}
-                    <div className="space-y-3 border-t pt-4">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="multi-restaurant-item"
-                          checked={addToMultipleRestaurants}
-                          onCheckedChange={handleAddToMultipleRestaurantsChange}
-                        />
-                        <Label htmlFor="multi-restaurant-item" className="text-sm font-medium">
-                          Добави към други ресторанти
-                        </Label>
-                      </div>
-                      {addToMultipleRestaurants && (
-                        <div className="ml-6 space-y-2">
-                          <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
-                          <div className="flex items-center justify-between gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={toggleSelectAllRestaurantsForCreation}
-                              disabled={restaurants.length === 0}
-                            >
-                              {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
-                            </Button>
-                            <span className="text-xs text-muted-foreground">
-                              {selectedRestaurantsForCreation.length} selected
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            {restaurants.map((r) => (
-                              <div key={r.restaurant_id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`restaurant-item-${r.restaurant_id}`}
-                                  checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
-                                  onCheckedChange={(checked) => {
-                                    toggleRestaurantForCreation(r.restaurant_id, checked === true);
-                                  }}
-                                />
-                                <Label htmlFor={`restaurant-item-${r.restaurant_id}`} className="text-sm cursor-pointer">
-                                  {r.name}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
+                    {modalMode === "add" && (
+                      <div className="space-y-3 border-t pt-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="multi-restaurant-item"
+                            checked={addToMultipleRestaurants}
+                            onCheckedChange={handleAddToMultipleRestaurantsChange}
+                          />
+                          <Label htmlFor="multi-restaurant-item" className="text-sm font-medium">
+                            Добави към други ресторанти
+                          </Label>
                         </div>
-                      )}
-                    </div>
+                        {addToMultipleRestaurants && (
+                          <div className="ml-6 space-y-2">
+                            <Label className="text-sm text-muted-foreground">Избери ресторанти:</Label>
+                            <div className="flex items-center justify-between gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={toggleSelectAllRestaurantsForCreation}
+                                disabled={restaurants.length === 0}
+                              >
+                                {areAllRestaurantsSelectedForCreation ? "Unselect all restaurants" : "Select all restaurants"}
+                              </Button>
+                              <span className="text-xs text-muted-foreground">
+                                {selectedRestaurantsForCreation.length} selected
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {restaurants.map((r) => (
+                                <div key={r.restaurant_id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`restaurant-item-${r.restaurant_id}`}
+                                    checked={selectedRestaurantsForCreation.includes(r.restaurant_id)}
+                                    onCheckedChange={(checked) => {
+                                      toggleRestaurantForCreation(r.restaurant_id, checked === true);
+                                    }}
+                                  />
+                                  <Label htmlFor={`restaurant-item-${r.restaurant_id}`} className="text-sm cursor-pointer">
+                                    {r.name}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2824,10 +3162,10 @@ export default function RestaurantDetailsAdminComponent() {
                     <div>
                       <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Templates</label>
                       <div className="mt-2">
-                        {((item.addon_template_ids && item.addon_template_ids.length > 0) || (item.removable_template_ids && item.removable_template_ids.length > 0) || (item[1] && Array.isArray(item[1]) && item[1].length > 0)) ? (
+                        {(getAppliedTemplateIds(item).length > 0) ? (
                           <div className="flex flex-wrap gap-1">
                             {getAppliedTemplateNames(item).map((templateName, idx) => {
-                              const templateIds = item.addon_template_ids || item.removable_template_ids || item[1] || [];
+                              const templateIds = getAppliedTemplateIds(item);
                               const templateId = templateIds[idx];
                               return (
                                 <Badge key={templateId} variant="outline" className="text-xs">
@@ -2944,10 +3282,10 @@ export default function RestaurantDetailsAdminComponent() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="text-sm text-gray-500">
-                          {((item.addon_template_ids && item.addon_template_ids.length > 0) || (item.removable_template_ids && item.removable_template_ids.length > 0) || (item[1] && Array.isArray(item[1]) && item[1].length > 0)) ? (
+                          {(getAppliedTemplateIds(item).length > 0) ? (
                             <div className="flex flex-wrap gap-1">
                               {getAppliedTemplateNames(item).map((templateName, idx) => {
-                                const templateIds = item.addon_template_ids || item.removable_template_ids || item[1] || [];
+                                const templateIds = getAppliedTemplateIds(item);
                                 const templateId = templateIds[idx];
                                 return (
                                   <Tooltip key={templateId}>
