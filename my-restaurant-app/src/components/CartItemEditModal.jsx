@@ -15,9 +15,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { formatDualCurrencyCompact } from "@/utils/currency"
 import { Plus, Minus, Loader2 } from "lucide-react"
 import { useCart } from "@/hooks/use-cart"
+
+const isProbablyMojibake = (value) => typeof value === 'string' && (value.includes('Ð') || value.includes('Ñ'))
+
+const decodeMojibake = (value) => {
+  if (!isProbablyMojibake(value)) return value
+  try {
+    return decodeURIComponent(
+      Array.from(value)
+        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    )
+  } catch {
+    return value
+  }
+}
+
+const normalizeTemplateOptions = (options) => {
+  if (!Array.isArray(options)) return []
+  return options.map((option) => decodeMojibake(String(option))).filter(Boolean)
+}
+
+const toBoolean = (value) => value === true || value === 'true' || value === 1
 
 export default function CartItemEditModal({ isOpen, onClose, cartItem, restaurantId }) {
   const { updateCartItem } = useCart()
@@ -25,8 +49,12 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
   const [item, setItem] = useState(null)
   const [addonTemplates, setAddonTemplates] = useState([])
   const [removableData, setRemovableData] = useState(null)
+  const [doughOptions, setDoughOptions] = useState([])
+  const [chocolateOptions, setChocolateOptions] = useState([])
   const [selectedAddons, setSelectedAddons] = useState({})
   const [selectedRemovables, setSelectedRemovables] = useState({})
+  const [selectedDoughType, setSelectedDoughType] = useState("")
+  const [selectedChocolateType, setSelectedChocolateType] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [totalPrice, setTotalPrice] = useState(0)
   const [addonVisibleCounts, setAddonVisibleCounts] = useState({})
@@ -75,8 +103,41 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
             restaurant_id: itemData[11]
           }
         }
-        setItem(itemData)
+        const normalizedItemData = {
+          ...itemData,
+          has_dough_options: toBoolean(itemData?.has_dough_options),
+          has_chocolate_options: toBoolean(itemData?.has_chocolate_options),
+        }
+
+        setItem(normalizedItemData)
         setQuantity(cartItem.quantity || 1)
+
+        const fetchTemplateChoices = async (templateType) => {
+          try {
+            const response = await fetchWithAuth(`${API_URL}/restaurant/${templateType}/${resolvedRestaurantId}/${resolvedItemId}`)
+            if (!response.ok) return []
+            const payload = await response.json()
+            if (templateType === 'dough-templates') {
+              return normalizeTemplateOptions(payload?.doughs)
+            }
+            return normalizeTemplateOptions(payload?.chocolate_types)
+          } catch (templateError) {
+            console.error(`Error loading ${templateType}:`, templateError)
+            return []
+          }
+        }
+
+        const fetchedDoughOptions = normalizedItemData.has_dough_options
+          ? await fetchTemplateChoices('dough-templates')
+          : []
+        const fetchedChocolateOptions = normalizedItemData.has_chocolate_options
+          ? await fetchTemplateChoices('chocolate-type-templates')
+          : []
+
+        setDoughOptions(fetchedDoughOptions)
+        setChocolateOptions(fetchedChocolateOptions)
+        setSelectedDoughType(fetchedDoughOptions[0] || "")
+        setSelectedChocolateType(fetchedChocolateOptions[0] || "")
 
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${resolvedRestaurantId}/items/${resolvedItemId}/addons`)
         const templates = addonsRes.ok ? await addonsRes.json() : []
@@ -133,6 +194,16 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
           })
         }
         setSelectedRemovables(restoredRemovables)
+
+        const restoredDoughType = fetchedDoughOptions.includes(cartItem.selectedDoughType)
+          ? cartItem.selectedDoughType
+          : (fetchedDoughOptions[0] || "")
+        const restoredChocolateType = fetchedChocolateOptions.includes(cartItem.selectedChocolateType)
+          ? cartItem.selectedChocolateType
+          : (fetchedChocolateOptions[0] || "")
+
+        setSelectedDoughType(restoredDoughType)
+        setSelectedChocolateType(restoredChocolateType)
 
         let newTotal = Number(itemData.price)
         Object.values(restoredAddons).forEach(addonArray => {
@@ -222,12 +293,18 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
 
     const selectedAddonList = getAllSelectedAddons()
     const selectedRemovableList = getAllSelectedRemovables()
+    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0] || "") : ""
+    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0] || "") : ""
 
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',')
     const removableIds = selectedRemovableList.sort().join(',')
-    const configurationId = (selectedAddonList.length === 0 && selectedRemovableList.length === 0)
+    const doughId = selectedDough ? `Тесто:${selectedDough}` : ''
+    const chocolateId = selectedChocolate ? `Шоколад:${selectedChocolate}` : ''
+    const customizations = [addonIds, removableIds, doughId, chocolateId].filter(Boolean).join('|')
+
+    const configurationId = !customizations
       ? String(item.item_id)
-      : `${item.item_id}-${addonIds}-${removableIds}`
+      : `${item.item_id}-${customizations}`
 
     const updatedItem = {
       ...cartItem,
@@ -240,6 +317,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
       description: item.description,
       selectedAddons: selectedAddonList,
       selectedRemovables: selectedRemovableList,
+      selectedDoughType: selectedDough,
+      selectedChocolateType: selectedChocolate,
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
       quantity,
@@ -254,6 +333,9 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
   const handleScroll = (e) => {
     e.stopPropagation()
   }
+
+  const showDoughOptions = item?.has_dough_options && doughOptions.length > 0
+  const showChocolateOptions = item?.has_chocolate_options && chocolateOptions.length > 0
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -464,6 +546,43 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Няма налични опции за премахване.</p>
+            )}
+
+            {(showDoughOptions || showChocolateOptions) && (
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Избор на вид</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {showDoughOptions && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold">Тесто</h3>
+                      <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
+                        {doughOptions.map((doughType) => (
+                          <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value={doughType} id={`edit-dough-${doughType}`} />
+                            <Label htmlFor={`edit-dough-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  {showChocolateOptions && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold">Шоколад</h3>
+                      <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
+                        {chocolateOptions.map((chocolateType) => (
+                          <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
+                            <RadioGroupItem value={chocolateType} id={`edit-choco-${chocolateType}`} />
+                            <Label htmlFor={`edit-choco-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         )}

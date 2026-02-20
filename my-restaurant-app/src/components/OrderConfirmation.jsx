@@ -143,6 +143,16 @@ export default function OrderConfirmation({
                         {t('menu.removed')}: {item.selectedRemovables.join(', ')}
                       </div>
                     )}
+                    {item.selectedDoughType && (
+                      <div className="text-sm text-blue-700 mt-1">
+                        Тесто: {item.selectedDoughType}
+                      </div>
+                    )}
+                    {item.selectedChocolateType && (
+                      <div className="text-sm text-amber-700 mt-1">
+                        Шоколад: {item.selectedChocolateType}
+                      </div>
+                    )}
                     {item.specialInstructions && (
                       <div className="text-sm text-gray-500 mt-1">
                         {t('cart.specialInstructions')}: {item.specialInstructions}

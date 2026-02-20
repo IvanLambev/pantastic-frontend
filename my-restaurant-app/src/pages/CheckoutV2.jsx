@@ -485,6 +485,8 @@ export default function CheckoutV2() {
       return {
         item_id: itemId,
         quantity: item.quantity || 1, // Use the cart item's quantity
+        selected_dough: item.selectedDoughType || null,
+        selected_chocolate_type: item.selectedChocolateType || null,
         addons: Object.keys(addons).length > 0 ? addons : null,
         removables: removables.length > 0 ? removables : null,
         special_instructions: item.specialInstructions || null
@@ -918,6 +920,20 @@ export default function CheckoutV2() {
                                   {index < item.selectedRemovables.length - 1 ? ', ' : ''}
                                 </span>
                               ))}
+                            </div>
+                          )}
+
+                          {item.selectedDoughType && (
+                            <div className="text-sm text-blue-700 mt-1">
+                              <span className="font-medium">Тесто: </span>
+                              <span>{item.selectedDoughType}</span>
+                            </div>
+                          )}
+
+                          {item.selectedChocolateType && (
+                            <div className="text-sm text-amber-700 mt-1">
+                              <span className="font-medium">Шоколад: </span>
+                              <span>{item.selectedChocolateType}</span>
                             </div>
                           )}
 

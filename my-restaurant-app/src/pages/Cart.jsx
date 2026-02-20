@@ -209,7 +209,9 @@ const Cart = () => {
 
                           {/* Addons/Removables indicator */}
                           {((item.selectedAddons && item.selectedAddons.length > 0) ||
-                            (item.selectedRemovables && item.selectedRemovables.length > 0)) && (
+                            (item.selectedRemovables && item.selectedRemovables.length > 0) ||
+                            item.selectedDoughType ||
+                            item.selectedChocolateType) && (
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {item.selectedAddons && item.selectedAddons.length > 0 && (
                                   <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
@@ -219,6 +221,16 @@ const Cart = () => {
                                 {item.selectedRemovables && item.selectedRemovables.length > 0 && (
                                   <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
                                     -{item.selectedRemovables.length} {t('cart.removables')}
+                                  </span>
+                                )}
+                                {item.selectedDoughType && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                    Тесто: {item.selectedDoughType}
+                                  </span>
+                                )}
+                                {item.selectedChocolateType && (
+                                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                                    Шоколад: {item.selectedChocolateType}
                                   </span>
                                 )}
                               </div>
@@ -353,6 +365,24 @@ const Cart = () => {
                           <span className="text-muted-foreground">{item.specialInstructions}</span>
                         </div>
                       )}
+
+                      {(item.selectedDoughType || item.selectedChocolateType) && (
+                        <div className="text-sm mb-4 bg-muted p-2 rounded-md">
+                          {item.selectedDoughType && (
+                            <p>
+                              <span className="font-semibold">Тесто: </span>
+                              <span className="text-muted-foreground">{item.selectedDoughType}</span>
+                            </p>
+                          )}
+                          {item.selectedChocolateType && (
+                            <p>
+                              <span className="font-semibold">Шоколад: </span>
+                              <span className="text-muted-foreground">{item.selectedChocolateType}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-2">
                           <Button
@@ -410,6 +440,16 @@ const Cart = () => {
                       {item.selectedRemovables && item.selectedRemovables.length > 0 && (
                         <div className="text-xs text-red-600 pl-4">
                           {item.selectedRemovables.length} {t('cart.removables')}
+                        </div>
+                      )}
+                      {item.selectedDoughType && (
+                        <div className="text-xs text-blue-700 pl-4">
+                          Тесто: {item.selectedDoughType}
+                        </div>
+                      )}
+                      {item.selectedChocolateType && (
+                        <div className="text-xs text-amber-700 pl-4">
+                          Шоколад: {item.selectedChocolateType}
                         </div>
                       )}
                     </div>

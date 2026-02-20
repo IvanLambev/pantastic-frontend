@@ -28,6 +28,28 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
+const isProbablyMojibake = (value) => typeof value === 'string' && (value.includes('Ð') || value.includes('Ñ'))
+
+const decodeMojibake = (value) => {
+  if (!isProbablyMojibake(value)) return value
+  try {
+    return decodeURIComponent(
+      Array.from(value)
+        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    )
+  } catch {
+    return value
+  }
+}
+
+const normalizeTemplateOptions = (options) => {
+  if (!Array.isArray(options)) return []
+  return options.map((option) => decodeMojibake(String(option))).filter(Boolean)
+}
+
+const toBoolean = (value) => value === true || value === 'true' || value === 1
+
 export default function ItemDetails() {
   const { restaurantId, itemId } = useParams()
   const navigate = useNavigate()
@@ -37,8 +59,12 @@ export default function ItemDetails() {
   const [error, setError] = useState(null)
   const [addonTemplates, setAddonTemplates] = useState([])
   const [removableData, setRemovableData] = useState(null)
+  const [doughOptions, setDoughOptions] = useState([])
+  const [chocolateOptions, setChocolateOptions] = useState([])
   const [selectedAddons, setSelectedAddons] = useState({})
   const [selectedRemovables, setSelectedRemovables] = useState({})
+  const [selectedDoughType, setSelectedDoughType] = useState("")
+  const [selectedChocolateType, setSelectedChocolateType] = useState("")
   const [addonVisibleCounts, setAddonVisibleCounts] = useState({})
   const [totalPrice, setTotalPrice] = useState(0)
   const { addToCart, updateCartItem } = useCart()
@@ -110,8 +136,41 @@ export default function ItemDetails() {
             restaurant_id: data[11]
           }
         }
-        setItem(data);
+        const normalizedItem = {
+          ...data,
+          has_dough_options: toBoolean(data?.has_dough_options),
+          has_chocolate_options: toBoolean(data?.has_chocolate_options),
+        }
+
+        setItem(normalizedItem);
         setTotalPrice(Number(data.price));
+
+        const fetchTemplateChoices = async (templateType) => {
+          try {
+            const response = await fetchWithAuth(`${API_URL}/restaurant/${templateType}/${restaurantId}/${itemId}`)
+            if (!response.ok) return []
+            const payload = await response.json()
+            if (templateType === 'dough-templates') {
+              return normalizeTemplateOptions(payload?.doughs)
+            }
+            return normalizeTemplateOptions(payload?.chocolate_types)
+          } catch (templateError) {
+            console.error(`Error loading ${templateType}:`, templateError)
+            return []
+          }
+        }
+
+        const fetchedDoughOptions = normalizedItem.has_dough_options
+          ? await fetchTemplateChoices('dough-templates')
+          : []
+        const fetchedChocolateOptions = normalizedItem.has_chocolate_options
+          ? await fetchTemplateChoices('chocolate-type-templates')
+          : []
+
+        setDoughOptions(fetchedDoughOptions)
+        setChocolateOptions(fetchedChocolateOptions)
+        setSelectedDoughType(fetchedDoughOptions[0] || "")
+        setSelectedChocolateType(fetchedChocolateOptions[0] || "")
 
         // Fetch addons for this item
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}/addons`);
@@ -198,6 +257,16 @@ export default function ItemDetails() {
             }
           }
           setSelectedRemovables(restoredRemovables)
+
+          const restoredDoughType = fetchedDoughOptions.includes(cartItem.selectedDoughType)
+            ? cartItem.selectedDoughType
+            : (fetchedDoughOptions[0] || "")
+          const restoredChocolateType = fetchedChocolateOptions.includes(cartItem.selectedChocolateType)
+            ? cartItem.selectedChocolateType
+            : (fetchedChocolateOptions[0] || "")
+
+          setSelectedDoughType(restoredDoughType)
+          setSelectedChocolateType(restoredChocolateType)
 
           // Recalculate total price
           let newTotal = Number(data.price)
@@ -370,15 +439,20 @@ export default function ItemDetails() {
   const handleAddToCart = () => {
     const selectedAddonList = getAllSelectedAddons();
     const selectedRemovableList = getAllSelectedRemovables();
+    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0] || "") : ""
+    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0] || "") : ""
 
     // Create a unique identifier for this specific item configuration
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',');
     const removableIds = selectedRemovableList.sort().join(',');
+    const doughId = selectedDough ? `Тесто:${selectedDough}` : ''
+    const chocolateId = selectedChocolate ? `Шоколад:${selectedChocolate}` : ''
+    const customizations = [addonIds, removableIds, doughId, chocolateId].filter(Boolean).join('|')
 
     // Use simple ID if no customizations, otherwise use composite ID
-    const configurationId = (selectedAddonList.length === 0 && selectedRemovableList.length === 0)
+    const configurationId = !customizations
       ? String(item.item_id)
-      : `${item.item_id}-${addonIds}-${removableIds}`;
+      : `${item.item_id}-${customizations}`;
 
     const cartItem = {
       id: configurationId, // Unique ID for this configuration
@@ -390,6 +464,8 @@ export default function ItemDetails() {
       description: item.description,
       selectedAddons: selectedAddonList,
       selectedRemovables: selectedRemovableList,
+      selectedDoughType: selectedDough,
+      selectedChocolateType: selectedChocolate,
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
       quantity: quantity,
@@ -480,6 +556,9 @@ export default function ItemDetails() {
   if (!item) {
     return <div className="container mx-auto px-4 py-8">Продуктът не е намерен</div>
   }
+
+  const showDoughOptions = item?.has_dough_options && doughOptions.length > 0
+  const showChocolateOptions = item?.has_chocolate_options && chocolateOptions.length > 0
 
   return (
     <div className="container mx-auto px-4 py-8 pb-28">
@@ -772,6 +851,44 @@ export default function ItemDetails() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+          )}
+
+          {(showDoughOptions || showChocolateOptions) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Избор на вид</CardTitle>
+                <CardDescription>Изберете предпочитан тип тесто и/или шоколад.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {showDoughOptions && (
+                  <div className="space-y-3">
+                    <h3 className="text-base font-semibold">Тесто</h3>
+                    <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
+                      {doughOptions.map((doughType) => (
+                        <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
+                          <RadioGroupItem value={doughType} id={`dough-desktop-${doughType}`} />
+                          <Label htmlFor={`dough-desktop-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {showChocolateOptions && (
+                  <div className="space-y-3">
+                    <h3 className="text-base font-semibold">Шоколад</h3>
+                    <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
+                      {chocolateOptions.map((chocolateType) => (
+                        <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
+                          <RadioGroupItem value={chocolateType} id={`choco-desktop-${chocolateType}`} />
+                          <Label htmlFor={`choco-desktop-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
@@ -1070,6 +1187,44 @@ export default function ItemDetails() {
               </CollapsibleContent>
             </Card>
           </Collapsible>
+        )}
+
+        {(showDoughOptions || showChocolateOptions) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Избор на вид</CardTitle>
+              <CardDescription>Изберете предпочитан тип тесто и/или шоколад.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {showDoughOptions && (
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold">Тесто</h3>
+                  <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
+                    {doughOptions.map((doughType) => (
+                      <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
+                        <RadioGroupItem value={doughType} id={`dough-mobile-${doughType}`} />
+                        <Label htmlFor={`dough-mobile-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+
+              {showChocolateOptions && (
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold">Шоколад</h3>
+                  <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
+                    {chocolateOptions.map((chocolateType) => (
+                      <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
+                        <RadioGroupItem value={chocolateType} id={`choco-mobile-${chocolateType}`} />
+                        <Label htmlFor={`choco-mobile-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
 

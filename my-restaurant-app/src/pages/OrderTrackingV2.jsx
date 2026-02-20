@@ -307,6 +307,12 @@ export default function OrderTrackingV2() {
                   {order.items && order.items.length > 0 ? (
                     order.items.map((item) => (
                       <div key={item.item_id} className="space-y-1">
+                        {(() => {
+                          const selectedDoughType = item.selected_dough_type || item.dough_type || item.dough || item.selectedDoughType
+                          const selectedChocolateType = item.selected_chocolate_type || item.chocolate_type || item.chocolate || item.selectedChocolateType
+
+                          return (
+                            <>
                         <div className="flex justify-between text-sm font-medium">
                           <span>{item.item_name}</span>
                           <span>x{item.item_quantity}</span>
@@ -331,12 +337,27 @@ export default function OrderTrackingV2() {
                             </ul>
                           </div>
                         )}
+                        {selectedDoughType && (
+                          <div className="pl-4 mt-1 text-xs text-blue-700">
+                            <span className="font-semibold">Тесто: </span>
+                            <span>{selectedDoughType}</span>
+                          </div>
+                        )}
+                        {selectedChocolateType && (
+                          <div className="pl-4 mt-1 text-xs text-amber-700">
+                            <span className="font-semibold">Шоколад: </span>
+                            <span>{selectedChocolateType}</span>
+                          </div>
+                        )}
                         {item.special_instructions && (
                           <div className="text-sm text-muted-foreground pl-4">
                             <span className="font-medium">Инструкции: </span>
                             {item.special_instructions}
                           </div>
                         )}
+                            </>
+                          )
+                        })()}
                       </div>
                     ))
                   ) : order.products && Object.entries(order.products).map(([productId, quantity]) => (
