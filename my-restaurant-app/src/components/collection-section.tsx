@@ -27,6 +27,7 @@ interface MenuItem {
   image_url: string
   description: string
   item_type: string
+  restaurant_id?: string
 }
 
 interface Collection {
@@ -35,15 +36,22 @@ interface Collection {
   description: string
   item_ids: string[]
   item_count: number
+  restaurant_id: string
+  collection_key: string
 }
 
 interface CollectionSectionProps {
-  restaurantId: string
+  restaurantId?: string
   collectionId?: string
   collectionIndex?: number // Index of collection to display (0-based)
   title?: string
   subtitle?: string
   limit?: number
+}
+
+interface Restaurant {
+  restaurant_id?: string
+  [key: string]: unknown
 }
 
 export function CollectionSection({
@@ -59,35 +67,104 @@ export function CollectionSection({
   const [collection, setCollection] = useState<Collection | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const getRestaurantId = (restaurant: Restaurant | unknown): string | null => {
+    if (Array.isArray(restaurant)) {
+      return typeof restaurant[0] === 'string' ? restaurant[0] : null
+    }
+
+    if (restaurant && typeof restaurant === 'object') {
+      const id = (restaurant as Restaurant).restaurant_id
+      return typeof id === 'string' ? id : null
+    }
+
+    return null
+  }
+
   useEffect(() => {
     const fetchCollectionAndItems = async () => {
       setLoading(true)
       try {
-        // Fetch collection data
-        const collectionsResponse = await fetchWithAuth(
-          `${API_URL}/restaurant/collections/${restaurantId}`
-        )
+        const allCollections: Collection[] = []
+        const collectionItemsMap: Record<string, MenuItem[]> = {}
 
-        if (!collectionsResponse.ok) {
-          throw new Error('Failed to fetch collections')
+        const restaurantIds: string[] = []
+
+        if (restaurantId) {
+          restaurantIds.push(restaurantId)
+        } else {
+          const restaurantsResponse = await fetchWithAuth(
+            `${API_URL}/restaurant/restaurants`
+          )
+
+          if (!restaurantsResponse.ok) {
+            throw new Error('Failed to fetch restaurants')
+          }
+
+          const restaurantsData = await restaurantsResponse.json()
+          const parsedRestaurantIds = Array.isArray(restaurantsData)
+            ? restaurantsData
+                .map((restaurant) => getRestaurantId(restaurant))
+                .filter((id): id is string => Boolean(id))
+            : []
+
+          restaurantIds.push(...parsedRestaurantIds)
         }
 
-        const collectionsData = await collectionsResponse.json()
+        const restaurantFetches = restaurantIds.map(async (currentRestaurantId) => {
+          const [collectionsResponse, itemsResponse] = await Promise.all([
+            fetchWithAuth(`${API_URL}/restaurant/collections/${currentRestaurantId}`),
+            fetchWithAuth(`${API_URL}/restaurant/${currentRestaurantId}/items`),
+          ])
 
-        // Find the specific collection by ID, index, or use the first one
+          if (!collectionsResponse.ok || !itemsResponse.ok) {
+            return
+          }
+
+          const collectionsData = await collectionsResponse.json()
+          const allItems = await itemsResponse.json()
+
+          const restaurantCollections = Array.isArray(collectionsData?.collections)
+            ? collectionsData.collections
+            : []
+
+          for (const currentCollection of restaurantCollections) {
+            const collectionKey = `${currentRestaurantId}:${currentCollection.collection_id}`
+            const normalizedCollection: Collection = {
+              ...currentCollection,
+              restaurant_id: currentRestaurantId,
+              collection_key: collectionKey,
+            }
+
+            const matchingItems = Array.isArray(allItems)
+              ? allItems
+                  .filter((item: MenuItem) =>
+                    currentCollection.item_ids.includes(item.item_id)
+                  )
+                  .map((item: MenuItem) => ({
+                    ...item,
+                    restaurant_id: currentRestaurantId,
+                  }))
+              : []
+
+            allCollections.push(normalizedCollection)
+            collectionItemsMap[collectionKey] = matchingItems
+          }
+        })
+
+        await Promise.all(restaurantFetches)
+
         let targetCollection: Collection | null = null
 
         if (collectionId) {
-          // Find by specific collection ID
-          targetCollection = collectionsData.collections.find(
-            (c: Collection) => c.collection_id === collectionId
-          )
-        } else if (collectionsData.collections.length > collectionIndex) {
-          // Use the collection at the specified index
-          targetCollection = collectionsData.collections[collectionIndex]
-        } else if (collectionsData.collections.length > 0) {
-          // Fallback to first collection
-          targetCollection = collectionsData.collections[0]
+          targetCollection = allCollections.find(
+            (c) =>
+              c.collection_key === collectionId ||
+              c.collection_id === collectionId
+          ) || null
+        } else if (allCollections.length > collectionIndex) {
+          targetCollection = allCollections[collectionIndex]
+        } else if (allCollections.length > 0) {
+          targetCollection = allCollections[0]
         }
 
         if (!targetCollection) {
@@ -97,21 +174,8 @@ export function CollectionSection({
 
         setCollection(targetCollection)
 
-        // Fetch all items from the restaurant
-        const itemsResponse = await fetchWithAuth(
-          `${API_URL}/restaurant/${restaurantId}/items`
-        )
-
-        if (!itemsResponse.ok) {
-          throw new Error('Failed to fetch items')
-        }
-
-        const allItems = await itemsResponse.json()
-
-        // Filter items that belong to this collection
-        const collectionItems = allItems.filter((item: MenuItem) =>
-          targetCollection!.item_ids.includes(item.item_id)
-        )
+        const collectionItems =
+          collectionItemsMap[targetCollection.collection_key] || []
 
         // Apply limit if specified
         const itemsToShow = limit ? collectionItems.slice(0, limit) : collectionItems
@@ -129,14 +193,21 @@ export function CollectionSection({
   }, [restaurantId, collectionId, collectionIndex, limit])
 
   const handleItemClick = (item: MenuItem) => {
+    const resolvedRestaurantId =
+      item.restaurant_id || collection?.restaurant_id || restaurantId
+
+    if (!resolvedRestaurantId) {
+      return
+    }
+
     // Store the restaurant ID before navigation
     const restaurantData = {
-      restaurant_id: restaurantId,
+      restaurant_id: resolvedRestaurantId,
       collection_id: collection?.collection_id
     }
     localStorage.setItem('lastViewedRestaurant', JSON.stringify(restaurantData))
 
-    navigate(`/restaurants/${restaurantId}/items/${item.item_id}`)
+    navigate(`/restaurants/${resolvedRestaurantId}/items/${item.item_id}`)
   }
 
   if (loading) {
@@ -239,7 +310,7 @@ export function CollectionSection({
           <Button
             variant="outline"
             size="lg"
-            onClick={() => navigate(`/restaurants/${restaurantId}`)}
+            onClick={() => navigate(`/restaurants/${collection.restaurant_id}`)}
             className="gap-2"
           >
             Виж всички от {collection.name}

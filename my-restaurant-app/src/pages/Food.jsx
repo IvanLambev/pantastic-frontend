@@ -399,6 +399,16 @@ const Food = () => {
   const getItemImage = (item) => Array.isArray(item) ? item[5] : item.image_url;
   const getItemDescription = (item) => Array.isArray(item) ? item[4] : item.description;
   const getItemType = (item) => Array.isArray(item) ? item[6] : item.item_type;
+  const getNormalizedItemType = (item) => {
+    const itemType = getItemType(item) || '';
+    const normalizedName = (getItemName(item) || '').toLowerCase();
+
+    if (itemType === 'sweet-american' && (normalizedName.includes('мини') || normalizedName.includes('mini'))) {
+      return 'sweet-american-mini';
+    }
+
+    return itemType;
+  };
   const getItemLabels = (item) => Array.isArray(item) ? [] : (item.labels || []);
   const getDynamicLabels = (item) => Array.isArray(item) ? [] : (item.dynamic_labels || []);
 
@@ -487,7 +497,7 @@ const Food = () => {
     const name = getItemName(item) || '';
     const description = getItemDescription(item) || '';
     const price = getItemPrice(item);
-    const itemType = getItemType(item) || '';
+    const itemType = getNormalizedItemType(item) || '';
 
     const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       description.toLowerCase().includes(searchQuery.toLowerCase());

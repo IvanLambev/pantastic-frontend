@@ -46,7 +46,6 @@ const Home = () => {
 
       {/* Collection Section 1 - First collection */}
       <CollectionSection
-        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
         collectionIndex={0}
         title={t('home.featuredItems')}
         subtitle={t('home.featuredItemsDesc')}
@@ -55,21 +54,18 @@ const Home = () => {
 
       {/* Collection Section 2 - Second collection */}
       <CollectionSection
-        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
         collectionIndex={1}
         limit={4}
       />
 
       {/* Collection Section 3 - Third collection */}
       <CollectionSection
-        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
         collectionIndex={2}
         limit={4}
       />
 
       {/* Collection Section 4 - Fourth collection */}
       <CollectionSection
-        restaurantId="8511b497-1275-4325-b723-5848c2b6f9d8"
         collectionIndex={3}
         limit={4}
       />
