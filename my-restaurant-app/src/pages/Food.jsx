@@ -506,20 +506,17 @@ const Food = () => {
     } else if (category === "all") {
       matchesCategory = !isDeluxe;
     } else if (category === "sweet") {
-      matchesCategory = itemType.includes('sweet') && !isDeluxe;
+      matchesCategory = itemType === 'sweet-classic';
     } else if (category === "american") {
-      // Assuming american pancakes are also 'sweet' but maybe we want to filter specifically?
-      // If there is no specific 'american' type in the backend, we might just show 'sweet' or 
-      // if the user meant specific items. For now, let's treat it as 'sweet' or check for 'american' in name/type if possible.
-      // The user said "american-sweet_pancake" in the prompt, so let's check for that or just 'sweet' if not found.
-      // Let's try to match 'american' in itemType or name if possible, otherwise fallback to sweet.
-      matchesCategory = (itemType.includes('american') || itemType.includes('sweet')) && !isDeluxe;
+      matchesCategory = itemType === 'sweet-american';
+    } else if (category === "american-mini") {
+      matchesCategory = itemType === 'sweet-american-mini';
     } else if (category === "savory") {
       // Strict filtering for savory/sour
       matchesCategory = (itemType.includes('sour') || itemType.includes('savory')) &&
         !itemType.includes('sweet');
-    } else if (category === "promo") {
-      matchesCategory = itemType.includes('promo');
+    } else if (category === "drinks") {
+      matchesCategory = itemType === 'misc';
     }
 
     return matchesSearch && matchesPrice && matchesCategory;
@@ -715,7 +712,7 @@ const Food = () => {
       {/* Category Buttons Row */}
       {selectedRestaurant && (
         <div className="container mx-auto px-4 my-6">
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "sweet" ? "default" : "outline"}
@@ -726,14 +723,6 @@ const Food = () => {
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
-              variant={category === "savory" ? "default" : "outline"}
-              onClick={() => setCategory("savory")}
-            >
-              <span className="hidden sm:inline">{t('menu.sourPancakes')}</span>
-              <span className="sm:hidden">{t('menu.sour')}</span>
-            </Button>
-            <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "american" ? "default" : "outline"}
               onClick={() => setCategory("american")}
             >
@@ -741,11 +730,20 @@ const Food = () => {
               <span className="lg:hidden">{t('menu.american')}</span>
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
-              variant={category === "promo" ? "default" : "outline"}
-              onClick={() => setCategory("promo")}
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
+              variant={category === "american-mini" ? "default" : "outline"}
+              onClick={() => setCategory("american-mini")}
             >
-              {t('menu.promo')}
+              <span className="hidden lg:inline">{t('menu.americanMiniPancakes')}</span>
+              <span className="lg:hidden">{t('menu.americanMini')}</span>
+            </Button>
+            <Button
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              variant={category === "savory" ? "default" : "outline"}
+              onClick={() => setCategory("savory")}
+            >
+              <span className="hidden sm:inline">{t('menu.sourPancakes')}</span>
+              <span className="sm:hidden">{t('menu.sour')}</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
@@ -754,6 +752,13 @@ const Food = () => {
               onClick={() => setCategory("deluxe")}
             >
               DELUXE BOX
+            </Button>
+            <Button
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              variant={category === "drinks" ? "default" : "outline"}
+              onClick={() => setCategory("drinks")}
+            >
+              {t('menu.drinks')}
             </Button>
           </div>
         </div>
