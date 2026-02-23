@@ -66,7 +66,7 @@ export const translations = {
     americanPancakes: "Американски палачинки",
     american: "Американски",
     americanMiniPancakes: "Американски мини палачинки",
-    americanMini: "Американски мини",
+    americanMini: "Американски Мини",
     drinks: "Напитки",
     search: "Търсене",
     options: "Добавки",
