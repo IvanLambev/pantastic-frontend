@@ -270,6 +270,10 @@ const Food = () => {
     };
   }, []);
 
+  useEffect(() => {
+    sessionStorage.setItem('selectedCategory', category);
+  }, [category]);
+
   const handleChangeSelection = async () => {
     // Clear the cart when changing restaurants
     clearCart()
@@ -374,6 +378,11 @@ const Food = () => {
       quantity: 1
     })
     toast.success(t('menu.addedToCart', { name: itemData.name }))
+  }
+
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory)
+    sessionStorage.setItem('selectedCategory', newCategory)
   }
 
   const handleItemNavigation = (item) => {
@@ -726,15 +735,15 @@ const Food = () => {
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "sweet" ? "default" : "outline"}
-              onClick={() => setCategory("sweet")}
+              onClick={() => handleCategoryChange("sweet")}
             >
               <span className="hidden sm:inline">{t('menu.sweetPancakes')}</span>
               <span className="sm:hidden">{t('menu.sweet')}</span>
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "american" ? "default" : "outline"}
-              onClick={() => setCategory("american")}
+              onClick={() => handleCategoryChange("american")}
             >
               <span className="hidden lg:inline">{t('menu.americanPancakes')}</span>
               <span className="lg:hidden">{t('menu.american')}</span>
@@ -742,15 +751,14 @@ const Food = () => {
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "american-mini" ? "default" : "outline"}
-              onClick={() => setCategory("american-mini")}
+              onClick={() => handleCategoryChange("american-mini")}
             >
-              <span className="hidden lg:inline">{t('menu.americanMiniPancakes')}</span>
-              <span className="lg:hidden">{t('menu.americanMini')}</span>
+              <span>Американски Мини</span>
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "savory" ? "default" : "outline"}
-              onClick={() => setCategory("savory")}
+              onClick={() => handleCategoryChange("savory")}
             >
               <span className="hidden sm:inline">{t('menu.sourPancakes')}</span>
               <span className="sm:hidden">{t('menu.sour')}</span>
@@ -759,14 +767,14 @@ const Food = () => {
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "deluxe" ? "default" : "outline"}
               style={{ letterSpacing: 1 }}
-              onClick={() => setCategory("deluxe")}
+              onClick={() => handleCategoryChange("deluxe")}
             >
               DELUXE BOX
             </Button>
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "drinks" ? "default" : "outline"}
-              onClick={() => setCategory("drinks")}
+              onClick={() => handleCategoryChange("drinks")}
             >
               {t('menu.drinks')}
             </Button>
