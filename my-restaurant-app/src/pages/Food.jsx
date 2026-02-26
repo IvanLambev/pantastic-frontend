@@ -536,6 +536,8 @@ const Food = () => {
         !itemType.includes('sweet');
     } else if (category === "drinks") {
       matchesCategory = itemType === 'misc';
+    } else if (category === "desserts") {
+      matchesCategory = itemType === 'desserts';
     }
 
     return matchesSearch && matchesPrice && matchesCategory;
@@ -731,7 +733,7 @@ const Food = () => {
       {/* Category Buttons Row */}
       {selectedRestaurant && (
         <div className="container mx-auto px-4 my-6">
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 max-w-6xl mx-auto">
             <Button
               className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
               variant={category === "sweet" ? "default" : "outline"}
@@ -777,6 +779,13 @@ const Food = () => {
               onClick={() => handleCategoryChange("drinks")}
             >
               {t('menu.drinks')}
+            </Button>
+            <Button
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              variant={category === "desserts" ? "default" : "outline"}
+              onClick={() => handleCategoryChange("desserts")}
+            >
+              Десерти
             </Button>
           </div>
         </div>
