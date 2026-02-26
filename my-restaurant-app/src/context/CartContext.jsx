@@ -20,11 +20,12 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (item) => {
     setCartItems(prevItems => {
+      const quantityToAdd = Number(item?.quantity) > 0 ? Number(item.quantity) : 1
       const existingItem = prevItems.find(i => i.id === item.id)
       let newItems
       if (existingItem) {
         newItems = prevItems.map(i =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id ? { ...i, quantity: i.quantity + quantityToAdd } : i
         )
       } else {
         // Defensive: always use correct indices if item is an array
@@ -39,7 +40,14 @@ export const CartProvider = ({ children }) => {
             description: item[4],
             quantity: 1
           };
-        } else if (!cartItem.originalItemId) {
+        } else {
+          cartItem = {
+            ...cartItem,
+            quantity: quantityToAdd
+          }
+        }
+
+        if (!cartItem.originalItemId) {
           const idSource = cartItem.item_id || cartItem.id
           if (typeof idSource === 'string') {
             const match = idSource.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)

@@ -476,19 +476,7 @@ export default function ItemDetails() {
       updateCartItem(location.state.cartItem.id, cartItem)
       toast.success('Количката е обновена')
     } else {
-      // Add to cart multiple times based on quantity
-      // Wait, addToCart in context adds 1 to quantity if exists.
-      // But here we loop.
-      // If I use updateCartItem, I pass the full quantity.
-      // If I use addToCart, I should probably just call it once with quantity?
-      // The current implementation loops.
-      // I should keep the loop for consistency if I don't change addToCart.
-      // But wait, if I add 5 items, I get 5 calls.
-      // My updateCartItem implementation handles quantity directly.
-
-      for (let i = 0; i < quantity; i++) {
-        addToCart(cartItem);
-      }
+      addToCart(cartItem)
 
       const addonText = selectedAddonList.length > 0 ? ` с ${selectedAddonList.length} добавки` : '';
       const removableText = selectedRemovableList.length > 0 ? ` и ${selectedRemovableList.length} премахнати съставки` : '';
