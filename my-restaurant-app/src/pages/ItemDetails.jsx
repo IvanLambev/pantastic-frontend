@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { API_URL } from '@/config/api'
 import { useCart } from "@/hooks/use-cart"
@@ -45,7 +45,31 @@ const decodeMojibake = (value) => {
 
 const normalizeTemplateOptions = (options) => {
   if (!Array.isArray(options)) return []
-  return options.map((option) => decodeMojibake(String(option))).filter(Boolean)
+  return options
+    .map((option) => {
+      if (option && typeof option === 'object' && !Array.isArray(option)) {
+        const name = decodeMojibake(String(option.name || '')).trim()
+        if (!name) return null
+        return {
+          name,
+          price: Number(option.price) || 0,
+        }
+      }
+
+      const name = decodeMojibake(String(option)).trim()
+      if (!name) return null
+      return {
+        name,
+        price: 0,
+      }
+    })
+    .filter(Boolean)
+}
+
+const getTemplateOptionPrice = (options, selectedName) => {
+  if (!selectedName || !Array.isArray(options)) return 0
+  const matchedOption = options.find((option) => option?.name === selectedName)
+  return Number(matchedOption?.price) || 0
 }
 
 const toBoolean = (value) => value === true || value === 'true' || value === 1
@@ -169,8 +193,8 @@ export default function ItemDetails() {
 
         setDoughOptions(fetchedDoughOptions)
         setChocolateOptions(fetchedChocolateOptions)
-        setSelectedDoughType(fetchedDoughOptions[0] || "")
-        setSelectedChocolateType(fetchedChocolateOptions[0] || "")
+        setSelectedDoughType(fetchedDoughOptions[0]?.name || "")
+        setSelectedChocolateType(fetchedChocolateOptions[0]?.name || "")
 
         // Fetch addons for this item
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${restaurantId}/items/${itemId}/addons`);
@@ -258,12 +282,12 @@ export default function ItemDetails() {
           }
           setSelectedRemovables(restoredRemovables)
 
-          const restoredDoughType = fetchedDoughOptions.includes(cartItem.selectedDoughType)
+          const restoredDoughType = fetchedDoughOptions.some((option) => option.name === cartItem.selectedDoughType)
             ? cartItem.selectedDoughType
-            : (fetchedDoughOptions[0] || "")
-          const restoredChocolateType = fetchedChocolateOptions.includes(cartItem.selectedChocolateType)
+            : (fetchedDoughOptions[0]?.name || "")
+          const restoredChocolateType = fetchedChocolateOptions.some((option) => option.name === cartItem.selectedChocolateType)
             ? cartItem.selectedChocolateType
-            : (fetchedChocolateOptions[0] || "")
+            : (fetchedChocolateOptions[0]?.name || "")
 
           setSelectedDoughType(restoredDoughType)
           setSelectedChocolateType(restoredChocolateType)
@@ -275,6 +299,8 @@ export default function ItemDetails() {
               newTotal += Number(addon.price)
             })
           })
+          newTotal += getTemplateOptionPrice(fetchedDoughOptions, restoredDoughType)
+          newTotal += getTemplateOptionPrice(fetchedChocolateOptions, restoredChocolateType)
           setTotalPrice(newTotal)
         }
 
@@ -401,7 +427,7 @@ export default function ItemDetails() {
   };
 
   // Calculate total price based on item price and selected addons (removables don't affect price)
-  const updateTotalPrice = (selectedAddonObj) => {
+  const updateTotalPrice = useCallback((selectedAddonObj) => {
     if (!item) return;
 
     let newTotal = Number(item.price);
@@ -413,8 +439,15 @@ export default function ItemDetails() {
       });
     });
 
+    newTotal += getTemplateOptionPrice(doughOptions, selectedDoughType);
+    newTotal += getTemplateOptionPrice(chocolateOptions, selectedChocolateType);
+
     setTotalPrice(newTotal);
-  };
+  }, [item, doughOptions, chocolateOptions, selectedDoughType, selectedChocolateType]);
+
+  useEffect(() => {
+    updateTotalPrice(selectedAddons);
+  }, [selectedDoughType, selectedChocolateType, doughOptions, chocolateOptions, selectedAddons, updateTotalPrice]);
 
   // Check if an addon is selected - Updated for new API structure
   const isAddonSelected = (templateId, addonName) => {
@@ -439,8 +472,8 @@ export default function ItemDetails() {
   const handleAddToCart = () => {
     const selectedAddonList = getAllSelectedAddons();
     const selectedRemovableList = getAllSelectedRemovables();
-    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0] || "") : ""
-    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0] || "") : ""
+    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0]?.name || "") : ""
+    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0]?.name || "") : ""
 
     // Create a unique identifier for this specific item configuration
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',');
@@ -466,6 +499,8 @@ export default function ItemDetails() {
       selectedRemovables: selectedRemovableList,
       selectedDoughType: selectedDough,
       selectedChocolateType: selectedChocolate,
+      selectedDoughPrice: getTemplateOptionPrice(doughOptions, selectedDough),
+      selectedChocolatePrice: getTemplateOptionPrice(chocolateOptions, selectedChocolate),
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
       quantity: quantity,
@@ -852,10 +887,15 @@ export default function ItemDetails() {
                   <div className="space-y-3">
                     <h3 className="text-base font-semibold">Тесто</h3>
                     <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
-                      {doughOptions.map((doughType) => (
-                        <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
-                          <RadioGroupItem value={doughType} id={`dough-desktop-${doughType}`} />
-                          <Label htmlFor={`dough-desktop-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                      {doughOptions.map((doughOption) => (
+                        <div key={doughOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={doughOption.name} id={`dough-desktop-${doughOption.name}`} />
+                            <Label htmlFor={`dough-desktop-${doughOption.name}`} className="cursor-pointer">{doughOption.name}</Label>
+                          </div>
+                          {Number(doughOption.price) > 0 && (
+                            <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(doughOption.price)}</span>
+                          )}
                         </div>
                       ))}
                     </RadioGroup>
@@ -866,10 +906,15 @@ export default function ItemDetails() {
                   <div className="space-y-3">
                     <h3 className="text-base font-semibold">Шоколад</h3>
                     <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
-                      {chocolateOptions.map((chocolateType) => (
-                        <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
-                          <RadioGroupItem value={chocolateType} id={`choco-desktop-${chocolateType}`} />
-                          <Label htmlFor={`choco-desktop-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                      {chocolateOptions.map((chocolateOption) => (
+                        <div key={chocolateOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value={chocolateOption.name} id={`choco-desktop-${chocolateOption.name}`} />
+                            <Label htmlFor={`choco-desktop-${chocolateOption.name}`} className="cursor-pointer">{chocolateOption.name}</Label>
+                          </div>
+                          {Number(chocolateOption.price) > 0 && (
+                            <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(chocolateOption.price)}</span>
+                          )}
                         </div>
                       ))}
                     </RadioGroup>
@@ -1188,10 +1233,15 @@ export default function ItemDetails() {
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold">Тесто</h3>
                   <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
-                    {doughOptions.map((doughType) => (
-                      <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
-                        <RadioGroupItem value={doughType} id={`dough-mobile-${doughType}`} />
-                        <Label htmlFor={`dough-mobile-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                    {doughOptions.map((doughOption) => (
+                      <div key={doughOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value={doughOption.name} id={`dough-mobile-${doughOption.name}`} />
+                          <Label htmlFor={`dough-mobile-${doughOption.name}`} className="cursor-pointer">{doughOption.name}</Label>
+                        </div>
+                        {Number(doughOption.price) > 0 && (
+                          <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(doughOption.price)}</span>
+                        )}
                       </div>
                     ))}
                   </RadioGroup>
@@ -1202,10 +1252,15 @@ export default function ItemDetails() {
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold">Шоколад</h3>
                   <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
-                    {chocolateOptions.map((chocolateType) => (
-                      <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
-                        <RadioGroupItem value={chocolateType} id={`choco-mobile-${chocolateType}`} />
-                        <Label htmlFor={`choco-mobile-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                    {chocolateOptions.map((chocolateOption) => (
+                      <div key={chocolateOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value={chocolateOption.name} id={`choco-mobile-${chocolateOption.name}`} />
+                          <Label htmlFor={`choco-mobile-${chocolateOption.name}`} className="cursor-pointer">{chocolateOption.name}</Label>
+                        </div>
+                        {Number(chocolateOption.price) > 0 && (
+                          <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(chocolateOption.price)}</span>
+                        )}
                       </div>
                     ))}
                   </RadioGroup>

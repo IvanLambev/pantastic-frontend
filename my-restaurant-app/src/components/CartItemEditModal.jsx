@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { API_URL } from '@/config/api'
 import { fetchWithAuth } from "@/context/AuthContext"
 import { toast } from "sonner"
@@ -38,7 +38,31 @@ const decodeMojibake = (value) => {
 
 const normalizeTemplateOptions = (options) => {
   if (!Array.isArray(options)) return []
-  return options.map((option) => decodeMojibake(String(option))).filter(Boolean)
+  return options
+    .map((option) => {
+      if (option && typeof option === 'object' && !Array.isArray(option)) {
+        const name = decodeMojibake(String(option.name || '')).trim()
+        if (!name) return null
+        return {
+          name,
+          price: Number(option.price) || 0,
+        }
+      }
+
+      const name = decodeMojibake(String(option)).trim()
+      if (!name) return null
+      return {
+        name,
+        price: 0,
+      }
+    })
+    .filter(Boolean)
+}
+
+const getTemplateOptionPrice = (options, selectedName) => {
+  if (!selectedName || !Array.isArray(options)) return 0
+  const matchedOption = options.find((option) => option?.name === selectedName)
+  return Number(matchedOption?.price) || 0
 }
 
 const toBoolean = (value) => value === true || value === 'true' || value === 1
@@ -136,8 +160,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
 
         setDoughOptions(fetchedDoughOptions)
         setChocolateOptions(fetchedChocolateOptions)
-        setSelectedDoughType(fetchedDoughOptions[0] || "")
-        setSelectedChocolateType(fetchedChocolateOptions[0] || "")
+        setSelectedDoughType(fetchedDoughOptions[0]?.name || "")
+        setSelectedChocolateType(fetchedChocolateOptions[0]?.name || "")
 
         const addonsRes = await fetchWithAuth(`${API_URL}/restaurant/${resolvedRestaurantId}/items/${resolvedItemId}/addons`)
         const templates = addonsRes.ok ? await addonsRes.json() : []
@@ -195,12 +219,12 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
         }
         setSelectedRemovables(restoredRemovables)
 
-        const restoredDoughType = fetchedDoughOptions.includes(cartItem.selectedDoughType)
+        const restoredDoughType = fetchedDoughOptions.some((option) => option.name === cartItem.selectedDoughType)
           ? cartItem.selectedDoughType
-          : (fetchedDoughOptions[0] || "")
-        const restoredChocolateType = fetchedChocolateOptions.includes(cartItem.selectedChocolateType)
+          : (fetchedDoughOptions[0]?.name || "")
+        const restoredChocolateType = fetchedChocolateOptions.some((option) => option.name === cartItem.selectedChocolateType)
           ? cartItem.selectedChocolateType
-          : (fetchedChocolateOptions[0] || "")
+          : (fetchedChocolateOptions[0]?.name || "")
 
         setSelectedDoughType(restoredDoughType)
         setSelectedChocolateType(restoredChocolateType)
@@ -211,6 +235,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
             newTotal += Number(addon.price)
           })
         })
+        newTotal += getTemplateOptionPrice(fetchedDoughOptions, restoredDoughType)
+        newTotal += getTemplateOptionPrice(fetchedChocolateOptions, restoredChocolateType)
         setTotalPrice(newTotal)
       } catch (error) {
         console.error('Error fetching item options:', error)
@@ -235,7 +261,7 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
     setAddonVisibleCounts(initialCounts)
   }, [addonTemplates, isOpen])
 
-  const updateTotalPrice = (selectedAddonObj) => {
+  const updateTotalPrice = useCallback((selectedAddonObj) => {
     if (!item) return
     let newTotal = Number(item.price)
     Object.values(selectedAddonObj).forEach(addonArray => {
@@ -243,8 +269,14 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
         newTotal += Number(addon.price)
       })
     })
+    newTotal += getTemplateOptionPrice(doughOptions, selectedDoughType)
+    newTotal += getTemplateOptionPrice(chocolateOptions, selectedChocolateType)
     setTotalPrice(newTotal)
-  }
+  }, [item, doughOptions, chocolateOptions, selectedDoughType, selectedChocolateType])
+
+  useEffect(() => {
+    updateTotalPrice(selectedAddons)
+  }, [selectedDoughType, selectedChocolateType, doughOptions, chocolateOptions, selectedAddons, updateTotalPrice])
 
   const handleAddonChange = (templateId, addon, isChecked) => {
     setSelectedAddons(prev => {
@@ -293,8 +325,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
 
     const selectedAddonList = getAllSelectedAddons()
     const selectedRemovableList = getAllSelectedRemovables()
-    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0] || "") : ""
-    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0] || "") : ""
+    const selectedDough = item?.has_dough_options ? (selectedDoughType || doughOptions[0]?.name || "") : ""
+    const selectedChocolate = item?.has_chocolate_options ? (selectedChocolateType || chocolateOptions[0]?.name || "") : ""
 
     const addonIds = selectedAddonList.map(addon => addon.name).sort().join(',')
     const removableIds = selectedRemovableList.sort().join(',')
@@ -319,6 +351,8 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
       selectedRemovables: selectedRemovableList,
       selectedDoughType: selectedDough,
       selectedChocolateType: selectedChocolate,
+      selectedDoughPrice: getTemplateOptionPrice(doughOptions, selectedDough),
+      selectedChocolatePrice: getTemplateOptionPrice(chocolateOptions, selectedChocolate),
       addonCount: selectedAddonList.length,
       removableCount: selectedRemovableList.length,
       quantity,
@@ -558,10 +592,15 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold">Тесто</h3>
                       <RadioGroup value={selectedDoughType} onValueChange={setSelectedDoughType}>
-                        {doughOptions.map((doughType) => (
-                          <div key={doughType} className="flex items-center space-x-2 rounded-lg border p-3">
-                            <RadioGroupItem value={doughType} id={`edit-dough-${doughType}`} />
-                            <Label htmlFor={`edit-dough-${doughType}`} className="cursor-pointer">{doughType}</Label>
+                        {doughOptions.map((doughOption) => (
+                          <div key={doughOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value={doughOption.name} id={`edit-dough-${doughOption.name}`} />
+                              <Label htmlFor={`edit-dough-${doughOption.name}`} className="cursor-pointer">{doughOption.name}</Label>
+                            </div>
+                            {Number(doughOption.price) > 0 && (
+                              <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(doughOption.price)}</span>
+                            )}
                           </div>
                         ))}
                       </RadioGroup>
@@ -572,10 +611,15 @@ export default function CartItemEditModal({ isOpen, onClose, cartItem, restauran
                     <div className="space-y-3">
                       <h3 className="text-sm font-semibold">Шоколад</h3>
                       <RadioGroup value={selectedChocolateType} onValueChange={setSelectedChocolateType}>
-                        {chocolateOptions.map((chocolateType) => (
-                          <div key={chocolateType} className="flex items-center space-x-2 rounded-lg border p-3">
-                            <RadioGroupItem value={chocolateType} id={`edit-choco-${chocolateType}`} />
-                            <Label htmlFor={`edit-choco-${chocolateType}`} className="cursor-pointer">{chocolateType}</Label>
+                        {chocolateOptions.map((chocolateOption) => (
+                          <div key={chocolateOption.name} className="flex items-center justify-between space-x-2 rounded-lg border p-3">
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value={chocolateOption.name} id={`edit-choco-${chocolateOption.name}`} />
+                              <Label htmlFor={`edit-choco-${chocolateOption.name}`} className="cursor-pointer">{chocolateOption.name}</Label>
+                            </div>
+                            {Number(chocolateOption.price) > 0 && (
+                              <span className="text-sm font-semibold text-primary">+{formatDualCurrencyCompact(chocolateOption.price)}</span>
+                            )}
                           </div>
                         ))}
                       </RadioGroup>

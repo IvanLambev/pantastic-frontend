@@ -34,6 +34,26 @@ const Cart = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
   const [selectedCartItem, setSelectedCartItem] = useState(null)
 
+  const getOptionLabel = (option) => {
+    if (!option) return ""
+    if (typeof option === 'string') return option
+    if (typeof option === 'object') return option.name || ""
+    return String(option)
+  }
+
+  const getOptionPrice = (item, key) => {
+    const directPrice = Number(item?.[key])
+    if (!Number.isNaN(directPrice) && directPrice > 0) return directPrice
+
+    const fallbackSelection = key === 'selectedDoughPrice' ? item?.selectedDoughType : item?.selectedChocolateType
+    if (fallbackSelection && typeof fallbackSelection === 'object') {
+      const nestedPrice = Number(fallbackSelection.price)
+      if (!Number.isNaN(nestedPrice) && nestedPrice > 0) return nestedPrice
+    }
+
+    return 0
+  }
+
   // Get delivery information from sessionStorage
   const deliveryAddress = sessionStorage.getItem('delivery_address')
   const deliveryCoords = sessionStorage.getItem('delivery_coords')
@@ -225,12 +245,14 @@ const Cart = () => {
                                 )}
                                 {item.selectedDoughType && (
                                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                                    Тесто: {item.selectedDoughType}
+                                    Тесто: {getOptionLabel(item.selectedDoughType)}
+                                    {getOptionPrice(item, 'selectedDoughPrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedDoughPrice'))})`}
                                   </span>
                                 )}
                                 {item.selectedChocolateType && (
                                   <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
-                                    Шоколад: {item.selectedChocolateType}
+                                    Шоколад: {getOptionLabel(item.selectedChocolateType)}
+                                    {getOptionPrice(item, 'selectedChocolatePrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedChocolatePrice'))})`}
                                   </span>
                                 )}
                               </div>
@@ -371,13 +393,19 @@ const Cart = () => {
                           {item.selectedDoughType && (
                             <p>
                               <span className="font-semibold">Тесто: </span>
-                              <span className="text-muted-foreground">{item.selectedDoughType}</span>
+                              <span className="text-muted-foreground">{getOptionLabel(item.selectedDoughType)}</span>
+                              {getOptionPrice(item, 'selectedDoughPrice') > 0 && (
+                                <span className="text-primary font-medium"> {`(+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedDoughPrice'))})`}</span>
+                              )}
                             </p>
                           )}
                           {item.selectedChocolateType && (
                             <p>
                               <span className="font-semibold">Шоколад: </span>
-                              <span className="text-muted-foreground">{item.selectedChocolateType}</span>
+                              <span className="text-muted-foreground">{getOptionLabel(item.selectedChocolateType)}</span>
+                              {getOptionPrice(item, 'selectedChocolatePrice') > 0 && (
+                                <span className="text-primary font-medium"> {`(+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedChocolatePrice'))})`}</span>
+                              )}
                             </p>
                           )}
                         </div>
@@ -444,12 +472,14 @@ const Cart = () => {
                       )}
                       {item.selectedDoughType && (
                         <div className="text-xs text-blue-700 pl-4">
-                          Тесто: {item.selectedDoughType}
+                          Тесто: {getOptionLabel(item.selectedDoughType)}
+                          {getOptionPrice(item, 'selectedDoughPrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedDoughPrice'))})`}
                         </div>
                       )}
                       {item.selectedChocolateType && (
                         <div className="text-xs text-amber-700 pl-4">
-                          Шоколад: {item.selectedChocolateType}
+                          Шоколад: {getOptionLabel(item.selectedChocolateType)}
+                          {getOptionPrice(item, 'selectedChocolatePrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedChocolatePrice'))})`}
                         </div>
                       )}
                     </div>

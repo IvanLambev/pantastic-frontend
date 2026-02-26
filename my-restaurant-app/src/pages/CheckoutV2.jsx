@@ -254,11 +254,29 @@ export default function CheckoutV2() {
   // Calculate subtotal in BGN (without delivery fee)
   const calculateSubtotalBGN = () => {
     return cartItems.reduce((sum, item) => {
-      const addOnsTotal = item.addOns ?
-        item.addOns.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) : 0;
-      return sum + (item.price * item.quantity) + (addOnsTotal * item.quantity);
+      return sum + ((Number(item.price) || 0) * (Number(item.quantity) || 1));
     }, 0);
   };
+
+  const getOptionLabel = (option) => {
+    if (!option) return ""
+    if (typeof option === 'string') return option
+    if (typeof option === 'object') return option.name || ""
+    return String(option)
+  }
+
+  const getOptionPrice = (item, key) => {
+    const directPrice = Number(item?.[key])
+    if (!Number.isNaN(directPrice) && directPrice > 0) return directPrice
+
+    const fallbackSelection = key === 'selectedDoughPrice' ? item?.selectedDoughType : item?.selectedChocolateType
+    if (fallbackSelection && typeof fallbackSelection === 'object') {
+      const nestedPrice = Number(fallbackSelection.price)
+      if (!Number.isNaN(nestedPrice) && nestedPrice > 0) return nestedPrice
+    }
+
+    return 0
+  }
 
   // Calculate discount amount in BGN
   const calculateDiscountAmountBGN = () => {
@@ -485,8 +503,8 @@ export default function CheckoutV2() {
       return {
         item_id: itemId,
         quantity: item.quantity || 1, // Use the cart item's quantity
-        selected_dough: item.selectedDoughType || null,
-        selected_chocolate_type: item.selectedChocolateType || null,
+        selected_dough: getOptionLabel(item.selectedDoughType) || null,
+        selected_chocolate_type: getOptionLabel(item.selectedChocolateType) || null,
         addons: Object.keys(addons).length > 0 ? addons : null,
         removables: removables.length > 0 ? removables : null,
         special_instructions: item.specialInstructions || null
@@ -926,14 +944,20 @@ export default function CheckoutV2() {
                           {item.selectedDoughType && (
                             <div className="text-sm text-blue-700 mt-1">
                               <span className="font-medium">Тесто: </span>
-                              <span>{item.selectedDoughType}</span>
+                              <span>{getOptionLabel(item.selectedDoughType)}</span>
+                              {getOptionPrice(item, 'selectedDoughPrice') > 0 && (
+                                <span className="font-medium text-primary"> {`(+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedDoughPrice'))})`}</span>
+                              )}
                             </div>
                           )}
 
                           {item.selectedChocolateType && (
                             <div className="text-sm text-amber-700 mt-1">
                               <span className="font-medium">Шоколад: </span>
-                              <span>{item.selectedChocolateType}</span>
+                              <span>{getOptionLabel(item.selectedChocolateType)}</span>
+                              {getOptionPrice(item, 'selectedChocolatePrice') > 0 && (
+                                <span className="font-medium text-primary"> {`(+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedChocolatePrice'))})`}</span>
+                              )}
                             </div>
                           )}
 

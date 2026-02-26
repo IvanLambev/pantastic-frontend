@@ -34,6 +34,26 @@ export default function OrderConfirmation({
 }) {
   const [orderDetails, setOrderDetails] = useState(null);
 
+  const getOptionLabel = (option) => {
+    if (!option) return "";
+    if (typeof option === 'string') return option;
+    if (typeof option === 'object') return option.name || "";
+    return String(option);
+  };
+
+  const getOptionPrice = (item, key) => {
+    const directPrice = Number(item?.[key]);
+    if (!Number.isNaN(directPrice) && directPrice > 0) return directPrice;
+
+    const fallbackSelection = key === 'selectedDoughPrice' ? item?.selectedDoughType : item?.selectedChocolateType;
+    if (fallbackSelection && typeof fallbackSelection === 'object') {
+      const nestedPrice = Number(fallbackSelection.price);
+      if (!Number.isNaN(nestedPrice) && nestedPrice > 0) return nestedPrice;
+    }
+
+    return 0;
+  };
+
   // Lock body scroll when dialog is open
   useEffect(() => {
     if (open) {
@@ -145,12 +165,14 @@ export default function OrderConfirmation({
                     )}
                     {item.selectedDoughType && (
                       <div className="text-sm text-blue-700 mt-1">
-                        Тесто: {item.selectedDoughType}
+                        Тесто: {getOptionLabel(item.selectedDoughType)}
+                        {getOptionPrice(item, 'selectedDoughPrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedDoughPrice'))})`}
                       </div>
                     )}
                     {item.selectedChocolateType && (
                       <div className="text-sm text-amber-700 mt-1">
-                        Шоколад: {item.selectedChocolateType}
+                        Шоколад: {getOptionLabel(item.selectedChocolateType)}
+                        {getOptionPrice(item, 'selectedChocolatePrice') > 0 && ` (+${formatDualCurrencyCompact(getOptionPrice(item, 'selectedChocolatePrice'))})`}
                       </div>
                     )}
                     {item.specialInstructions && (
