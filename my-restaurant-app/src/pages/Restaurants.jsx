@@ -120,10 +120,10 @@ export default function Restaurants() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight break-words mb-4 px-2">
             Нашите Ресторанти
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-base sm:text-xl text-gray-600 px-2">
             Открийте локациите на всички наши ресторанти и работното им време
           </p>
         </div>
