@@ -4,28 +4,7 @@ import { fetchWithAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Clock, Store } from "lucide-react";
 import { openInMaps } from "@/utils/mapsHelper";
-
-// Helper function to parse opening hours (handles both string and object formats)
-const parseOpeningHours = (hours) => {
-  if (!hours) return {};
-  
-  // If it's already an object, return it
-  if (typeof hours === 'object' && !Array.isArray(hours)) {
-    return hours;
-  }
-  
-  // If it's a string, try to parse it
-  if (typeof hours === 'string') {
-    try {
-      return JSON.parse(hours);
-    } catch (e) {
-      console.error('Error parsing opening hours:', e);
-      return {};
-    }
-  }
-  
-  return {};
-};
+import { parseOpeningHours } from "@/utils/ipGeolocation";
 
 // Helper function to translate day names to Bulgarian
 const translateDay = (day) => {
