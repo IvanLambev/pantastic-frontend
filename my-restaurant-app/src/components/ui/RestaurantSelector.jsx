@@ -1203,7 +1203,6 @@ export default function RestaurantSelector({
                 let timeText = t('restaurantSelector.closed');
                 let stateBg = "bg-red-100/60 text-red-700";
                 if (isComingSoon) {
-                  timeText = t('restaurantSelector.comingSoon');
                   stateBg = "bg-amber-100/60 text-amber-700";
                 } else if (todayHours) {
                   // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
@@ -1264,7 +1263,7 @@ export default function RestaurantSelector({
                       </div>
                       <div className="text-sm text-gray-600 text-left sm:text-right w-full sm:w-auto">
                         <div className="bg-gray-200/60 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 justify-between sm:justify-end">
-                          <span className="whitespace-nowrap">{currentDayBG}: <span className="text-black">{todayHours ? timeText : "Затворено"}</span></span>
+                          <span className="whitespace-nowrap">{currentDayBG}: <span className="text-black">{isComingSoon ? "—" : (todayHours ? timeText : "Затворено")}</span></span>
                           <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${stateBg} whitespace-nowrap`}>
                             {isComingSoon ? t('restaurantSelector.comingSoon') : (isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed'))}
                           </span>

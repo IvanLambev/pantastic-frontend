@@ -156,65 +156,67 @@ export default function Restaurants() {
                     </span>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-6">
-                  {/* Location */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-3 mb-2">
-                      <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-900 text-left">Адрес</p>
-                        <p 
-                          className="text-gray-600 hover:text-blue-600 hover:underline cursor-pointer text-left"
-                          onClick={() => openInMaps(restaurant.address, restaurant.city)}
-                        >
-                          {restaurant.address}, {restaurant.city}
-                        </p>
+                {!isComingSoon && (
+                  <CardContent className="pt-6">
+                    {/* Location */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <div className="text-left">
+                          <p className="font-semibold text-gray-900 text-left">Адрес</p>
+                          <p 
+                            className="text-gray-600 hover:text-blue-600 hover:underline cursor-pointer text-left"
+                            onClick={() => openInMaps(restaurant.address, restaurant.city)}
+                          >
+                            {restaurant.address}, {restaurant.city}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Full Week Working Hours */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <Clock className="h-5 w-5 text-gray-400" />
-                      <p className="font-semibold text-gray-900">Пълно работно време</p>
-                    </div>
-                    <div className="ml-8 space-y-2">
-                      {daysOrder.map((day) => {
-                        const dayHours = hours[day];
-                        const isToday = day === currentDay;
-                        const isDayOpen = isRestaurantOpenOnDay(restaurant.opening_hours, day);
+                    {/* Full Week Working Hours */}
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <Clock className="h-5 w-5 text-gray-400" />
+                        <p className="font-semibold text-gray-900">Пълно работно време</p>
+                      </div>
+                      <div className="ml-8 space-y-2">
+                        {daysOrder.map((day) => {
+                          const dayHours = hours[day];
+                          const isToday = day === currentDay;
+                          const isDayOpen = isRestaurantOpenOnDay(restaurant.opening_hours, day);
 
-                        return (
-                          <div 
-                            key={day} 
-                            className={`flex justify-between items-center py-2 px-3 rounded-lg ${
-                              isToday && isDayOpen ? 'bg-green-50' : 'bg-gray-50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                                {translateDay(day)}
-                              </span>
-                              {isToday && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                  isDayOpen 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {isDayOpen ? 'Отворено' : 'Затворено'}
+                          return (
+                            <div 
+                              key={day} 
+                              className={`flex justify-between items-center py-2 px-3 rounded-lg ${
+                                isToday && isDayOpen ? 'bg-green-50' : 'bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
+                                  {translateDay(day)}
                                 </span>
-                              )}
+                                {isToday && (
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                    isDayOpen 
+                                      ? 'bg-green-100 text-green-700' 
+                                      : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {isDayOpen ? 'Отворено' : 'Затворено'}
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
+                                {dayHours || 'Затворено'}
+                              </span>
                             </div>
-                            <span className={`${isToday ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
-                              {dayHours || 'Затворено'}
-                            </span>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
+                  </CardContent>
+                )}
               </Card>
             );
           })}
