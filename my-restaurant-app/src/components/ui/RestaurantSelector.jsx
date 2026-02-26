@@ -744,8 +744,8 @@ export default function RestaurantSelector({
         // Save location in sessionStorage if delivery
         let userCity = null;
         if (deliveryMethod === 'delivery') {
-          // Try to reverse geocode if possible, else save as 'Device Location'
-          let deviceAddress = 'Device Location';
+          // Try to reverse geocode if possible, else save as localized fallback label
+          let deviceAddress = t('restaurantSelector.deviceLocation');
           try {
             if (window && window.fetch) {
               const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=bg`);
@@ -804,7 +804,7 @@ export default function RestaurantSelector({
             handleClose();
           }
         } else {
-          setAddressError(result.message || "No restaurants found near your location.");
+          setAddressError(result.message || t('restaurantSelector.noRestaurantsFoundNearby'));
         }
         setAddressLoading(false);
       },
@@ -896,7 +896,7 @@ export default function RestaurantSelector({
         handleClose();
       }
     } else {
-      setAddressError(result.message || "No restaurants found near this location.");
+      setAddressError(result.message || t('restaurantSelector.noRestaurantsFoundNearby'));
     }
   }
 
@@ -933,7 +933,7 @@ export default function RestaurantSelector({
     setShowDistanceWarning(false);
     setPendingRestaurantSelection(null);
     setPendingDistance(null);
-    setAddressError("Please try a different location or manually select a restaurant.");
+    setAddressError(t('restaurantSelector.tryDifferentOrManualSelect'));
   }
 
   return (
@@ -1068,7 +1068,7 @@ export default function RestaurantSelector({
                 )}
 
                 {/* No Open Restaurants - Show nearest restaurant for menu browsing */}
-                {addressError.includes("No restaurants are currently open") && !showDistanceWarning && (
+                {(addressError.includes(t('restaurantSelector.noRestaurantsOpenInRadius', { radius: 7.5 })) || addressError.includes("No restaurants are currently open")) && !showDistanceWarning && (
                   <div className="text-center space-y-4">
                     <p className="text-sm text-muted-foreground mt-2">
                       {t('restaurantSelector.noRestaurantsOpenDesc')}
@@ -1081,7 +1081,7 @@ export default function RestaurantSelector({
                         </h4>
                         <p className="text-sm text-blue-800 mb-1">{pendingRestaurantSelection.name}</p>
                         <p className="text-xs text-blue-600 mb-3">
-                          {pendingRestaurantSelection.address || 'Address not available'}
+                          {pendingRestaurantSelection.address || t('restaurantSelector.addressNotAvailable')}
                           {pendingDistance && ` - ${pendingDistance.toFixed(1)} km ${t('restaurantSelector.away')}`}
                         </p>
                         <Button
@@ -1192,7 +1192,7 @@ export default function RestaurantSelector({
                 const hours = parseOpeningHours(restaurant.opening_hours);
                 const todayHours = hours[currentDay];
                 let isOpen = false;
-                let timeText = "Closed";
+                let timeText = t('restaurantSelector.closed');
                 let stateBg = "bg-red-100/60 text-red-700";
                 if (todayHours) {
                   // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
@@ -1227,7 +1227,7 @@ export default function RestaurantSelector({
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
-                      const restaurantName = restaurant?.name || 'Unknown Restaurant';
+                      const restaurantName = restaurant?.name || t('restaurantSelector.unknownRestaurant');
                       toast.success(t('home.restaurantSelected', { name: restaurantName }));
                     }}
                   >
