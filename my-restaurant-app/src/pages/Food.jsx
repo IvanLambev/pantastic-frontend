@@ -735,7 +735,7 @@ const Food = () => {
         <div className="container mx-auto px-4 my-6">
           <div className="grid grid-cols-2 lg:grid-cols-7 gap-4 max-w-6xl mx-auto">
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "sweet" ? "default" : "outline"}
               onClick={() => handleCategoryChange("sweet")}
             >
@@ -758,7 +758,7 @@ const Food = () => {
               <span>Американски Мини</span>
             </Button>
             <Button
-              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl"
+              className="text-sm lg:text-lg py-6 lg:py-8 font-bold rounded-xl whitespace-normal leading-tight"
               variant={category === "savory" ? "default" : "outline"}
               onClick={() => handleCategoryChange("savory")}
             >
