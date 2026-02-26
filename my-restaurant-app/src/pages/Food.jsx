@@ -36,6 +36,7 @@ import { t, translateLabel, translateDynamicLabel } from "@/utils/translations"
 import { openInMaps } from "@/utils/mapsHelper"
 import { selectRestaurantWithFallback, isRestaurantOpen, parseOpeningHours, getNextOpenTime } from "@/utils/ipGeolocation"
 import { cn } from "@/lib/utils"
+import { isComingSoonRestaurant } from "@/utils/restaurantAvailability"
 import {
   Tooltip,
   TooltipContent,
@@ -473,6 +474,11 @@ const Food = () => {
 
   // Unified restaurant selection handler
   function selectRestaurant(restaurant) {
+    if (isComingSoonRestaurant(restaurant)) {
+      toast.info(t('restaurantSelector.comingSoon'));
+      return;
+    }
+
     // Get the current restaurant ID if exists
     const currentRestaurantId = selectedRestaurant
       ? (Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id)

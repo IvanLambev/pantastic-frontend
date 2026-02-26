@@ -21,6 +21,7 @@ import { fetchWithAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { t } from "@/utils/translations";
 import { openInMaps } from "@/utils/mapsHelper";
+import { isComingSoonRestaurant } from "@/utils/restaurantAvailability";
 
 // Google Maps Autocomplete Component
 function GoogleMapsAutocomplete({ onLocationSelect }) {
@@ -524,7 +525,7 @@ export default function RestaurantSelector({
     const SAME_CITY_ASSUMED_DISTANCE = 3; // Assume restaurants in same city without coords are ~3km away
 
     // First, try to find CLOSEST open restaurant within MAX_RADIUS_KM radius
-    const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
+    const openRestaurants = restaurants.filter(r => !isComingSoonRestaurant(r) && isRestaurantOpen(r));
 
     console.log(`[findClosestRestaurant] Found ${openRestaurants.length} open restaurants out of ${restaurants.length} total`);
     console.log(`[findClosestRestaurant] User city detected: ${userCity || 'unknown'}`);
@@ -606,6 +607,7 @@ export default function RestaurantSelector({
     const allRestaurantsWithDistance = [];
 
     for (const r of restaurants) {
+      if (isComingSoonRestaurant(r)) continue;
       const rLat = parseFloat(r.latitude);
       const rLng = parseFloat(r.longitude);
       const hasCoords = !isNaN(rLat) && !isNaN(rLng);
@@ -672,6 +674,7 @@ export default function RestaurantSelector({
       const dayName = days[checkDate.getDay()];
 
       for (const restaurant of restaurants) {
+        if (isComingSoonRestaurant(restaurant)) continue;
         // Parse opening hours using the helper function
         const hours = parseOpeningHours(restaurant.opening_hours);
         const dayHours = hours[dayName];
@@ -1087,6 +1090,10 @@ export default function RestaurantSelector({
                         <Button
                           variant="default"
                           onClick={() => {
+                            if (isComingSoonRestaurant(pendingRestaurantSelection)) {
+                              toast.info(t('restaurantSelector.comingSoon'));
+                              return;
+                            }
                             onSelect(pendingRestaurantSelection);
                             handleClose();
                             toast.info(t('restaurantSelector.closedRestaurantWarning'));
@@ -1188,13 +1195,17 @@ export default function RestaurantSelector({
                 const daysBG = ["Неделя", "Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота"];
                 const currentDay = days[eetTime.getDay()];
                 const currentDayBG = daysBG[eetTime.getDay()];
+                const isComingSoon = isComingSoonRestaurant(restaurant);
                 // Parse opening hours properly (handles both string and object formats)
                 const hours = parseOpeningHours(restaurant.opening_hours);
                 const todayHours = hours[currentDay];
                 let isOpen = false;
                 let timeText = t('restaurantSelector.closed');
                 let stateBg = "bg-red-100/60 text-red-700";
-                if (todayHours) {
+                if (isComingSoon) {
+                  timeText = t('restaurantSelector.comingSoon');
+                  stateBg = "bg-amber-100/60 text-amber-700";
+                } else if (todayHours) {
                   // Format: "09:00-18:00" or "10:00-03:00" (crosses midnight)
                   const [open, close] = todayHours.split("-");
                   const [openH, openM] = open.split(":").map(Number);
@@ -1222,14 +1233,19 @@ export default function RestaurantSelector({
                   <Button
                     key={restaurant.restaurant_id}
                     variant="outline"
-                    className="w-full p-4 sm:p-6 h-auto hover:bg-gray-100 relative"
+                    className={`w-full p-4 sm:p-6 h-auto relative ${isComingSoon ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-100'}`}
                     onClick={() => {
+                      if (isComingSoon) {
+                        toast.info(t('restaurantSelector.comingSoon'));
+                        return;
+                      }
                       sessionStorage.setItem('delivery_method', 'pickup');
                       onSelect(restaurant);
                       handleClose();
                       const restaurantName = restaurant?.name || t('restaurantSelector.unknownRestaurant');
                       toast.success(t('home.restaurantSelected', { name: restaurantName }));
                     }}
+                    disabled={isComingSoon}
                   >
                     <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
                       <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
@@ -1250,7 +1266,7 @@ export default function RestaurantSelector({
                         <div className="bg-gray-200/60 rounded-lg px-2 py-1 font-semibold flex items-center gap-2 justify-between sm:justify-end">
                           <span className="whitespace-nowrap">{currentDayBG}: <span className="text-black">{todayHours ? timeText : "Затворено"}</span></span>
                           <span className={`px-2 py-1 rounded-lg text-xs font-semibold ${stateBg} whitespace-nowrap`}>
-                            {isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed')}
+                            {isComingSoon ? t('restaurantSelector.comingSoon') : (isOpen ? t('restaurantSelector.open') : t('restaurantSelector.closed'))}
                           </span>
                         </div>
                       </div>

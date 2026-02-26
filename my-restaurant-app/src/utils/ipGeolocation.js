@@ -2,6 +2,8 @@
  * IP Geolocation utilities for automatic city detection
  */
 
+import { isComingSoonRestaurant } from "@/utils/restaurantAvailability";
+
 const DEFAULT_RESTAURANT_ID = "001a5b8a-e149-48da-83e6-ffb5772b144c";
 
 /**
@@ -305,12 +307,14 @@ export function findRestaurantInCity(restaurants, userCity) {
  * @returns {Object | null} - Default restaurant or null
  */
 export function getDefaultRestaurant(restaurants) {
-  if (!restaurants || !restaurants.length) {
+  const availableRestaurants = (restaurants || []).filter((restaurant) => !isComingSoonRestaurant(restaurant));
+
+  if (!availableRestaurants.length) {
     console.error('[IP Geolocation] ❌ No restaurants available at all!');
     return null;
   }
 
-  const defaultRestaurant = restaurants.find(restaurant => {
+  const defaultRestaurant = availableRestaurants.find(restaurant => {
     const restaurantId = restaurant.restaurant_id || restaurant[0]; // Handle both formats
     return restaurantId === DEFAULT_RESTAURANT_ID;
   });
@@ -322,7 +326,7 @@ export function getDefaultRestaurant(restaurants) {
     console.error('[IP Geolocation] ❌ UUID fallback restaurant not found! Using first restaurant');
   }
 
-  return defaultRestaurant || restaurants[0]; // Return first restaurant if default not found
+  return defaultRestaurant || availableRestaurants[0]; // Return first available restaurant if default not found
 }
 
 /**
@@ -340,15 +344,21 @@ export async function selectRestaurantWithFallback(restaurants) {
   if (savedRestaurant) {
     try {
       const parsed = JSON.parse(savedRestaurant);
+      if (isComingSoonRestaurant(parsed)) {
+        localStorage.removeItem('selectedRestaurant');
+      } else {
       console.log('[IP Geolocation] Using saved restaurant:', parsed.name || parsed[8]);
       return parsed;
+      }
     } catch (error) {
       console.error('[IP Geolocation] Error parsing saved restaurant:', error);
       localStorage.removeItem('selectedRestaurant');
     }
   }
 
-  if (!restaurants || !restaurants.length) {
+  const availableRestaurants = (restaurants || []).filter((restaurant) => !isComingSoonRestaurant(restaurant));
+
+  if (!availableRestaurants.length) {
     console.warn('[IP Geolocation] No restaurants available');
     return null;
   }
@@ -373,7 +383,7 @@ export async function selectRestaurantWithFallback(restaurants) {
     console.log('[IP Geolocation] User city detected:', userCity);
     
     // First, try to find CLOSEST OPEN restaurant (considering both coords and same-city restaurants)
-    const openRestaurants = restaurants.filter(r => isRestaurantOpen(r));
+    const openRestaurants = availableRestaurants.filter(r => isRestaurantOpen(r));
     
     // Build a list of all open restaurants with their distances
     const restaurantsWithDistance = [];
@@ -433,7 +443,7 @@ export async function selectRestaurantWithFallback(restaurants) {
     // No open restaurants within range - Find CLOSEST restaurant (open or closed)
     const allRestaurantsWithDistance = [];
     
-    restaurants.forEach(restaurant => {
+    availableRestaurants.forEach(restaurant => {
       const restLat = parseFloat(restaurant.latitude || restaurant[4]);
       const restLng = parseFloat(restaurant.longitude || restaurant[5]);
       const hasCoords = !isNaN(restLat) && !isNaN(restLng);
@@ -473,7 +483,7 @@ export async function selectRestaurantWithFallback(restaurants) {
 
   // 3. Fall back to default restaurant UUID (LAST RESORT - only when IP detection fails completely)
   console.warn('[IP Geolocation] ⚠️ Using UUID fallback (last resort) - IP detection failed or no city match');
-  const defaultRestaurant = getDefaultRestaurant(restaurants);
+  const defaultRestaurant = getDefaultRestaurant(availableRestaurants);
   return defaultRestaurant;
 }
 

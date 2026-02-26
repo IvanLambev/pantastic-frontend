@@ -306,6 +306,7 @@ export const translations = {
     reviewOrder: "Прегледай поръчка",
     restaurantClosed: "Ресторантът е затворен",
     restaurantClosedMsg: "Ресторантът в момента е затворен",
+    comingSoonRestaurant: "Този ресторант е в процес на откриване. Очаквайте скоро.",
     nextOpening: "Следващо отваряне",
     processingPayment: "Обработка на плащане...",
 
@@ -413,6 +414,7 @@ export const translations = {
 
     open: "Отворено",
     closed: "Затворено",
+    comingSoon: "Очаквайте скоро",
     opensAt: "Отваря в",
     closesAt: "Затваря в",
 

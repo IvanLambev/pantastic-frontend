@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Clock, Store } from "lucide-react";
 import { openInMaps } from "@/utils/mapsHelper";
 import { parseOpeningHours } from "@/utils/ipGeolocation";
+import { isComingSoonRestaurant } from "@/utils/restaurantAvailability";
 
 // Helper function to translate day names to Bulgarian
 const translateDay = (day) => {
@@ -132,6 +133,7 @@ export default function Restaurants() {
         <div className="grid gap-6 md:grid-cols-2">
           {restaurants.map((restaurant) => {
             const hours = parseOpeningHours(restaurant.opening_hours);
+            const isComingSoon = isComingSoonRestaurant(restaurant);
             const isOpen = isRestaurantOpen(restaurant.opening_hours);
             const currentDay = getCurrentDay();
 
@@ -144,11 +146,13 @@ export default function Restaurants() {
                       <CardTitle className="text-2xl">{restaurant.name}</CardTitle>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      isOpen 
+                      isComingSoon
+                        ? 'bg-amber-100 text-amber-700'
+                        : isOpen 
                         ? 'bg-green-100 text-green-700' 
                         : 'bg-red-100 text-red-700'
                     }`}>
-                      {isOpen ? 'Отворено' : 'Затворено'}
+                      {isComingSoon ? 'Очаквайте скоро' : (isOpen ? 'Отворено' : 'Затворено')}
                     </span>
                   </div>
                 </CardHeader>

@@ -31,6 +31,7 @@ import {
   isRestaurantOpen,
   getNextOpenTime
 } from "@/utils/deliveryScheduler"
+import { isComingSoonRestaurant } from "@/utils/restaurantAvailability"
 
 export default function CheckoutV2() {
   const { cartItems, clearCart, updateQuantity, removeFromCart } = useCart()
@@ -228,6 +229,7 @@ export default function CheckoutV2() {
   }
 
   // Check if restaurant is currently open
+  const isComingSoon = isComingSoonRestaurant(selectedRestaurant)
   const isOpen = isRestaurantOpen(selectedRestaurant)
   const nextOpenTime = !isOpen ? getNextOpenTime(selectedRestaurant) : null
 
@@ -479,6 +481,10 @@ export default function CheckoutV2() {
     // Check if restaurant is selected
     if (!selectedRestaurant || selectedRestaurant.length === 0) {
       throw new Error('No restaurant selected')
+    }
+
+    if (isComingSoonRestaurant(selectedRestaurant)) {
+      throw new Error(t('checkout.comingSoonRestaurant'))
     }
 
     // Format order items according to new API structure
@@ -1094,6 +1100,11 @@ export default function CheckoutV2() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
+                  {isComingSoon && (
+                    <div className="text-center p-2 bg-amber-50 border border-amber-200 rounded-lg w-full">
+                      <p className="text-sm text-amber-800 font-medium">{t('checkout.comingSoonRestaurant')}</p>
+                    </div>
+                  )}
                   {!isOpen && nextOpenTime && !isScheduled && (
                     <div className="text-center p-2 bg-orange-50 border border-orange-200 rounded-lg w-full">
                       <p className="text-sm text-orange-800 font-medium">{t('checkout.restaurantClosed')}</p>
@@ -1101,15 +1112,20 @@ export default function CheckoutV2() {
                     </div>
                   )}
                   <Button
-                    className={`w-full ${(!isOpen && !isScheduled) ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
+                    className={`w-full ${((!isOpen && !isScheduled) || isComingSoon) ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed' : ''}`}
                     size="lg"
                     onClick={handleCheckout}
-                    disabled={isProcessing || (!isOpen && !isScheduled)}
+                    disabled={isProcessing || (!isOpen && !isScheduled) || isComingSoon}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         {t('checkout.processingPayment')}
+                      </div>
+                    ) : isComingSoon ? (
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4" />
+                        {t('checkout.comingSoonRestaurant')}
                       </div>
                     ) : (!isOpen && !isScheduled) ? (
                       <div className="flex items-center gap-2">
