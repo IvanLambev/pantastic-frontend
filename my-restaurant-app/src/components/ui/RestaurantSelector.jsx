@@ -353,6 +353,10 @@ export default function RestaurantSelector({
   onClose,
   onSelect,
 }) {
+  const DELIVERY_RADIUS_SPECIAL_LIMITS_KM = {
+    '56e7e890-c598-4c34-a3b7-ecfbfd09417c': 4.5,
+  };
+
   // Restaurant data state
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -516,6 +520,15 @@ export default function RestaurantSelector({
       .trim();
   }
 
+  function getRestaurantId(restaurant) {
+    return restaurant?.restaurant_id || restaurant?.id || restaurant?.uuid || restaurant?.restaurant_uuid || null;
+  }
+
+  function getRestaurantMaxRadiusKm(restaurant, defaultRadiusKm) {
+    const restaurantId = getRestaurantId(restaurant);
+    return DELIVERY_RADIUS_SPECIAL_LIMITS_KM[restaurantId] ?? defaultRadiusKm;
+  }
+
   // Find closest restaurant (open or closed) by coordinates
   // userCity parameter is optional - when provided, prioritizes restaurants in the same city
   function findClosestRestaurant(lat, lng, userCity = null) {
@@ -543,6 +556,10 @@ export default function RestaurantSelector({
 
       if (hasCoords) {
         const dist = getDistance(lat, lng, rLat, rLng);
+        const maxRadiusKm = getRestaurantMaxRadiusKm(r, MAX_RADIUS_KM);
+        if (dist > maxRadiusKm) {
+          continue;
+        }
         restaurantsWithDistance.push({ restaurant: r, distance: dist, hasCoords: true, isSameCity });
       } else if (isSameCity) {
         // Restaurant is in the same city but no coordinates - assume it could be close
@@ -584,11 +601,13 @@ export default function RestaurantSelector({
         }
       }
 
-      // If closest is within MAX_RADIUS_KM, select it
-      if (closest.distance <= MAX_RADIUS_KM) {
+      const closestMaxRadiusKm = getRestaurantMaxRadiusKm(closest.restaurant, MAX_RADIUS_KM);
+
+      // If closest is within its allowed max radius, select it
+      if (closest.distance <= closestMaxRadiusKm) {
         console.log(`[Restaurant Selection] Selected CLOSEST open restaurant within ${MAX_RADIUS_KM}km: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km (coords: ${closest.hasCoords})`);
         return { restaurant: closest.restaurant, distance: closest.distance, message: null, isOpen: true, estimatedDistance: closest.estimatedDistance };
-      } else if (closest.distance > MAX_RADIUS_KM && closest.distance <= 15) {
+      } else if (closest.distance > closestMaxRadiusKm && closest.distance <= 15) {
         // Warn about distant restaurant (between MAX_RADIUS_KM and 15 km)
         console.log(`[Restaurant Selection] CLOSEST open restaurant is DISTANT: ${closest.restaurant.name} at ${closest.distance.toFixed(2)} km`);
         return {
@@ -616,7 +635,8 @@ export default function RestaurantSelector({
 
       if (hasCoords) {
         const dist = getDistance(lat, lng, rLat, rLng);
-        if (dist <= MAX_RADIUS_KM) {
+        const maxRadiusKm = getRestaurantMaxRadiusKm(r, MAX_RADIUS_KM);
+        if (dist <= maxRadiusKm) {
           allRestaurantsWithDistance.push({ restaurant: r, distance: dist, hasCoords: true, isSameCity });
         }
       } else if (isSameCity) {
@@ -655,7 +675,7 @@ export default function RestaurantSelector({
       restaurant: null,
       distance: null,
       isOpen: false,
-      message: `No restaurants found within ${MAX_RADIUS_KM}km of your location. Please try a different address or manually select a restaurant.`,
+      message: t('restaurantSelector.noRestaurantsFoundInRadius', { radius: MAX_RADIUS_KM }),
       allowBrowsing: false
     };
   }

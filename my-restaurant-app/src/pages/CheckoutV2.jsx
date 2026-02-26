@@ -34,6 +34,10 @@ import {
 import { isComingSoonRestaurant } from "@/utils/restaurantAvailability"
 
 export default function CheckoutV2() {
+  const DELIVERY_RADIUS_SPECIAL_LIMITS_KM = {
+    '56e7e890-c598-4c34-a3b7-ecfbfd09417c': 4.5,
+  }
+
   const { cartItems, clearCart, updateQuantity, removeFromCart } = useCart()
   const navigate = useNavigate()
   const [selectedPayment, setSelectedPayment] = useState("cash")
@@ -253,6 +257,50 @@ export default function CheckoutV2() {
     return coordinates ? JSON.parse(coordinates) : { latitude: null, longitude: null }
   }
 
+  const getSelectedRestaurantId = () => {
+    return Array.isArray(selectedRestaurant)
+      ? selectedRestaurant[0]
+      : selectedRestaurant?.restaurant_id
+  }
+
+  const getSelectedRestaurantMaxRadiusKm = () => {
+    const restaurantId = getSelectedRestaurantId()
+    return DELIVERY_RADIUS_SPECIAL_LIMITS_KM[restaurantId] ?? null
+  }
+
+  const isDistanceLimitExceeded = () => {
+    if (deliveryMethod !== 'delivery') return false
+
+    const maxRadiusKm = getSelectedRestaurantMaxRadiusKm()
+    if (!maxRadiusKm) return false
+
+    const distanceKm = Number(deliveryEstimate?.distance_km)
+    if (Number.isNaN(distanceKm)) return false
+
+    return distanceKm > maxRadiusKm
+  }
+
+  const isDistanceValidationPending = () => {
+    if (deliveryMethod !== 'delivery') return false
+
+    const maxRadiusKm = getSelectedRestaurantMaxRadiusKm()
+    if (!maxRadiusKm) return false
+
+    if (estimatingDelivery) return true
+
+    const distanceKm = Number(deliveryEstimate?.distance_km)
+    return Number.isNaN(distanceKm)
+  }
+
+  const getDistanceLimitErrorMessage = () => {
+    const maxRadiusKm = getSelectedRestaurantMaxRadiusKm()
+    const distanceKm = Number(deliveryEstimate?.distance_km)
+    return t('checkout.distanceLimitExceeded', {
+      maxDistance: maxRadiusKm,
+      distance: Number.isNaN(distanceKm) ? '?' : distanceKm.toFixed(2)
+    })
+  }
+
   // Calculate subtotal in BGN (without delivery fee)
   const calculateSubtotalBGN = () => {
     return cartItems.reduce((sum, item) => {
@@ -444,6 +492,16 @@ export default function CheckoutV2() {
   ]
 
   const handleCheckout = () => {
+    if (isDistanceValidationPending()) {
+      toast.error(t('checkout.distanceValidationPending'))
+      return
+    }
+
+    if (isDistanceLimitExceeded()) {
+      toast.error(getDistanceLimitErrorMessage())
+      return
+    }
+
     setShowOrderConfirmation(true)
   }
 
@@ -485,6 +543,14 @@ export default function CheckoutV2() {
 
     if (isComingSoonRestaurant(selectedRestaurant)) {
       throw new Error(t('checkout.comingSoonRestaurant'))
+    }
+
+    if (isDistanceLimitExceeded()) {
+      throw new Error(getDistanceLimitErrorMessage())
+    }
+
+    if (isDistanceValidationPending()) {
+      throw new Error(t('checkout.distanceValidationPending'))
     }
 
     // Format order items according to new API structure
