@@ -31,6 +31,7 @@ export default function CustomerManagementComponent() {
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [totalAllCustomers, setTotalAllCustomers] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [prevPageToken, setPrevPageToken] = useState(null);
   const [nextPageToken, setNextPageToken] = useState(null);
   
   // Customer orders modal state
@@ -80,6 +81,7 @@ export default function CustomerManagementComponent() {
       setTotalCustomers(data.total_customers || 0);
       setTotalAllCustomers(data.total_all_customers || 0);
       setHasMore(data.has_more || false);
+      setPrevPageToken(data.prev_page_token ?? null);
       setNextPageToken(data.next_page_token);
 
     } catch (error) {
@@ -98,6 +100,7 @@ export default function CustomerManagementComponent() {
   // Handle search
   const handleSearch = () => {
     setSearchTerm(searchInput);
+    setPrevPageToken(null);
     setNextPageToken(null);
     fetchCustomers(searchInput);
   };
@@ -106,6 +109,7 @@ export default function CustomerManagementComponent() {
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchTerm('');
+    setPrevPageToken(null);
     setNextPageToken(null);
     fetchCustomers();
   };
@@ -119,10 +123,11 @@ export default function CustomerManagementComponent() {
 
   // Handle pagination - previous page
   const handlePreviousPage = () => {
-    const prevPageToken = currentPage > 1 ? String(currentPage - 1) : null;
+    const fallbackPrevPageToken = currentPage > 1 ? String(currentPage - 1) : null;
+    const resolvedPrevPageToken = prevPageToken ?? fallbackPrevPageToken;
 
-    if (prevPageToken) {
-      fetchCustomers(searchTerm, prevPageToken);
+    if (resolvedPrevPageToken) {
+      fetchCustomers(searchTerm, resolvedPrevPageToken);
     }
   };
 
