@@ -50,6 +50,8 @@ export default function CustomerManagementComponent() {
     try {
       let url = `${API_URL}/user/admin/users`;
       const params = new URLSearchParams();
+
+      params.append('page_size', String(pageSize));
       
       if (nameFilter) {
         params.append('name_filter', nameFilter);
@@ -86,7 +88,7 @@ export default function CustomerManagementComponent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pageSize]);
 
   // Initial load
   useEffect(() => {
@@ -117,16 +119,18 @@ export default function CustomerManagementComponent() {
 
   // Handle pagination - previous page
   const handlePreviousPage = () => {
-    // Note: The API doesn't provide a previous page token
-    // We'll need to implement this differently or request backend support
-    toast.info('Previous page functionality requires backend support');
+    const prevPageToken = currentPage > 1 ? String(currentPage - 1) : null;
+
+    if (prevPageToken) {
+      fetchCustomers(searchTerm, prevPageToken);
+    }
   };
 
   // Format date
   const formatDate = (dateString) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy HH:mm');
-    } catch (error) {
+    } catch {
       return dateString;
     }
   };
@@ -380,7 +384,7 @@ export default function CustomerManagementComponent() {
                 <div className="flex gap-2">
                   <Button
                     onClick={handlePreviousPage}
-                    disabled={currentPage === 1 || loading}
+                    disabled={currentPage <= 1 || loading}
                     variant="outline"
                     size="sm"
                   >
