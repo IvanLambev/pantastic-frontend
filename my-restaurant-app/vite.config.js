@@ -5,13 +5,17 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },  build: {
+  },
+  esbuild: mode === 'production' ? {
+    drop: ['console', 'debugger']
+  } : undefined,
+  build: {
     rollupOptions: {
       output: {
         manualChunks: {
@@ -30,4 +34,4 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000
   }
-})
+}))
