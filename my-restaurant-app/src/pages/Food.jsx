@@ -58,7 +58,7 @@ const Food = () => {
   const [maxPrice, setMaxPrice] = useState(100)
   const [category, setCategory] = useState("sweet")
   const [sortBy, setSortBy] = useState("default")
-  const { addToCart, clearCart } = useCart()
+  const { addToCart, cartItems, replaceCartItems } = useCart()
   const isMobile = window.innerWidth <= 768
   const [favoriteItems, setFavoriteItems] = useState([])
   const [canFavorite, setCanFavorite] = useState(false)
@@ -276,12 +276,293 @@ const Food = () => {
   }, [category]);
 
   const handleChangeSelection = async () => {
-    // Clear the cart when changing restaurants
-    clearCart()
+    // Keep current cart; remapping happens after a different restaurant is selected
     setSelectedRestaurant(null)
     localStorage.removeItem('selectedRestaurant')
     setShowRestaurantModal(true)
     setItems([]) // Clear menu items when changing restaurant
+  }
+
+  const getRestaurantId = (restaurant) => {
+    if (!restaurant) return null
+    return Array.isArray(restaurant)
+      ? (restaurant[0] || null)
+      : (restaurant.restaurant_id || restaurant.id || null)
+  }
+
+  const extractMappedCartLines = (responseData) => {
+    if (!responseData) return []
+
+    if (Array.isArray(responseData)) return responseData
+
+    const possibleArrays = [
+      responseData.mapped_items,
+      responseData.mapped_cart_items,
+      responseData.cart_items,
+      responseData.items,
+      responseData.mapped_items,
+      responseData.data,
+      responseData.result
+    ]
+
+    for (const candidate of possibleArrays) {
+      if (Array.isArray(candidate)) return candidate
+    }
+
+    if (Array.isArray(responseData.item_ids)) {
+      return responseData.item_ids.map((itemId) => ({ item_id: itemId }))
+    }
+
+    return []
+  }
+
+  const getCartSwitchErrorMessage = (statusCode, errorPayload) => {
+    const detail = errorPayload?.detail
+
+    if (statusCode === 400) {
+      if (detail === 'Provide either item_ids or cart_items') {
+        return t('cartSwitch.error.invalidPayload')
+      }
+
+      if (detail === 'current_restaurant_id and next_restaurant_id must be different') {
+        return t('cartSwitch.error.sameRestaurant')
+      }
+
+      if (detail && typeof detail === 'object' && detail.message === 'Some item_ids do not belong to current_restaurant_id') {
+        return t('cartSwitch.error.invalidSourceItems')
+      }
+    }
+
+    if (statusCode === 422) {
+      return t('cartSwitch.error.validation')
+    }
+
+    return t('cartSwitch.error.server')
+  }
+
+  const getUniqueMissingNames = (missingItems = []) => {
+    if (!Array.isArray(missingItems)) return []
+
+    const names = missingItems
+      .map((item) => item?.name || item?.item_name || item?.item_id)
+      .filter(Boolean)
+
+    return [...new Set(names)]
+  }
+
+  const getItemDetailsFromRestaurantItems = (menuItem) => {
+    if (!menuItem) return null
+
+    if (Array.isArray(menuItem)) {
+      return {
+        id: String(menuItem[0]),
+        name: menuItem[7],
+        price: Number(menuItem[8]) || 0,
+        image: menuItem[5],
+        description: menuItem[4]
+      }
+    }
+
+    return {
+      id: String(menuItem.item_id || menuItem.id),
+      name: menuItem.name,
+      price: Number(menuItem.price) || 0,
+      image: menuItem.image_url || menuItem.image,
+      description: menuItem.description
+    }
+  }
+
+  const mapAddonObjectToSelectedAddons = (addons, sourceCartItem) => {
+    if (!addons || typeof addons !== 'object' || Array.isArray(addons)) {
+      return Array.isArray(sourceCartItem?.selectedAddons) ? sourceCartItem.selectedAddons : []
+    }
+
+    const sourcePricesByName = {}
+    if (Array.isArray(sourceCartItem?.selectedAddons)) {
+      sourceCartItem.selectedAddons.forEach((addon) => {
+        if (!addon?.name) return
+        if (sourcePricesByName[addon.name] === undefined) {
+          sourcePricesByName[addon.name] = Number(addon.price) || 0
+        }
+      })
+    }
+
+    const selectedAddons = []
+    Object.entries(addons).forEach(([name, quantity]) => {
+      const count = Number(quantity) > 0 ? Number(quantity) : 0
+      for (let index = 0; index < count; index += 1) {
+        selectedAddons.push({
+          name,
+          price: sourcePricesByName[name] ?? 0
+        })
+      }
+    })
+
+    return selectedAddons
+  }
+
+  const transferCartToRestaurant = async (currentRestaurantId, nextRestaurantId) => {
+    if (!currentRestaurantId || !nextRestaurantId || currentRestaurantId === nextRestaurantId) {
+      return
+    }
+
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return
+    }
+
+    const payloadCartItems = cartItems.map((item) => {
+      const itemId = String(item.originalItemId || item.id)
+      const addons = {}
+
+      if (Array.isArray(item.selectedAddons)) {
+        item.selectedAddons.forEach((addon) => {
+          if (!addon?.name) return
+          addons[addon.name] = (addons[addon.name] || 0) + 1
+        })
+      }
+
+      return {
+        item_id: itemId,
+        quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+        addons,
+        removables: Array.isArray(item.selectedRemovables) ? item.selectedRemovables : []
+      }
+    })
+
+    const response = await fetchWithAuth(`${API_URL}/restaurants/map-cart-items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        current_restaurant_id: currentRestaurantId,
+        next_restaurant_id: nextRestaurantId,
+        cart_items: payloadCartItems
+      })
+    })
+
+    if (!response.ok) {
+      let errorPayload = null
+      try {
+        errorPayload = await response.json()
+      } catch {
+        errorPayload = null
+      }
+      throw new Error(getCartSwitchErrorMessage(response.status, errorPayload))
+    }
+
+    const responseData = await response.json()
+    const mappingStatus = responseData?.status
+    const mappedLines = extractMappedCartLines(responseData)
+    const missingItems = Array.isArray(responseData?.missing_items) ? responseData.missing_items : []
+
+    if (mappingStatus === 'no_matches') {
+      replaceCartItems([])
+      toast.error(t('cartSwitch.noMatches'))
+      return
+    }
+
+    const targetItemsResponse = await fetchWithAuth(`${API_URL}/restaurant/${nextRestaurantId}/items`, {
+      credentials: 'include'
+    })
+
+    const targetItemsData = targetItemsResponse.ok ? await targetItemsResponse.json() : []
+    const targetItemsById = new Map()
+    if (Array.isArray(targetItemsData)) {
+      targetItemsData.forEach((menuItem) => {
+        const details = getItemDetailsFromRestaurantItems(menuItem)
+        if (!details?.id) return
+        targetItemsById.set(details.id, details)
+      })
+    }
+
+    const sourceItemsById = new Map(
+      cartItems.map((cartItem) => [String(cartItem.originalItemId || cartItem.id), cartItem])
+    )
+
+    const hasUnmatchedAddons = mappedLines.some((line) =>
+      Array.isArray(line?.unmatched_addons) && line.unmatched_addons.length > 0
+    )
+
+    const hasUnmatchedRemovables = mappedLines.some((line) =>
+      Array.isArray(line?.unmatched_removables) && line.unmatched_removables.length > 0
+    )
+
+    const mappedCartItems = mappedLines
+      .map((line, index) => {
+        const mappedItemId = String(
+          line?.target_item_id ||
+          line?.item_id ||
+          line?.mapped_item_id ||
+          line?.new_item_id ||
+          line?.target_item_id ||
+          ''
+        )
+
+        if (!mappedItemId) return null
+
+        const sourceItemId = String(
+          line?.source_item_id ||
+          line?.old_item_id ||
+          line?.current_item_id ||
+          line?.source_item_id ||
+          line?.original_item_id ||
+          ''
+        )
+
+        const sourceCartItem =
+          sourceItemsById.get(sourceItemId) ||
+          sourceItemsById.get(String(line?.item_id || '')) ||
+          cartItems[index] ||
+          null
+
+        const mappedItemDetails = targetItemsById.get(mappedItemId)
+
+        const selectedAddons = mapAddonObjectToSelectedAddons(line?.addons, sourceCartItem)
+        const selectedRemovables = Array.isArray(line?.removables)
+          ? line.removables
+          : (Array.isArray(sourceCartItem?.selectedRemovables) ? sourceCartItem.selectedRemovables : [])
+
+        return {
+          ...(sourceCartItem || {}),
+          id: mappedItemId,
+          originalItemId: mappedItemId,
+          restaurant_id: nextRestaurantId,
+          quantity: Number(line?.quantity) > 0
+            ? Number(line.quantity)
+            : (Number(sourceCartItem?.quantity) > 0 ? Number(sourceCartItem.quantity) : 1),
+          name: line?.target_item_name || mappedItemDetails?.name || sourceCartItem?.name || '',
+          price: Number(mappedItemDetails?.price) || Number(sourceCartItem?.price) || 0,
+          image: mappedItemDetails?.image || sourceCartItem?.image,
+          description: mappedItemDetails?.description || sourceCartItem?.description,
+          selectedAddons,
+          selectedRemovables,
+          specialInstructions: line?.special_instructions ?? sourceCartItem?.specialInstructions ?? ''
+        }
+      })
+      .filter(Boolean)
+
+    replaceCartItems(mappedCartItems)
+
+    if (mappingStatus === 'partial_success') {
+      toast.warning(t('cartSwitch.partialSuccess'))
+
+      const missingNames = getUniqueMissingNames(missingItems)
+      if (missingNames.length > 0) {
+        toast.warning(t('cartSwitch.missingItems', { items: missingNames.join(', ') }))
+      }
+    } else {
+      toast.success(t('cartSwitch.success'))
+    }
+
+    if (hasUnmatchedAddons) {
+      toast.warning(t('cartSwitch.unmatchedAddons'))
+    }
+
+    if (hasUnmatchedRemovables) {
+      toast.warning(t('cartSwitch.unmatchedRemovables'))
+    }
   }
 
   const handleModalClose = async () => {
@@ -473,24 +754,26 @@ const Food = () => {
   };
 
   // Unified restaurant selection handler
-  function selectRestaurant(restaurant) {
+  async function selectRestaurant(restaurant) {
     if (isComingSoonRestaurant(restaurant)) {
       toast.info(t('restaurantSelector.comingSoon'));
       return;
     }
 
     // Get the current restaurant ID if exists
-    const currentRestaurantId = selectedRestaurant
-      ? (Array.isArray(selectedRestaurant) ? selectedRestaurant[0] : selectedRestaurant.restaurant_id)
-      : null;
+    const currentRestaurantId = getRestaurantId(selectedRestaurant);
 
     // Get the new restaurant ID
-    const newRestaurantId = Array.isArray(restaurant) ? restaurant[0] : restaurant.restaurant_id;
+    const newRestaurantId = getRestaurantId(restaurant);
 
-    // If switching to a different restaurant, clear the cart
-    if (currentRestaurantId && currentRestaurantId !== newRestaurantId) {
-      clearCart();
-      toast.info(t('cart.clearedForNewRestaurant') || 'Количката беше изчистена за новия ресторант');
+    // If switching to a different restaurant, try to map cart items to the new restaurant
+    if (currentRestaurantId && newRestaurantId && currentRestaurantId !== newRestaurantId) {
+      try {
+        await transferCartToRestaurant(currentRestaurantId, newRestaurantId)
+      } catch (error) {
+        console.error('Failed to transfer cart between restaurants:', error)
+        toast.error(error?.message || t('cartSwitch.error.server'))
+      }
     }
 
     setSelectedRestaurant(restaurant);

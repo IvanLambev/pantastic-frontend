@@ -89,6 +89,14 @@ export const CartProvider = ({ children }) => {
     setOrderId(null)
   }
 
+  const replaceCartItems = (items) => {
+    const normalizedItems = Array.isArray(items) ? items : []
+    setCartItems(normalizedItems)
+    localStorage.setItem('cart', JSON.stringify(normalizedItems))
+    localStorage.removeItem('orderId')
+    setOrderId(null)
+  }
+
   const checkout = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -250,6 +258,7 @@ export const CartProvider = ({ children }) => {
     removeFromCart,
     updateQuantity,
     clearCart,
+    replaceCartItems,
     checkout,
     updateOrder,
     cancelOrder,
