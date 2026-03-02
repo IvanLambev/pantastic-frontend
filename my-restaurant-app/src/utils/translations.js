@@ -858,4 +858,27 @@ export const translateDynamicLabel = (label) => {
   return normalizedLabel;
 };
 
+// Helper function to translate home collection text coming from API fallbacks
+export const translateHomeCollectionText = (text) => {
+  if (!text) return text;
+
+  const normalizedText = String(text).trim();
+  const homeCollectionTranslations = {
+    "Featured Items": "Представени артикули",
+    "Our most popular and recommended dishes": "Нашите най-популярни и препоръчани ястия",
+    "How to order your pancakes": "Как да поръчате вашите палачинки"
+  };
+
+  if (homeCollectionTranslations[normalizedText]) {
+    return homeCollectionTranslations[normalizedText];
+  }
+
+  const lowerText = normalizedText.toLowerCase();
+  const matchingKey = Object.keys(homeCollectionTranslations).find(
+    key => key.toLowerCase() === lowerText
+  );
+
+  return matchingKey ? homeCollectionTranslations[matchingKey] : normalizedText;
+};
+
 export default translations;

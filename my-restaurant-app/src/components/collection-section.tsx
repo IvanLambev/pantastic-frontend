@@ -18,7 +18,7 @@ import { ChevronRight, ArrowRight } from "lucide-react"
 
 // @ts-ignore - fetchWithAuth is exported from AuthContext.jsx
 import { fetchWithAuth } from "@/context/AuthContext"
-import { t } from "@/utils/translations"
+import { t, translateHomeCollectionText } from "@/utils/translations"
 
 interface MenuItem {
   item_id: string
@@ -233,8 +233,8 @@ export function CollectionSection({
     return null
   }
 
-  const displayTitle = title || collection.name
-  const displaySubtitle = subtitle || collection.description
+  const displayTitle = translateHomeCollectionText(title || collection.name)
+  const displaySubtitle = translateHomeCollectionText(subtitle || collection.description)
 
   return (
     <div className="container mx-auto px-4 py-12">
