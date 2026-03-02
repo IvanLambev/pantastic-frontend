@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import { Routes, Route, Link, Outlet, useLocation, Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
@@ -60,6 +60,12 @@ function useLenisSmoothScroll() {
 
 function AppWithLenis({ children }) {
   useLenisSmoothScroll()
+  const location = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.pathname])
+
   return children
 }
 
