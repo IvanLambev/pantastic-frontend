@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingBag, Navigation, Store, Truck, ArrowLeft } from "lucide-react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
+import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
 import { t } from "@/utils/translations";
 import { openInMaps } from "@/utils/mapsHelper";
@@ -353,6 +354,7 @@ export default function RestaurantSelector({
   onClose,
   onSelect,
 }) {
+  const { cartItems, replaceCartItems } = useCart();
   const DELIVERY_RADIUS_SPECIAL_LIMITS_KM = {
     '56e7e890-c598-4c34-a3b7-ecfbfd09417c': 4.5,
   };
@@ -378,6 +380,213 @@ export default function RestaurantSelector({
 
   // Location permission pre-prompt
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+
+  const getRestaurantId = (restaurant) => {
+    if (!restaurant) return null;
+    if (Array.isArray(restaurant)) return restaurant[0] || null;
+    return restaurant.restaurant_id || restaurant.id || null;
+  };
+
+  const extractSourceItemId = (cartItem) => {
+    const idSource = String(cartItem?.originalItemId || cartItem?.id || '');
+    const uuidMatch = idSource.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+    return uuidMatch ? uuidMatch[0] : idSource;
+  };
+
+  const extractMappedCartLines = (responseData) => {
+    if (!responseData) return [];
+    if (Array.isArray(responseData)) return responseData;
+
+    const possibleArrays = [
+      responseData.mapped_items,
+      responseData.mapped_cart_items,
+      responseData.cart_items,
+      responseData.items,
+      responseData.data,
+      responseData.result,
+    ];
+
+    for (const candidate of possibleArrays) {
+      if (Array.isArray(candidate)) return candidate;
+    }
+
+    if (Array.isArray(responseData.item_ids)) {
+      return responseData.item_ids.map((itemId) => ({ item_id: itemId }));
+    }
+
+    return [];
+  };
+
+  const getMappedTargetItemId = (line) => String(
+    line?.target_item_id ||
+    line?.item_id ||
+    line?.mapped_item_id ||
+    line?.new_item_id ||
+    ''
+  );
+
+  const getCartSwitchErrorMessage = (statusCode, errorPayload) => {
+    const detail = errorPayload?.detail;
+
+    if (statusCode === 400) {
+      if (detail === 'Provide either item_ids or cart_items') {
+        return t('cartSwitch.error.invalidPayload');
+      }
+
+      if (detail === 'current_restaurant_id and next_restaurant_id must be different') {
+        return t('cartSwitch.error.sameRestaurant');
+      }
+
+      if (detail && typeof detail === 'object' && detail.message === 'Some item_ids do not belong to current_restaurant_id') {
+        return t('cartSwitch.error.invalidSourceItems');
+      }
+    }
+
+    if (statusCode === 422) {
+      return t('cartSwitch.error.validation');
+    }
+
+    return t('cartSwitch.error.server');
+  };
+
+  const transferCartToRestaurant = async (currentRestaurantId, nextRestaurantId) => {
+    if (!currentRestaurantId || !nextRestaurantId || currentRestaurantId === nextRestaurantId) {
+      return;
+    }
+
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return;
+    }
+
+    const payloadCartItems = cartItems.map((item) => {
+      const addons = {};
+
+      if (Array.isArray(item.selectedAddons)) {
+        item.selectedAddons.forEach((addon) => {
+          if (!addon?.name) return;
+          addons[addon.name] = (addons[addon.name] || 0) + 1;
+        });
+      }
+
+      return {
+        item_id: extractSourceItemId(item),
+        quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+        addons,
+        removables: Array.isArray(item.selectedRemovables) ? item.selectedRemovables : [],
+      };
+    });
+
+    const response = await fetchWithAuth(`${API_URL}/restaurants/map-cart-items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        current_restaurant_id: currentRestaurantId,
+        next_restaurant_id: nextRestaurantId,
+        cart_items: payloadCartItems,
+      }),
+    });
+
+    if (!response.ok) {
+      let errorPayload = null;
+      try {
+        errorPayload = await response.json();
+      } catch {
+        errorPayload = null;
+      }
+      throw new Error(getCartSwitchErrorMessage(response.status, errorPayload));
+    }
+
+    const responseData = await response.json();
+    const mappingStatus = responseData?.status;
+    const mappedLines = extractMappedCartLines(responseData);
+
+    if (mappingStatus === 'no_matches') {
+      replaceCartItems([]);
+      toast.error(t('cartSwitch.noMatches'));
+      return;
+    }
+
+    const sourceItemsById = new Map(
+      cartItems.map((cartItem) => [extractSourceItemId(cartItem), cartItem])
+    );
+
+    const mappedCartItems = mappedLines
+      .map((line, index) => {
+        const mappedItemId = getMappedTargetItemId(line);
+        if (!mappedItemId) return null;
+
+        const sourceItemId = String(
+          line?.source_item_id ||
+          line?.old_item_id ||
+          line?.current_item_id ||
+          line?.original_item_id ||
+          ''
+        );
+
+        const sourceCartItem =
+          sourceItemsById.get(sourceItemId) ||
+          sourceItemsById.get(String(line?.item_id || '')) ||
+          cartItems[index] ||
+          null;
+
+        if (!sourceCartItem) return null;
+
+        return {
+          ...sourceCartItem,
+          id: mappedItemId,
+          originalItemId: mappedItemId,
+          restaurant_id: nextRestaurantId,
+          quantity: Number(line?.quantity) > 0
+            ? Number(line.quantity)
+            : (Number(sourceCartItem.quantity) > 0 ? Number(sourceCartItem.quantity) : 1),
+        };
+      })
+      .filter(Boolean);
+
+    if (mappedCartItems.length > 0) {
+      replaceCartItems(mappedCartItems);
+      if (mappingStatus === 'partial_success') {
+        toast.warning(t('cartSwitch.partialSuccess'));
+      } else {
+        toast.success(t('cartSwitch.success'));
+      }
+    }
+  };
+
+  const selectRestaurantWithCartMapping = async (nextRestaurant) => {
+    if (isComingSoonRestaurant(nextRestaurant)) {
+      toast.info(t('restaurantSelector.comingSoon'));
+      return false;
+    }
+
+    let currentRestaurant = null;
+    const savedRestaurant = localStorage.getItem('selectedRestaurant');
+    if (savedRestaurant) {
+      try {
+        currentRestaurant = JSON.parse(savedRestaurant);
+      } catch {
+        currentRestaurant = null;
+      }
+    }
+
+    const currentRestaurantId = getRestaurantId(currentRestaurant);
+    const nextRestaurantId = getRestaurantId(nextRestaurant);
+
+    if (currentRestaurantId && nextRestaurantId && currentRestaurantId !== nextRestaurantId) {
+      try {
+        await transferCartToRestaurant(currentRestaurantId, nextRestaurantId);
+      } catch (error) {
+        toast.error(error?.message || t('cartSwitch.error.server'));
+        return false;
+      }
+    }
+
+    await onSelect(nextRestaurant);
+    return true;
+  };
 
   // Fetch restaurants when component mounts
   useEffect(() => {
@@ -518,10 +727,6 @@ export default function RestaurantSelector({
       .replace(/[\s-]+/g, '') // Remove spaces and hyphens
       .replace(/^(city of|grad|г\.|гр\.)/i, '') // Remove common prefixes
       .trim();
-  }
-
-  function getRestaurantId(restaurant) {
-    return restaurant?.restaurant_id || restaurant?.id || restaurant?.uuid || restaurant?.restaurant_uuid || null;
   }
 
   function getRestaurantMaxRadiusKm(restaurant, defaultRadiusKm) {
@@ -823,8 +1028,10 @@ export default function RestaurantSelector({
               setAddressError(result.message);
             }
           } else {
-            onSelect(result.restaurant);
-            handleClose();
+            const didSelect = await selectRestaurantWithCartMapping(result.restaurant);
+            if (didSelect) {
+              handleClose();
+            }
           }
         } else {
           setAddressError(result.message || t('restaurantSelector.noRestaurantsFoundNearby'));
@@ -915,8 +1122,10 @@ export default function RestaurantSelector({
           setAddressError(result.message);
         }
       } else {
-        onSelect(result.restaurant);
-        handleClose();
+        const didSelect = await selectRestaurantWithCartMapping(result.restaurant);
+        if (didSelect) {
+          handleClose();
+        }
       }
     } else {
       setAddressError(result.message || t('restaurantSelector.noRestaurantsFoundNearby'));
@@ -941,14 +1150,16 @@ export default function RestaurantSelector({
     setCurrentStep('city-selection');
   }
 
-  function handleConfirmDistantRestaurant() {
+  async function handleConfirmDistantRestaurant() {
     if (pendingRestaurantSelection) {
-      onSelect(pendingRestaurantSelection);
-      setShowDistanceWarning(false);
-      setPendingRestaurantSelection(null);
-      setPendingDistance(null);
-      setAddressError("");
-      handleClose();
+      const didSelect = await selectRestaurantWithCartMapping(pendingRestaurantSelection);
+      if (didSelect) {
+        setShowDistanceWarning(false);
+        setPendingRestaurantSelection(null);
+        setPendingDistance(null);
+        setAddressError("");
+        handleClose();
+      }
     }
   }
 
@@ -1109,14 +1320,12 @@ export default function RestaurantSelector({
                         </p>
                         <Button
                           variant="default"
-                          onClick={() => {
-                            if (isComingSoonRestaurant(pendingRestaurantSelection)) {
-                              toast.info(t('restaurantSelector.comingSoon'));
-                              return;
+                          onClick={async () => {
+                            const didSelect = await selectRestaurantWithCartMapping(pendingRestaurantSelection);
+                            if (didSelect) {
+                              handleClose();
+                              toast.info(t('restaurantSelector.closedRestaurantWarning'));
                             }
-                            onSelect(pendingRestaurantSelection);
-                            handleClose();
-                            toast.info(t('restaurantSelector.closedRestaurantWarning'));
                           }}
                           className="w-full bg-blue-600 hover:bg-blue-700"
                         >
@@ -1253,16 +1462,14 @@ export default function RestaurantSelector({
                     key={restaurant.restaurant_id}
                     variant="outline"
                     className={`w-full p-4 sm:p-6 h-auto relative ${isComingSoon ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-100'}`}
-                    onClick={() => {
-                      if (isComingSoon) {
-                        toast.info(t('restaurantSelector.comingSoon'));
-                        return;
-                      }
+                    onClick={async () => {
                       sessionStorage.setItem('delivery_method', 'pickup');
-                      onSelect(restaurant);
-                      handleClose();
-                      const restaurantName = restaurant?.name || t('restaurantSelector.unknownRestaurant');
-                      toast.success(t('home.restaurantSelected', { name: restaurantName }));
+                      const didSelect = await selectRestaurantWithCartMapping(restaurant);
+                      if (didSelect) {
+                        handleClose();
+                        const restaurantName = restaurant?.name || t('restaurantSelector.unknownRestaurant');
+                        toast.success(t('home.restaurantSelected', { name: restaurantName }));
+                      }
                     }}
                     disabled={isComingSoon}
                   >
