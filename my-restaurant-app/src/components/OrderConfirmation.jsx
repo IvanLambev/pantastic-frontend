@@ -57,14 +57,16 @@ export default function OrderConfirmation({
   // Lock body scroll when dialog is open
   useEffect(() => {
     if (open) {
-      // Store original overflow style
-      const originalOverflow = document.body.style.overflow;
-      // Lock body scroll
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
       
       // Cleanup: restore original overflow when dialog closes
       return () => {
-        document.body.style.overflow = originalOverflow;
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
       };
     }
   }, [open]);
@@ -138,7 +140,7 @@ export default function OrderConfirmation({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 pt-0 space-y-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 pt-0 space-y-6">
           {/* Order Items */}
           <Card>
             <CardHeader>
