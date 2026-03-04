@@ -15,19 +15,17 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
   const [addedItems, setAddedItems] = useState(new Set())
   const { addToCart } = useCart()
 
-  console.log('[MiscItems] Component rendered with restaurantId:', restaurantId)
-
   useEffect(() => {
     const fetchMiscItems = async () => {
       if (!restaurantId) {
-        console.log('[MiscItems] No restaurant ID provided')
+        setMiscItems([])
+        setLoading(false)
         return
       }
 
       try {
         setLoading(true)
         const url = `${API_URL}/restaurant/${restaurantId}/items/misc`
-        console.log('[MiscItems] Fetching from:', url)
         
         // Public endpoint - no authentication required
         const response = await fetch(url, {
@@ -43,7 +41,6 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
         }
 
         const data = await response.json()
-        console.log('[MiscItems] Response data:', data)
         
         // Handle different response formats
         let items = []
@@ -55,8 +52,6 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
           items = data.data
         }
 
-        console.log('[MiscItems] Parsed items:', items)
-        
         // Limit the number of items displayed
         setMiscItems(items.slice(0, limit))
       } catch (error) {
@@ -102,9 +97,6 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
     }, 1000)
   }
 
-  // Always show the component container for debugging
-  console.log('[MiscItems] Render check - loading:', loading, 'items count:', miscItems.length)
-  
   if (loading) {
     return (
       <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
@@ -116,19 +108,8 @@ export default function MiscItemsSuggestion({ restaurantId, limit = 4 }) {
   }
 
   if (miscItems.length === 0) {
-    return (
-      <Card className="border-dashed border-2 border-orange-300 bg-orange-50">
-        <CardContent className="p-6">
-          <div className="text-sm">
-            <p className="font-medium">Debug: No misc items found</p>
-            <p className="text-xs text-muted-foreground mt-1">Restaurant ID: {restaurantId}</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return null
   }
-
-  console.log('[MiscItems] Rendering with', miscItems.length, 'items')
 
   return (
     <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
