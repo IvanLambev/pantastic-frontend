@@ -591,6 +591,7 @@ export default function RestaurantSelector({
   // Fetch restaurants when component mounts
   useEffect(() => {
     const fetchRestaurants = async () => {
+      setLoading(true)
       try {
         const response = await fetchWithAuth(`${API_URL}/restaurant/restaurants`)
         if (!response.ok) {
@@ -606,12 +607,8 @@ export default function RestaurantSelector({
       }
     }
 
-    // Check if restaurant is already selected
-    const selectedRestaurant = localStorage.getItem('selectedRestaurant')
-    if (!selectedRestaurant && open) {
+    if (open) {
       fetchRestaurants()
-    } else if (selectedRestaurant) {
-      setLoading(false)
     }
   }, [open])
 
