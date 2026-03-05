@@ -8,10 +8,10 @@ import { API_URL } from '@/config/api';
 export async function fetchDataAvailability() {
     try {
         console.log('📊 [ANALYTICS DEBUG] fetchDataAvailability called');
-        console.log('📊 [ANALYTICS DEBUG] URL:', `${API_URL}/restaurant/admin/data-availability`);
+        console.log('📊 [ANALYTICS DEBUG] URL:', `${API_URL}/admin/data-availability`);
 
         const response = await fetchWithAdminAuth(
-            `${API_URL}/restaurant/admin/data-availability`
+            `${API_URL}/admin/data-availability`
         );
 
         console.log('📡 [ANALYTICS DEBUG] Data availability response status:', response.status, response.ok);
@@ -75,7 +75,7 @@ export async function fetchRevenueByPeriod(timePeriod = 'week', restaurantId = n
     try {
         console.log('📊 [ANALYTICS DEBUG] fetchRevenueByPeriod called with timePeriod:', timePeriod, 'restaurantId:', restaurantId);
 
-        let url = `${API_URL}/restaurant/admin/revenue?time_period=${timePeriod}`;
+        let url = `${API_URL}/admin/revenue?time_period=${timePeriod}`;
         if (restaurantId) {
             url += `&restaurant_id=${restaurantId}`;
         }
@@ -116,7 +116,7 @@ export async function fetchRevenueByDateRange(startDate, endDate, restaurantId =
         console.log('📊 [ANALYTICS DEBUG] fetchRevenueByDateRange called');
         console.log('📊 [ANALYTICS DEBUG] Date range:', startDate, 'to', endDate, 'restaurantId:', restaurantId);
 
-        let url = `${API_URL}/restaurant/admin/revenue?start_date=${startDate}&end_date=${endDate}`;
+        let url = `${API_URL}/admin/revenue?start_date=${startDate}&end_date=${endDate}`;
         if (restaurantId) {
             url += `&restaurant_id=${restaurantId}`;
         }
@@ -152,7 +152,7 @@ export async function fetchRevenueByDateRange(startDate, endDate, restaurantId =
  */
 export async function fetchAllOrders(pageSize = 10, pagingState = null, sortBy = 'created_at', sortOrder = 'desc') {
     try {
-        let url = `${API_URL}/order/admin/orders?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
+        let url = `${API_URL}/admin/orders?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
         if (pagingState) {
             url += `&paging_state=${encodeURIComponent(pagingState)}`;
         }
@@ -179,7 +179,7 @@ export async function fetchAllOrders(pageSize = 10, pagingState = null, sortBy =
  */
 export async function fetchOrdersByRestaurant(restaurantId, pageSize = 10, pagingState = null, sortBy = 'created_at', sortOrder = 'desc') {
     try {
-        let url = `${API_URL}/order/admin/orders/restaurant/${restaurantId}?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
+        let url = `${API_URL}/admin/orders/restaurant/${restaurantId}?page_size=${pageSize}&sort_by=${sortBy}&sort_order=${sortOrder}`;
         if (pagingState) {
             url += `&paging_state=${encodeURIComponent(pagingState)}`;
         }
@@ -204,7 +204,7 @@ export async function fetchOrdersByRestaurant(restaurantId, pageSize = 10, pagin
  */
 export async function fetchOrderById(orderId) {
     try {
-        const response = await fetchWithAdminAuth(`${API_URL}/order/admin/orders/${orderId}`);
+        const response = await fetchWithAdminAuth(`${API_URL}/admin/orders/${orderId}`);
 
         if (!response.ok) {
             throw new Error(`Failed to fetch order: ${response.status}`);
@@ -224,7 +224,7 @@ export async function fetchOrderById(orderId) {
  */
 export async function fetchUserDetails(customerId) {
     try {
-        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/user/${customerId}`);
+        const response = await fetchWithAdminAuth(`${API_URL}/admin/user/${customerId}`);
 
         if (!response.ok) {
             throw new Error(`Failed to fetch user details: ${response.status}`);
@@ -244,7 +244,7 @@ export async function fetchUserDetails(customerId) {
  */
 export async function fetchOrdersByCustomer(customerId) {
     try {
-        const response = await fetchWithAdminAuth(`${API_URL}/order/admin/orders/customer/${customerId}`);
+        const response = await fetchWithAdminAuth(`${API_URL}/admin/orders/customer/${customerId}`);
 
         if (!response.ok) {
             throw new Error(`Failed to fetch customer orders: ${response.status}`);
@@ -314,7 +314,7 @@ export async function autocompleteOrders(prefix) {
         console.log('🔍 [ADMIN] Autocompleting orders with prefix:', prefix);
 
         const response = await fetchWithAdminAuth(
-            `${API_URL}/order/admin/orders/autocomplete?prefix=${encodeURIComponent(prefix)}`
+            `${API_URL}/admin/orders/autocomplete?prefix=${encodeURIComponent(prefix)}`
         );
 
         console.log('📡 [ADMIN] Autocomplete response status:', response.status, response.ok);
@@ -346,7 +346,7 @@ export async function fetchFullOrderDetails(orderUuid) {
         console.log('📦 [ADMIN] Fetching full order details for:', orderUuid);
 
         const response = await fetchWithAdminAuth(
-            `${API_URL}/order/admin/orders/${orderUuid}/full`
+            `${API_URL}/admin/orders/${orderUuid}/full`
         );
 
         console.log('📡 [ADMIN] Full order response status:', response.status, response.ok);
@@ -409,3 +409,4 @@ export async function updateOrderStatus(orderId, status) {
         throw error;
     }
 }
+

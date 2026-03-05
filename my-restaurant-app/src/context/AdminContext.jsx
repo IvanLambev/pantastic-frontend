@@ -24,7 +24,7 @@ export const AdminProvider = ({ children }) => {
       console.log('🔍 AdminContext: Using cookie-based auth')
       console.log('🔍 AdminContext: All cookies:', document.cookie)
 
-      const response = await fetch(`${API_URL}/restaurant/admin/verify`, {
+      const response = await fetch(`${API_URL}/admin/verify`, {
         method: "GET",
         credentials: 'include', // Send HttpOnly cookies
         headers: {
@@ -117,7 +117,7 @@ export const AdminProvider = ({ children }) => {
   const adminLogin = async (email, password) => {
     try {
       console.log('🔐 AdminContext: Attempting admin login for:', email)
-      const response = await fetch(`${API_URL}/restaurant/admin/login`, {
+      const response = await fetch(`${API_URL}/admin/login`, {
         method: "POST",
         credentials: 'include', // ✅ CRITICAL - Save HttpOnly cookies from backend
         headers: {

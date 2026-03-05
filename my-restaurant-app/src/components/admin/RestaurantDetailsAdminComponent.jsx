@@ -330,8 +330,8 @@ export default function RestaurantDetailsAdminComponent() {
         console.log('🔄 [ADMIN DEBUG] Delivery URL:', `${API_URL}/restaurant/delivery-people`);
         console.log('🔄 [ADMIN DEBUG] Addon Templates URL:', `${API_URL}/restaurant/addon-templates/${idToUse}`);
         console.log('🔄 [ADMIN DEBUG] Removable Templates URL:', `${API_URL}/restaurant/removables/templates/${idToUse}`);
-        console.log('🔄 [ADMIN DEBUG] Dough Templates URL:', `${API_URL}/restaurant/admin/dough-templates/${idToUse}`);
-        console.log('🔄 [ADMIN DEBUG] Chocolate Templates URL:', `${API_URL}/restaurant/admin/chocolate-type-templates/${idToUse}`);
+        console.log('🔄 [ADMIN DEBUG] Dough Templates URL:', `${API_URL}/admin/dough-templates/${idToUse}`);
+        console.log('🔄 [ADMIN DEBUG] Chocolate Templates URL:', `${API_URL}/admin/chocolate-type-templates/${idToUse}`);
 
         // Fetch all data in parallel
         const [itemsRes, deliveryRes, addonTemplatesRes, removableTemplatesRes, doughTemplatesRes, chocolateTemplatesRes] = await Promise.all([
@@ -339,8 +339,8 @@ export default function RestaurantDetailsAdminComponent() {
           fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
           fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${idToUse}`),
           fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${idToUse}`),
-          fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${idToUse}`),
-          fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${idToUse}`)
+          fetchWithAdminAuth(`${API_URL}/admin/dough-templates/${idToUse}`),
+          fetchWithAdminAuth(`${API_URL}/admin/chocolate-type-templates/${idToUse}`)
         ]);
 
         console.log('📡 [ADMIN DEBUG] Items response status:', itemsRes.status, itemsRes.ok);
@@ -1194,7 +1194,7 @@ export default function RestaurantDetailsAdminComponent() {
                         restaurantDoughTemplateIds.push(templateId);
                       } else {
                         console.log(`📋 Creating copy of non-global dough template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
-                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates`, {
+                        const response = await fetchWithAdminAuth(`${API_URL}/admin/dough-templates`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
@@ -1237,7 +1237,7 @@ export default function RestaurantDetailsAdminComponent() {
                         restaurantChocolateTemplateIds.push(templateId);
                       } else {
                         console.log(`📋 Creating copy of non-global chocolate template: ${sourceTemplate.name} for restaurant ${restaurantId}`);
-                        const response = await fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates`, {
+                        const response = await fetchWithAdminAuth(`${API_URL}/admin/chocolate-type-templates`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({
@@ -1548,8 +1548,8 @@ export default function RestaurantDetailsAdminComponent() {
       const [itemsRes, templatesRes, doughTemplatesRes, chocolateTemplatesRes] = await Promise.all([
         fetchWithAdminAuth(`${API_URL}/restaurant/${resolvedRestaurantId}/items`),
         fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${resolvedRestaurantId}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${resolvedRestaurantId}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${resolvedRestaurantId}`)
+        fetchWithAdminAuth(`${API_URL}/admin/dough-templates/${resolvedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/admin/chocolate-type-templates/${resolvedRestaurantId}`)
       ]);
 
       const itemsRaw = await itemsRes.json();
@@ -1717,8 +1717,8 @@ export default function RestaurantDetailsAdminComponent() {
         fetchWithAdminAuth(`${API_URL}/restaurant/delivery-people`),
         fetchWithAdminAuth(`${API_URL}/restaurant/addon-templates/${selectedRestaurantId}`),
         fetchWithAdminAuth(`${API_URL}/restaurant/removables/templates/${selectedRestaurantId}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/admin/dough-templates/${selectedRestaurantId}`),
-        fetchWithAdminAuth(`${API_URL}/restaurant/admin/chocolate-type-templates/${selectedRestaurantId}`)
+        fetchWithAdminAuth(`${API_URL}/admin/dough-templates/${selectedRestaurantId}`),
+        fetchWithAdminAuth(`${API_URL}/admin/chocolate-type-templates/${selectedRestaurantId}`)
       ]);
 
       const itemsRaw = await itemsRes.json();
@@ -3699,4 +3699,5 @@ export default function RestaurantDetailsAdminComponent() {
     </TooltipProvider>
   );
 }
+
 

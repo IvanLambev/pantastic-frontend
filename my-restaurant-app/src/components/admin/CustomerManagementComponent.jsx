@@ -164,7 +164,7 @@ export default function CustomerManagementComponent() {
     setSelectedOrderDetails(null);
     
     try {
-      const response = await fetchWithAdminAuth(`${API_URL}/order/admin/orders/${orderId}`, {
+      const response = await fetchWithAdminAuth(`${API_URL}/admin/orders/${orderId}`, {
         method: 'GET',
       });
 
@@ -744,3 +744,4 @@ export default function CustomerManagementComponent() {
     </div>
   );
 }
+

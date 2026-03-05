@@ -54,7 +54,7 @@ export default function Dashboard() {
 
     try {
       const response = await fetchWithAdminAuth(
-        `${API_URL}/restaurant/admin/reports/monthly?month=${selectedMonth}`
+        `${API_URL}/admin/reports/monthly?month=${selectedMonth}`
       )
 
       if (!response.ok) {
