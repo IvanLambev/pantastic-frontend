@@ -17,6 +17,7 @@ const useAuth = () => {
 // Auth Provider component
 const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [token, setToken] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -26,7 +27,62 @@ const AuthProvider = ({ children }) => {
       const isAdminRoute = window.location.pathname.startsWith('/admin');
       if (isAdminRoute) {
         console.log("🔍 Skipping user auth check - on admin route");
+        setAuthLoading(false)
         return;
+      }
+
+      const restoreSessionFromBackend = async () => {
+        // Prefer /user/me for backward compatibility, but fall back to /user/user-info
+        // since cookie-based sessions in this app are known to work with that endpoint.
+        const endpoints = ["/user/me", "/user/user-info"]
+        let sawUnauthorized = false
+
+        for (const endpoint of endpoints) {
+          try {
+            const response = await fetch(`${API_URL}${endpoint}`, {
+              method: "GET",
+              credentials: 'include',
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+
+            if (response.ok) {
+              const userData = await response.json()
+              const normalizedUser = {
+                ...userData,
+                // Some endpoints return "admin" while others return "is_admin"
+                is_admin: userData.is_admin ?? Boolean(userData.admin),
+              }
+
+              console.log(`✅ User session restored from ${endpoint}:`, normalizedUser)
+              localStorage.setItem("user", JSON.stringify(normalizedUser))
+              setToken(normalizedUser.access_token || null)
+              setIsLoggedIn(true)
+
+              if (normalizedUser.is_admin) {
+                setIsAdmin(true)
+                localStorage.setItem("isAdmin", "true")
+              } else {
+                setIsAdmin(false)
+                localStorage.removeItem("isAdmin")
+              }
+
+              return "ok"
+            }
+
+            if (response.status === 401) {
+              sawUnauthorized = true
+              console.log(`❌ ${endpoint} returned 401, continuing checks...`)
+            } else {
+              console.log(`⚠️ ${endpoint} returned ${response.status}, continuing checks...`)
+            }
+          } catch (error) {
+            console.warn(`⚠️ Failed to check ${endpoint}:`, error.message)
+          }
+        }
+
+        return sawUnauthorized ? "unauthorized" : "failed"
       }
 
       console.log("🔍 Checking login status on app load...")
@@ -51,33 +107,17 @@ const AuthProvider = ({ children }) => {
             
             // Then validate in background (non-blocking)
             try {
-              const response = await fetch(`${API_URL}/user/me`, {
-                method: "GET",
-                credentials: 'include',
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              })
-
-              if (response.ok) {
-                const userData = await response.json()
-                console.log("✅ Session validated with backend")
-                // Update localStorage with fresh data
-                localStorage.setItem("user", JSON.stringify(userData))
-                setToken(userData.access_token || null)
-                
-                if (userData.is_admin) {
-                  setIsAdmin(true)
-                  localStorage.setItem("isAdmin", "true")
-                }
-              } else if (response.status === 401) {
-                // Only clear on explicit 401
+              const restoreState = await restoreSessionFromBackend()
+              if (restoreState === "unauthorized") {
+                // Only clear on explicit unauthorized response.
                 console.log("❌ Session expired (401), clearing data")
                 localStorage.removeItem("user")
                 localStorage.removeItem("isAdmin")
                 setIsLoggedIn(false)
                 setIsAdmin(false)
                 setToken(null)
+              } else if (restoreState === "failed") {
+                console.warn("⚠️ Session validation skipped due to backend/network issue; keeping cached session")
               }
               // Ignore other errors (network issues, etc.)
             } catch (error) {
@@ -94,26 +134,8 @@ const AuthProvider = ({ children }) => {
         // No user in localStorage, check cookies
         console.log("📡 No user in localStorage, checking cookies with backend...")
         try {
-          const response = await fetch(`${API_URL}/user/me`, {
-            method: "GET",
-            credentials: 'include',
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-
-          if (response.ok) {
-            const userData = await response.json()
-            console.log("✅ User session restored from cookies:", userData)
-            localStorage.setItem("user", JSON.stringify(userData))
-            setToken(userData.access_token || null)
-            setIsLoggedIn(true)
-
-            if (userData.is_admin) {
-              setIsAdmin(true)
-              localStorage.setItem("isAdmin", "true")
-            }
-          } else {
+          const restoreState = await restoreSessionFromBackend()
+          if (restoreState !== "ok") {
             console.log("❌ No valid cookie session found")
             setIsLoggedIn(false)
             setIsAdmin(false)
@@ -122,8 +144,13 @@ const AuthProvider = ({ children }) => {
           console.error("❌ Error checking cookies:", error)
           setIsLoggedIn(false)
           setIsAdmin(false)
+        } finally {
+          setAuthLoading(false)
         }
+        return
       }
+
+      setAuthLoading(false)
     }
 
     checkLoginStatus()
@@ -247,6 +274,7 @@ const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       isLoggedIn,
+      authLoading,
       token,
       setToken,
       updateLoginState,

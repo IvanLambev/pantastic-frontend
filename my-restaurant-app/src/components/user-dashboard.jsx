@@ -40,6 +40,11 @@ export default function UserDashboard() {
   const [restaurants, setRestaurants] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const normalizeItemName = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    return name.trim().toLowerCase().replace(/\s+/g, ' ');
+  };
+
   // Initialize token from localStorage if available (but don't redirect yet)
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -173,9 +178,13 @@ export default function UserDashboard() {
                 },
               });
               if (itemsRes.ok) {
-                const items = await itemsRes.json();
+                const itemsPayload = await itemsRes.json();
+                const rawItems = Array.isArray(itemsPayload)
+                  ? itemsPayload
+                  : (Array.isArray(itemsPayload?.items) ? itemsPayload.items : []);
+
                 // Normalize each item to object format
-                return items.map(item => {
+                return rawItems.map(item => {
                   if (Array.isArray(item)) {
                     return {
                       item_id: item[0],
@@ -207,6 +216,10 @@ export default function UserDashboard() {
         for (const item of allItems) {
           if (item && item.item_id) {
             itemMapObj[item.item_id] = item;
+            const normalizedName = normalizeItemName(item.name);
+            if (normalizedName) {
+              itemMapObj[`name:${normalizedName}`] = item;
+            }
           }
         }
         setItemMap(itemMapObj);
@@ -224,7 +237,9 @@ export default function UserDashboard() {
           const data = await res.json();
           // Attach item details to each favourite, fallback to placeholder if missing
           const detailedFavorites = data.map(fav => {
-            const details = itemMapObj[fav.item_id] || {};
+            const details = itemMapObj[fav.item_id]
+              || itemMapObj[`name:${normalizeItemName(fav.item_name || fav.name)}`]
+              || {};
             return {
               ...fav,
               name: details.name || 'Unknown Item',
@@ -467,7 +482,9 @@ export default function UserDashboard() {
                                   <ul className="text-sm space-y-3">
                                     {(order.items || []).map((item, index) => {
                                       // Get image from itemMap if available
-                                      const itemDetails = itemMap[item.item_id] || {};
+                                      const itemDetails = itemMap[item.item_id]
+                                        || itemMap[`name:${normalizeItemName(item.item_name)}`]
+                                        || {};
                                       const imageUrl = itemDetails.image_url || '/elementor-placeholder-image.webp';
                                       
                                       return (
