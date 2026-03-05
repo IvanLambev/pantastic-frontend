@@ -1,11 +1,10 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes } from "react-router-dom"
 import { AdminProvider } from "@/context/AdminContext"
 import AdminProtectedRoute from "@/components/AdminProtectedRoute"
 import AdminLogin from "./admin/AdminLogin"
-import Dashboard from "./admin/Dashboard"
 import Projects from "./admin/Projects"
 import Team from "./admin/Team"
 import Restaurant from "./admin/Restaurant"
@@ -24,7 +23,7 @@ function AdminDashboard() {
             <SiteHeader className="border-b border-gray-200" />
             <main className="flex-1 space-y-4 p-8">
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/" element={<Navigate to="/admin/analytics" replace />} />
                 <Route path="/analytics" element={<AdminAnalyticsDashboard />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/team" element={<Team />} />

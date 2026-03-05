@@ -21,9 +21,7 @@ export async function fetchWithAdminAuth(url, options = {}) {
   });
 
   if (response.status === 401) {
-    sessionStorage.removeItem("adminUser");
-    window.location.href = "/admin/login";
-    throw new Error("Admin session expired. Please login again.");
+    throw new Error("Unauthorized");
   }
 
   if (response.status === 403) {
