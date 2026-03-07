@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Store, Clock, CreditCard } from "lucide-react";
+import { MapPin, Store, Clock, CreditCard, Loader2 } from "lucide-react";
 import { formatDualCurrencyCompact } from "@/utils/currency";
 import { t } from "@/utils/translations";
 import 'leaflet/dist/leaflet.css';
@@ -342,8 +342,20 @@ export default function OrderConfirmation({
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {t('checkout.backToCart')}
           </Button>
-          <Button onClick={onConfirm} disabled={isLoading} className="flex-1">
-            {isLoading ? t('checkout.placingOrder') : t('checkout.confirmOrder')}
+          <Button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="flex-1"
+            data-haptic-pattern="success"
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t('checkout.placingOrder')}
+              </span>
+            ) : (
+              t('checkout.confirmOrder')
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -71,7 +71,7 @@ const Navbar = () => {
   const totalQuantity = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-black text-white">
+    <nav data-haptic-exclude="true" className="sticky top-0 z-50 w-full border-b bg-black text-white">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo Section */}
         <Link to="/" className="mr-6 flex items-center space-x-2">
@@ -186,7 +186,7 @@ const Navbar = () => {
                   <span className="sr-only">{t('nav.profile')}</span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56" data-haptic-exclude="true">
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard" className="cursor-pointer">{t('nav.dashboard')}</Link>
                 </DropdownMenuItem>
@@ -222,7 +222,7 @@ const Navbar = () => {
                 <FaBars className="h-6 w-6" />
               </button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto">
+            <SheetContent side="right" className="bg-black text-white border-zinc-800 overflow-y-auto" data-haptic-exclude="true">
               <SheetTitle className="text-white mb-2 mt-2">Меню</SheetTitle>
               <div className="flex flex-col gap-3 mt-2 px-2">
                 <SheetClose asChild>
