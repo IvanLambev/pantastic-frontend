@@ -382,6 +382,8 @@ export default function RestaurantSelector({
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [showMapsConfirm, setShowMapsConfirm] = useState(false);
   const [pendingMapsAddress, setPendingMapsAddress] = useState(null);
+  const [showPartialCartSwitchDialog, setShowPartialCartSwitchDialog] = useState(false);
+  const [pendingPartialCartSwitch, setPendingPartialCartSwitch] = useState(null);
 
   const handleAddressMapClick = (event, address, city) => {
     event.stopPropagation();
@@ -440,6 +442,32 @@ export default function RestaurantSelector({
     ''
   );
 
+  const extractMissingItemNames = (responseData) => {
+    if (!responseData || typeof responseData !== 'object') return [];
+
+    const namesFromArray = Array.isArray(responseData.missing_items)
+      ? responseData.missing_items
+          .map((item) => item?.name || item?.item_name || '')
+          .filter((name) => typeof name === 'string' && name.trim().length > 0)
+      : [];
+
+    if (namesFromArray.length > 0) {
+      return Array.from(new Set(namesFromArray));
+    }
+
+    const message = typeof responseData.message === 'string' ? responseData.message : '';
+    const separatorIndex = message.indexOf(':');
+    if (separatorIndex === -1) return [];
+
+    const trailingText = message.slice(separatorIndex + 1).trim();
+    if (!trailingText) return [];
+
+    return trailingText
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean);
+  };
+
   const getCartSwitchErrorMessage = (statusCode, errorPayload) => {
     const detail = errorPayload?.detail;
 
@@ -466,11 +494,11 @@ export default function RestaurantSelector({
 
   const transferCartToRestaurant = async (currentRestaurantId, nextRestaurantId) => {
     if (!currentRestaurantId || !nextRestaurantId || currentRestaurantId === nextRestaurantId) {
-      return;
+      return { status: 'noop' };
     }
 
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
-      return;
+      return { status: 'empty_cart' };
     }
 
     const payloadCartItems = cartItems.map((item) => {
@@ -521,7 +549,7 @@ export default function RestaurantSelector({
     if (mappingStatus === 'no_matches') {
       replaceCartItems([]);
       toast.error(t('cartSwitch.noMatches'));
-      return;
+      return { status: 'no_matches' };
     }
 
     const sourceItemsById = new Map(
@@ -562,13 +590,36 @@ export default function RestaurantSelector({
       .filter(Boolean);
 
     if (mappedCartItems.length > 0) {
-      replaceCartItems(mappedCartItems);
       if (mappingStatus === 'partial_success') {
-        toast.warning(t('cartSwitch.partialSuccess'));
+        return {
+          status: 'partial_success',
+          mappedCartItems,
+          missingItemNames: extractMissingItemNames(responseData),
+        };
       } else {
+        replaceCartItems(mappedCartItems);
         toast.success(t('cartSwitch.success'));
+        return {
+          status: 'success',
+          mappedCartItems,
+          missingItemNames: [],
+        };
       }
     }
+
+    if (mappingStatus === 'partial_success') {
+      return {
+        status: 'partial_success',
+        mappedCartItems: [],
+        missingItemNames: extractMissingItemNames(responseData),
+      };
+    }
+
+    return {
+      status: mappingStatus || 'unknown',
+      mappedCartItems: [],
+      missingItemNames: [],
+    };
   };
 
   const selectRestaurantWithCartMapping = async (nextRestaurant) => {
@@ -592,7 +643,17 @@ export default function RestaurantSelector({
 
     if (currentRestaurantId && nextRestaurantId && currentRestaurantId !== nextRestaurantId) {
       try {
-        await transferCartToRestaurant(currentRestaurantId, nextRestaurantId);
+        const transferResult = await transferCartToRestaurant(currentRestaurantId, nextRestaurantId);
+
+        if (transferResult?.status === 'partial_success') {
+          setPendingPartialCartSwitch({
+            nextRestaurant,
+            mappedCartItems: transferResult.mappedCartItems || [],
+            missingItemNames: transferResult.missingItemNames || [],
+          });
+          setShowPartialCartSwitchDialog(true);
+          return false;
+        }
       } catch (error) {
         toast.error(error?.message || t('cartSwitch.error.server'));
         return false;
@@ -1175,6 +1236,40 @@ export default function RestaurantSelector({
     }
   }
 
+  async function handleConfirmPartialCartSwitch() {
+    if (!pendingPartialCartSwitch?.nextRestaurant) {
+      setShowPartialCartSwitchDialog(false);
+      setPendingPartialCartSwitch(null);
+      return;
+    }
+
+    const mappedCartItems = Array.isArray(pendingPartialCartSwitch.mappedCartItems)
+      ? pendingPartialCartSwitch.mappedCartItems
+      : [];
+
+    if (mappedCartItems.length > 0) {
+      replaceCartItems(mappedCartItems);
+    }
+
+    await onSelect(pendingPartialCartSwitch.nextRestaurant);
+
+    const missingNames = pendingPartialCartSwitch.missingItemNames || [];
+    if (missingNames.length > 0) {
+      toast.warning(`Липсващи продукти: ${missingNames.join(', ')}`);
+    } else {
+      toast.warning(t('cartSwitch.partialSuccess'));
+    }
+
+    setShowPartialCartSwitchDialog(false);
+    setPendingPartialCartSwitch(null);
+    handleClose();
+  }
+
+  function handleCancelPartialCartSwitch() {
+    setShowPartialCartSwitchDialog(false);
+    setPendingPartialCartSwitch(null);
+  }
+
   function handleCancelDistantRestaurant() {
     setShowDistanceWarning(false);
     setPendingRestaurantSelection(null);
@@ -1582,6 +1677,49 @@ export default function RestaurantSelector({
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Partial cart mapping confirmation dialog */}
+      <Dialog
+        open={showPartialCartSwitchDialog}
+        onOpenChange={(openState) => {
+          setShowPartialCartSwitchDialog(openState);
+          if (!openState) {
+            setPendingPartialCartSwitch(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[92vw] max-w-lg rounded-xl p-4 sm:p-6">
+          <DialogHeader className="pr-8 sm:pr-10">
+            <DialogTitle className="text-base sm:text-lg leading-snug pr-1">
+              Съжаляваме, някои продукти не бяха намерени
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed space-y-2">
+              <p>
+                Част от артикулите във вашата количка не са налични в избрания ресторант и може да се наложи да ги добавите ръчно.
+              </p>
+              {Array.isArray(pendingPartialCartSwitch?.missingItemNames) && pendingPartialCartSwitch.missingItemNames.length > 0 && (
+                <div>
+                  <p className="font-medium text-foreground mb-1">Ненамерени артикули:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {pendingPartialCartSwitch.missingItemNames.map((itemName, index) => (
+                      <li key={`${itemName}-${index}`}>{itemName}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="font-medium">Искате ли все пак да смените ресторанта?</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelPartialCartSwitch}>
+              Отказ
+            </Button>
+            <Button onClick={handleConfirmPartialCartSwitch}>
+              Да, смени ресторанта
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
