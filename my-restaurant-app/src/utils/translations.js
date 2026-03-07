@@ -58,7 +58,7 @@ export const translations = {
     selectRestaurant: "Моля, изберете ресторант първо",
     category: "Категория",
     allCategories: "Всички категории",
-    changeRestaurant: "Промени ресторант",
+    changeRestaurant: "Промени адрес",
     sweetPancakes: "Сладки палачинки",
     sweet: "Сладки",
     sourPancakes: "Солени палачинки",
@@ -281,7 +281,7 @@ export const translations = {
 
     // Restaurant selection
     selectedRestaurant: "Избран ресторант",
-    changeRestaurant: "Промени",
+    changeRestaurant: "Промени адрес",
     changeRestaurantTitle: "Промяна на ресторант?",
     changeRestaurantWarning: "Промяната на ресторанта ще опита да прехвърли продуктите ви към новия ресторант. Някои продукти или добавки може да не са налични.",
     changeRestaurantConfirm: "Сигурни ли сте, че искате да продължите?",
@@ -464,7 +464,10 @@ export const translations = {
 
     or: "Или",
     manuallySelect: "Избери ръчно ресторант",
-    mapHint: "Използвайте два пръста за движение на картата"
+    mapHint: "Използвайте два пръста за движение на картата",
+    mapsConfirmTitle: "Да отворим ли адреса на ресторанта?",
+    mapsConfirmMessage: "Това действие ще отвори приложението Maps.",
+    mapsConfirmAction: "Да, отвори адреса"
   },
 
   // FAQ

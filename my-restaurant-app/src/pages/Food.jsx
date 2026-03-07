@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -66,6 +68,21 @@ const Food = () => {
   const [searchingForOpen, setSearchingForOpen] = useState(false)
   const [showDeluxeBoxModal, setShowDeluxeBoxModal] = useState(false)
   const [selectedDeluxeBoxItem, setSelectedDeluxeBoxItem] = useState(null)
+  const [showMapsConfirm, setShowMapsConfirm] = useState(false)
+  const [pendingMapsAddress, setPendingMapsAddress] = useState(null)
+
+  const handleAddressMapClick = (event, address, city) => {
+    event.stopPropagation()
+    setPendingMapsAddress({ address, city })
+    setShowMapsConfirm(true)
+  }
+
+  const handleConfirmOpenMaps = () => {
+    if (!pendingMapsAddress?.address) return
+    openInMaps(pendingMapsAddress.address, pendingMapsAddress.city || "")
+    setShowMapsConfirm(false)
+    setPendingMapsAddress(null)
+  }
 
   // Helper to calculate distance between two coordinates (Haversine formula)
   function getDistance(lat1, lon1, lat2, lon2) {
@@ -574,6 +591,30 @@ const Food = () => {
         onClose={handleModalClose}
         onSelect={selectRestaurant}
       />
+      <Dialog
+        open={showMapsConfirm}
+        onOpenChange={(openState) => {
+          setShowMapsConfirm(openState)
+          if (!openState) {
+            setPendingMapsAddress(null)
+          }
+        }}
+      >
+        <DialogContent className="w-[92vw] max-w-md rounded-xl p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">{t('restaurantSelector.mapsConfirmTitle')}</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              {t('restaurantSelector.mapsConfirmMessage')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMapsConfirm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleConfirmOpenMaps}>{t('restaurantSelector.mapsConfirmAction')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Selected Restaurant Banner */}
       {selectedRestaurant && (
         <div className="bg-background border-b">
@@ -597,10 +638,9 @@ const Food = () => {
                     e.currentTarget.style.textDecoration = 'none';
                   }}
                   onClick={(e) => {
-                    e.stopPropagation();
                     const address = Array.isArray(selectedRestaurant) ? selectedRestaurant[1] : selectedRestaurant.address;
                     const city = Array.isArray(selectedRestaurant) ? selectedRestaurant[3] : selectedRestaurant.city;
-                    openInMaps(address, city);
+                    handleAddressMapClick(e, address, city);
                   }}
                 >
                   {Array.isArray(selectedRestaurant) ? `${selectedRestaurant[1]}, ${selectedRestaurant[3]}` : `${selectedRestaurant.address}, ${selectedRestaurant.city}`}

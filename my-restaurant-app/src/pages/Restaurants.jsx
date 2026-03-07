@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { API_URL } from '@/config/api';
 import { fetchWithAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapPin, Clock, Store } from "lucide-react";
 import { openInMaps } from "@/utils/mapsHelper";
 import { parseOpeningHours } from "@/utils/ipGeolocation";
 import { isComingSoonRestaurant } from "@/utils/restaurantAvailability";
+import { t } from "@/utils/translations";
 
 // Helper function to translate day names to Bulgarian
 const translateDay = (day) => {
@@ -70,6 +73,20 @@ export default function Restaurants() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showMapsConfirm, setShowMapsConfirm] = useState(false);
+  const [pendingMapsAddress, setPendingMapsAddress] = useState(null);
+
+  const handleAddressMapClick = (address, city) => {
+    setPendingMapsAddress({ address, city });
+    setShowMapsConfirm(true);
+  };
+
+  const handleConfirmOpenMaps = () => {
+    if (!pendingMapsAddress?.address) return;
+    openInMaps(pendingMapsAddress.address, pendingMapsAddress.city || "");
+    setShowMapsConfirm(false);
+    setPendingMapsAddress(null);
+  };
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -166,7 +183,7 @@ export default function Restaurants() {
                           <p className="font-semibold text-gray-900 text-left">Адрес</p>
                           <p 
                             className="text-gray-600 hover:text-blue-600 hover:underline cursor-pointer text-left"
-                            onClick={() => openInMaps(restaurant.address, restaurant.city)}
+                            onClick={() => handleAddressMapClick(restaurant.address, restaurant.city)}
                           >
                             {restaurant.address}, {restaurant.city}
                           </p>
@@ -221,6 +238,31 @@ export default function Restaurants() {
             );
           })}
         </div>
+
+        <Dialog
+          open={showMapsConfirm}
+          onOpenChange={(openState) => {
+            setShowMapsConfirm(openState);
+            if (!openState) {
+              setPendingMapsAddress(null);
+            }
+          }}
+        >
+          <DialogContent className="w-[92vw] max-w-md rounded-xl p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle className="text-base sm:text-lg">{t('restaurantSelector.mapsConfirmTitle')}</DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed">
+                {t('restaurantSelector.mapsConfirmMessage')}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowMapsConfirm(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleConfirmOpenMaps}>{t('restaurantSelector.mapsConfirmAction')}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

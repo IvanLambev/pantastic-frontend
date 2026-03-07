@@ -12,7 +12,7 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 import "@reach/combobox/styles.css";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingBag, Navigation, Store, Truck, ArrowLeft } from "lucide-react";
@@ -380,6 +380,21 @@ export default function RestaurantSelector({
 
   // Location permission pre-prompt
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [showMapsConfirm, setShowMapsConfirm] = useState(false);
+  const [pendingMapsAddress, setPendingMapsAddress] = useState(null);
+
+  const handleAddressMapClick = (event, address, city) => {
+    event.stopPropagation();
+    setPendingMapsAddress({ address, city });
+    setShowMapsConfirm(true);
+  };
+
+  const handleConfirmOpenMaps = () => {
+    if (!pendingMapsAddress?.address) return;
+    openInMaps(pendingMapsAddress.address, pendingMapsAddress.city || "");
+    setShowMapsConfirm(false);
+    setPendingMapsAddress(null);
+  };
 
   const getRestaurantId = (restaurant) => {
     if (!restaurant) return null;
@@ -1478,8 +1493,7 @@ export default function RestaurantSelector({
                         <span
                           className="text-sm text-gray-500 text-left hover:text-blue-600 hover:underline cursor-pointer"
                           onClick={(e) => {
-                            e.stopPropagation();
-                            openInMaps(restaurant.address, restaurant.city);
+                            handleAddressMapClick(e, restaurant.address, restaurant.city);
                           }}
                         >
                           {restaurant.address.split(',')[0]}, {restaurant.city}
@@ -1499,6 +1513,36 @@ export default function RestaurantSelector({
               })
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Maps Launch Confirmation Dialog */}
+      <Dialog
+        open={showMapsConfirm}
+        onOpenChange={(openState) => {
+          setShowMapsConfirm(openState);
+          if (!openState) {
+            setPendingMapsAddress(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[92vw] max-w-md rounded-xl p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">
+              {t('restaurantSelector.mapsConfirmTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              {t('restaurantSelector.mapsConfirmMessage')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMapsConfirm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleConfirmOpenMaps}>
+              {t('restaurantSelector.mapsConfirmAction')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
