@@ -249,8 +249,8 @@ export default function Restaurants() {
           }}
         >
           <DialogContent className="w-[92vw] max-w-md rounded-xl p-4 sm:p-6">
-            <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">{t('restaurantSelector.mapsConfirmTitle')}</DialogTitle>
+            <DialogHeader className="pr-8 sm:pr-10">
+              <DialogTitle className="text-base sm:text-lg leading-snug pr-1">{t('restaurantSelector.mapsConfirmTitle')}</DialogTitle>
               <DialogDescription className="text-sm leading-relaxed">
                 {t('restaurantSelector.mapsConfirmMessage')}
               </DialogDescription>
